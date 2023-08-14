@@ -144,16 +144,16 @@ class BankBuster < Vessel::Cargo
     cookie_button.click
   end
 
-  def input_login_and_get_qr_code
-    ssn_field = at_css("input[type=text]")
-    raise 'SSN field not found' unless ssn_field
-    ssn_field.focus.type(SSN, :enter)
-    puts 'Filled in SSN, starting login...'
+def input_login_and_get_qr_code
+  ssn_field = at_css("input[type=text]")
+  raise LoginError, 'SSN field not found' unless ssn_field
+  ssn_field.focus.type(SSN, :enter)
+  puts 'Filled in SSN, starting login...'
 
-    page.network.wait_for_idle(timeout: 5)
-    message = at_css("span[slot=message]")&.text
-    puts message if message
-    raise 'Unable to login' if message&.include?('Det gick inte att logga in')
+  page.network.wait_for_idle(timeout: 5)
+  message = at_css("span[slot=message]")&.text
+  puts message if message
+  raise LoginError, 'Unable to login' if message&.include?('Det gick inte att logga in')
 
     # Assuming this instruction text doesn't matter if we're shown a QR code?
     # login_message = at_css(".mobile-bank-id__qr-code--instruction-list").text
