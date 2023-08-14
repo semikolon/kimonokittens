@@ -13,33 +13,6 @@ require 'pry-nav'
 require 'break'
 require './bank_payments_reader.rb'
 
-# Billy.configure do |c|
-#   c.cache = true
-#   c.cache_request_headers = false
-#   c.ignore_params = ["http://www.google-analytics.com/__utm.gif",
-#                      "https://r.twimg.com/jot",
-#                      "http://p.twitter.com/t.gif",
-#                      "http://p.twitter.com/f.gif",
-#                      "http://www.facebook.com/plugins/like.php",
-#                      "https://www.facebook.com/dialog/oauth",
-#                      "http://cdn.api.twitter.com/1/urls/count.json"]
-#   c.path_blacklist = []
-#   c.merge_cached_responses_whitelist = []
-#   c.persist_cache = true
-#   c.ignore_cache_port = true # defaults to true
-#   c.non_successful_cache_disabled = true
-#   c.non_successful_error_level = :error # or :warn
-#   c.non_whitelisted_requests_disabled = false
-#   c.cache_path = 'req_cache/'
-#   c.certs_path = 'req_certs/'
-#   c.proxy_host = 'localhost'
-#   c.proxy_port = 3399 # defaults to random
-#   c.proxied_request_host = nil
-#   c.proxied_request_port = 80
-#   c.cache_whitelist = []
-#   c.record_requests = true # defaults to false
-#   c.cache_request_body_methods = ['post', 'patch', 'put'] # defaults to ['post']
-# end
 
 class FerrumLogger
   def initialize(logger)
@@ -301,12 +274,3 @@ BankBuster.run do |result|
 end
 
 
-# puts "Requests received via Puffing Billy Proxy:"
-# puts TablePrint::Printer.table_print(Billy.proxy.requests, [
-#   :status,
-#   :handler,
-#   :method,
-#   { url: { width: 100 } },
-#   :headers,
-#   :body
-# ])
