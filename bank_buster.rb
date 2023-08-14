@@ -59,9 +59,9 @@ end
 class LoginError < StandardError; end
 class FileRetrievalError < StandardError; end
 
-def handle_login_errors(e)
-  puts "\nError during login process. Aborting login.".red
-  page.screenshot(path: 'error.jpg')
+def handle_errors(e, error_message, screenshot_path)
+  puts "\n#{error_message}".red
+  page.screenshot(path: screenshot_path)
   at_css("acorn-button[label='Avbryt']")&.click
   page.network.wait_for_idle
   binding.pry
@@ -72,16 +72,12 @@ def handle_login_errors(e)
   raise e
 end
 
+def handle_login_errors(e)
+  handle_errors(e, "Error during login process. Aborting login.", 'error.jpg')
+end
+
 def handle_file_errors(e)
-  puts "\nError while getting files.".red
-  page.screenshot(path: 'error_files.jpg')
-  page.network.wait_for_idle
-  binding.pry
-  unless e.is_a? Interrupt
-    puts $! # e.message
-    puts $@ # e.backtrace
-  end
-  raise e
+  handle_errors(e, "Error while getting files.", 'error_files.jpg')
 end
 
 class BankBuster < Vessel::Cargo
