@@ -228,25 +228,25 @@ class BankBuster < Vessel::Cargo
   
   def login_process
 
-      until at_css("p[data-cy='verify-yourself']")&.text == 'Legitimera dig i BankID-appen'
+      until at_css("p[data-cy='verify-yourself']")&.text == ENV['BANK_ID_AUTH_TEXT']
         input_login_and_get_qr_code
       end
       puts 'QR code picked up. Authenticate with BankID.'.yellow
 
-      until at_css('acorn-section-header')&.attribute('heading') == 'Välj profil'
+      until at_css('acorn-section-header')&.attribute('heading') == ENV['PROFILE_SELECT_TEXT']
         sleep 0.2
         page.network.wait_for_idle
       end
 
-      company_login = css('acorn-item').select{ |i| i.text.include?('Förskolan Solsidan') }.first
+      company_login = css('acorn-item').select{ |i| i.text.include?(ENV['COMPANY_NAME_TEXT']) }.first
       raise LoginError, 'Could not login as company' unless company_login
       company_login.click
       page.network.wait_for_idle
 
       print 'Logging in..'
       attempts = 0
-      until at_css('h1')&.text == 'Välkommen!' && page.url.include?('start-page')
-        raise 'Login timed out' if at_css('h1')&.text == "Du behöver logga in igen"
+      until at_css('h1')&.text == ENV['WELCOME_TEXT'] && page.url.include?(ENV['START_PAGE_URL_FRAGMENT'])
+        raise 'Login timed out' if at_css('h1')&.text == ENV['RELOGIN_TEXT']
         raise 'Login took too long, please investigate' if attempts > 100
         print '.'
         sleep 0.05
