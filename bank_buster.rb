@@ -79,12 +79,16 @@ class BankBuster < Vessel::Cargo
   # TODO: Start on /start-page and reuse login from last session if possible, need to save and reuse cookies for that though
 
   def parse(&block)
+    # Filter out non-essential requests
     filter_out_non_essentials
     page.network.wait_for_idle
+    # Accept cookies on the page
     accept_cookies
     page.network.wait_for_idle(timeout: 1)
+    # Start the login process
     login_process
-    retrieve_files(&block)  # Pass the block to retrieve_files
+    # Retrieve files and pass the block to the method
+    retrieve_files(&block)
   rescue LoginError => e
     handle_login_errors(e)
   rescue FileRetrievalError => e
@@ -92,8 +96,10 @@ class BankBuster < Vessel::Cargo
   end
 
   def filter_out_non_essentials
+    # Intercept network requests
     page.network.intercept
     page.on(:request) do |request|
+      # If the request is for an image, font, or stylesheet, abort it unless it's a blob
       if ['Image', 'Font','Stylesheet'].include?(request.resource_type)
         if request.match?("/blob:/")
           request.continue
@@ -101,6 +107,7 @@ class BankBuster < Vessel::Cargo
           request.abort
         end
       else
+        # Continue with other types of requests
         request.continue
       end
     end

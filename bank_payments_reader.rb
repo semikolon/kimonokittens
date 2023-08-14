@@ -14,13 +14,13 @@ module BankPaymentsReader
   PAYMENT_FILENAME_PATTERN = ENV['PAYMENT_FILENAME_PATTERN']
 
   def parse_files(filenames = nil)
-    # Skapa en array med alla betalningsuppgiftsfiler
+    # Create an array with all payment files
     files = filenames || Dir.glob(PAYMENT_FILENAME_PATTERN)
 
-    # Sortera filnamnen efter datum
+    # Sort the file names by date
     files.sort_by! { |file| Date.parse(file[/\d{4}-\d{2}-\d{2}/]) }
 
-    # Skapa en array för alla betalningar
+    # Create an array for all payments
     payments = []
 
     # Loopa igenom alla filer och extrahera betalningsuppgifterna
