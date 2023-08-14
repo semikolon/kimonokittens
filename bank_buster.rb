@@ -260,10 +260,10 @@ class BankBuster < Vessel::Cargo
       handle_file_errors(e)
     end
 
+      def retrieve_files
     begin
-  def retrieve_files
-    puts 'Logged in. Reading files...'.green
-    yield({ filenames: download_all_payment_files })
+      puts 'Logged in. Reading files...'.green
+      yield({ filenames: download_all_payment_files })
 
     rescue Exception => e # Rescue manual interrupt only?
       puts "\nError while getting files.".red
