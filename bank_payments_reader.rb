@@ -8,8 +8,6 @@ require 'colorize'
 require 'pry'
 require 'pry-nav'
 require 'break'
-require 'ox'
-require 'oj'
 
 module BankPaymentsReader
   extend self
