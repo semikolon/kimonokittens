@@ -56,6 +56,34 @@ if SSN.nil? || SSN.empty?
   raise 'Bank customer SSN needed'
 end
 
+class LoginError < StandardError; end
+class FileRetrievalError < StandardError; end
+
+def handle_login_errors(e)
+  puts "\nError during login process. Aborting login.".red
+  page.screenshot(path: 'error.jpg')
+  at_css("acorn-button[label='Avbryt']")&.click
+  page.network.wait_for_idle
+  binding.pry
+  unless e.is_a? Interrupt
+    puts $! # e.message
+    puts $@ # e.backtrace
+  end
+  raise e
+end
+
+def handle_file_errors(e)
+  puts "\nError while getting files.".red
+  page.screenshot(path: 'error_files.jpg')
+  page.network.wait_for_idle
+  binding.pry
+  unless e.is_a? Interrupt
+    puts $! # e.message
+    puts $@ # e.backtrace
+  end
+  raise e
+end
+
 class BankBuster < Vessel::Cargo
   INFO_INTERVAL = 20
   driver :ferrum,
@@ -181,7 +209,7 @@ class BankBuster < Vessel::Cargo
     page.go_to(url_to_fetch_url)
     
     page.network.wait_for_idle(timeout: 1) unless page.network.status == 200
-    raise 'Download URL fetch failed' unless page.network.status == 200
+    raise FileRetrievalError, 'Download URL fetch failed' unless page.network.status == 200
     
     location_info = Oj.safe_load(page.at_css('pre').text)
     ticket = location_info['ticket']
@@ -198,16 +226,7 @@ class BankBuster < Vessel::Cargo
     filename
   end
   
-  def parse
-    filter_out_non_essentials
-    page.network.wait_for_idle
-    # page.screenshot(path: 'initial.jpg')
-
-    accept_cookies
-    page.network.wait_for_idle(timeout: 1)
-    # page.screenshot(path: 'after_cookies.jpg')
-
-    begin # if something goes wrong here, click button to abort login
+  def login_process
 
       until at_css("p[data-cy='verify-yourself']")&.text == 'Legitimera dig i BankID-appen'
         input_login_and_get_qr_code
@@ -220,7 +239,7 @@ class BankBuster < Vessel::Cargo
       end
 
       company_login = css('acorn-item').select{ |i| i.text.include?('Förskolan Solsidan') }.first
-      raise 'Could not login as company' unless company_login
+      raise LoginError, 'Could not login as company' unless company_login
       company_login.click
       page.network.wait_for_idle
 
@@ -235,23 +254,16 @@ class BankBuster < Vessel::Cargo
       end
       puts "\n"
 
-    rescue Exception => e # Rescue manual interrupt only?
-      puts "\nError during login process. Aborting login.".red
-      page.screenshot(path: 'error.jpg')
-      at_css("acorn-button[label='Avbryt']")&.click
-      page.network.wait_for_idle
-      binding.pry
-      unless e.is_a? Interrupt
-        puts $! # e.message
-        puts $@ # e.backtrace
-      end
-      raise e
+    rescue LoginError => e
+      handle_login_errors(e)
+    rescue FileRetrievalError => e
+      handle_file_errors(e)
     end
 
     begin
-
-      puts 'Logged in. Reading files...'.green
-      yield({ filenames: download_all_payment_files })
+  def retrieve_files
+    puts 'Logged in. Reading files...'.green
+    yield({ filenames: download_all_payment_files })
 
     rescue Exception => e # Rescue manual interrupt only?
       puts "\nError while getting files.".red
