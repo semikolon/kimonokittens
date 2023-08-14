@@ -109,6 +109,17 @@ class BankBuster < Vessel::Cargo
   start_urls 'https://online.swedbank.se/app/ib/logga-in'
   # TODO: Start on /start-page and reuse login from last session if possible, need to save and reuse cookies for that though
 
+  def parse
+    filter_out_non_essentials
+    page.network.wait_for_idle
+    login_process
+    retrieve_files
+  rescue LoginError => e
+    handle_login_errors(e)
+  rescue FileRetrievalError => e
+    handle_file_errors(e)
+  end
+
   def filter_out_non_essentials
     page.network.intercept
     page.on(:request) do |request|
