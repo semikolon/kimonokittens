@@ -1,0 +1,22 @@
+# sudo cp json_server_daemon.service /lib/systemd/system -v
+# sudo systemctl enable json_server_daemon.service
+
+# The service can be started, stopped or restarted using standard systemd commands:
+# sudo systemctl status mydaemon
+# sudo systemctl start mydaemon
+# sudo systemctl stop mydaemon
+# sudo systemctl restart mydaemon
+
+[Unit]
+Description=Simple JSON web server
+After=network.target
+
+[Service]
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/kimonokittens
+Restart=always
+ExecStart=/home/pi/.rbenv/shims/ruby json_server.rb
+
+[Install]
+WantedBy=multi-user.target
