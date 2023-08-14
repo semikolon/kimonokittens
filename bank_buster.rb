@@ -101,8 +101,8 @@ class BankBuster < Vessel::Cargo
     timeout: 10,
     process_timeout: 120
   # delay 2
-  domain 'online.swedbank.se'
-  start_urls 'https://online.swedbank.se/app/ib/logga-in'
+    domain ENV['BANK_DOMAIN']
+    start_urls ENV['BANK_LOGIN_URL']
   # TODO: Start on /start-page and reuse login from last session if possible, need to save and reuse cookies for that though
 
   def parse(&block)
