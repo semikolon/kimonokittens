@@ -13,7 +13,7 @@ require 'oj'
 
 module BankPaymentsReader
   extend self
-  PAYMENT_FILENAME_PATTERN = "Bankgiro_betalningar_Redovisning_camt_054_*.xml"
+  PAYMENT_FILENAME_PATTERN = ENV['PAYMENT_FILENAME_PATTERN']
 
   def parse_files(filenames = nil)
     # Skapa en array med alla betalningsuppgiftsfiler
