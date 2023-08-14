@@ -112,6 +112,8 @@ class BankBuster < Vessel::Cargo
   def parse
     filter_out_non_essentials
     page.network.wait_for_idle
+    accept_cookies
+    page.network.wait_for_idle(timeout: 1)
     login_process
     retrieve_files
   rescue LoginError => e
@@ -263,29 +265,36 @@ class BankBuster < Vessel::Cargo
       attempts += 1
     end
     puts "\n"
-
-  rescue LoginError => e
-    handle_login_errors(e)
-  rescue FileRetrievalError => e
-    handle_file_errors(e)
   end
 
   def retrieve_files
-    begin
-      puts 'Logged in. Reading files...'.green
-      yield({ filenames: download_all_payment_files })
+    puts 'Logged in. Reading files...'.green
+    yield({ filenames: download_all_payment_files })
+  end
 
-    rescue Exception => e # Rescue manual interrupt only?
-      puts "\nError while getting files.".red
-      page.screenshot(path: 'error_files.jpg')
-      page.network.wait_for_idle
-      binding.pry
-      unless e.is_a? Interrupt
-        puts $! # e.message
-        puts $@ # e.backtrace
-      end
-      raise e
+  def handle_login_errors(e)
+    puts "\nError during login process. Aborting login.".red
+    page.screenshot(path: 'error.jpg')
+    at_css("acorn-button[label='Avbryt']")&.click
+    page.network.wait_for_idle
+    binding.pry
+    unless e.is_a? Interrupt
+      puts $! # e.message
+      puts $@ # e.backtrace
     end
+    raise e
+  end
+
+  def handle_file_errors(e)
+    puts "\nError while getting files.".red
+    page.screenshot(path: 'error_files.jpg')
+    page.network.wait_for_idle
+    binding.pry
+    unless e.is_a? Interrupt
+      puts $! # e.message
+      puts $@ # e.backtrace
+    end
+    raise e
   end
 
 end
