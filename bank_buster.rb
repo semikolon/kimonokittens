@@ -109,13 +109,13 @@ class BankBuster < Vessel::Cargo
   start_urls 'https://online.swedbank.se/app/ib/logga-in'
   # TODO: Start on /start-page and reuse login from last session if possible, need to save and reuse cookies for that though
 
-  def parse
+  def parse(&block)
     filter_out_non_essentials
     page.network.wait_for_idle
     accept_cookies
     page.network.wait_for_idle(timeout: 1)
     login_process
-    retrieve_files
+    retrieve_files(&block)  # Pass the block to retrieve_files
   rescue LoginError => e
     handle_login_errors(e)
   rescue FileRetrievalError => e
@@ -267,10 +267,6 @@ class BankBuster < Vessel::Cargo
     puts "\n"
   end
 
-  def retrieve_files
-    puts 'Logged in. Reading files...'.green
-    yield({ filenames: download_all_payment_files })
-  end
 
   def handle_login_errors(e)
     puts "\nError during login process. Aborting login.".red
@@ -297,6 +293,11 @@ class BankBuster < Vessel::Cargo
     raise e
   end
 
+  def retrieve_files
+    puts 'Logged in. Reading files...'.green
+    filenames = download_all_payment_files
+    yield({ filenames: filenames }) if block_given?  # Yield to the block if it's provided
+  end
 end
 
 BankBuster.run do |result|
