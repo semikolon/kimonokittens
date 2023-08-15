@@ -128,7 +128,7 @@ def input_login_and_get_qr_code
   while at_css("img.mobile-bank-id__qr-code--image")
       print '.' #puts "...".green
       #puts at_css("img.mobile-bank-id__qr-code--image")&.attribute('src')
-      page.screenshot(path: 'qr_code.jpg', selector: 'img.mobile-bank-id__qr-code--image')
+      page.screenshot(path: 'screenshots/qr_code.jpg', selector: 'img.mobile-bank-id__qr-code--image')
       # system('imgcat qr_code.jpg')
       # system('qlmanage -p qr_code.jpg 1>&- 2>&- &')
       sleep 1
@@ -232,7 +232,7 @@ def input_login_and_get_qr_code
 
   def handle_errors(e, error_message, screenshot_path)
     puts "\n#{error_message}".red
-    page.screenshot(path: screenshot_path)
+    page.screenshot(path: "screenshots/#{screenshot_path}")
     at_css("acorn-button[label='Avbryt']")&.click
     page.network.wait_for_idle
     # binding.pry
