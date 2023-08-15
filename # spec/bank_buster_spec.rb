@@ -1,8 +1,10 @@
 require 'rspec'
+require 'rspec/mocks'
 require_relative '../bank_buster.rb'
 
 describe BankBuster do
-  let(:bank_buster) { BankBuster.new }
+  let(:mock_driver) { instance_double("Ferrum::Browser") }
+  let(:bank_buster) { BankBuster.new(driver: mock_driver) }
 
   describe '#parse' do
     it 'should do something' do
