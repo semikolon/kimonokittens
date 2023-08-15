@@ -77,7 +77,11 @@ class BankBuster < Vessel::Cargo
     rescue Ferrum::DeadBrowserError => e
       puts "Browser died.".red
     rescue NoMethodError => e
-      raise unless e.message.include?("undefined method `command' for nil:NilClass")
+      if e.backtrace[0].include?('ferrum') && e.message.include?('command')
+        puts "Tried to command dead browser.".orange
+      else
+        raise # Unexpected error
+      end
     end
     
     def filter_out_non_essentials
@@ -109,27 +113,27 @@ class BankBuster < Vessel::Cargo
     cookie_button.click
   end
 
-def input_login_and_get_qr_code
-  ssn_field = at_css("input[type=text]")
-  raise LoginError, 'SSN field not found' unless ssn_field
-  ssn_field.focus.type(SSN, :enter)
-  puts 'Filled in SSN, starting login...'
-  
-  page.network.wait_for_idle(timeout: 5)
-  message = at_css("span[slot=message]")&.text
-  puts message if message
-  raise LoginError, 'Unable to login' if message&.include?('Det gick inte att logga in')
-  
-  # Assuming this instruction text doesn't matter if we're shown a QR code?
-  # login_message = at_css(".mobile-bank-id__qr-code--instruction-list").text
-  # raise unless login_message.include?('Öppna BankID-appen')
-  
-  print 'Saving QR codes..'
-  while at_css("img.mobile-bank-id__qr-code--image")
+  def input_login_and_get_qr_code
+    ssn_field = at_css("input[type=text]")
+    raise LoginError, 'SSN field not found' unless ssn_field
+    ssn_field.focus.type(SSN, :enter)
+    puts 'Filled in SSN, starting login...'
+    
+    page.network.wait_for_idle(timeout: 5)
+    message = at_css("span[slot=message]")&.text
+    puts message if message
+    raise LoginError, 'Unable to login' if message&.include?('Det gick inte att logga in')
+    
+    # Assuming this instruction text doesn't matter if we're shown a QR code?
+    # login_message = at_css(".mobile-bank-id__qr-code--instruction-list").text
+    # raise unless login_message.include?('Öppna BankID-appen')
+    
+    print 'Saving QR codes..'
+    while at_css("img.mobile-bank-id__qr-code--image")
       print '.' #puts "...".green
       #puts at_css("img.mobile-bank-id__qr-code--image")&.attribute('src')
       page.screenshot(path: "#{SCREENSHOTS_DIR}/qr_code.jpg", selector: 'img.mobile-bank-id__qr-code--image')
-      # system('imgcat qr_code.jpg')
+      system("imgcat #{SCREENSHOTS_DIR}/qr_code.jpg")
       # system('qlmanage -p qr_code.jpg 1>&- 2>&- &')
       sleep 1
       page.network.wait_for_idle(timeout: 1)
