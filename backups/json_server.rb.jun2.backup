@@ -1,0 +1,121 @@
+require 'agoo'
+require 'rack'
+require 'rack/reverse_proxy'
+require 'oj'
+require 'awesome_print'
+
+# Setting the thread count to 0 causes the server to use the current
+# thread. Greater than zero runs the server in a separate thread and the
+# current thread can be used for other tasks as long as it does not exit.
+Agoo::Log.configure(dir: '',
+        console: true,
+        classic: true,
+        colorize: true,
+        states: {
+          INFO: true,
+          DEBUG: false,
+          connect: true,
+          request: true,
+          response: true,
+          eval: true,
+          push: false,
+        })
+
+Agoo::Server.init(6464, 'root', thread_count: 0)
+
+KWH_PRICE = 1.3 + 1.06
+# Göta Energi (electricity sales) ~ 1.30 SEK per kWh
+# Vattenfall (electricity network) ~ 1.06 SEK per kWh
+
+WDAY = {
+  'Mon': 'Mån',
+  'Tue': 'Tis',
+  'Wed': 'Ons',
+  'Thu': 'Tor',
+  'Fri': 'Fre',
+  'Sat': 'Lör',
+  'Sun': 'Sön'
+}
+
+class StatsHandler
+  def call(req)
+    electricity_stats = Oj.load_file('electricity_stats.json')
+
+    days = electricity_stats.reverse.map do |day|
+      kwh = day['consumption']
+      date = DateTime.parse(day['date'])
+      short_date = date.strftime("%b %-d")
+      weekday = WDAY[date.strftime("%a").to_sym]
+      price = (kwh * KWH_PRICE).ceil
+      {
+        date: short_date,
+        weekday: weekday,
+        full_date: "#{weekday} #{short_date}",
+        price: price,
+        title: "= #{price} kr (#{weekday})",
+        long_title: "#{kwh} kWh = #{price} kr (#{weekday})",
+        consumption: kwh
+      }
+    end
+    price_so_far = days.sum { |day| day[:price] }
+    average_day = price_so_far / days.count
+    projected_total = ((average_day * 31).to_f).ceil
+    days.prepend({
+      price_so_far: price_so_far,
+      average_day: average_day,
+      projected_total: projected_total,
+      last_days_summary: days[1..3].map{ |d| "#{d[:weekday]}: #{d[:price]} kr\n" }.join
+    })
+
+    # ap days
+    stats = {
+      electricity_stats: days,
+      training_stats: []
+    }
+    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(stats) ]]
+  end
+end
+
+class HomePageHandler
+  def initialize
+    @content = File.read('www/index.html')
+  end
+
+  def call(req)
+    [200, { 'Content-Type' => 'text/html' }, [ @content ]]
+  end
+end
+
+class ProxyHandler
+  include Rack::ReverseProxy
+
+  def call(env)
+    reverse_proxy_options preserve_host: true
+    opts = { replace_response_host: true }
+    reverse_proxy /^\/data\/(.*)$/, 'http://192.168.0.210:1880/data/$1', opts
+    [500, { 'Content-Type' => 'text/plain' }, [ "Unexpected error in ProxyHandler." ]]
+  end
+end
+
+home_page_handler = HomePageHandler.new
+stats_handler = StatsHandler.new
+proxy_handler = ProxyHandler.new
+
+routes = Rack::Mount::RouteSet.new do |set|
+  set.add_route home_page_handler, :path_info => %r{^/$}
+  set.add_route stats_handler, :path_info => %r{^/data/stats.json$}
+  set.add_route proxy_handler, :path_info => %r{^/data/.*$}
+end
+
+app = Rack::Builder.new do
+  run routes
+end.to_app
+
+Agoo::Server.init(6464, 'root', thread_count: 0)
+Agoo::Rack.handler = app
+Agoo::Server.start
+
+# Agoo::Server.handle(:GET, "/", home_page_handler)
+# Agoo::Server.handle(:GET, "/data/stats.json", stats_handler)
+# Agoo::Server.handle(:GET, "/data/*", proxy_handler)
+# Agoo::Server.start()

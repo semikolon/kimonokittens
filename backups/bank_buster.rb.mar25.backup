@@ -1,0 +1,124 @@
+#coding: utf-8
+require 'dotenv/load'
+require 'awesome_print'
+require 'vessel'
+require 'oj'
+
+SSN = ENV['ADMIN_SSN']
+
+if SSN.nil? || SSN.empty?
+  abort 'Bank customer SSN needed'
+end
+
+class BankBuster < Vessel::Cargo
+  ferrum(
+    #slowmo: 2.0,
+    #port: 9222,
+    #host: 'localhost',
+    process_timeout: 20
+  )
+  timeout 8
+  #delay 2
+  domain 'online.swedbank.se'
+  start_urls 'https://online.swedbank.se/app/ib/logga-in'
+
+  def parse
+    page.browser.network.intercept
+    page.browser.on(:request) do |request|
+      if ['Font','Stylesheet'].include?(request.resource_type)
+        request.abort
+      else
+        request.continue
+      end
+    end
+    page.network.wait_for_idle
+
+    # todo klicka avbryt inloggning vid ctrl+c (använd at_exit ?)
+
+    # Hide cookie warning
+    cookie_button = at_css("acorn-button[data-test-id='acorn-button-accept-all-cookies']")
+    if cookie_button
+      cookie_button.click
+    else
+      abort 'button to accept cookies not found'
+      puts page.text
+    end
+    # page.browser.add_style_tag(content: "div.cdk-overlay-container { display: none; }")
+    # page.browser.cookies.set(name:'COOKIE_CONSENT', value:"functi-1%7Cmarket-1%2B2023-03-25", domain: 'online.swedbank.se')
+    # page.browser.cookies.set(name:'s_cc', value:'true', domain: 'online.swedbank.se')
+    # puts page.browser.cookies["COOKIE_CONSENT"]
+    # puts page.browser.cookies["s_cc"]
+    # yield true
+    # return
+    #
+    # 'campaign=eydpZCc6ICdHckc5UHdGNGpwVW0nLCAncGFnZSc6ICcvYXBwL2liL2xvZ2dhLWluJywgJ3BhZ2VpZCc6ICcnLCAnZXBvY2gnOiAxNjc5NzAzODA3Mjg4fQ==; lang=sv; TS38cb841f027=08fd3130a4ab2000f240e99cd563f69d412c86f408462f83b847db667ecfa1cc411c8f50951b3ead08603dba891130001425e60c97b76b68a6b8e62ca59a02a39d10b358ea4ae08b40640dbb5ce33feadff8fd8c673d269351a98c7ae52c064d; COOKIE_CONSENT=functi-1%7Cmarket-1%2B2023-03-25; _cls_v=d2859392-81c1-44bb-969e-dbe75c295ffa; _cls_s=7f41f432-b684-42e1-a3eb-67a9141c2f23:0; Bc=d:null*null_p:null*null_r:0*0.2; AMCVS_AB12899B544ABE260A4C98BC%40AdobeOrg=1; AMCV_AB12899B544ABE260A4C98BC%40AdobeOrg=1585540135%7CMCMID%7C42955916017146583204553131948766270010%7CMCAAMLH-1680308785%7C6%7CMCAAMB-1680308785%7C6G1ynYcLPuiQxYZrsz_pkqfLG9yMXBpb2zX5dvJdYQJzPXImdj0y%7CMCOPTOUT-1679711185s%7CNONE%7CvVersion%7C4.4.0; s_cc=true'
+    
+    page.network.wait_for_idle
+
+    begin # if something goes wrong here, click 'abort login'
+
+      ssn_field = at_css("input[type=text]")
+      raise 'ssn field not found' unless ssn_field
+      ssn_field.focus.type(SSN, :enter)
+      puts 'Filled in SSN, starting login...'
+      # page.browser.evaluate('document.forms[0].submit()')
+      
+      # login_button = at_css("[type=submit]")
+      # raise 'submit button not found' unless login_button
+      # login_button.focus.click
+
+      page.network.wait_for_idle
+      message = at_css("span[slot=message]")&.text
+      puts message
+      # todo: recognize error: 'Det gick inte att logga in. Inloggningen är redan påbörjad. Öppna BankID säkerhetsapp och vänta tills du ser "Klar att användas". Vänligen försök sedan logga in igen.'
+
+      login_message = at_css(".mobile-bank-id__qr-code--instruction-list")&.text
+      # yield login_message # verify this message
+      puts login_message
+      puts 'waiting for idle...'
+      page.network.wait_for_idle
+
+      # page.browser.add_style_tag(content: "div.cdk-overlay-container { display: none; }")
+
+      while at_css("img.mobile-bank-id__qr-code--image")
+        puts 'qr code:'
+        puts at_css("img.mobile-bank-id__qr-code--image")&.attribute('src')
+        page.screenshot(path: 'qr_code.jpg', selector: 'img.mobile-bank-id__qr-code--image')
+        sleep 0.5
+      end
+
+    rescue Exception => e # Rescue manual interrupt only?
+      puts 'Error - aborting login.'
+      at_css("acorn-button[label='Avbryt']").click
+    end
+
+    yield 'logged in'
+
+    # continually show this qr code
+    # $$("img.mobile-bank-id__qr-code--image")[0].src
+
+    # continually watch for an error message, like:
+    # $$("acorn-alert-message *[slot='message']")[0].innerText
+
+    # something like...
+    # while not logged in?
+    #   and qr code present?
+    #   (otherwise, abort with error message)
+    #     yield a request or call a method
+    #     with qr code as argument
+    #       request/method shows it to the user somehow
+    #       user scans screen, authenticates with Mobile BankId
+
+
+
+    # url = absolute_url(next_page[:href])
+    # yield request(url: url, handler: :parse)
+  end
+
+end
+
+
+# BankBuster.run(driver_options: { headless: false }) do |data|
+BankBuster.run do |result|
+  ap result
+end
