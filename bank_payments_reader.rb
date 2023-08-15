@@ -11,11 +11,13 @@ require 'break'
 
 module BankPaymentsReader
   extend self
+
   PAYMENT_FILENAME_PATTERN = ENV['PAYMENT_FILENAME_PATTERN']
+  TRANSACTIONS_DIR = ENV['TRANSACTIONS_DIR'] || "#{Dir.pwd}/transactions"
 
   def parse_files(filenames = nil)
     # Create an array with all payment files
-    files = filenames || Dir.glob(PAYMENT_FILENAME_PATTERN)
+    files = filenames || Dir.glob("#{TRANSACTIONS_DIR}/#{PAYMENT_FILENAME_PATTERN}")
 
     # Sort the file names by date
     files.sort_by! { |file| Date.parse(file[/\d{4}-\d{2}-\d{2}/]) }
