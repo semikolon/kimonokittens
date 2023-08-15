@@ -135,7 +135,7 @@ end
 # EXAMPLE:
 #{"startDate"=>"2023-03-01T00:00:00", "endDate"=>"2023-03-07T23:38:01.6393038+00:00", "delta"=>nil, "unit"=>"kWh", "aggregationInterval"=>"Daily", "consumption"=>[{"date"=>"2023-03-01T00:00:00", "week"=>nil, "consumption"=>50}, {"date"=>"2023-03-02T00:00:00", "week"=>nil, "consumption"=>52}, {"date"=>"2023-03-03T00:00:00", "week"=>nil, "consumption"=>60}, {"date"=>"2023-03-04T00:00:00", "week"=>nil, "consumption"=>82}, {"date"=>"2023-03-05T00:00:00", "week"=>nil, "consumption"=>78}, {"date"=>"2023-03-06T00:00:00", "week"=>nil, "consumption"=>73}, {"date"=>"2023-03-07T00:00:00", "week"=>nil, "consumption"=>78}]}
 
-# Vessel::Logger.instance.level = ::Logger::WARN
+Vessel::Logger.instance.level = ::Logger::WARN
 
 Vattenfall.run do |fresh_data|
   stats = fresh_data['consumption'].map(&:compact)
