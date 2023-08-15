@@ -29,9 +29,7 @@ PAYMENT_FILENAME_PATTERN = ENV['PAYMENT_FILENAME_PATTERN']
 TRANSACTIONS_DIR = ENV['TRANSACTIONS_DIR'] || "#{Dir.pwd}/transactions"
 SSN = ENV['ADMIN_SSN']
 
-if SSN.nil? || SSN.empty?
-  raise 'Bank customer SSN needed'
-end
+raise 'Bank customer SSN needed' if SSN.nil? || SSN.empty?
 
 class LoginError < StandardError; end
 class FileRetrievalError < StandardError; end
