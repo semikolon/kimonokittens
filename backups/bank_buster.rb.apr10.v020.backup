@@ -1,0 +1,260 @@
+#coding: utf-8
+require 'dotenv/load'
+require 'awesome_print'
+require 'pathname'
+require 'ferrum'
+require 'vessel'
+require 'oj'
+require 'colorize'
+require 'billy'
+require 'table_print'
+require 'pry'
+require 'pry-nav'
+require 'break'
+
+# Billy.configure do |c|
+#   c.cache = true
+#   c.cache_request_headers = false
+#   c.ignore_params = ["http://www.google-analytics.com/__utm.gif",
+#                      "https://r.twimg.com/jot",
+#                      "http://p.twitter.com/t.gif",
+#                      "http://p.twitter.com/f.gif",
+#                      "http://www.facebook.com/plugins/like.php",
+#                      "https://www.facebook.com/dialog/oauth",
+#                      "http://cdn.api.twitter.com/1/urls/count.json"]
+#   c.path_blacklist = []
+#   c.merge_cached_responses_whitelist = []
+#   c.persist_cache = true
+#   c.ignore_cache_port = true # defaults to true
+#   c.non_successful_cache_disabled = true
+#   c.non_successful_error_level = :error # or :warn
+#   c.non_whitelisted_requests_disabled = false
+#   c.cache_path = 'req_cache/'
+#   c.certs_path = 'req_certs/'
+#   c.proxy_host = 'localhost'
+#   c.proxy_port = 3399 # defaults to random
+#   c.proxied_request_host = nil
+#   c.proxied_request_port = 80
+#   c.cache_whitelist = []
+#   c.record_requests = true # defaults to false
+#   c.cache_request_body_methods = ['post', 'patch', 'put'] # defaults to ['post']
+# end
+
+class FerrumLogger
+  def initialize(logger)
+    @logger = logger
+  end
+  def puts(*args)
+    @logger << (args)
+  end
+end
+
+SSN = ENV['ADMIN_SSN']
+
+if SSN.nil? || SSN.empty?
+  raise 'Bank customer SSN needed'
+end
+
+class BankBuster < Vessel::Cargo
+  ferrum(
+    #slowmo: 2.0,
+    #port: 9222, # for remote debugging
+    #host: 'localhost',
+    save_path: Dir.pwd,
+    browser_options: {
+      'no-default-browser-check' => true,
+      'disable-extensions' => true,
+      #"proxy-bypass-list" => "<-loopback>"
+    },
+    # proxy: { host: "localhost", port: "3399" },
+    # logger: FerrumLogger.new(Logger.new("browser.log")),
+    process_timeout: 20
+  )
+  timeout 20
+  #delay 2
+  domain 'online.swedbank.se'
+  start_urls 'https://online.swedbank.se/app/ib/logga-in'
+  # TODO: Start on /start-page and reuse login from last session if possible, need to save and reuse cookies for that though
+
+  def filter_out_non_essentials
+    page.network.intercept
+    page.on(:request) do |request|
+      if ['Image', 'Font','Stylesheet'].include?(request.resource_type)
+        if request.match?("/blob:/")
+          request.continue
+        else
+          request.abort
+        end
+      else
+        request.continue
+      end
+    end
+  end
+
+  def accept_cookies
+    cookie_button = at_css("acorn-button[data-test-id='acorn-button-accept-all-cookies']")
+    if cookie_button
+      cookie_button.click
+    else
+      raise 'button to accept cookies not found'
+    end
+  end
+
+  def try_logging_in
+    ssn_field = at_css("input[type=text]")
+    raise 'SSN field not found' unless ssn_field
+    ssn_field.focus.type(SSN, :enter)
+    puts 'Filled in SSN, starting login...'.green
+
+    page.network.wait_for_idle
+    message = at_css("span[slot=message]")&.text
+    puts message if message
+    raise 'Unable to login' if message&.include?('Det gick inte att logga in')
+
+    # Assuming this instruction text doesn't matter if we're shown a QR code?
+    # login_message = at_css(".mobile-bank-id__qr-code--instruction-list").text
+    # raise unless login_message.include?('Öppna BankID-appen')
+
+    print 'Saving QR codes..'
+    while at_css("img.mobile-bank-id__qr-code--image")
+      print '.' #puts "...".green
+      #puts at_css("img.mobile-bank-id__qr-code--image")&.attribute('src')
+      page.screenshot(path: 'qr_code.jpg', selector: 'img.mobile-bank-id__qr-code--image')
+      # system('imgcat qr_code.jpg')
+      # system('qlmanage -p qr_code.jpg 1>&- 2>&- &')
+      sleep 1
+      page.network.wait_for_idle
+    end
+    puts "\n"
+
+    message = at_css("span[slot=message]")&.text
+    if message&.include?('för lång tid')
+      puts 'Timed out. Restarting login attempt...'
+      at_css("acorn-button[label='Försök igen']").click
+    end
+  end
+
+  def pick_up_files
+    page.network.clear(:traffic)
+    page.go_to('https://online.swedbank.se/app/ib/dokument')
+    page.network.wait_for_idle
+    page.screenshot(path: 'files.jpg')
+
+    search_headers = nil
+    json = nil
+    page.network.traffic.each do |exchange|
+      req = exchange.request
+      if req && exchange.finished? && req.type == 'XHR' &&
+        req.url.include?("message/document/search?")
+        search_headers = req.headers
+        json = Oj.safe_load(exchange.response.body)
+      end
+    end
+
+    all_documents = json['documents']
+    documents = all_documents.select do |doc|
+      doc['type'] == 'Redovisning camt.054' &&
+      doc['name'].include?('betalningar')
+    end
+    # TODO take(1)
+    ap documents
+
+    documents.each do |doc|
+      url = absolute_url('/TDE_DAP_Portal_REST_WEB/api/v5/message/document/'+doc['id']+'/view?referenceType=DOCUMENT_ID')
+      yield request(url: url, headers: search_headers, handler: :download_file)
+    end
+  end
+
+  def download_file
+    puts 'Downloading XML file...'.green
+    location_info = Oj.safe_load(page.at_css('pre').text)
+    ticket = location_info['ticket']
+    page.headers.set(page.headers.get) # TODO Is this needed?
+    page.go_to('https://online.swedbank.se/'+location_info['url']+'?ticket='+ticket)
+    page.network.wait_for_idle
+    puts 'Reading XML file content...'
+    response = page.network.traffic.find { |x| x.request.url.match?(/\.xml/) }.response
+    response.body
+  end
+  
+  def parse
+    filter_out_non_essentials
+    page.network.wait_for_idle
+    page.screenshot(path: 'initial.jpg')
+
+    accept_cookies
+    page.network.wait_for_idle
+    page.screenshot(path: 'after_cookies.jpg')
+
+    # puts 'Already logged in!' if at_css('h1')&.text == 'Välkommen!'
+
+    begin # if something goes wrong here, click button to abort login
+
+      # TODO ponder these loops carefully
+
+      until at_css("p[data-cy='verify-yourself']")&.text == 'Legitimera dig i BankID-appen'
+        try_logging_in
+        page.network.wait_for_idle
+      end
+      puts 'QR code picked up. Authenticate with BankID.'.green
+      # TODO hold for auth complete?
+
+      puts 'Trying to login as company...'
+      until at_css('acorn-section-header')&.attribute('heading') == 'Välj profil'
+        sleep 0.2
+        page.network.wait_for_idle
+      end
+
+      company_login = css('acorn-item').select{ |i| i.text.include?('Förskolan Solsidan') }.first
+      raise 'Could not login as company' unless company_login
+      company_login.click
+      page.network.wait_for_idle
+
+      print 'Logging in..'
+      attempts = 0
+      until at_css('h1')&.text == 'Välkommen!' && page.url.include?('start-page')
+        raise 'Login timed out' if at_css('h1')&.text == "Du behöver logga in igen"
+        raise 'Login took too long, please investigate' if attempts > 20
+        print '.'
+        sleep 0.2
+        page.network.wait_for_idle
+        attempts += 1
+      end
+      puts '\n'
+
+    rescue Exception => e # Rescue manual interrupt only?
+      puts "\nError - aborting login...".red
+      page.screenshot(path: 'error.jpg')
+      at_css("acorn-button[label='Avbryt']")&.click
+      page.network.wait_for_idle
+      binding.pry
+      unless e.is_a? Interrupt
+        puts $! # e.message
+        puts $@ # e.backtrace
+      end
+      raise e
+    end
+
+    # TODO don't go further unless logged in
+    puts 'Logged in. Reading files...'.green
+    pick_up_files
+  end
+
+end
+
+files = []
+BankBuster.run do |result|
+  files << result
+  # interpret the contents of the files here?
+end
+binding.pry
+
+# puts "Requests received via Puffing Billy Proxy:"
+# puts TablePrint::Printer.table_print(Billy.proxy.requests, [
+#   :status,
+#   :handler,
+#   :method,
+#   { url: { width: 100 } },
+#   :headers,
+#   :body
+# ])
