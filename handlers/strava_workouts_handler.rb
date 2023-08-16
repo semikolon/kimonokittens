@@ -1,5 +1,8 @@
 
 
+require 'faraday'
+require 'oj'
+
 class StravaWorkoutsHandler
   STRAVA_API_URL = 'https://www.strava.com/api/v3'
   CLIENT_ID = ENV['STRAVA_CLIENT_ID']
