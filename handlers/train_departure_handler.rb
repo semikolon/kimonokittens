@@ -1,3 +1,8 @@
+require 'faraday'
+require 'oj'
+require 'awesome_print'
+require 'pry'
+require 'pry-nav'
 
 # def to_sentence(array)
 #   if array.size > 1
@@ -7,12 +12,6 @@
 #     array.first
 #   end
 # end
-
-require 'faraday'
-require 'oj'
-require 'awesome_print'
-require 'pry'
-require 'pry-nav'
 
 class TrainDepartureHandler
   SL_API_KEY = ENV['SL_API_KEY']
