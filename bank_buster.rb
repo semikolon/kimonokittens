@@ -13,8 +13,6 @@ require 'pry-nav'
 require 'break'
 require './bank_payments_reader.rb'
 
-SCREENSHOTS_DIR = 'screenshots'
-
 
 class FerrumLogger
   def initialize(logger)
@@ -27,6 +25,7 @@ end
 
 PAYMENT_FILENAME_PATTERN = ENV['PAYMENT_FILENAME_PATTERN']
 TRANSACTIONS_DIR = ENV['TRANSACTIONS_DIR'] || "#{Dir.pwd}/transactions"
+SCREENSHOTS_DIR = 'screenshots'
 SSN = ENV['ADMIN_SSN']
 
 raise 'Bank customer SSN needed' if SSN.nil? || SSN.empty?
@@ -133,8 +132,8 @@ class BankBuster < Vessel::Cargo
       print '.' #puts "...".green
       #puts at_css("img.mobile-bank-id__qr-code--image")&.attribute('src')
       page.screenshot(path: "#{SCREENSHOTS_DIR}/qr_code.jpg", selector: 'img.mobile-bank-id__qr-code--image')
-      system("imgcat #{SCREENSHOTS_DIR}/qr_code.jpg")
-      # system('qlmanage -p qr_code.jpg 1>&- 2>&- &')
+      # system("imgcat #{SCREENSHOTS_DIR}/qr_code.jpg")
+      system("qlmanage -p #{SCREENSHOTS_DIR}/qr_code.jpg -r cache -x 1>&- 2>&- &")
       sleep 1
       page.network.wait_for_idle(timeout: 1)
     end
@@ -224,8 +223,8 @@ class BankBuster < Vessel::Cargo
     print 'Logging in..'
     attempts = 0
     until at_css('h1')&.text == ENV['WELCOME_TEXT'] && page.url.include?(ENV['START_PAGE_URL_FRAGMENT'])
-      raise 'Login timed out' if at_css('h1')&.text == ENV['RELOGIN_TEXT']
-      raise 'Login took too long, please investigate' if attempts > 100
+      raise LoginError, 'Login timed out' if at_css('h1')&.text == ENV['RELOGIN_TEXT']
+      raise LoginError, 'Login took too long, please investigate' if attempts > 100
       print '.'
       sleep 0.05
       attempts += 1
@@ -234,21 +233,24 @@ class BankBuster < Vessel::Cargo
   end
   
 
-  def handle_errors(e, error_message, screenshot_path)
+  def handle_errors(e, error_message, screenshot_path, &block)
     puts "\n#{error_message}".red
     page.screenshot(path: "#{SCREENSHOTS_DIR}/#{screenshot_path}")
-    at_css("acorn-button[label='Avbryt']")&.click
-    page.network.wait_for_idle
-    # binding.pry
+    block.call if block_given?
     unless e.is_a? Interrupt
       puts $! # e.message
       puts $@ # e.backtrace
     end
-    raise e
+    # raise e
   end
   
   def handle_login_errors(e)
-    handle_errors(e, "Error during login process. Aborting login.", 'error.jpg')
+    handle_errors(e, "Error during login process. Aborting login.", 'error.jpg') do
+      at_css("acorn-button[label='Avbryt']")&.click
+      puts "Clicked abort button..."
+      page.network.wait_for_idle
+      # binding.pry
+    end
   end
   
   def handle_file_errors(e)
