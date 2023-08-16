@@ -1,0 +1,70 @@
+{
+  "ResponseData": {
+    "Trains": [
+      {
+        "GroupOfLine": "Pendeltåg",
+        "TransportMode": "TRAIN",
+        "LineNumber": "41",
+        "Destination": "Märsta",
+        "JourneyDirection": 2,
+        "StopAreaName": "Huddinge",
+        "StopAreaNumber": 9527,
+        "StopPointNumber": 9528,
+        "StopPointDesignation": "2",
+        "TimeTabledDateTime": "2023-07-01T10:35:00",
+        "ExpectedDateTime": "2023-07-01T10:35:00",
+        "DisplayTime": "10:35",
+        "JourneyNumber": 1233,
+        "Deviations": null
+      },
+      {
+        "GroupOfLine": "Pendeltåg",
+        "TransportMode": "TRAIN",
+        "LineNumber": "41",
+        "Destination": "Märsta",
+        "JourneyDirection": 2,
+        "StopAreaName": "Huddinge",
+        "StopAreaNumber": 9527,
+        "StopPointNumber": 9528,
+        "StopPointDesignation": "2",
+        "TimeTabledDateTime": "2023-07-01T10:55:00",
+        "ExpectedDateTime": "2023-07-01T10:55:00",
+        "DisplayTime": "10:55",
+        "JourneyNumber": 1234,
+        "Deviations": null
+      },
+      {
+        "GroupOfLine": "Pendeltåg",
+        "TransportMode": "TRAIN",
+        "LineNumber": "41",
+        "Destination": "Märsta",
+        "JourneyDirection": 2,
+        "StopAreaName": "Huddinge",
+        "StopAreaNumber": 9527,
+        "StopPointNumber": 9528,
+        "StopPointDesignation": "2",
+        "TimeTabledDateTime": "2023-07-01T11:15:00",
+        "ExpectedDateTime": "2023-07-01T11:15:00",
+        "DisplayTime": "11:15",
+        "JourneyNumber": 1235,
+        "Deviations": null
+      },
+      {
+        "GroupOfLine": "Pendeltåg",
+        "TransportMode": "TRAIN",
+        "LineNumber": "41",
+        "Destination": "Märsta",
+        "JourneyDirection": 2,
+        "StopAreaName": "Huddinge",
+        "StopAreaNumber": 9527,
+        "StopPointNumber": 9528,
+        "StopPointDesignation": "2",
+        "TimeTabledDateTime": "2023-07-01T11:35:00",
+        "ExpectedDateTime": "2023-07-01T11:35:00",
+        "DisplayTime": "11:35",
+        "JourneyNumber": 1236,
+        "Deviations": null
+      }
+    ]
+  }
+}
