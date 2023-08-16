@@ -8,6 +8,12 @@
 #   end
 # end
 
+require 'faraday'
+require 'oj'
+require 'awesome_print'
+require 'pry'
+require 'pry-nav'
+
 class TrainDepartureHandler
   SL_API_KEY = ENV['SL_API_KEY']
   SITE_ID = 9527 # From https://api.sl.se/api2/typeahead.json?key=#{SL_API_KEY}&searchstring=Huddinge%20station&stationsonly=true&maxresults=2
