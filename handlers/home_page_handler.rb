@@ -1,9 +1,9 @@
 class HomePageHandler
   def initialize
-    # ... existing code ...
+    @content = File.read('www/index.html')
   end
 
   def call(req)
-    # ... existing code ...
+    [200, { 'Content-Type' => 'text/html' }, [ @content ]]
   end
 end
