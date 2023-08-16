@@ -1,3 +1,5 @@
+require 'agoo'
+
 class StaticHandler
   WWW_DIR = File.expand_path("../www", __FILE__)
 
