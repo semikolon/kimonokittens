@@ -52,9 +52,19 @@ class Vattenfall < Vessel::Cargo
     raise "Element '#{selector}' not found after #{max_attempts} attempts"
   end
 
+  def quit_browser
+    original_stdout = $stdout.clone
+    $stdout.reopen(File.new('/dev/null', 'w'))
+    
+    page &.browser &.quit
+
+  rescue NoMethodError => e
+    raise unless e.backtrace.first.include?("ferrum/browser.rb:240:in `quit'")  
+  end
+
   def parse
     Signal.trap("TERM") do
-      page &.browser &.quit rescue nil
+      quit_browser
       exit
     end
 
@@ -128,7 +138,7 @@ class Vattenfall < Vessel::Cargo
     yield Oj.safe_load(measured) # , mode: :strict, bigdecimal_load: :float, allow_gc: false
   ensure
     # This will execute regardless of any exceptions raised
-    page &.browser &.quit rescue nil
+    quit_browser
   end
 end
 
@@ -141,8 +151,8 @@ Vattenfall.run do |fresh_data|
   stats = fresh_data['consumption'].map(&:compact)
   stats.each{|s| s['date'] = DateTime.parse(s['date']).new_offset('+02:00').iso8601 }
   # ap stats
-  puts "Successfully fetched #{stats.size} days of data".green
-  puts "Last data recorded: #{DateTime.parse(stats.last['date']).strftime('%b %-d, %H.%M')}".gray
+  puts "Successfully fetched #{(stats.size / 24).round} days of data.".green
+  puts "Last data recorded: #{DateTime.parse(stats.last['date']).strftime('%b %-d, %H.%M')}"
   Oj.to_file('electricity_usage.json', stats)
 end
 
