@@ -5,3 +5,17 @@ venv/
 bgfiler/
 
 backups/
+
+*.har
+
+electricity_usage.json
+
+tibber_price_data.json
+
+.refresh_token
+
+*.tsv
+
+screenshots/
+
+.aider*
