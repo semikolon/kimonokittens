@@ -8,8 +8,8 @@ app.config.globalProperties.$socket = ref(null)
 
 app.mount('#app')
 
-const websocketUrl = process.env.VUE_APP_WEBSOCKET_URL || 'ws://localhost:6464/ws';
-const websocketUrl = process.env.VUE_APP_WEBSOCKET_URL || 'ws://localhost:6464/ws';
+const websocketUrl = process.env.VUE_APP_WEBSOCKET_URL;
+const websocketUrl = process.env.VUE_APP_WEBSOCKET_URL;
 const socket = new WebSocket(websocketUrl);
 socket.onerror = function(error) {
   console.error(`WebSocket error: ${error}`);
