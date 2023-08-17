@@ -12,6 +12,7 @@ class BankBusterHandler
       end
     end
   end
+
 def handle_message(ws, msg)
   puts "Received: #{msg}"
 
@@ -26,15 +27,15 @@ def handle_message(ws, msg)
           processed_data = BankPaymentsReader.parse_files(result[:filenames])
           # Send the processed data to the frontend.
           ws.write(processed_data)
+        elsif result[:type] == 'PROGRESS_UPDATE'
+          ws.write("PROGRESS_UPDATE?progress=#{result[:progress]}")
+        end
+      end
         end
       end
     rescue => e
       # Send an error message to the frontend when an exception is raised.
       ws.write("ERROR: #{e.message}")
-    end
-  end
-end
-      end
     end
   end
 end
