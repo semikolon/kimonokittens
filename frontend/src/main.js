@@ -16,6 +16,10 @@ app.config.globalProperties.$socket.value.onmessage = (event) => {
     // Refresh the QR code
   } else if (message.startsWith('FILES_RETRIEVED')) {
     // Update the view to show the results table
+  } else if (message.startsWith('PROGRESS_UPDATE')) {
+    const progress = message.split('=')[1];
+    // Update the progress bar with the new progress value
+    app.config.globalProperties.$progress.value = progress;
   }
 }
 
