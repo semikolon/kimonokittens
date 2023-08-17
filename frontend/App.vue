@@ -1,10 +1,15 @@
 <template>
   <div id="app">
-    <BigButton v-if="!error" @click="handleClick" />
+    <BigButton v-if="view === 'button'" @click="handleClick" />
+    <div v-if="view === 'qrCode'">
+      <!-- The QR code will go here -->
+    </div>
+    <div v-if="view === 'results'">
+      <!-- The results table will go here -->
+    </div>
     <div v-if="error" class="error-notification">
       Något gick fel.
     </div>
-    <!-- The results table will go here -->
   </div>
 </template>
 
@@ -18,13 +23,15 @@ export default {
   },
   data() {
     return {
+      view: 'button',
       error: null,
     }
   },
   methods: {
     handleClick() {
       // Handle the button click
-      // If an error occurs, set this.error to the error message
+      this.view = 'qrCode';
+      // If an error occurs, set this.error to the error message and this.view back to 'button'
     },
   },
 }
