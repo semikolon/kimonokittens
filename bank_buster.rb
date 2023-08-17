@@ -69,6 +69,9 @@ class BankBuster < Vessel::Cargo
       login_process
       # Retrieve files and pass the block to the method
       retrieve_files(&block)
+      # Reset the browser to be able to reuse the crawler instance
+      reset_browser
+
     rescue LoginError => e
       handle_login_errors(e)
     rescue FileRetrievalError => e
@@ -128,7 +131,8 @@ class BankBuster < Vessel::Cargo
       puts "Open BankID app and scan QR code below:\n".green
       #puts at_css("img.mobile-bank-id__qr-code--image")&.attribute('src')
       page.screenshot(path: "#{SCREENSHOTS_DIR}/qr_code.jpg", selector: 'img.mobile-bank-id__qr-code--image')
-      system("./imgcat -H 40% #{SCREENSHOTS_DIR}/qr_code.jpg")
+      yield({ type: 'QR_UPDATE' })
+      # system("./imgcat -H 40% #{SCREENSHOTS_DIR}/qr_code.jpg")
       sleep 1
       page.network.wait_for_idle(timeout: 1)
     end
@@ -255,7 +259,11 @@ class BankBuster < Vessel::Cargo
   def retrieve_files
     puts 'Logged in. Reading files...'.green
     filenames = download_all_payment_files
-    yield({ filenames: filenames }) if block_given?  # Yield to the block if it's provided
+    yield({ type: 'FILES_RETRIEVED', filenames: filenames }) if block_given?
+  end
+
+  def reset_browser
+    browser.reset
   end
 end
 
@@ -268,5 +276,3 @@ puts "Files found: #{Dir.glob("#{TRANSACTIONS_DIR}/#{PAYMENT_FILENAME_PATTERN}")
 BankBuster.run do |result|
   BankPaymentsReader.parse_files(result[:filenames])
 end
-
-
