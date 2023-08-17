@@ -21,6 +21,4 @@ app.config.globalProperties.$socket.value = socket;
 
 // Remove the onmessage handler
 
-app.config.globalProperties.$socket.value.onopen = () => {
-  app.config.globalProperties.$socket.value.send('START')
-}
+// Remove the onopen handler
