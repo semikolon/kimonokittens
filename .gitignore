@@ -19,3 +19,6 @@ tibber_price_data.json
 screenshots/
 
 .aider*
+frontend/.env
+
+.env-backup

@@ -9,7 +9,6 @@ app.config.globalProperties.$socket = ref(null)
 app.mount('#app')
 
 const websocketUrl = process.env.VUE_APP_WEBSOCKET_URL;
-const websocketUrl = process.env.VUE_APP_WEBSOCKET_URL;
 const socket = new WebSocket(websocketUrl);
 socket.onerror = function(error) {
   console.error(`WebSocket error: ${error}`);
@@ -18,7 +17,3 @@ socket.onclose = function(event) {
   console.log(`WebSocket connection closed: ${event.code}`);
 };
 app.config.globalProperties.$socket.value = socket;
-
-// Remove the onmessage handler
-
-// Remove the onopen handler
