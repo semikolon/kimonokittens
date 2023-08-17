@@ -7,6 +7,9 @@
     <div v-if="view === 'results'">
       <!-- The results table will go here -->
     </div>
+    <div v-if="view === 'progress'">
+      <progress max="100" :value="progress"></progress>
+    </div>
     <div v-if="error" class="error-notification">
       Något gick fel.
     </div>
@@ -26,6 +29,7 @@ export default {
       view: 'button',
       error: null,
       socket: null,
+      progress: 0,
     }
   },
   created() {
@@ -45,6 +49,10 @@ export default {
       } else if (message.startsWith('FILES_RETRIEVED')) {
         // Update the view to show the results table
         this.view = 'results';
+      } else if (message.startsWith('PROGRESS_UPDATE')) {
+        // Update the progress bar with the new progress value
+        this.progress = message.split('=')[1];
+        this.view = 'progress';
       } else if (message.startsWith('ERROR')) {
         // Handle the error message
         this.error = message;
