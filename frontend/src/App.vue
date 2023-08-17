@@ -43,14 +43,18 @@ export default {
     handleClick() {
       // Handle the button click
       this.view = 'qrCode';
+      // Send a message to the WebSocket server
+      this.socket.send('START');
       // If an error occurs, set this.error to the error message and this.view back to 'button'
     },
     handleMessage(event) {
       const message = event.data;
       if (message.startsWith('QR_UPDATE')) {
         // Refresh the QR code
+        // We need to implement this functionality
       } else if (message.startsWith('FILES_RETRIEVED')) {
         // Update the view to show the results table
+        // We need to implement this functionality
         this.view = 'results';
       } else if (message.startsWith('PROGRESS_UPDATE')) {
         // Update the progress bar with the new progress value
