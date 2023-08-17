@@ -24,15 +24,15 @@ export default {
   components: {
     BigButton,
   },
-    data() {
-      return {
-        view: 'button',
-        error: null,
-        socket: null,
-        progress: 0,
-        qrCode: null, // New data property for the QR code image URL
-      }
-    },
+  data() {
+    return {
+      view: 'button',
+      error: null,
+      socket: null,
+      progress: 0,
+      qrCode: null, // New data property for the QR code image URL
+    }
+  },
   created() {
     this.socket = this.$socket;
     this.socket.onmessage = this.handleMessage;
