@@ -8,7 +8,16 @@ app.config.globalProperties.$socket = ref(null)
 
 app.mount('#app')
 
-app.config.globalProperties.$socket.value = new WebSocket('ws://localhost:6464/ws')
+const websocketUrl = process.env.VUE_APP_WEBSOCKET_URL || 'ws://localhost:6464/ws';
+const websocketUrl = process.env.VUE_APP_WEBSOCKET_URL || 'ws://localhost:6464/ws';
+const socket = new WebSocket(websocketUrl);
+socket.onerror = function(error) {
+  console.error(`WebSocket error: ${error}`);
+};
+socket.onclose = function(event) {
+  console.log(`WebSocket connection closed: ${event.code}`);
+};
+app.config.globalProperties.$socket.value = socket;
 
 app.config.globalProperties.$socket.value.onmessage = (event) => {
   const message = event.data

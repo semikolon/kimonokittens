@@ -33,7 +33,7 @@ export default {
     }
   },
   created() {
-    this.socket = new WebSocket('ws://localhost:6464/ws');
+    this.socket = this.$socket;
     this.socket.onmessage = this.handleMessage;
   },
   methods: {
