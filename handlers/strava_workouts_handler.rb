@@ -1,5 +1,7 @@
 require 'faraday'
 require 'oj'
+require 'pry'
+require 'pry-nav'
 
 class StravaWorkoutsHandler
   STRAVA_API_URL = 'https://www.strava.com/api/v3'
@@ -114,13 +116,16 @@ class StravaWorkoutsHandler
 
     recent_distance = (recent_run_totals['distance'].to_f / 1000).round(1)
     recent_count = recent_run_totals['count'].to_f
-    recent_distance_per_run = (recent_distance / recent_count).round(2)
+    recent_distance_per_run = recent_count != 0 ? (recent_distance / recent_count).round(2) : 0
 
     ytd_distance = (ytd_run_totals['distance'].to_f / 1000).round(1)
     ytd_count = ytd_run_totals['count'].to_f
     ytd_distance_per_run = (ytd_distance / ytd_count).round(2)
-
-    recent_pace = (recent_run_totals['moving_time'].to_f / recent_run_totals['distance'].to_f * 1000).round(0)
+    
+    recent_distance = recent_run_totals['distance'].to_f
+    recent_moving_time = recent_run_totals['moving_time'].to_f
+    
+    recent_pace = recent_distance != 0 ? (recent_moving_time / recent_distance * 1000).round(0) : 0
     ytd_pace = (ytd_run_totals['moving_time'].to_f / ytd_run_totals['distance'].to_f * 1000).round(0)
 
     recent_pace = "#{(recent_pace / 60).floor}:#{(recent_pace % 60).to_s.rjust(2, '0')}"
