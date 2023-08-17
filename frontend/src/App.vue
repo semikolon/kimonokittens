@@ -45,6 +45,10 @@ export default {
       } else if (message.startsWith('FILES_RETRIEVED')) {
         // Update the view to show the results table
         this.view = 'results';
+      } else if (message.startsWith('ERROR')) {
+        // Handle the error message
+        this.error = message;
+        this.view = 'button';
       }
     },
   },
