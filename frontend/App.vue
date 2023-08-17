@@ -25,13 +25,27 @@ export default {
     return {
       view: 'button',
       error: null,
+      socket: null,
     }
+  },
+  created() {
+    this.socket = new WebSocket('ws://localhost:6464/ws');
+    this.socket.onmessage = this.handleMessage;
   },
   methods: {
     handleClick() {
       // Handle the button click
       this.view = 'qrCode';
       // If an error occurs, set this.error to the error message and this.view back to 'button'
+    },
+    handleMessage(event) {
+      const message = event.data;
+      if (message.startsWith('QR_UPDATE')) {
+        // Refresh the QR code
+      } else if (message.startsWith('FILES_RETRIEVED')) {
+        // Update the view to show the results table
+        this.view = 'results';
+      }
     },
   },
 }
