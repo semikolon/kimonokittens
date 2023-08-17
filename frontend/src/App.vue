@@ -42,23 +42,7 @@ export default {
       this.view = 'qrCode';
       // If an error occurs, set this.error to the error message and this.view back to 'button'
     },
-    handleMessage(event) {
-      const message = event.data;
-      if (message.startsWith('QR_UPDATE')) {
-        // Refresh the QR code
-      } else if (message.startsWith('FILES_RETRIEVED')) {
-        // Update the view to show the results table
-        this.view = 'results';
-      } else if (message.startsWith('PROGRESS_UPDATE')) {
-        // Update the progress bar with the new progress value
-        this.progress = message.split('=')[1];
-        this.view = 'progress';
-      } else if (message.startsWith('ERROR')) {
-        // Handle the error message
-        this.error = message;
-        this.view = 'button';
-      }
-    },
+    // Remove the handleMessage method
   },
 }
 </script>
