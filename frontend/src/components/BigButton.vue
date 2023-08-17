@@ -1,12 +1,18 @@
 <template>
   <button class="big-button">
-    Läs in betalningar
+    {{ buttonText }}
   </button>
 </template>
 
 <script>
 export default {
   name: 'BigButton',
+  props: {
+    buttonText: {
+      type: String,
+      required: true
+    }
+  }
 }
 </script>
 
