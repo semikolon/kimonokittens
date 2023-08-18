@@ -25,8 +25,8 @@ def handle_message(ws, msg)
           ws.write("QR_UPDATE?timestamp=#{Time.now.to_i}")
         elsif result[:type] == 'FILES_RETRIEVED'
           processed_data = BankPaymentsReader.parse_files(result[:filenames])
-          # Convert the processed data to JSON and send it to the frontend.
-          ws.write("FILES_RETRIEVED=#{processed_data.to_json}")
+          # Convert the processed data to JSON using Oj and send it to the frontend.
+          ws.write("FILES_RETRIEVED=#{Oj.dump(processed_data)}")
         elsif result[:type] == 'PROGRESS_UPDATE'
           ws.write("PROGRESS_UPDATE=#{result[:progress]}")
         end
