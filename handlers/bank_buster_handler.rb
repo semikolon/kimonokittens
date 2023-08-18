@@ -26,9 +26,9 @@ def handle_message(ws, msg)
         elsif result[:type] == 'FILES_RETRIEVED'
           processed_data = BankPaymentsReader.parse_files(result[:filenames])
           # Send the processed data to the frontend.
-          ws.write(processed_data)
+          ws.write("FILES_RETRIEVED=#{processed_data}")
         elsif result[:type] == 'PROGRESS_UPDATE'
-          ws.write("PROGRESS_UPDATE?progress=#{result[:progress]}")
+          ws.write("PROGRESS_UPDATE=#{result[:progress]}")
         end
       end
         end

@@ -10,6 +10,7 @@
     </div>
     <div v-if="view === 'progress'">
       <progress max="100" :value="progress"></progress>
+      <p>{{ progress }}% completed</p>
     </div>
     <div v-if="error" class="error-notification">
       Något gick fel.

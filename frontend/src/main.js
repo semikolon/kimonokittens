@@ -21,9 +21,12 @@ socket.onmessage = function(event) {
   if (message.startsWith('QR_UPDATE')) {
     const qrCodeUrl = message.split('=')[1];
     app.config.globalProperties.$socket.value.qrCode = `${qrCodeUrl}?timestamp=${Date.now()}`;
-  } else if (message.startsWith('ERROR')) {
-    app.config.globalProperties.$socket.value.error = message;
-    app.config.globalProperties.$socket.value.view = 'button';
-  }
+      } else if (message.startsWith('PROGRESS_UPDATE')) {
+        app.config.globalProperties.$socket.value.progress = parseFloat(message.split('=')[1]);
+        app.config.globalProperties.$socket.value.view = 'progress';
+      } else if (message.startsWith('ERROR')) {
+        app.config.globalProperties.$socket.value.error = message;
+        app.config.globalProperties.$socket.value.view = 'button';
+      }
 };
 app.config.globalProperties.$socket.value = socket;
