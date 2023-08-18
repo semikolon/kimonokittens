@@ -42,17 +42,17 @@ export default {
       this.socket.send('START');
     },
     handleMessage(event) {
-      const message = event.data;
-      if (message.startsWith('QR_UPDATE')) {
-        this.qrCode = `screenshots/qr_code.jpg?timestamp=${Date.now()}`;
-      } else if (message.startsWith('FILES_RETRIEVED')) {
-        this.results = message.split('=')[1];
+      const message = JSON.parse(event.data);
+      if (message.type === 'QR_UPDATE') {
+        this.qrCode = `${message.qr_code_url}?timestamp=${Date.now()}`;
+      } else if (message.type === 'FILES_RETRIEVED') {
+        this.results = message.data;
         this.view = 'results';
-      } else if (message.startsWith('PROGRESS_UPDATE')) {
-        this.progress = message.split('=')[1];
+      } else if (message.type === 'PROGRESS_UPDATE') {
+        this.progress = message.progress;
         this.view = 'progress';
-      } else if (message.startsWith('ERROR')) {
-        this.error = message;
+      } else if (message.type === 'ERROR') {
+        this.error = message.error;
         this.view = 'button';
       }
     },

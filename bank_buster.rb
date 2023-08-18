@@ -126,13 +126,12 @@ class BankBuster < Vessel::Cargo
     puts message if message
     raise LoginError, 'Unable to login' if message&.include?('Det gick inte att logga in')
         
+    qr_code_url = "#{SCREENSHOTS_DIR}/qr_code.jpg"
     while at_css("img.mobile-bank-id__qr-code--image")
       system("clear")
       puts "Open BankID app and scan QR code below:\n".green
-      #puts at_css("img.mobile-bank-id__qr-code--image")&.attribute('src')
-      page.screenshot(path: "#{SCREENSHOTS_DIR}/qr_code.jpg", selector: 'img.mobile-bank-id__qr-code--image')
-      yield({ type: 'QR_UPDATE' })
-      # system("./imgcat -H 40% #{SCREENSHOTS_DIR}/qr_code.jpg")
+      page.screenshot(path: qr_code_url, selector: 'img.mobile-bank-id__qr-code--image')
+      yield({ type: 'QR_UPDATE', qr_code_url: qr_code_url })
       sleep 1
       page.network.wait_for_idle(timeout: 1)
     end
