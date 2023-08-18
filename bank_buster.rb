@@ -69,7 +69,7 @@ class BankBuster < Vessel::Cargo
     # Start the login process
     login_process
     # Retrieve files and pass the block to the method
-    retrieve_files(&block)
+    retrieve_and_parse_files(&block)
     # Reset the browser to be able to reuse the crawler instance
     reset_browser
 
@@ -253,10 +253,11 @@ class BankBuster < Vessel::Cargo
   end
   
 
-  def retrieve_files
+  def retrieve_and_parse_files
     puts 'Logged in. Reading files...'.green
     filenames = download_all_payment_files
-    yield({ type: 'FILES_RETRIEVED', filenames: filenames }) if block_given?
+    payments = BankPaymentsReader.parse_files(filenames)
+    yield({ type: 'FILES_RETRIEVED', data: payments }) if block_given?
   end
 
   def handle_errors(e, error_message, screenshot_path, &block)
@@ -293,7 +294,3 @@ Vessel::Logger.instance.level = ::Logger::WARN
 puts "Transactions Dir: #{TRANSACTIONS_DIR}"
 puts "Pattern: #{PAYMENT_FILENAME_PATTERN}"
 puts "Files found: #{Dir.glob("#{TRANSACTIONS_DIR}/#{PAYMENT_FILENAME_PATTERN}").count}"
-
-BankBuster.run do |result|
-  BankPaymentsReader.parse_files(result[:filenames])
-end
