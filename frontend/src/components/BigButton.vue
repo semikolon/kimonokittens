@@ -1,13 +1,7 @@
 <template>
-  <div>
-    <button v-if="view === 'button'" class="big-button">
-      {{ buttonText }}
-    </button>
-    <div v-else-if="view === 'qrCode'">
-      <img :src="qrCode" alt="QR Code" class="qr-code">
-      <p>Väntar på inloggning...</p>
-    </div>
-  </div>
+  <button class="big-button">
+    {{ buttonText }}
+  </button>
 </template>
 
 <script>
@@ -17,14 +11,6 @@ export default {
     buttonText: {
       type: String,
       required: true
-    },
-    view: {
-      type: String,
-      required: true
-    },
-    qrCode: {
-      type: String,
-      required: false
     }
   }
 }
@@ -35,10 +21,5 @@ export default {
   width: 40vw;
   height: 40vh;
   font-size: 2em;
-}
-
-.qr-code {
-  width: 40vh;
-  height: 40vh;
 }
 </style>
