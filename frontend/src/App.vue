@@ -52,8 +52,8 @@ export default {
     handleMessage(event) {
       const message = event.data;
       if (message.startsWith('QR_UPDATE')) {
-        // Refresh the QR code
-        this.qrCode = message.split('=')[1];
+        // Refresh the QR code with a timestamp query parameter to force a refresh
+        this.qrCode = `${message.split('=')[1]}?timestamp=${Date.now()}`;
       } else if (message.startsWith('FILES_RETRIEVED')) {
         // Update the view to show the results table
         // We need to implement this functionality
