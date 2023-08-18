@@ -37,9 +37,6 @@ export default {
   created() {
     this.socket = this.$socket;
     this.socket.onmessage = this.handleMessage;
-    this.socket.onopen = () => {
-      this.socket.send('START')
-    }
   },
   methods: {
     handleClick() {
