@@ -30,41 +30,31 @@ export default {
       error: null,
       socket: null,
       progress: 0,
-      qrCode: null, // New data property for the QR code image URL
-      results: null, // New data property for the results
+      qrCode: 'screenshots/qr_code.jpg', // Updated data property for the QR code image URL
+      results: null,
     }
-  },
-  created() {
-    this.socket = this.$socket;
-    this.socket.onmessage = this.handleMessage;
   },
   methods: {
     handleClick() {
-      // Handle the button click
       this.view = 'qrCode';
-      // Send a message to the WebSocket server
       this.socket.send('START');
-      // If an error occurs, set this.error to the error message and this.view back to 'button'
     },
     handleMessage(event) {
       const message = event.data;
       if (message.startsWith('QR_UPDATE')) {
-        // Refresh the QR code with a timestamp query parameter to force a refresh
-        this.qrCode = `${message.split('=')[1]}?timestamp=${Date.now()}`;
+        this.qrCode = `screenshots/qr_code.jpg?timestamp=${Date.now()}`; // Updated to refresh the QR code image URL
       } else if (message.startsWith('FILES_RETRIEVED')) {
-        // Update the results and the view to show the results table
         this.results = message.split('=')[1];
         this.view = 'results';
       } else if (message.startsWith('PROGRESS_UPDATE')) {
-        // Update the progress bar with the new progress value
         this.progress = message.split('=')[1];
         this.view = 'progress';
       } else if (message.startsWith('ERROR')) {
-        // Handle the error message
         this.error = message;
         this.view = 'button';
       }
     },
+  },
   },
 }
 </script>
