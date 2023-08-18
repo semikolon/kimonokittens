@@ -207,8 +207,14 @@ class BankBuster < Vessel::Cargo
   end
   
   def login_process
+    attempts = 0
     until at_css("p[data-cy='verify-yourself']")&.text == ENV['BANK_ID_AUTH_TEXT']
       input_login_and_get_qr_code
+      attempts += 1
+      if attempts > MAX_ATTEMPTS
+        yield({ type: 'ERROR', error: 'Timeout while waiting for update' })
+        return
+      end
     end
     puts 'QR code picked up. Authenticate with BankID.'.yellow
     
