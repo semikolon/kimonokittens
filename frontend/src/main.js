@@ -19,7 +19,8 @@ socket.onclose = function(event) {
 socket.onmessage = function(event) {
   const message = event.data;
   if (message.startsWith('QR_UPDATE')) {
-    app.config.globalProperties.$socket.value.qrCode = `screenshots/qr_code.jpg?timestamp=${Date.now()}`;
+    const qrCodeUrl = message.split('=')[1];
+    app.config.globalProperties.$socket.value.qrCode = `${qrCodeUrl}?timestamp=${Date.now()}`;
   } else if (message.startsWith('ERROR')) {
     app.config.globalProperties.$socket.value.error = message;
     app.config.globalProperties.$socket.value.view = 'button';
