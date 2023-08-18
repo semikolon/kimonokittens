@@ -25,10 +25,11 @@
       <progress max="100" :value="progress"></progress>
       <p>{{ progress }}% completed</p>
     </div>
-    <div v-if="view === 'error'">
-      <p>Error: {{ error }}</p>
+    <div v-if="error" class="error-notification">
+      <p>{{ error }}</p>
     </div>
   </div>
+</template>
 </template>
 
 <script>
@@ -45,7 +46,6 @@ export default {
     return {
       view: 'button',
       error: null,
-      errorMessage: null,
       socket: null,
       progress: 0,
       qrCode: 'screenshots/qr_code.jpg',
@@ -101,7 +101,7 @@ export default {
         this.error = message.error;
         this.view = 'button';
       } else {
-        console.error(`Unexpected message type: ${message.type}`);
+        this.error = `Unexpected message type: ${message.type}`;
       }
     },
     sortBy(key) {
@@ -114,7 +114,13 @@ export default {
 
 <style scoped>
 .error-notification {
-  /* Add styles for the error notification */
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #f56565;
+  color: white;
+  padding: 1em;
+  text-align: center;
 }
 
 .qr-code {
