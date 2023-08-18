@@ -55,8 +55,8 @@ export default {
         // Refresh the QR code with a timestamp query parameter to force a refresh
         this.qrCode = `${message.split('=')[1]}?timestamp=${Date.now()}`;
       } else if (message.startsWith('FILES_RETRIEVED')) {
-        // Update the view to show the results table
-        // We need to implement this functionality
+        // Update the results and the view to show the results table
+        this.results = message.split('=')[1];
         this.view = 'results';
       } else if (message.startsWith('PROGRESS_UPDATE')) {
         // Update the progress bar with the new progress value
