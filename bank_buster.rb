@@ -86,7 +86,13 @@ class BankBuster < Vessel::Cargo
         raise # Unexpected error
       end
     end
-    
+
+    def wait_for_idle_or_rescue
+      page.network.wait_for_idle
+    rescue Ferrum::TimeoutError
+      yield({ type: 'ERROR', error: 'Timeout while waiting for update' })
+    end
+
     def filter_out_non_essentials
     # Intercept network requests
     page.network.intercept
