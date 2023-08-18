@@ -74,13 +74,17 @@ class BankBuster < Vessel::Cargo
     reset_browser
 
   rescue LoginError => e
+    yield({ type: 'ERROR', error: 'Login error occurred', message: e.message }) if block_given?
     handle_login_errors(e)
   rescue FileRetrievalError => e
+    yield({ type: 'ERROR', error: 'File retrieval error occurred', message: e.message }) if block_given?
     handle_file_errors(e)
   rescue Ferrum::DeadBrowserError => e
+    yield({ type: 'ERROR', error: 'Browser error occurred', message: e.message }) if block_given?
     puts "Browser died.".red
   rescue NoMethodError => e
     if e.backtrace[0].include?('ferrum') && e.message.include?('command')
+      yield({ type: 'ERROR', error: 'Unknown command error occurred', message: e.message }) if block_given?
       puts "Tried to command dead browser.".orange
     else
       raise # Unexpected error
