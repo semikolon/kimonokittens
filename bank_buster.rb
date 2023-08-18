@@ -180,7 +180,7 @@ class BankBuster < Vessel::Cargo
     documents.each_with_index do |doc, index|
       download_file(id: doc['id'], headers: auth_headers)
       progress = ((index + 1).to_f / documents.size.to_f) * 100
-      yield({ type: 'PROGRESS_UPDATE', progress: progress })
+      yield({ type: 'PROGRESS_UPDATE', progress: progress.round(2) })
     end
   end
   
