@@ -98,19 +98,24 @@ export default {
         this.error = `Error parsing WebSocket message: ${error.message}`;
         return;
       }
-      if (message.type === 'QR_UPDATE') {
-        this.$refs.qrCodeComponent.refreshImage();
-      } else if (message.type === 'FILES_RETRIEVED') {
-        this.results = message.data;
-        this.view = 'results';
-      } else if (message.type === 'PROGRESS_UPDATE') {
-        this.progress = message.progress;
-        this.view = 'progress';
-      } else if (message.type === 'ERROR') {
-        this.error = message.error;
-        this.view = 'button';
-      } else {
-        this.error = `Unexpected message type: ${message.type}`;
+      switch (message.type) {
+        case 'QR_UPDATE':
+          this.$refs.qrCodeComponent.refreshImage();
+          break;
+        case 'FILES_RETRIEVED':
+          this.results = message.data;
+          this.view = 'results';
+          break;
+        case 'PROGRESS_UPDATE':
+          this.progress = message.progress;
+          this.view = 'progress';
+          break;
+        case 'ERROR':
+          this.error = message.error;
+          this.view = 'button';
+          break;
+        default:
+          this.error = `Unexpected message type: ${message.type}`;
       }
     },
     sortBy(key) {
