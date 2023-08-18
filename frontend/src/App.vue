@@ -45,6 +45,7 @@ export default {
     return {
       view: 'button',
       error: null,
+      errorMessage: null,
       socket: null,
       progress: 0,
       qrCode: 'screenshots/qr_code.jpg',
