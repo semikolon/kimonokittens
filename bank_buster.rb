@@ -128,7 +128,7 @@ class BankBuster < Vessel::Cargo
     ssn_field.focus.type(SSN, :enter)
     puts 'Filled in SSN, starting login...'
     
-    page.network.wait_for_idle(timeout: 5)
+    wait_for_idle_or_rescue
     message = at_css("span[slot=message]")&.text
     puts message if message
     raise LoginError, 'Unable to login' if message&.include?('Det gick inte att logga in')
