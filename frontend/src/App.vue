@@ -99,6 +99,8 @@ export default {
       } else if (message.type === 'ERROR') {
         this.error = message.error;
         this.view = 'button';
+      } else {
+        console.error(`Unexpected message type: ${message.type}`);
       }
     },
     sortBy(key) {
