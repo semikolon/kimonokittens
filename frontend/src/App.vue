@@ -31,6 +31,7 @@ export default {
       socket: null,
       progress: 0,
       qrCode: null, // New data property for the QR code image URL
+      results: null, // New data property for the results
     }
   },
   created() {
