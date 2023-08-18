@@ -14,9 +14,19 @@ export default {
       required: true
     }
   },
+  data() {
+    return {
+      timestamp: Date.now()
+    }
+  },
   computed: {
     qrCodeUrl() {
-      return `${this.qrCode}?timestamp=${Date.now()}`;
+      return `${this.qrCode}?timestamp=${this.timestamp}`;
+    }
+  },
+  methods: {
+    refreshImage() {
+      this.timestamp = Date.now();
     }
   }
 }
