@@ -6,16 +6,17 @@
       <p class="waiting-message">Väntar på inloggning...</p>
     </div>
     <div v-if="view === 'results'">
+      <input v-model="filterText" placeholder="Filter by name">
       <table class="table-auto">
         <thead>
           <tr>
-            <th class="px-4 py-2">Debtor Name</th>
-            <th class="px-4 py-2">Payment Date</th>
-            <th class="px-4 py-2">Total Amount</th>
+            <th class="px-4 py-2" @click="sortBy('debtor_name')">Debtor Name</th>
+            <th class="px-4 py-2" @click="sortBy('payment_date')">Payment Date</th>
+            <th class="px-4 py-2" @click="sortBy('total_amount')">Total Amount</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="result in results" :key="result.debtor_name">
+          <tr v-for="result in filteredResults" :key="result.debtor_name">
             <td class="border px-4 py-2">{{ result.debtor_name }}</td>
             <td class="border px-4 py-2">{{ result.payment_date }}</td>
             <td class="border px-4 py-2">{{ result.total_amount }}</td>
@@ -49,6 +50,36 @@ export default {
       progress: 0,
       qrCode: 'screenshots/qr_code.jpg',
       results: null,
+      filterText: '',
+      sortKey: '',
+      sortOrders: {
+        debtor_name: 1,
+        payment_date: 1,
+        total_amount: 1
+      }
+    }
+  },
+  computed: {
+    filteredResults() {
+      var sortKey = this.sortKey
+      var filterKey = this.filterText && this.filterText.toLowerCase()
+      var order = this.sortOrders[sortKey] || 1
+      var results = this.results
+      if (filterKey) {
+        results = results.filter(function (row) {
+          return Object.keys(row).some(function (key) {
+            return String(row[key]).toLowerCase().indexOf(filterKey) > -1
+          })
+        })
+      }
+      if (sortKey) {
+        results = results.slice().sort(function (a, b) {
+          a = a[sortKey]
+          b = b[sortKey]
+          return (a === b ? 0 : a > b ? 1 : -1) * order
+        })
+      }
+      return results
     }
   },
   methods: {
@@ -71,6 +102,10 @@ export default {
         this.view = 'button';
       }
     },
+    sortBy(key) {
+      this.sortKey = key
+      this.sortOrders[key] = this.sortOrders[key] * -1
+    }
   },
 }
 </script>
