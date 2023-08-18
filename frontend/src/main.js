@@ -22,6 +22,7 @@ const connectionTimeout = setTimeout(() => {
 
 socket.onerror = function(error) {
   console.error(`WebSocket error: ${error}`);
+  app.config.globalProperties.$connectionError = `WebSocket connection error: ${error}`;
 };
 socket.onopen = function() {
   connectionEstablished = true;
