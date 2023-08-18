@@ -28,8 +28,8 @@
       <progress max="100" :value="progress"></progress>
       <p>{{ progress }}% completed</p>
     </div>
-    <div v-if="error" class="error-notification">
-      Något gick fel.
+    <div v-if="view === 'error'">
+      <p>Error: {{ error }}</p>
     </div>
   </div>
 </template>
