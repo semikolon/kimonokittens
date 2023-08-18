@@ -35,6 +35,7 @@ class FileRetrievalError < StandardError; end
 
 class BankBuster < Vessel::Cargo
   INFO_INTERVAL = 20
+  MAX_ATTEMPTS = 10 # Define the maximum number of attempts
   driver :ferrum,
   # slowmo: 2.0,
   # port: 9222, # for remote debugging
@@ -217,6 +218,9 @@ class BankBuster < Vessel::Cargo
       end
     end
     puts 'QR code picked up. Authenticate with BankID.'.yellow
+    # Add a rescue block to handle timeout errors
+    rescue Timeout::Error
+      yield({ type: 'ERROR', error: 'Timeout while waiting for update' })
     
     until at_css('acorn-section-header')&.attribute('heading') == ENV['PROFILE_SELECT_TEXT']
       sleep 0.2

@@ -10,8 +10,22 @@ app.mount('#app')
 
 const websocketUrl = process.env.VUE_APP_WEBSOCKET_URL;
 const socket = new WebSocket(websocketUrl);
+let connectionEstablished = false;
+
+// Set a timeout to close the connection if it isn't established within 5 seconds
+const connectionTimeout = setTimeout(() => {
+  if (!connectionEstablished) {
+    socket.close();
+    console.error('WebSocket connection timeout');
+  }
+}, 5000);
+
 socket.onerror = function(error) {
   console.error(`WebSocket error: ${error}`);
+};
+socket.onopen = function() {
+  connectionEstablished = true;
+  clearTimeout(connectionTimeout);
 };
 socket.onclose = function(event) {
   console.log(`WebSocket connection closed: ${event.code}`);
