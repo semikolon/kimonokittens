@@ -89,7 +89,7 @@ export default {
     handleMessage(event) {
       const message = JSON.parse(event.data);
       if (message.type === 'QR_UPDATE') {
-        this.qrCode = `${message.qr_code_url}?timestamp=${Date.now()}`;
+        this.qrCode = message.qr_code_url;
       } else if (message.type === 'FILES_RETRIEVED') {
         this.results = message.data;
         this.view = 'results';
