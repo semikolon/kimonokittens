@@ -28,6 +28,9 @@
     <div v-if="error" class="error-notification">
       <p>{{ error }}</p>
     </div>
+    <div v-if="$connectionError" class="connection-error-notification">
+      <p>{{ $connectionError }}</p>
+    </div>
   </div>
 </template>
 </template>
@@ -113,7 +116,8 @@ export default {
 </script>
 
 <style scoped>
-.error-notification {
+.error-notification,
+.connection-error-notification {
   position: fixed;
   bottom: 0;
   width: 100%;
