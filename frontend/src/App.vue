@@ -3,6 +3,7 @@
     <BigButton v-if="view === 'button'" @click="handleClick" />
     <div v-if="view === 'qrCode'">
       <img :src="qrCode" alt="QR Code" class="qr-code">
+      <p class="waiting-message">Väntar på inloggning...</p>
     </div>
     <div v-if="view === 'results'">
       <!-- The results table will go here -->
@@ -30,7 +31,7 @@ export default {
       error: null,
       socket: null,
       progress: 0,
-      qrCode: 'screenshots/qr_code.jpg', // Updated data property for the QR code image URL
+      qrCode: 'screenshots/qr_code.jpg',
       results: null,
     }
   },
@@ -42,7 +43,7 @@ export default {
     handleMessage(event) {
       const message = event.data;
       if (message.startsWith('QR_UPDATE')) {
-        this.qrCode = `screenshots/qr_code.jpg?timestamp=${Date.now()}`; // Updated to refresh the QR code image URL
+        this.qrCode = `screenshots/qr_code.jpg?timestamp=${Date.now()}`;
       } else if (message.startsWith('FILES_RETRIEVED')) {
         this.results = message.split('=')[1];
         this.view = 'results';
@@ -55,7 +56,6 @@ export default {
       }
     },
   },
-  },
 }
 </script>
 
@@ -67,6 +67,11 @@ export default {
 .qr-code {
   width: 40vh;
   height: 40vh;
+}
+
+.waiting-message {
+  font-size: 2em;
+  margin-top: 20px;
 }
 </style>
 
