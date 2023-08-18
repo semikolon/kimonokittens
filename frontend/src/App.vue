@@ -90,7 +90,7 @@ export default {
       const message = JSON.parse(event.data);
       if (message.type === 'QR_UPDATE') {
         this.qrCode = message.qr_code_url + '?' + new Date().getTime();
-        this.refreshImage();
+        this.$refs.qrCodeComponent.refreshImage();
       } else if (message.type === 'FILES_RETRIEVED') {
         this.results = message.data;
         this.view = 'results';
@@ -101,9 +101,6 @@ export default {
         this.error = message.error;
         this.view = 'button';
       }
-    },
-    refreshImage() {
-      this.qrCode = this.qrCode;
     },
     sortBy(key) {
       this.sortKey = key
