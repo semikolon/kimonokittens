@@ -1,10 +1,7 @@
 <template>
   <div id="app">
     <BigButton v-if="view === 'button'" @click="handleClick" />
-    <div v-if="view === 'qrCode'">
-      <img :src="qrCode" alt="QR Code" class="qr-code">
-      <p class="waiting-message">Väntar på inloggning...</p>
-    </div>
+    <QRCode v-if="view === 'qrCode'" :qrCode="qrCode" />
     <div v-if="view === 'results'">
       <input v-model="filterText" placeholder="Filter by name">
       <table class="table-auto">
@@ -36,11 +33,13 @@
 
 <script>
 import BigButton from './components/BigButton.vue'
+import QRCode from './components/QRCode.vue'
 
 export default {
   name: 'App',
   components: {
     BigButton,
+    QRCode
   },
   data() {
     return {
