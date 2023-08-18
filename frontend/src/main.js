@@ -24,9 +24,10 @@ socket.onmessage = function(event) {
       } else if (message.startsWith('PROGRESS_UPDATE')) {
         app.config.globalProperties.$socket.value.progress = parseFloat(message.split('=')[1]);
         app.config.globalProperties.$socket.value.view = 'progress';
-      } else if (message.startsWith('ERROR')) {
-        app.config.globalProperties.$socket.value.error = message;
-        app.config.globalProperties.$socket.value.view = 'button';
+      } else if (message.startsWith('FILES_RETRIEVED')) {
+        const data = message.split('=')[1];
+        app.config.globalProperties.$socket.value.results = JSON.parse(data);
+        app.config.globalProperties.$socket.value.view = 'results';
       }
 };
 app.config.globalProperties.$socket.value = socket;

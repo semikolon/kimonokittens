@@ -6,7 +6,22 @@
       <p class="waiting-message">Väntar på inloggning...</p>
     </div>
     <div v-if="view === 'results'">
-      <!-- The results table will go here -->
+      <table class="table-auto">
+        <thead>
+          <tr>
+            <th class="px-4 py-2">Debtor Name</th>
+            <th class="px-4 py-2">Payment Date</th>
+            <th class="px-4 py-2">Total Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="result in results" :key="result.debtor_name">
+            <td class="border px-4 py-2">{{ result.debtor_name }}</td>
+            <td class="border px-4 py-2">{{ result.payment_date }}</td>
+            <td class="border px-4 py-2">{{ result.total_amount }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <div v-if="view === 'progress'">
       <progress max="100" :value="progress"></progress>
