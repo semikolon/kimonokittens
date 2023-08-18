@@ -91,7 +91,13 @@ export default {
       this.socket.send('START');
     },
     handleMessage(event) {
-      const message = JSON.parse(event.data);
+      let message;
+      try {
+        message = JSON.parse(event.data);
+      } catch (error) {
+        this.error = `Error parsing WebSocket message: ${error.message}`;
+        return;
+      }
       if (message.type === 'QR_UPDATE') {
         this.$refs.qrCodeComponent.refreshImage();
       } else if (message.type === 'FILES_RETRIEVED') {
