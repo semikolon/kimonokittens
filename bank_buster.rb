@@ -87,8 +87,8 @@ class BankBuster < Vessel::Cargo
       end
     end
 
-    def wait_for_idle_or_rescue(timeout: nil)
-      timeout ? wait_for_idle(timeout: timeout) : wait_for_idle
+    def wait_for_idle_or_rescue(...)
+      wait_for_idle(...)
     rescue Ferrum::TimeoutError
       yield({ type: 'ERROR', error: 'Timeout while waiting for update' })
     end
