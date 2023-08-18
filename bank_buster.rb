@@ -62,7 +62,7 @@ class BankBuster < Vessel::Cargo
     def parse(&block)
       # Filter out non-essential requests
       filter_out_non_essentials
-      page.network.wait_for_idle
+      wait_for_idle_or_rescue
       # Accept cookies on the page
       accept_cookies
       page.network.wait_for_idle(timeout: 1)
@@ -88,7 +88,7 @@ class BankBuster < Vessel::Cargo
     end
 
     def wait_for_idle_or_rescue
-      page.network.wait_for_idle
+      wait_for_idle_or_rescue
     rescue Ferrum::TimeoutError
       yield({ type: 'ERROR', error: 'Timeout while waiting for update' })
     end
@@ -148,14 +148,14 @@ class BankBuster < Vessel::Cargo
     if message&.include?('för lång tid')
       puts 'Timed out. Restarting login attempt...'
       at_css("acorn-button[label='Försök igen']").click
-      page.network.wait_for_idle
+      wait_for_idle_or_rescue
     end
   end
 
   def download_all_payment_files
     page.network.clear(:traffic)
     page.go_to(absolute_url('/app/ib/dokument'))
-    page.network.wait_for_idle
+    wait_for_idle_or_rescue
     # page.screenshot(path: 'files.jpg')
     
     auth_headers = nil
@@ -230,13 +230,13 @@ class BankBuster < Vessel::Cargo
     
     until at_css('acorn-section-header')&.attribute('heading') == ENV['PROFILE_SELECT_TEXT']
       sleep 0.2
-      page.network.wait_for_idle
+      wait_for_idle_or_rescue
     end
     
     company_login = css('acorn-item').select{ |i| i.text.include?(ENV['COMPANY_NAME_TEXT']) }.first
     raise LoginError, 'Could not login as company' unless company_login
     company_login.click
-    page.network.wait_for_idle
+    wait_for_idle_or_rescue
     
     print 'Logging in..'
     attempts = 0
@@ -266,7 +266,7 @@ class BankBuster < Vessel::Cargo
     handle_errors(e, "Error during login process. Aborting login.", 'error.jpg') do
       at_css("acorn-button[label='Avbryt']")&.click
       puts "Clicked abort button..."
-      page.network.wait_for_idle
+      wait_for_idle_or_rescue
       # binding.pry
     end
   end
