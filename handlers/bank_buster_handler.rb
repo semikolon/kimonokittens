@@ -1,3 +1,5 @@
+require 'oj'
+
 class BankBusterHandler
   def initialize
     @bank_buster = BankBuster.new
@@ -20,18 +22,8 @@ def handle_message(ws, msg)
   when 'START'
     begin
       @bank_buster.parse do |result|
-        if result[:type] == 'QR_UPDATE'
-          # Send a message to the frontend to refresh the QR code image.
-          ws.write("QR_UPDATE?timestamp=#{Time.now.to_i}")
-        elsif result[:type] == 'FILES_RETRIEVED'
-          processed_data = BankPaymentsReader.parse_files(result[:filenames])
-          # Convert the processed data to JSON using Oj and send it to the frontend.
-          ws.write("FILES_RETRIEVED=#{Oj.dump(processed_data)}")
-        elsif result[:type] == 'PROGRESS_UPDATE'
-          ws.write("PROGRESS_UPDATE=#{result[:progress]}")
-        end
-      end
-        end
+        # Convert the result to JSON using Oj and send it to the frontend.
+        ws.write(Oj.dump(result))
       end
     rescue => e
       # Send an error message to the frontend when an exception is raised.
