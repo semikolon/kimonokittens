@@ -58,16 +58,23 @@ class BankBuster < Vessel::Cargo
     domain ENV['BANK_DOMAIN']
     start_urls ENV['BANK_LOGIN_URL']
     # TODO: Start on /start-page and reuse login from last session if possible, need to save and reuse cookies for that though
+
+  def log_existing_files
+    yield({ type: 'LOG', data: "Transactions Dir: #{TRANSACTIONS_DIR}" }) if block_given?
+    yield({ type: 'LOG', data: "Pattern: #{PAYMENT_FILENAME_PATTERN}" }) if block_given?
+    yield({ type: 'LOG', data: "Files found: #{Dir.glob("#{TRANSACTIONS_DIR}/#{PAYMENT_FILENAME_PATTERN}").count}" }) if block_given?
+  end
   
   def parse(&block)
+    log_existing_files(&block)
     # Filter out non-essential requests
     filter_out_non_essentials
     wait_for_idle_or_rescue
     # Accept cookies on the page
-    accept_cookies
+    accept_cookies(&block)
     wait_for_idle_or_rescue(timeout: 1)
     # Start the login process
-    login_process
+    login_process(&block)
     # Retrieve files and pass the block to the method
     retrieve_and_parse_files(&block)
     # Reset the browser to be able to reuse the crawler instance
@@ -290,3 +297,7 @@ class BankBuster < Vessel::Cargo
 end
 
 Vessel::Logger.instance.level = ::Logger::WARN
+
+# yield({ type: 'LOG', data: "Transactions Dir: #{TRANSACTIONS_DIR}" }) if block_given?
+# yield({ type: 'LOG', data: "Pattern: #{PAYMENT_FILENAME_PATTERN}" }) if block_given?
+# yield({ type: 'LOG', data: "Files found: #{Dir.glob("#{TRANSACTIONS_DIR}/#{PAYMENT_FILENAME_PATTERN}").count}" }) if block_given?
