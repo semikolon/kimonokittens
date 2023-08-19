@@ -184,7 +184,7 @@ class BankBuster < Vessel::Cargo
     end
     # ap documents
     # documents = documents.take(4)
-    puts "Found #{documents.count} documents to download".cyan
+    yield({ type: 'LOG', data: "Found #{documents.count} documents to download" }) if block_given?
     
     # page.network.clear(:cache)
     documents.each_with_index do |doc, index|
