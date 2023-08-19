@@ -146,7 +146,7 @@ class BankBuster < Vessel::Cargo
       sleep 1
       wait_for_idle_or_rescue(timeout: 1)
     end
-    puts "\n"
+    yield({ type: 'LOG', data: "\n" }) if block_given?
 
     message = at_css("span[slot=message]")&.text
     if message&.include?('för lång tid')
