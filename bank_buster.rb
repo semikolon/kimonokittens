@@ -85,7 +85,7 @@ class BankBuster < Vessel::Cargo
   rescue NoMethodError => e
     if e.backtrace[0].include?('ferrum') && e.message.include?('command')
       yield({ type: 'ERROR', error: 'Unknown command error occurred', message: e.message }) if block_given?
-      puts "Tried to command dead browser.".orange
+      yield({ type: 'LOG', data: "Tried to command dead browser." }) if block_given?
     else
       raise # Unexpected error
     end
