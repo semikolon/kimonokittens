@@ -130,7 +130,7 @@ class BankBuster < Vessel::Cargo
     ssn_field = at_css("input[type=text]")
     raise LoginError, 'SSN field not found' unless ssn_field
     ssn_field.focus.type(SSN, :enter)
-    puts 'Filled in SSN, starting login...'
+    yield({ type: 'LOG', data: 'Filled in SSN, starting login...' }) if block_given?
   
     wait_for_idle_or_rescue
     message = at_css("span[slot=message]")&.text
