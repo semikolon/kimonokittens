@@ -213,7 +213,7 @@ class BankBuster < Vessel::Cargo
     raise FileRetrievalError, 'Download failed' unless page.network.status == 200
     
     filename = page.network.response.headers['Content-type'].match(/name="(.*)"/)[1]
-    puts "Downloaded #{filename}".green
+    yield({ type: 'LOG', data: "Downloaded #{filename}" }) if block_given?
     filename
   end
   
