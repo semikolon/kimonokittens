@@ -22,3 +22,5 @@ screenshots/
 frontend/.env
 
 .env-backup
+
+.env
