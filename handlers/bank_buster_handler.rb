@@ -16,7 +16,7 @@ class BankBusterHandler
   end
 
 def handle_message(ws, msg)
-  puts "Received: #{msg}"
+  yield({ type: 'LOG', data: "Received: #{msg}" }) if block_given?
 
   case msg
   when 'START'
