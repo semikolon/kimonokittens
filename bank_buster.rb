@@ -290,7 +290,3 @@ class BankBuster < Vessel::Cargo
 end
 
 Vessel::Logger.instance.level = ::Logger::WARN
-
-yield({ type: 'LOG', data: "Transactions Dir: #{TRANSACTIONS_DIR}" }) if block_given?
-yield({ type: 'LOG', data: "Pattern: #{PAYMENT_FILENAME_PATTERN}" }) if block_given?
-yield({ type: 'LOG', data: "Files found: #{Dir.glob("#{TRANSACTIONS_DIR}/#{PAYMENT_FILENAME_PATTERN}").count}" }) if block_given?
