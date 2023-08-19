@@ -140,7 +140,7 @@ class BankBuster < Vessel::Cargo
     qr_code_url = "#{SCREENSHOTS_DIR}/qr_code.jpg"
     while at_css("img.mobile-bank-id__qr-code--image")
       system("clear")
-      puts "Open BankID app and scan QR code below:\n".green
+      yield({ type: 'LOG', data: "Open BankID app and scan QR code below:\n" }) if block_given?
       page.screenshot(path: qr_code_url, selector: 'img.mobile-bank-id__qr-code--image')
       yield({ type: 'QR_UPDATE', qr_code_url: qr_code_url })
       sleep 1
