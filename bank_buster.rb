@@ -116,7 +116,7 @@ class BankBuster < Vessel::Cargo
   end
 
   def accept_cookies
-    puts 'Trying to identify cookie accept button...'.gray
+    yield({ type: 'LOG', data: 'Trying to identify cookie accept button...' }) if block_given?
     attempts = 0
     until cookie_button = at_css("acorn-button[data-cy='acorn-button-accept-all-cookies']")
       raise LoginError, 'Could not find cookie accept button' if attempts > 100
