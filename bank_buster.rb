@@ -254,14 +254,14 @@ class BankBuster < Vessel::Cargo
   
 
   def retrieve_and_parse_files
-    puts 'Logged in. Reading files...'.green
+    yield({ type: 'LOG', data: 'Logged in. Reading files...' }) if block_given?
     filenames = download_all_payment_files
     payments = BankPaymentsReader.parse_files(filenames)
     yield({ type: 'FILES_RETRIEVED', data: payments }) if block_given?
   end
 
   def handle_errors(e, error_message, screenshot_path, &block)
-    puts "\n#{error_message}".red
+    yield({ type: 'LOG', data: "\n#{error_message}" }) if block_given?
     page.screenshot(path: "#{SCREENSHOTS_DIR}/#{screenshot_path}")
     block.call if block_given?
     unless e.is_a? Interrupt
@@ -291,6 +291,6 @@ end
 
 Vessel::Logger.instance.level = ::Logger::WARN
 
-puts "Transactions Dir: #{TRANSACTIONS_DIR}"
-puts "Pattern: #{PAYMENT_FILENAME_PATTERN}"
-puts "Files found: #{Dir.glob("#{TRANSACTIONS_DIR}/#{PAYMENT_FILENAME_PATTERN}").count}"
+yield({ type: 'LOG', data: "Transactions Dir: #{TRANSACTIONS_DIR}" }) if block_given?
+yield({ type: 'LOG', data: "Pattern: #{PAYMENT_FILENAME_PATTERN}" }) if block_given?
+yield({ type: 'LOG', data: "Files found: #{Dir.glob("#{TRANSACTIONS_DIR}/#{PAYMENT_FILENAME_PATTERN}").count}" }) if block_given?
