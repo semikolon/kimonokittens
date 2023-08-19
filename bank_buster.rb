@@ -81,7 +81,7 @@ class BankBuster < Vessel::Cargo
     handle_file_errors(e)
   rescue Ferrum::DeadBrowserError => e
     yield({ type: 'ERROR', error: 'Browser error occurred', message: e.message }) if block_given?
-    puts "Browser died.".red
+    yield({ type: 'LOG', data: "Browser died." }) if block_given?
   rescue NoMethodError => e
     if e.backtrace[0].include?('ferrum') && e.message.include?('command')
       yield({ type: 'ERROR', error: 'Unknown command error occurred', message: e.message }) if block_given?
