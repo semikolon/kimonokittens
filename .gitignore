@@ -24,3 +24,4 @@ frontend/.env
 .env-backup
 
 .env
+.env-fresh
