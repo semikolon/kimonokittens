@@ -37,12 +37,12 @@ WDAY = {
 
 class ElectricityStatsHandler
   def call(req)
-    electricity_stats = Oj.load_file('electricity_usage.json')
+    electricity_usage = Oj.load_file('electricity_usage.json')
     tibber_prices = Oj.load_file('tibber_price_data.json')
     
     avg_price_per_kwh = tibber_prices.values.sum / tibber_prices.count
 
-    all_hours = electricity_stats.map do |hour|
+    all_hours = electricity_usage.map do |hour|
       consumption = hour['consumption']
 
       date = DateTime.parse(hour['date'])
@@ -128,10 +128,72 @@ class ElectricityStatsHandler
       peak_pricey_hours: peak_pricey_hours,
       last_days_summary: last_days_summary
     })
+
+    # Savings calculations
     
+    # Calculate the average price for the previous month
+    avg_prev_month_price = average_price_previous_month(tibber_prices)
+
+    # Calculate daily savings
+    daily_savings = calculate_daily_savings(tibber_prices, electricity_usage, avg_prev_month_price)
+
+    # Calculate monthly savings
+    monthly_savings_summary = calculate_monthly_savings(daily_savings)
+
     stats = {
-      electricity_stats: last_days_summed
+      electricity_stats: last_days_summed,
+      daily_savings: daily_savings,
+      monthly_savings_summary: monthly_savings_summary
     }
+    
     [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(stats) ]]
   end
+
+  # Helper method to get the average price for the previous month
+  def average_price_previous_month(tibber_prices)
+    current_month = Date.today.month
+    previous_month_prices = tibber_prices.select do |date_string, _|
+      # Extract the date part from the date-time string
+      date_part = date_string.split("T").first
+      Date.parse(date_part).month == current_month - 1
+    end
+    previous_month_prices.values.sum / previous_month_prices.size
+  end
+
+  # Helper method to calculate savings for each day
+  def calculate_daily_savings(tibber_prices, electricity_usage, average_previous_month_price)
+    daily_savings = []
+
+    electricity_usage.each do |day_data|
+      date = day_data['date']
+      consumption = day_data['consumption']
+
+      # Calculate cost based on dynamic pricing
+      dynamic_cost = tibber_prices[date] * consumption
+
+      # Calculate cost based on fixed price
+      fixed_cost = average_previous_month_price * consumption
+
+      # Calculate savings for the day
+      savings = fixed_cost - dynamic_cost
+
+      daily_savings << { 'date' => date, 'savings' => savings }
+    end
+
+    daily_savings
+  end
+
+  # Helper method to calculate monthly savings
+  def calculate_monthly_savings(daily_savings)
+    monthly_savings = {}
+
+    daily_savings.each do |day_data|
+      month = Date.parse(day_data['date']).strftime('%B %Y')  # e.g., "April 2023"
+      monthly_savings[month] ||= 0
+      monthly_savings[month] += day_data['savings']
+    end
+
+    monthly_savings
+  end
+
 end
