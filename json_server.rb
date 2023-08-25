@@ -39,13 +39,17 @@ strava_workouts_handler = StravaWorkoutsHandler.new
 bank_buster_handler = BankBusterHandler.new
 
 Agoo::Server.handle(:GET, "/", home_page_handler)
-Agoo::Server.handle(:GET, "/*", static_handler)
-Agoo::Server.handle(:GET, "/data/electricity", electricity_stats_handler)
-Agoo::Server.handle(:GET, "/data/train_departures", train_departure_handler)
-Agoo::Server.handle(:GET, "/data/strava_stats", strava_workouts_handler)
-Agoo::Server.handle(:GET, "/data/*", proxy_handler)
 
 # Add WebSocket handler for BankBuster
 Agoo::Server.handle(:GET, "/ws", bank_buster_handler)
+
+Agoo::Server.handle(:GET, "/*", static_handler)
+
+Agoo::Server.handle(:GET, "/data/electricity", electricity_stats_handler)
+Agoo::Server.handle(:GET, "/data/train_departures", train_departure_handler)
+Agoo::Server.handle(:GET, "/data/strava_stats", strava_workouts_handler)
+
+Agoo::Server.handle(:GET, "/data/*", proxy_handler)
+
 
 Agoo::Server.start()

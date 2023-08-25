@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <BigButton v-if="view === 'button'" @click="handleClick" />
+    <BigButton v-if="view === 'button'" @click="handleClick" :buttonText="'Fetch payments'" />
     <QRCode v-if="view === 'qrCode'" :qrCode="qrCode" />
     <div v-if="view === 'results'">
       <input v-model="filterText" placeholder="Filter by name">
@@ -28,14 +28,14 @@
     <div v-if="error" class="error-notification">
       <p>{{ error }}</p>
     </div>
-    <div v-if="$connectionError" class="connection-error-notification">
-      <p>{{ $connectionError }}</p>
+    <div v-if="connectionError" class="connection-error-notification">
+      <p>{{ connectionError }}</p>
     </div>
   </div>
 </template>
-</template>
 
 <script>
+import { inject } from 'vue';
 import BigButton from './components/BigButton.vue'
 import QRCode from './components/QRCode.vue'
 
@@ -45,11 +45,19 @@ export default {
     BigButton,
     QRCode
   },
+  setup() {
+    const socket = inject('socket');
+    const connectionError = inject('connectionError');
+    
+    return {
+      socket,
+      connectionError
+    };
+  },
   data() {
     return {
       view: 'button',
       error: null,
-      socket: null,
       progress: 0,
       qrCode: 'screenshots/qr_code.jpg',
       results: null,
@@ -59,7 +67,7 @@ export default {
         debtor_name: 1,
         payment_date: 1,
         total_amount: 1
-      }
+      },
     }
   },
   computed: {
