@@ -2,6 +2,7 @@ require 'faraday'
 require 'oj'
 require 'dotenv/load'
 require 'awesome_print'
+require 'colorize'
 
 def find_cheapest_hours
   tibber_prices = Oj.load_file('tibber_price_data.json')
@@ -35,7 +36,7 @@ def fetch_tibber_data
     f.adapter Faraday.default_adapter
   end
 
-  number_of_days = 7 * 5
+  number_of_days = 62 # 7 * 5
 
   query = "{
     viewer {
@@ -73,6 +74,8 @@ end
 
 def fetch_and_store_tibber_data
   price_data = fetch_tibber_data
+  # log how many days we fetched prices for
+  puts "Fetched prices for #{price_data.count / 24} days, up until #{DateTime.parse(price_data.keys.last).strftime("%Y-%m-%d")}".green
   Oj.to_file('tibber_price_data.json', price_data)
 end
 
