@@ -1,12 +1,8 @@
-import { createApp, ref, reactive } from 'vue'
+import { createApp, provide } from 'vue'
 import App from './App.vue'
 import './assets/tailwind.css'
 
 const app = createApp(App)
-
-app.config.globalProperties.socket = ref(null)
-
-app.mount('#app')
 
 const websocketUrl = process.env.VUE_APP_WEBSOCKET_URL;
 const socket = new WebSocket(websocketUrl);
@@ -53,4 +49,5 @@ socket.onmessage = function(event) {
   }
 };
 
-app.config.globalProperties.socket = reactive(socket);
+app.provide('socket', socket);
+app.mount('#app');

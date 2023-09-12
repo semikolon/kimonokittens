@@ -47,11 +47,9 @@ export default {
   },
   setup() {
     const socket = inject('socket');
-    const connectionError = inject('connectionError');
     
     return {
-      socket,
-      connectionError
+      socket
     };
   },
   data() {
