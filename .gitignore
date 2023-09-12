@@ -19,6 +19,15 @@ tibber_price_data.json
 screenshots/
 
 .aider*
+memory/
+
+.gpte_consent
+workspace/
+prompt
+file_list.txt
+
+*.rtf
+
 frontend/.env
 
 .env-backup
