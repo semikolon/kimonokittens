@@ -43,7 +43,7 @@ class ElectricityStatsHandler
     avg_price_per_kwh = tibber_prices.values.sum / tibber_prices.count
 
     all_hours = electricity_usage.map do |hour|
-      consumption = hour['consumption']
+      consumption = hour['consumption'] || 0.0
 
       date = DateTime.parse(hour['date'])
       short_date = date.strftime("%b %-d")
@@ -132,18 +132,18 @@ class ElectricityStatsHandler
     # Savings calculations
     
     # Calculate the average price for the previous month
-    avg_prev_month_price = average_price_previous_month(tibber_prices)
+    # avg_prev_month_price = average_price_previous_month(tibber_prices)
 
     # Calculate daily savings
-    daily_savings = calculate_daily_savings(tibber_prices, electricity_usage, avg_prev_month_price)
+    # daily_savings = calculate_daily_savings(tibber_prices, electricity_usage, avg_prev_month_price)
 
     # Calculate monthly savings
-    monthly_savings_summary = calculate_monthly_savings(daily_savings)
+    # monthly_savings_summary = calculate_monthly_savings(daily_savings)
 
     stats = {
-      electricity_stats: last_days_summed,
-      daily_savings: daily_savings,
-      monthly_savings_summary: monthly_savings_summary
+      electricity_stats: last_days_summed
+      # daily_savings: daily_savings,
+      # monthly_savings_summary: monthly_savings_summary
     }
     
     [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(stats) ]]
