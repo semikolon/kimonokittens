@@ -57,6 +57,7 @@ export default {
       view: 'button',
       error: null,
       progress: 0,
+      connectionError: null,
       qrCode: 'screenshots/qr_code.jpg',
       results: null,
       filterText: '',
