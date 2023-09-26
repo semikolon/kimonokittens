@@ -1,4 +1,4 @@
-import { createApp, provide } from 'vue'
+import { createApp } from 'vue'
 import App from './App.vue'
 import './assets/tailwind.css'
 
@@ -30,22 +30,26 @@ socket.onclose = function(event) {
   console.log(`WebSocket connection closed: ${event.code}`);
 };
 
-socket.onmessage = function(event) {
-  const message = event.data;
-  if (message.startsWith('QR_UPDATE')) {
-    const qrCodeUrl = message.split('=')[1];
-    app.config.globalProperties.socket.value.qrCode = qrCodeUrl;
-  } else if (message.startsWith('PROGRESS_UPDATE')) {
-    app.config.globalProperties.socket.value.progress = parseFloat(message.split('=')[1]);
-    app.config.globalProperties.socket.value.view = 'progress';
-  } else if (message.startsWith('FILES_RETRIEVED')) {
-    const data = message.split('=')[1];
-    app.config.globalProperties.socket.value.results = JSON.parse(data);
-    app.config.globalProperties.socket.value.view = 'results';
-  } else if (message.startsWith('ERROR')) {
-    const error = message.split('=')[1];
-    app.config.globalProperties.socket.value.error = error;
-    app.config.globalProperties.socket.value.view = 'error';
+socket.onmessage = (event) => {
+  const [key, value] = event.data.split('=');
+  const { socket } = app.config.globalProperties;
+
+  switch (key) {
+    case 'QR_UPDATE':
+      socket.value.qrCode = value;
+      break;
+    case 'PROGRESS_UPDATE':
+      socket.value.progress = parseFloat(value);
+      socket.value.view = 'progress';
+      break;
+    case 'FILES_RETRIEVED':
+      socket.value.results = JSON.parse(value);
+      socket.value.view = 'results';
+      break;
+    case 'ERROR':
+      socket.value.error = value;
+      socket.value.view = 'error';
+      break;
   }
 };
 
