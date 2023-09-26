@@ -34,3 +34,9 @@ frontend/.env
 
 .env
 .env-fresh
+
+.galaxybrain/
+
+monthly_finances_fredrik.rb
+
+rent.rb
