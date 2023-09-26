@@ -29,6 +29,7 @@ require_relative 'handlers/static_handler'
 require_relative 'handlers/train_departure_handler'
 require_relative 'handlers/strava_workouts_handler'
 require_relative 'handlers/bank_buster_handler'
+require_relative 'handlers/rent_and_finances_handler'
 
 home_page_handler = HomePageHandler.new
 electricity_stats_handler = ElectricityStatsHandler.new
@@ -37,6 +38,7 @@ static_handler = StaticHandler.new
 train_departure_handler = TrainDepartureHandler.new
 strava_workouts_handler = StravaWorkoutsHandler.new
 bank_buster_handler = BankBusterHandler.new
+rent_and_finances_handler = RentAndFinancesHandler.new
 
 Agoo::Server.handle(:GET, "/", home_page_handler)
 
@@ -45,6 +47,7 @@ Agoo::Server.handle(:GET, "/ws", bank_buster_handler)
 
 Agoo::Server.handle(:GET, "/*", static_handler)
 
+Agoo::Server.handle(:GET, "/data/rent_and_finances", rent_and_finances_handler)
 Agoo::Server.handle(:GET, "/data/electricity", electricity_stats_handler)
 Agoo::Server.handle(:GET, "/data/train_departures", train_departure_handler)
 Agoo::Server.handle(:GET, "/data/strava_stats", strava_workouts_handler)
