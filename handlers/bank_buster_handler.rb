@@ -12,8 +12,9 @@ class BankBusterHandler
   def call(env)
     return unless env['rack.upgrade?'] == :websocket
 
-    req = env['rack.hijack']
-    ws = Agoo::Upgraded.new(req, self)
+    io = env['rack.hijack'].call
+    #binding.pry
+    ws = Agoo::Upgraded.new(io, self)
     ws.each do |msg|
       handle_message(ws, msg)
     end
@@ -23,15 +24,11 @@ class BankBusterHandler
     puts "Socket connection opened successfully."
   end
 
-  def on_message(upgraded, msg)
-    handle_message(upgraded, msg)
-  end
-
   def on_close(upgraded)
     puts "Closing socket connection."
   end
 
-  def handle_message(ws, msg)
+  def on_message(upgraded, msg)
     puts "Received message: #{msg}"
     
     if msg == 'START'
