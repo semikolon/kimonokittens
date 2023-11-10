@@ -6,21 +6,25 @@ require 'awesome_print'
 require 'pry'
 require 'pry-nav'
 
+# Configure Agoo logging
 Agoo::Log.configure(dir: '',
-                    console: true,
-                    classic: true,
-                    colorize: true,
-                    states: {
-                      INFO: true,
-                      DEBUG: false,
-                      connect: true,
-                      request: true,
-                      response: true,
-                      eval: true,
-                      push: false,
-                    })
+  console: true,
+  classic: true,
+  colorize: true,
+  states: {
+    INFO: true,
+    DEBUG: false,
+    connect: true,
+    request: true,
+    response: true,
+    eval: true,
+    push: false
+  })
 
-Agoo::Server.init(6464, 'root', thread_count: 0)
+# Initialize the Agoo server with SSL configuration
+Agoo::Server.init(6464, 'root', thread_count: 0, 
+  ssl_cert: "/etc/letsencrypt/live/kimonokittens.com/fullchain.pem", 
+  ssl_key: "***REMOVED***")
 
 require_relative 'handlers/electricity_stats_handler'
 require_relative 'handlers/proxy_handler'
