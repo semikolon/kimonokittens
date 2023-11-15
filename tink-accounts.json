@@ -1,0 +1,125 @@
+{
+  "accounts": [
+    {
+      "id": "5ead77d616894050a8506ca6dc0230dc",
+      "name": "Valv",
+      "type": "SAVINGS",
+      "balances": {
+        "booked": {
+          "amount": {
+            "value": {
+              "unscaledValue": "0",
+              "scale": "0"
+            },
+            "currencyCode": "SEK"
+          }
+        },
+        "available": {
+          "amount": {
+            "value": {
+              "unscaledValue": "0",
+              "scale": "0"
+            },
+            "currencyCode": "SEK"
+          }
+        }
+      },
+      "identifiers": {
+        "iban": {
+          "iban": "SE9480000832796934713816",
+          "bban": "80000832796934713816"
+        },
+        "financialInstitution": {
+          "accountNumber": "8327-9,693 471 381-6",
+          "referenceNumbers": {}
+        }
+      },
+      "dates": {
+        "lastRefreshed": "2023-11-11T10:23:04Z"
+      },
+      "financialInstitutionId": "6c1749b4475e5677a83e9fa4bb60a18a",
+      "customerSegment": "PERSONAL"
+    },
+    {
+      "id": "f53feaa9b3fe45b6822dc9e35b9854fa",
+      "name": "Huset",
+      "type": "CHECKING",
+      "balances": {
+        "booked": {
+          "amount": {
+            "value": {
+              "unscaledValue": "38134",
+              "scale": "2"
+            },
+            "currencyCode": "SEK"
+          }
+        },
+        "available": {
+          "amount": {
+            "value": {
+              "unscaledValue": "38134",
+              "scale": "2"
+            },
+            "currencyCode": "SEK"
+          }
+        }
+      },
+      "identifiers": {
+        "iban": {
+          "iban": "SE5480000842027643780922",
+          "bban": "80000842027643780922"
+        },
+        "financialInstitution": {
+          "accountNumber": "8420-2,764 378 092-2",
+          "referenceNumbers": {}
+        }
+      },
+      "dates": {
+        "lastRefreshed": "2023-11-11T10:23:04Z"
+      },
+      "financialInstitutionId": "6c1749b4475e5677a83e9fa4bb60a18a",
+      "customerSegment": "PERSONAL"
+    },
+    {
+      "id": "6b844b0d44754c4d858c050cbd06189d",
+      "name": "Betala",
+      "type": "CHECKING",
+      "balances": {
+        "booked": {
+          "amount": {
+            "value": {
+              "unscaledValue": "936",
+              "scale": "2"
+            },
+            "currencyCode": "SEK"
+          }
+        },
+        "available": {
+          "amount": {
+            "value": {
+              "unscaledValue": "936",
+              "scale": "2"
+            },
+            "currencyCode": "SEK"
+          }
+        }
+      },
+      "identifiers": {
+        "iban": {
+          "iban": "SE7880000842029948670337",
+          "bban": "80000842029948670337"
+        },
+        "financialInstitution": {
+          "accountNumber": "8420-2,994 867 033-7",
+          "referenceNumbers": {}
+        }
+      },
+      "dates": {
+        "lastRefreshed": "2023-11-11T10:23:04Z"
+      },
+      "financialInstitutionId": "6c1749b4475e5677a83e9fa4bb60a18a",
+      "customerSegment": "PERSONAL"
+    }
+  ],
+  "nextPageToken": ""
+}
