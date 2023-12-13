@@ -131,7 +131,6 @@ class TrainDepartureHandler
     if departures.any?
       first_train_you_can_catch = departures.first
       late = first_train_you_can_catch[:minutes_until_departure] < WALK_TIME
-      binding.pry
       first_train_you_can_catch[:suffix] = if late
         " - spring eller cykla!"
       elsif first_train_you_can_catch[:minutes_until_departure] > (WALK_TIME + MARGIN_TIME + 5) # E.g. 8 + 5 + 5 = 18 mins
