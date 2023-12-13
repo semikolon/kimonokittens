@@ -81,8 +81,7 @@ class Vattenfall < Vessel::Cargo
     #page.screenshot(path:'before_vf_login.jpg')
     #ap css('button')
     #btn = wait_for_element(selector: "//button[text() = 'Customer number and password']")
-    #binding.pry
-    btn = at_xpath("//button[text() = 'Customer number and password']")
+    btn = at_css("button[variant='outline-secondary']")
     #btn = css('button')[2]
     #raise 'Could not find login button' unless btn.text == 'Customer number and password'
     btn.click
@@ -106,8 +105,12 @@ class Vattenfall < Vessel::Cargo
 
     puts "Fetching data for #{start_date} to #{end_date}...".yellow
 
-    page.go_to "https://services.vattenfalleldistribution.se/consumption/consumption/HDG735999100004995459/#{start_date}/#{end_date}/Hourly/Measured"
-    page.network.wait_for_idle(timeout: 120) rescue puts "Timeout error. Might or might not affect data retrieval.".red
+    page.go_to "https://services.vattenfalleldistribution.se/consumption/consumption/HDG735999100004995459/#{start_date}/#{end_date}/Hourly/Measured?skipDts=true"
+    begin
+      page.network.wait_for_idle(timeout: 10)
+    rescue Ferrum::TimeoutError
+      puts "Timeout error. Might or might not affect data retrieval.".red
+    end
 
     # begin
     #   page.go_to "https://services.vattenfalleldistribution.se/consumption/consumption/HDG735999100004995459/#{start_date}/#{end_date}/Hourly/Measured"
@@ -133,8 +136,9 @@ class Vattenfall < Vessel::Cargo
     #     puts "Timeout error: #{e.message}. Aborting after #{r} attempts.".red
     #   end
     # end
-
-    measured = page.at_css('pre').text
+    
+    measured = page.at_css('pre')&.text
+    raise 'No data found' if measured.nil?
     yield Oj.safe_load(measured) # , mode: :strict, bigdecimal_load: :float, allow_gc: false
   ensure
     # This will execute regardless of any exceptions raised
