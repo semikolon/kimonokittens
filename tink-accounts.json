@@ -1,7 +1,8 @@
+
 {
   "accounts": [
     {
-      "id": "5ead77d616894050a8506ca6dc0230dc",
+      "id": "72088236db8345ce84d20c6102eca344",
       "name": "Valv",
       "type": "SAVINGS",
       "balances": {
@@ -35,20 +36,20 @@
         }
       },
       "dates": {
-        "lastRefreshed": "2023-11-11T10:23:04Z"
+        "lastRefreshed": "2023-11-29T23:38:23Z"
       },
       "financialInstitutionId": "6c1749b4475e5677a83e9fa4bb60a18a",
       "customerSegment": "PERSONAL"
     },
     {
-      "id": "f53feaa9b3fe45b6822dc9e35b9854fa",
+      "id": "9b34ffa854b74fa1a9a789389439a7ea",
       "name": "Huset",
       "type": "CHECKING",
       "balances": {
         "booked": {
           "amount": {
             "value": {
-              "unscaledValue": "38134",
+              "unscaledValue": "116359",
               "scale": "2"
             },
             "currencyCode": "SEK"
@@ -57,7 +58,7 @@
         "available": {
           "amount": {
             "value": {
-              "unscaledValue": "38134",
+              "unscaledValue": "116359",
               "scale": "2"
             },
             "currencyCode": "SEK"
@@ -75,20 +76,20 @@
         }
       },
       "dates": {
-        "lastRefreshed": "2023-11-11T10:23:04Z"
+        "lastRefreshed": "2023-11-29T23:38:23Z"
       },
       "financialInstitutionId": "6c1749b4475e5677a83e9fa4bb60a18a",
       "customerSegment": "PERSONAL"
     },
     {
-      "id": "6b844b0d44754c4d858c050cbd06189d",
+      "id": "c128ad19b6b54b09b00927e0c2cb2cd6",
       "name": "Betala",
       "type": "CHECKING",
       "balances": {
         "booked": {
           "amount": {
             "value": {
-              "unscaledValue": "936",
+              "unscaledValue": "199483",
               "scale": "2"
             },
             "currencyCode": "SEK"
@@ -97,7 +98,7 @@
         "available": {
           "amount": {
             "value": {
-              "unscaledValue": "936",
+              "unscaledValue": "199483",
               "scale": "2"
             },
             "currencyCode": "SEK"
@@ -115,7 +116,7 @@
         }
       },
       "dates": {
-        "lastRefreshed": "2023-11-11T10:23:04Z"
+        "lastRefreshed": "2023-11-29T23:38:23Z"
       },
       "financialInstitutionId": "6c1749b4475e5677a83e9fa4bb60a18a",
       "customerSegment": "PERSONAL"
