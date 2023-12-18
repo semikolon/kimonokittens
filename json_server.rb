@@ -22,9 +22,10 @@ Agoo::Log.configure(dir: '',
   })
 
 # Initialize the Agoo server with SSL configuration
-Agoo::Server.init(6464, 'root', thread_count: 0, 
-  ssl_cert: "/etc/letsencrypt/live/kimonokittens.com/fullchain.pem", 
-  ssl_key: "/etc/letsencrypt/live/kimonokittens.com/privkey.pem")
+Agoo::Server.init(6464, 'root', thread_count: 0)
+# , 
+#   ssl_cert: "/etc/letsencrypt/live/kimonokittens.com/fullchain.pem", 
+#   ssl_key: "/etc/letsencrypt/live/kimonokittens.com/privkey.pem")
 
 require_relative 'handlers/electricity_stats_handler'
 require_relative 'handlers/proxy_handler'
