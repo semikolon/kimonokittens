@@ -1,0 +1,609 @@
+Total amount: 3949187.0 SEK
+[
+    [  0] {
+         :debtor_name => "ANTON KÅRÉN",
+        :payment_date => "2023-02-10",
+        :total_amount => "9299.00",
+           :reference => "2021087"
+    },
+    [  1] {
+         :debtor_name => "FORA AB",
+        :payment_date => "2023-02-14",
+        :total_amount => "2509.00",
+           :reference => "1164942706"
+    },
+    [  2] {
+         :debtor_name => "Härnösands Kommun",
+        :payment_date => "2023-02-20",
+        :total_amount => "467153.00",
+           :reference => nil
+    },
+    [  3] {
+         :debtor_name => "Jenny Mariette Christina Boström",
+        :payment_date => "2023-02-24",
+        :total_amount => "1151.00",
+           :reference => nil
+    },
+    [  4] {
+         :debtor_name => "SEBASTIAN BOELIUS",
+        :payment_date => "2023-02-24",
+        :total_amount => "4426.00",
+           :reference => "202111795"
+    },
+    [  5] {
+         :debtor_name => "TOMAS PÅLSSON",
+        :payment_date => "2023-02-27",
+        :total_amount => "9430.00",
+           :reference => "2021110"
+    },
+    [  6] {
+         :debtor_name => "Persson, Emil",
+        :payment_date => "2023-02-28",
+        :total_amount => "4914.00",
+           :reference => "202110193"
+    },
+    [  7] {
+         :debtor_name => "MIKAEL MALM",
+        :payment_date => "2023-03-01",
+        :total_amount => "7619.00",
+           :reference => "136"
+    },
+    [  8] {
+         :debtor_name => "MARIE MONTONEN",
+        :payment_date => "2023-03-08",
+        :total_amount => "2797.00",
+           :reference => "202112090"
+    },
+    [  9] {
+         :debtor_name => "ANTON KÅRÉN",
+        :payment_date => "2023-03-09",
+        :total_amount => "8461.00",
+           :reference => "2021114"
+    },
+    [ 10] {
+         :debtor_name => "Ida Näslund",
+        :payment_date => "2023-03-10",
+        :total_amount => "1645.00",
+           :reference => "2021121"
+    },
+    [ 11] {
+         :debtor_name => "Härnösands Kommun",
+        :payment_date => "2023-03-20",
+        :total_amount => "467153.00",
+           :reference => nil
+    },
+    [ 12] {
+         :debtor_name => "GRADIN MATS",
+        :payment_date => "2023-03-24",
+        :total_amount => "2302.00",
+           :reference => "2021133"
+    },
+    [ 13] {
+         :debtor_name => "SEBASTIAN BOELIUS",
+        :payment_date => "2023-03-24",
+        :total_amount => "3275.00",
+           :reference => "202114294"
+    },
+    [ 14] {
+         :debtor_name => "SARA BLOMQVIST SPÅNBERG",
+        :payment_date => "2023-03-27",
+        :total_amount => "8752.00",
+           :reference => "2021141"
+    },
+    [ 15] {
+         :debtor_name => "TOMAS PÅLSSON",
+        :payment_date => "2023-03-27",
+        :total_amount => "1645.00",
+           :reference => "2021136"
+    },
+    [ 16] {
+         :debtor_name => "Malm, Therese",
+        :payment_date => "2023-03-30",
+        :total_amount => "649.00",
+           :reference => "2021137"
+    },
+    [ 17] {
+         :debtor_name => "Hedenberg, Ulrika",
+        :payment_date => "2023-03-31",
+        :total_amount => "2302.00",
+           :reference => "202112892"
+    },
+    [ 18] {
+         :debtor_name => "ANA DAFINA CIOCAN-SCHEU",
+        :payment_date => "2023-04-03",
+        :total_amount => "4058.00",
+           :reference => "OCR 2021144"
+    },
+    [ 19] {
+         :debtor_name => "MARIE MONTONEN",
+        :payment_date => "2023-04-04",
+        :total_amount => "12254.00",
+           :reference => "202114591"
+    },
+    [ 20] {
+         :debtor_name => "TERESIA TJERNBERG HARBUTOVA",
+        :payment_date => "2023-04-04",
+        :total_amount => "672.00",
+           :reference => "2021105"
+    },
+    [ 21] {
+         :debtor_name => "Härnösands Kommun",
+        :payment_date => "2023-04-20",
+        :total_amount => "488652.00",
+           :reference => nil
+    },
+    [ 22] {
+         :debtor_name => "GRADIN MATS",
+        :payment_date => "2023-04-25",
+        :total_amount => "1151.00",
+           :reference => "2021158"
+    },
+    [ 23] {
+         :debtor_name => "SEBASTIAN BOELIUS",
+        :payment_date => "2023-04-25",
+        :total_amount => "5194.00",
+           :reference => "202116794"
+    },
+    [ 24] {
+         :debtor_name => "TOMAS PÅLSSON",
+        :payment_date => "2023-04-26",
+        :total_amount => "7622.00",
+           :reference => "2021161"
+    },
+    [ 25] {
+         :debtor_name => "Persson, Emil",
+        :payment_date => "2023-04-27",
+        :total_amount => "4795.00",
+           :reference => "202115291"
+    },
+    [ 26] {
+         :debtor_name => "FAHLÉN HELENA",
+        :payment_date => "2023-04-28",
+        :total_amount => "1151.00",
+           :reference => "2021147"
+    },
+    [ 27] {
+         :debtor_name => "MARIE MONTONEN",
+        :payment_date => "2023-05-02",
+        :total_amount => "6855.00",
+           :reference => "202117099"
+    },
+    [ 28] {
+         :debtor_name => "Jenny Mariette Christina Boström",
+        :payment_date => "2023-05-02",
+        :total_amount => "1151.00",
+           :reference => nil
+    },
+    [ 29] {
+         :debtor_name => "IBRAHIM ISMAIL ISMAIL",
+        :payment_date => "2023-05-03",
+        :total_amount => "336.00",
+           :reference => "202115697"
+    },
+    [ 30] {
+         :debtor_name => "ANTON KÅRÉN",
+        :payment_date => "2023-05-08",
+        :total_amount => "9457.00",
+           :reference => "2021164"
+    },
+    [ 31] {
+         :debtor_name => "Hedenberg, Ulrika",
+        :payment_date => "2023-05-10",
+        :total_amount => "1151.00",
+           :reference => "202115390"
+    },
+    [ 32] {
+         :debtor_name => "Härnösands Kommun",
+        :payment_date => "2023-05-19",
+        :total_amount => "457908.00",
+           :reference => nil
+    },
+    [ 33] {
+         :debtor_name => "BESWICK HANNAH",
+        :payment_date => "2023-05-25",
+        :total_amount => "1919.00",
+           :reference => "2021168"
+    },
+    [ 34] {
+         :debtor_name => "LEE COLLINS",
+        :payment_date => "2023-05-30",
+        :total_amount => "3124.00",
+           :reference => "202119699"
+    },
+    [ 35] {
+         :debtor_name => "PIA BOELIUS",
+        :payment_date => "2023-05-30",
+        :total_amount => "3857.00",
+           :reference => "202119392"
+    },
+    [ 36] {
+         :debtor_name => "MARIE MONTONEN",
+        :payment_date => "2023-05-31",
+        :total_amount => "2098.00",
+           :reference => "202119798"
+    },
+    [ 37] {
+         :debtor_name => "ANA DAFINA CIOCAN-SCHEU",
+        :payment_date => "2023-06-01",
+        :total_amount => "8773.00",
+           :reference => "OCR nummer 2021195"
+    },
+    [ 38] {
+         :debtor_name => "Malm, Therese",
+        :payment_date => "2023-06-05",
+        :total_amount => "649.00",
+           :reference => "2021188"
+    },
+    [ 39] {
+         :debtor_name => "TOMAS PÅLSSON",
+        :payment_date => "2023-06-05",
+        :total_amount => "1645.00",
+           :reference => "2021187"
+    },
+    [ 40] {
+         :debtor_name => "FAHLÉN HELENA",
+        :payment_date => "2023-06-07",
+        :total_amount => "1151.00",
+           :reference => "2021173"
+    },
+    [ 41] {
+         :debtor_name => "ANTON KÅRÉN",
+        :payment_date => "2023-06-13",
+        :total_amount => "11376.00",
+           :reference => "2021190"
+    },
+    [ 42] {
+         :debtor_name => "Härnösands Kommun",
+        :payment_date => "2023-06-20",
+        :total_amount => "445654.00",
+           :reference => nil
+    },
+    [ 43] {
+         :debtor_name => "Ida Näslund",
+        :payment_date => "2023-06-21",
+        :total_amount => "1645.00",
+           :reference => "2021198"
+    },
+    [ 44] {
+         :debtor_name => "BESWICK HANNAH",
+        :payment_date => "2023-06-22",
+        :total_amount => "1919.00",
+           :reference => "2021194"
+    },
+    [ 45] {
+         :debtor_name => "SEBASTIAN BOELIUS",
+        :payment_date => "2023-06-22",
+        :total_amount => "1596.00",
+           :reference => "202121992"
+    },
+    [ 46] {
+         :debtor_name => "SARA BLOMQVIST SPÅNBERG",
+        :payment_date => "2023-06-26",
+        :total_amount => "11241.00",
+           :reference => "2021218"
+    },
+    [ 47] {
+         :debtor_name => "Ponten, Ida",
+        :payment_date => "2023-06-26",
+        :total_amount => "1645.00",
+           :reference => "2021201"
+    },
+    [ 48] {
+         :debtor_name => "SARA BLOMQVIST SPÅNBERG",
+        :payment_date => "2023-06-27",
+        :total_amount => "4661.00",
+           :reference => "2021192"
+    },
+    [ 49] {
+         :debtor_name => "LARSSON SARA",
+        :payment_date => "2023-06-27",
+        :total_amount => "1223.00",
+           :reference => "2021215"
+    },
+    [ 50] {
+         :debtor_name => "LEE COLLINS",
+        :payment_date => "2023-06-28",
+        :total_amount => "2467.00",
+           :reference => "Ava Li Fedorow"
+    },
+    [ 51] {
+         :debtor_name => "MARIE MONTONEN",
+        :payment_date => "2023-06-29",
+        :total_amount => "3148.00",
+           :reference => "202122495"
+    },
+    [ 52] {
+         :debtor_name => "FAHLÉN HELENA",
+        :payment_date => "2023-06-30",
+        :total_amount => "1645.00",
+           :reference => "2021200"
+    },
+    [ 53] {
+         :debtor_name => "ISABELLA MALM",
+        :payment_date => "2023-07-03",
+        :total_amount => "4387.00",
+           :reference => "2021211"
+    },
+    [ 54] {
+         :debtor_name => "ANTON KÅRÉN",
+        :payment_date => "2023-07-06",
+        :total_amount => "9889.00",
+           :reference => "2021216"
+    },
+    [ 55] {
+         :debtor_name => "TELIA SVERIGE AB",
+        :payment_date => "2023-07-13",
+        :total_amount => "2079.00",
+           :reference => nil
+    },
+    [ 56] {
+         :debtor_name => "NILSSON MICHAEL",
+        :payment_date => "2023-07-18",
+        :total_amount => "822.00",
+           :reference => "202122693"
+    },
+    [ 57] {
+         :debtor_name => "Härnösands Kommun",
+        :payment_date => "2023-07-20",
+        :total_amount => "346624.00",
+           :reference => nil
+    },
+    [ 58] {
+         :debtor_name => "BESWICK HANNAH",
+        :payment_date => "2023-07-25",
+        :total_amount => "1919.00",
+           :reference => "2021228"
+    },
+    [ 59] {
+         :debtor_name => "LEE COLLINS",
+        :payment_date => "2023-07-26",
+        :total_amount => "5537.00",
+           :reference => "Ava Li Fedorow"
+    },
+    [ 60] {
+         :debtor_name => "SARA BLOMQVIST SPÅNBERG",
+        :payment_date => "2023-07-27",
+        :total_amount => "6065.00",
+           :reference => "2021245"
+    },
+    [ 61] {
+         :debtor_name => "PIA BOELIUS",
+        :payment_date => "2023-07-27",
+        :total_amount => "1356.00",
+           :reference => "202124699"
+    },
+    [ 62] {
+         :debtor_name => "ANA DAFINA CIOCAN-SCHEU",
+        :payment_date => "2023-07-31",
+        :total_amount => "2294.00",
+           :reference => "OCR nummer 2021247"
+    },
+    [ 63] {
+         :debtor_name => "Ponten, Ida",
+        :payment_date => "2023-07-31",
+        :total_amount => "1151.00",
+           :reference => "2021231"
+    },
+    [ 64] {
+         :debtor_name => "ISABELLA MALM",
+        :payment_date => "2023-08-04",
+        :total_amount => "2413.00",
+           :reference => "2021238"
+    },
+    [ 65] {
+         :debtor_name => "Jenny Mariette Christina Boström",
+        :payment_date => "2023-08-07",
+        :total_amount => "1151.00",
+           :reference => nil
+    },
+    [ 66] {
+         :debtor_name => "TOMAS PÅLSSON",
+        :payment_date => "2023-08-09",
+        :total_amount => "9457.00",
+           :reference => "2021240"
+    },
+    [ 67] {
+         :debtor_name => "CAROLIN ARVÉN",
+        :payment_date => "2023-09-26",
+        :total_amount => "5866.00",
+           :reference => "2021290"
+    },
+    [ 68] {
+         :debtor_name => "PIA BOELIUS",
+        :payment_date => "2023-09-26",
+        :total_amount => "1356.00",
+           :reference => "202128690"
+    },
+    [ 69] {
+         :debtor_name => "SARA BLOMQVIST SPÅNBERG",
+        :payment_date => "2023-09-27",
+        :total_amount => "2302.00",
+           :reference => "2021285"
+    },
+    [ 70] {
+         :debtor_name => "Persson, Emil",
+        :payment_date => "2023-09-28",
+        :total_amount => "1645.00",
+           :reference => "202127593"
+    },
+    [ 71] {
+         :debtor_name => "Malm, Therese",
+        :payment_date => "2023-09-29",
+        :total_amount => "649.00",
+           :reference => "2021281"
+    },
+    [ 72] {
+         :debtor_name => "ANA DAFINA CIOCAN-SCHEU",
+        :payment_date => "2023-10-02",
+        :total_amount => "1645.00",
+           :reference => "OCR nummer 2021288"
+    },
+    [ 73] {
+         :debtor_name => "TOMAS PÅLSSON",
+        :payment_date => "2023-10-03",
+        :total_amount => "1645.00",
+           :reference => "2021280"
+    },
+    [ 74] {
+         :debtor_name => "LEE COLLINS",
+        :payment_date => "2023-10-05",
+        :total_amount => "822.00",
+           :reference => "2009264041"
+    },
+    [ 75] {
+         :debtor_name => "ANTON KÅRÉN",
+        :payment_date => "2023-10-06",
+        :total_amount => "5510.00",
+           :reference => "2021283"
+    },
+    [ 76] {
+         :debtor_name => "Kristine Ulander",
+        :payment_date => "2023-10-11",
+        :total_amount => "1151.00",
+           :reference => "2021273"
+    },
+    [ 77] {
+         :debtor_name => "NACKA KOMMUN",
+        :payment_date => "2023-10-19",
+        :total_amount => "13277.00",
+           :reference => "145284"
+    },
+    [ 78] {
+         :debtor_name => "Härnösands Kommun",
+        :payment_date => "2023-10-20",
+        :total_amount => "301833.00",
+           :reference => nil
+    },
+    [ 79] {
+         :debtor_name => "BESWICK HANNAH",
+        :payment_date => "2023-10-24",
+        :total_amount => "1151.00",
+           :reference => "2021308"
+    },
+    [ 80] {
+         :debtor_name => "GRADIN MATS",
+        :payment_date => "2023-10-25",
+        :total_amount => "1151.00",
+           :reference => "2021300"
+    },
+    [ 81] {
+         :debtor_name => "TOMAS PÅLSSON",
+        :payment_date => "2023-10-25",
+        :total_amount => "2412.00",
+           :reference => "2021302"
+    },
+    [ 82] {
+         :debtor_name => "CAROLIN ARVÉN",
+        :payment_date => "2023-10-26",
+        :total_amount => "1461.00",
+           :reference => "2021310"
+    },
+    [ 83] {
+         :debtor_name => "Söderström, Tina",
+        :payment_date => "2023-10-27",
+        :total_amount => "2610.00",
+           :reference => "202130597"
+    },
+    [ 84] {
+         :debtor_name => "ANA DAFINA CIOCAN-SCHEU",
+        :payment_date => "2023-10-30",
+        :total_amount => "4376.00",
+           :reference => "OCR nummer 2021309"
+    },
+    [ 85] {
+         :debtor_name => "ISABELLA MALM",
+        :payment_date => "2023-10-31",
+        :total_amount => "1919.00",
+           :reference => "2021301"
+    },
+    [ 86] {
+         :debtor_name => "FAHLÉN HELENA",
+        :payment_date => "2023-11-01",
+        :total_amount => "1151.00",
+           :reference => "2021293"
+    },
+    [ 87] {
+         :debtor_name => "ANTON KÅRÉN",
+        :payment_date => "2023-11-03",
+        :total_amount => "4248.00",
+           :reference => "2021304"
+    },
+    [ 88] {
+         :debtor_name => "Härnösands Kommun",
+        :payment_date => "2023-11-20",
+        :total_amount => "326341.00",
+           :reference => nil
+    },
+    [ 89] {
+         :debtor_name => "ISABELLA MALM",
+        :payment_date => "2023-11-27",
+        :total_amount => "7001.00",
+           :reference => "2021320"
+    },
+    [ 90] {
+         :debtor_name => "RIKNER OLIVIA",
+        :payment_date => "2023-11-27",
+        :total_amount => "150.00",
+           :reference => "5569329880"
+    },
+    [ 91] {
+         :debtor_name => "SARA BLOMQVIST SPÅNBERG",
+        :payment_date => "2023-11-28",
+        :total_amount => "2302.00",
+           :reference => "2021325"
+    },
+    [ 92] {
+         :debtor_name => "Fora AB",
+        :payment_date => "2023-11-29",
+        :total_amount => "1371.00",
+           :reference => "7000131909"
+    },
+    [ 93] {
+         :debtor_name => "FAHLÉN HELENA",
+        :payment_date => "2023-12-01",
+        :total_amount => "1151.00",
+           :reference => "2021312"
+    },
+    [ 94] {
+         :debtor_name => "ANTON KÅRÉN",
+        :payment_date => "2023-12-04",
+        :total_amount => "2413.00",
+           :reference => "2021323"
+    },
+    [ 95] {
+         :debtor_name => "ANA DAFINA CIOCAN-SCHEU",
+        :payment_date => "2023-12-05",
+        :total_amount => "2294.00",
+           :reference => "OCR nummer 2021328"
+    },
+    [ 96] {
+         :debtor_name => "Kristine Ulander",
+        :payment_date => "2023-12-11",
+        :total_amount => "2302.00",
+           :reference => "2021314"
+    },
+    [ 97] {
+         :debtor_name => "Widinghoff, Johanna",
+        :payment_date => "2023-12-11",
+        :total_amount => "575.00",
+           :reference => "2021317"
+    },
+    [ 98] {
+         :debtor_name => "TOMAS PÅLSSON",
+        :payment_date => "2023-12-15",
+        :total_amount => "1151.00",
+           :reference => "2021321"
+    },
+    [ 99] {
+         :debtor_name => "Härnösands Kommun",
+        :payment_date => "2023-12-20",
+        :total_amount => "326341.00",
+           :reference => nil
+    },
+    [100] {
+         :debtor_name => "SARA BLOMQVIST SPÅNBERG",
+        :payment_date => "2023-12-22",
+        :total_amount => "3146.00",
+           :reference => "2021342"
+    }
+]
