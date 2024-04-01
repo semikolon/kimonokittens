@@ -100,8 +100,13 @@ class Vattenfall < Vessel::Cargo
       "accept" => 'application/json, text/plain, */*',
       "ocp-apim-subscription-key" => '***REMOVED***'
     })
-    start_date = Date.new(Date.today.year, Date.today.month-1, [28, Date.today.day].min).strftime("%Y-%m-%d")
-    end_date = Date.new(Date.today.year, Date.today.month, -1).strftime("%Y-%m-%d") # last day of month
+    today = Date.today
+    if today.month == 1
+      start_date = Date.new(today.year, 1, 1).strftime("%Y-%m-%d") # Jan 1st of the current year
+    else
+      start_date = Date.new(today.year - 1, today.month - 1, [28, today.day].min).strftime("%Y-%m-%d")
+    end
+    end_date = Date.new(today.year, today.month, -1).strftime("%Y-%m-%d") # last day of month
 
     puts "Fetching data for #{start_date} to #{end_date}...".yellow
 
