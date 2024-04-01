@@ -39,21 +39,24 @@ module BankPaymentsReader
         payment[:debtor_name] = entry.locate('NtryDtls/TxDtls/RltdPties/Dbtr/Nm').first.text
         payment[:payment_date] = entry.locate('BookgDt/Dt').first.text
         payment[:total_amount] = entry.locate('Amt').first.text
+        payment[:reference] = entry.locate('NtryDtls/TxDtls/RmtInf/Strd/RfrdDocInf/Nb').first&.text
         payments << payment
       end
     end
 
     # Konvertera betalningsarrayen till en JSON-sträng med Oj
     # json = Oj.dump(payments)
-    ap payments
+    # ap payments
+
     # Räkna ihop summan av alla betalningar
-    total_amount = payments.map { |payment| payment[:total_amount].to_f }.sum
-    puts "Total amount: #{total_amount} SEK"
+    # total_amount = payments.map { |payment| payment[:total_amount].to_f }.sum
+    # puts "Total amount: #{total_amount} SEK"
     payments
   end
 end
 
 # If run from the terminal, just parse the files
 if __FILE__ == $0
-  BankPaymentsReader.parse_files
+  payments = BankPaymentsReader.parse_files
+  # ap payments
 end
