@@ -1,0 +1,450 @@
+[
+    {
+        "debtor_name": "ISABELLA MALM",
+        "reference": "2021258",
+        "total_amount": "2413.00",
+        "message": "",
+        "payment_date": "2023-08-31"
+    },
+    {
+        "debtor_name": "GRADIN MATS",
+        "reference": "2021080",
+        "total_amount": "1151.00",
+        "message": "",
+        "payment_date": "2023-02-01"
+    },
+    {
+        "debtor_name": "ISABELLA MALM",
+        "reference": "2021081",
+        "total_amount": "2413.00",
+        "message": "",
+        "payment_date": "2023-02-01"
+    },
+    {
+        "debtor_name": "ERIKSSON SOFIE",
+        "reference": "OCR 202105292 ADRIAN OCH",
+        "total_amount": "2306.00",
+        "message": "ASTRID MALM",
+        "payment_date": "2023-01-04"
+    },
+    {
+        "debtor_name": "BESWICK HANNAH",
+        "reference": "2021066",
+        "total_amount": "1835.00",
+        "message": "",
+        "payment_date": "2023-01-25"
+    },
+    {
+        "debtor_name": "LEE COLLINS",
+        "reference": "2009264041.0",
+        "total_amount": "822.00",
+        "message": "",
+        "payment_date": "2023-08-30"
+    },
+    {
+        "debtor_name": "Jenny Mariette Christina Boström",
+        "reference": "",
+        "total_amount": "1151.00",
+        "message": "2021253.0",
+        "payment_date": "2023-08-30"
+    },
+    {
+        "debtor_name": "ISABELLA MALM",
+        "reference": "2021056",
+        "total_amount": "2306.00",
+        "message": "",
+        "payment_date": "2023-01-02"
+    },
+    {
+        "debtor_name": "LARSSON SARA",
+        "reference": "2021282",
+        "total_amount": "856.00",
+        "message": "",
+        "payment_date": "2023-09-25"
+    },
+    {
+        "debtor_name": "GRADIN MATS",
+        "reference": "2021278",
+        "total_amount": "1151.00",
+        "message": "",
+        "payment_date": "2023-09-25"
+    },
+    {
+        "debtor_name": "BESWICK HANNAH",
+        "reference": "2021266",
+        "total_amount": "1151.00",
+        "message": "",
+        "payment_date": "2023-09-25"
+    },
+    {
+        "debtor_name": "Ponten, Ida",
+        "reference": "2021045",
+        "total_amount": "1101.00",
+        "message": "2021045",
+        "payment_date": "2022-12-30"
+    },
+    {
+        "debtor_name": "GRADIN MATS",
+        "reference": "2021055",
+        "total_amount": "1101.00",
+        "message": "",
+        "payment_date": "2022-12-27"
+    },
+    {
+        "debtor_name": "Söderström, Tina",
+        "reference": "202106399",
+        "total_amount": "2306.00",
+        "message": "202106399.0",
+        "payment_date": "2022-12-27"
+    },
+    {
+        "debtor_name": "Jonsson, Maria",
+        "reference": "2021054",
+        "total_amount": "2306.00",
+        "message": "2021054.0",
+        "payment_date": "2022-12-27"
+    },
+    {
+        "debtor_name": "Kristine Ulander",
+        "reference": "2021046",
+        "total_amount": "1101.00",
+        "message": "",
+        "payment_date": "2023-01-03"
+    },
+    {
+        "debtor_name": "John Edberg",
+        "reference": "2021047",
+        "total_amount": "1101.00",
+        "message": "",
+        "payment_date": "2023-01-03"
+    },
+    {
+        "debtor_name": "Widinghoff, Johanna",
+        "reference": "2021051",
+        "total_amount": "1101.00",
+        "message": "2021051.0",
+        "payment_date": "2023-01-03"
+    },
+    {
+        "debtor_name": "ANTON KÅRÉN",
+        "reference": "2021062",
+        "total_amount": "1946.00",
+        "message": "",
+        "payment_date": "2023-01-03"
+    },
+    {
+        "debtor_name": "Elina Eliasson",
+        "reference": "2021057",
+        "total_amount": "2306.00",
+        "message": "",
+        "payment_date": "2023-01-03"
+    },
+    {
+        "debtor_name": "Kristine Ulander",
+        "reference": "2021252",
+        "total_amount": "1151.00",
+        "message": "",
+        "payment_date": "2023-09-07"
+    },
+    {
+        "debtor_name": "Widinghoff, Johanna",
+        "reference": "2021255",
+        "total_amount": "1151.00",
+        "message": "2021255.0",
+        "payment_date": "2023-09-07"
+    },
+    {
+        "debtor_name": "Ponten, Ida",
+        "reference": "2021251",
+        "total_amount": "1151.00",
+        "message": "2021251.0",
+        "payment_date": "2023-09-07"
+    },
+    {
+        "debtor_name": "ANTON KÅRÉN",
+        "reference": "2021262",
+        "total_amount": "1946.00",
+        "message": "",
+        "payment_date": "2023-09-07"
+    },
+    {
+        "debtor_name": "Malm, Therese",
+        "reference": "2021059",
+        "total_amount": "649.00",
+        "message": "2021059.0",
+        "payment_date": "2022-12-28"
+    },
+    {
+        "debtor_name": "ANA DAFINA CIOCAN-SCHEU",
+        "reference": "OCR 2021067",
+        "total_amount": "1572.00",
+        "message": "",
+        "payment_date": "2022-12-28"
+    },
+    {
+        "debtor_name": "SARA BLOMQVIST SPÅNBERG",
+        "reference": "2021064",
+        "total_amount": "1835.00",
+        "message": "",
+        "payment_date": "2022-12-28"
+    },
+    {
+        "debtor_name": "Härnösands Kommun",
+        "reference": "",
+        "total_amount": "467153.00",
+        "message": "Ersättningar externa anor FSK",
+        "payment_date": "2023-01-20"
+    },
+    {
+        "debtor_name": "Härnösands Kommun",
+        "reference": "",
+        "total_amount": "311078.00",
+        "message": "Ersättningar externa anor FSK",
+        "payment_date": "2023-08-18"
+    },
+    {
+        "debtor_name": "FAHLÉN HELENA",
+        "reference": "2021044",
+        "total_amount": "1101.00",
+        "message": "",
+        "payment_date": "2022-12-29"
+    },
+    {
+        "debtor_name": "Persson, Emil",
+        "reference": "202104998",
+        "total_amount": "1572.00",
+        "message": "202104998.0",
+        "payment_date": "2022-12-29"
+    },
+    {
+        "debtor_name": "CAROLIN ARVÉN",
+        "reference": "202127098",
+        "total_amount": "1151.00",
+        "message": "",
+        "payment_date": "2023-08-25"
+    },
+    {
+        "debtor_name": "GRADIN MATS",
+        "reference": "2021257",
+        "total_amount": "1151.00",
+        "message": "",
+        "payment_date": "2023-08-25"
+    },
+    {
+        "debtor_name": "BESWICK HANNAH",
+        "reference": "2021230",
+        "total_amount": "1151.00",
+        "message": "",
+        "payment_date": "2023-08-25"
+    },
+    {
+        "debtor_name": "SEBASTIAN BOELIUS",
+        "reference": "202126595",
+        "total_amount": "1356.00",
+        "message": "",
+        "payment_date": "2023-08-25"
+    },
+    {
+        "debtor_name": "Hedenberg, Ulrika",
+        "reference": "202102398",
+        "total_amount": "1101.00",
+        "message": "202102398",
+        "payment_date": "2023-01-26"
+    },
+    {
+        "debtor_name": "Hedenberg, Ulrika",
+        "reference": "202105094",
+        "total_amount": "1101.00",
+        "message": "202105094",
+        "payment_date": "2023-01-26"
+    },
+    {
+        "debtor_name": "Malm, Therese",
+        "reference": "2021084",
+        "total_amount": "649.00",
+        "message": "2021084",
+        "payment_date": "2023-01-30"
+    },
+    {
+        "debtor_name": "LEE COLLINS",
+        "reference": "ava",
+        "total_amount": "822.00",
+        "message": "",
+        "payment_date": "2023-01-30"
+    },
+    {
+        "debtor_name": "Ponten, Ida",
+        "reference": "2021070",
+        "total_amount": "1151.00",
+        "message": "2021070",
+        "payment_date": "2023-01-30"
+    },
+    {
+        "debtor_name": "TOMAS PÅLSSON",
+        "reference": "2021083",
+        "total_amount": "1645.00",
+        "message": "",
+        "payment_date": "2023-01-30"
+    },
+    {
+        "debtor_name": "ANA DAFINA CIOCAN-SCHEU",
+        "reference": "OCR nummer 2021092",
+        "total_amount": "1645.00",
+        "message": "",
+        "payment_date": "2023-01-30"
+    },
+    {
+        "debtor_name": "Persson, Emil",
+        "reference": "202107496",
+        "total_amount": "1645.00",
+        "message": "202107496",
+        "payment_date": "2023-01-30"
+    },
+    {
+        "debtor_name": "Ida Näslund",
+        "reference": "OCR 202109591",
+        "total_amount": "1645.00",
+        "message": "",
+        "payment_date": "2023-01-30"
+    },
+    {
+        "debtor_name": "SARA BLOMQVIST SPÅNBERG",
+        "reference": "2021089",
+        "total_amount": "1919.00",
+        "message": "",
+        "payment_date": "2023-01-30"
+    },
+    {
+        "debtor_name": "ERIKSSON SOFIE",
+        "reference": "OCR 202107793 ADRIAN OCH",
+        "total_amount": "2410.00",
+        "message": "ASTRID MALM",
+        "payment_date": "2023-01-30"
+    },
+    {
+        "debtor_name": "Jonsson, Maria",
+        "reference": "2021079",
+        "total_amount": "2413.00",
+        "message": "2021079",
+        "payment_date": "2023-01-30"
+    },
+    {
+        "debtor_name": "NACKA KOMMUN",
+        "reference": "145044",
+        "total_amount": "19701.00",
+        "message": "",
+        "payment_date": "2023-09-21"
+    },
+    {
+        "debtor_name": "Malm, Therese",
+        "reference": "2021260",
+        "total_amount": "649.00",
+        "message": "2021260.0",
+        "payment_date": "2023-09-01"
+    },
+    {
+        "debtor_name": "FAHLÉN HELENA",
+        "reference": "2021250",
+        "total_amount": "1151.00",
+        "message": "",
+        "payment_date": "2023-09-01"
+    },
+    {
+        "debtor_name": "ANA DAFINA CIOCAN-SCHEU",
+        "reference": "OCR nummer 202126793",
+        "total_amount": "1645.00",
+        "message": "",
+        "payment_date": "2023-09-01"
+    },
+    {
+        "debtor_name": "Jenny Mariette Christina Boström",
+        "reference": "",
+        "total_amount": "1151.00",
+        "message": "2021073",
+        "payment_date": "2023-02-03"
+    },
+    {
+        "debtor_name": "MARIE MONTONEN",
+        "reference": "202109492",
+        "total_amount": "2797.00",
+        "message": "",
+        "payment_date": "2023-02-02"
+    },
+    {
+        "debtor_name": "LARSSON SARA",
+        "reference": "2021261",
+        "total_amount": "856.00",
+        "message": "",
+        "payment_date": "2023-08-28"
+    },
+    {
+        "debtor_name": "SARA BLOMQVIST SPÅNBERG",
+        "reference": "2021264",
+        "total_amount": "1151.00",
+        "message": "",
+        "payment_date": "2023-08-28"
+    },
+    {
+        "debtor_name": "TOMAS PÅLSSON",
+        "reference": "2021259",
+        "total_amount": "1645.00",
+        "message": "",
+        "payment_date": "2023-08-28"
+    },
+    {
+        "debtor_name": "Persson, Emil",
+        "reference": "202125498",
+        "total_amount": "1645.00",
+        "message": "202125498.0",
+        "payment_date": "2023-08-28"
+    },
+    {
+        "debtor_name": "Jonsson, Maria",
+        "reference": "2021256",
+        "total_amount": "2413.00",
+        "message": "2021256.0",
+        "payment_date": "2023-08-28"
+    },
+    {
+        "debtor_name": "Söderström, Tina",
+        "reference": "202126397",
+        "total_amount": "2413.00",
+        "message": "202126397.0",
+        "payment_date": "2023-08-28"
+    },
+    {
+        "debtor_name": "Härnösands Kommun",
+        "reference": "",
+        "total_amount": "311078.00",
+        "message": "Ersättningar externa anor FSK",
+        "payment_date": "2023-09-20"
+    },
+    {
+        "debtor_name": "LARSSON SARA",
+        "reference": "2021086",
+        "total_amount": "856.00",
+        "message": "",
+        "payment_date": "2023-01-31"
+    },
+    {
+        "debtor_name": "Widinghoff, Johanna",
+        "reference": "85",
+        "total_amount": "1007.00",
+        "message": "85.0",
+        "payment_date": "2023-01-27"
+    },
+    {
+        "debtor_name": "SEBASTIAN BOELIUS",
+        "reference": "202109096",
+        "total_amount": "1356.00",
+        "message": "",
+        "payment_date": "2023-01-27"
+    },
+    {
+        "debtor_name": "Söderström, Tina",
+        "reference": "202108890",
+        "total_amount": "2413.00",
+        "message": "202108890.0",
+        "payment_date": "2023-01-27"
+    }
+]

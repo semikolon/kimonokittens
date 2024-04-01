@@ -1,0 +1,860 @@
+[
+  {
+    "CustomerName": "Ana Ciocan-Scheu",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021247",
+        "Amount": "1645,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021267",
+        "Amount": "1645,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021288",
+        "Amount": "1645,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021309",
+        "Amount": "1645,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021328",
+        "Amount": "1645,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Andreas Höglund",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2020894",
+        "Amount": "712,00",
+        "Date": "2022-06-20",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Anton Kårén TullaMaja Fogelberg",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021243",
+        "Amount": "1946,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021262",
+        "Amount": "1946,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021283",
+        "Amount": "1946,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021304",
+        "Amount": "1946,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021323",
+        "Amount": "2413,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Björn Jonsson",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021256",
+        "Amount": "2413,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021277",
+        "Amount": "2413,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021299",
+        "Amount": "1425,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021318",
+        "Amount": "1919,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Caroline Arvén / Wayne Friend",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021270",
+        "Amount": "1151,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021290",
+        "Amount": "1151,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021310",
+        "Amount": "310,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Elina Eliasson",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021239",
+        "Amount": "2413,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Emil Persson",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021254",
+        "Amount": "1645,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021275",
+        "Amount": "1645,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021297",
+        "Amount": "657,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021316",
+        "Amount": "1151,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Emma Morelius",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021240",
+        "Amount": "1645,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021259",
+        "Amount": "1645,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021280",
+        "Amount": "1645,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021302",
+        "Amount": "657,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021321",
+        "Amount": "1151,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Hannah Beswick",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021220",
+        "Amount": "2742,00",
+        "Date": "2023-06-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021227",
+        "Amount": "-2742,00",
+        "Date": "2023-07-02",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021230",
+        "Amount": "1151,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021266",
+        "Amount": "1151,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021287",
+        "Amount": "1151,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021308",
+        "Amount": "1151,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021327",
+        "Amount": "1151,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Harriet Hagfors",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2020907",
+        "Amount": "2215,00",
+        "Date": "2022-06-20",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Helena Fahlen",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021229",
+        "Amount": "1151,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021250",
+        "Amount": "1151,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021271",
+        "Amount": "1151,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021293",
+        "Amount": "1151,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021312",
+        "Amount": "1151,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Ida Näslund",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021223",
+        "Amount": "1645,00",
+        "Date": "2023-06-21",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Ida Ponten",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021231",
+        "Amount": "1151,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021251",
+        "Amount": "1151,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021272",
+        "Amount": "1151,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021294",
+        "Amount": "1151,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021313",
+        "Amount": "1151,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Isabella Malm",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021238",
+        "Amount": "2413,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021258",
+        "Amount": "2413,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021279",
+        "Amount": "1919,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021301",
+        "Amount": "1919,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021320",
+        "Amount": "1919,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Jenny-Lee Collins",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021248",
+        "Amount": "822,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021268",
+        "Amount": "822,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021289",
+        "Amount": "822,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021292",
+        "Amount": "-822,00",
+        "Date": "2023-10-07",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Johanna Widinghoff",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021235",
+        "Amount": "1151,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021255",
+        "Amount": "1151,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021276",
+        "Amount": "1151,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021298",
+        "Amount": "1151,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021317",
+        "Amount": "575,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Kristine Ulander",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021232",
+        "Amount": "1151,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021252",
+        "Amount": "1151,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021273",
+        "Amount": "1151,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021295",
+        "Amount": "1151,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021314",
+        "Amount": "1151,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Linda Gradin",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021257",
+        "Amount": "1151,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021278",
+        "Amount": "1151,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021300",
+        "Amount": "1151,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021319",
+        "Amount": "1151,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Maria",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2020961",
+        "Amount": "786,00",
+        "Date": "2022-08-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2020989",
+        "Amount": "1572,00",
+        "Date": "2022-09-22",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Marie Montonen",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021224",
+        "Amount": "697,00",
+        "Date": "2023-06-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021269",
+        "Amount": "863,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Mariette Boström",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2020939",
+        "Amount": "1634,00",
+        "Date": "2022-08-20",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021233",
+        "Amount": "1151,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021253",
+        "Amount": "1151,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021274",
+        "Amount": "1151,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021296",
+        "Amount": "1151,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021315",
+        "Amount": "1151,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Olivia Rikner",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021291",
+        "Amount": "150,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021311",
+        "Amount": "150,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021329",
+        "Amount": "150,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Pia Boelius",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021265",
+        "Amount": "1356,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021286",
+        "Amount": "1356,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021307",
+        "Amount": "604,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021326",
+        "Amount": "844,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Sara Blomquist",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021264",
+        "Amount": "1151,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021285",
+        "Amount": "1151,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021306",
+        "Amount": "1151,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021325",
+        "Amount": "1151,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Sara Larsson",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021261",
+        "Amount": "856,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021282",
+        "Amount": "856,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Sessan Forsberg",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2020933",
+        "Amount": "230,00",
+        "Date": "2022-07-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2020952",
+        "Amount": "612,00",
+        "Date": "2022-08-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2020979",
+        "Amount": "673,00",
+        "Date": "2022-09-22",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021007",
+        "Amount": "673,00",
+        "Date": "2022-10-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021034",
+        "Amount": "673,00",
+        "Date": "2022-11-26",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021060",
+        "Amount": "673,00",
+        "Date": "2022-12-19",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021085",
+        "Amount": "673,00",
+        "Date": "2023-01-26",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021112",
+        "Amount": "673,00",
+        "Date": "2023-02-22",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Sofie Eriksson",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2020944",
+        "Amount": "2682,00",
+        "Date": "2022-08-20",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021130",
+        "Amount": "2413,00",
+        "Date": "2023-03-20",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021155",
+        "Amount": "2413,00",
+        "Date": "2023-04-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021181",
+        "Amount": "2413,00",
+        "Date": "2023-05-29",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Teresia Tjernberg",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021026",
+        "Amount": "336,00",
+        "Date": "2022-11-26",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021053",
+        "Amount": "336,00",
+        "Date": "2022-12-19",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021182",
+        "Amount": "336,00",
+        "Date": "2023-05-29",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021208",
+        "Amount": "480,00",
+        "Date": "2023-06-21",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Therese Malm",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021241",
+        "Amount": "649,00",
+        "Date": "2023-07-25",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021260",
+        "Amount": "649,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021281",
+        "Amount": "649,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021303",
+        "Amount": "649,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021322",
+        "Amount": "649,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  },
+  {
+    "CustomerName": "Tina Söderström",
+    "Invoices": [
+      {
+        "InvoiceNumber": "2021263",
+        "Amount": "2413,00",
+        "Date": "2023-08-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021284",
+        "Amount": "2413,00",
+        "Date": "2023-09-23",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021305",
+        "Amount": "1459,00",
+        "Date": "2023-10-21",
+        "Paid": false
+      },
+      {
+        "InvoiceNumber": "2021324",
+        "Amount": "1936,00",
+        "Date": "2023-11-26",
+        "Paid": false
+      }
+    ]
+  }
+]

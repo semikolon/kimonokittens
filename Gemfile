@@ -15,5 +15,7 @@ gem 'pry'
 gem 'pry-nav'
 gem 'break'
 gem 'activesupport', '~> 6.1.4'
+gem 'text'
+gem 'google-apis-sheets_v4'
 
 gem "ferrum", "~> 0.13"
