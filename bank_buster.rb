@@ -98,8 +98,12 @@ class BankBuster < Vessel::Cargo
     end
   end
 
+  def inspect
+    "#<#{self.class}:0x#{object_id.to_s(16)}>"
+  end
+
   def wait_for_idle_or_rescue(...)
-    wait_for_idle(...)
+    page.network.wait_for_idle(...)
   rescue Ferrum::TimeoutError
     yield({ type: 'ERROR', error: 'Timeout while waiting for update' })
   end
@@ -125,7 +129,7 @@ class BankBuster < Vessel::Cargo
   def accept_cookies
     yield({ type: 'LOG', data: 'Trying to identify cookie accept button...' }) if block_given?
     attempts = 0
-    until cookie_button = at_css("acorn-button[data-cy='acorn-button-accept-all-cookies']")
+    until cookie_button = at_css("acorn-button[data-cy='acorn-button-accept-all']")
       raise LoginError, 'Could not find cookie accept button' if attempts > 100
       sleep 0.1
       attempts += 1
@@ -133,7 +137,7 @@ class BankBuster < Vessel::Cargo
     cookie_button.click
   end
 
-  def input_login_and_get_qr_code
+  def input_login_and_get_qr_code(&block)
     ssn_field = at_css("input[type=text]")
     raise LoginError, 'SSN field not found' unless ssn_field
     ssn_field.focus.type(SSN, :enter)
@@ -146,8 +150,7 @@ class BankBuster < Vessel::Cargo
         
     qr_code_url = "#{SCREENSHOTS_DIR}/qr_code.jpg"
     while at_css("img.mobile-bank-id__qr-code--image")
-      system("clear")
-      yield({ type: 'LOG', data: "Open BankID app and scan QR code below:\n" }) if block_given?
+      #yield({ type: 'LOG', data: "Open BankID app and scan QR code below:\n" }) if block_given?
       page.screenshot(path: qr_code_url, selector: 'img.mobile-bank-id__qr-code--image')
       yield({ type: 'QR_UPDATE', qr_code_url: qr_code_url })
       sleep 1
@@ -163,7 +166,7 @@ class BankBuster < Vessel::Cargo
     end
   end
 
-  def download_all_payment_files
+  def download_all_payment_files(&block)
     page.network.clear(:traffic)
     page.go_to(absolute_url('/app/ib/dokument'))
     wait_for_idle_or_rescue
@@ -195,13 +198,13 @@ class BankBuster < Vessel::Cargo
     
     # page.network.clear(:cache)
     documents.each_with_index do |doc, index|
-      download_file(id: doc['id'], headers: auth_headers)
+      download_file(id: doc['id'], headers: auth_headers, &block)
       progress = ((index + 1).to_f / documents.size.to_f) * 100
       yield({ type: 'PROGRESS_UPDATE', progress: progress.round(2) })
     end
   end
   
-  def download_file(id:, headers:)
+  def download_file(id:, headers:, &block)
     page.headers.set(headers)
     url_to_fetch_url = absolute_url('/TDE_DAP_Portal_REST_WEB/api/v5/message/document/'+id+'/view?referenceType=DOCUMENT_ID')
     page.go_to(url_to_fetch_url)
@@ -210,11 +213,22 @@ class BankBuster < Vessel::Cargo
     raise FileRetrievalError, 'Download URL fetch failed' unless page.network.status == 200
     
     location_info = Oj.safe_load(page.at_css('pre').text)
+    #=> "{\"url\":\"TDE_DAP_Portal_REST_WEB/api/v5/content/edocument\",\"ticket\":\"52b77e46187277e3eca271571703a6f8d8a7776b\",\"param\":\"ticket\",\"method\":\"GET\",\"internal\":true,\"movedToArchive\":true}"
+    #binding.pry
     ticket = location_info['ticket']
     
     page.headers.set(page.headers.get)
     url_to_download = absolute_url('/'+location_info['url']+'?ticket='+ticket)
-    page.go_to(url_to_download)
+    begin
+      page.go_to(url_to_download)
+    rescue Ferrum::StatusError => e
+      yield({ type: 'LOG', data: "File download status error, might be irrelevant" }) if block_given?
+    end
+
+    #E, [2023-12-25T20:56:59.023791 #78626] ERROR -- : Engine: `Ferrum::StatusError: Request to https://online.swedbank.se/TDE_DAP_Portal_REST_WEB/api/v5/content/edocument?ticket=9b74fd66ad22bf9794b2c9d1c0a929e0adf3028e failed (net::ERR_ABORTED)`
+    #/usr/local/var/rbenv/versions/3.2.2/lib/ruby/gems/3.2.0/gems/ferrum-0.14/lib/ferrum/page.rb:118:in `go_to'
+    #bank_buster.rb:222:in `download_file'
+    #bank_buster.rb:201:in `block in download_all_payment_files'
     
     wait_for_idle_or_rescue(timeout: 1) unless page.network.status == 200
     raise FileRetrievalError, 'Download failed' unless page.network.status == 200
@@ -224,10 +238,10 @@ class BankBuster < Vessel::Cargo
     filename
   end
   
-  def login_process
+  def login_process(&block)
     attempts = 0
     until at_css("p[data-cy='verify-yourself']")&.text == ENV['BANK_ID_AUTH_TEXT']
-      input_login_and_get_qr_code
+      input_login_and_get_qr_code(&block)
       attempts += 1
       if attempts > MAX_ATTEMPTS
         yield({ type: 'ERROR', error: 'Timeout while waiting for update' })
@@ -260,9 +274,9 @@ class BankBuster < Vessel::Cargo
   end
   
 
-  def retrieve_and_parse_files
+  def retrieve_and_parse_files(&block)
     yield({ type: 'LOG', data: 'Logged in. Reading files...' }) if block_given?
-    filenames = download_all_payment_files
+    filenames = download_all_payment_files(&block)
     payments = BankPaymentsReader.parse_files(filenames)
     yield({ type: 'FILES_RETRIEVED', data: payments }) if block_given?
   end
@@ -301,3 +315,27 @@ Vessel::Logger.instance.level = ::Logger::WARN
 # yield({ type: 'LOG', data: "Transactions Dir: #{TRANSACTIONS_DIR}" }) if block_given?
 # yield({ type: 'LOG', data: "Pattern: #{PAYMENT_FILENAME_PATTERN}" }) if block_given?
 # yield({ type: 'LOG', data: "Files found: #{Dir.glob("#{TRANSACTIONS_DIR}/#{PAYMENT_FILENAME_PATTERN}").count}" }) if block_given?
+
+# When running in the terminal:
+if __FILE__ == $PROGRAM_NAME
+  BankBuster.run do |event|
+    case event[:type]
+    when 'LOG'
+      puts event[:data]
+    when 'ERROR'
+      puts "Error: #{event[:error]} - #{event[:message]}".red
+    when 'QR_UPDATE'
+      system("clear")
+      puts "Open BankID app and scan QR code below:\n".green
+      system("./imgcat -H 40% #{event[:qr_code_url]}")
+    when 'PROGRESS_UPDATE'
+      system("clear")
+      puts "Progress: #{event[:progress]}%".yellow
+    when 'FILES_RETRIEVED'
+      system("clear")
+      puts "Files retrieved successfully.".green
+      puts "Files stored in: #{TRANSACTIONS_DIR}"
+      ap event[:data]
+    end
+  end
+end
