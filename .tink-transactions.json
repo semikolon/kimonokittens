@@ -1,0 +1,3070 @@
+{
+  "transactions": [
+    {
+      "id": "4c9fdee0654847a88d9b1fa8e97fc9c9",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1440",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Sushi Byam - Han",
+        "display": "Sushi Byam - Han"
+      },
+      "dates": {
+        "booked": "2023-11-29"
+      },
+      "identifiers": {
+        "providerTransactionId": "1299826902"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Sushi Byam - Han"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE45E25F1573FE8C00085C06"
+    },
+    {
+      "id": "6645edf5a8d644f6b5f13d56a541eda1",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1090",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "BROD & SALT BAG",
+        "display": "Brod & Salt Bag"
+      },
+      "dates": {
+        "booked": "2023-11-29"
+      },
+      "identifiers": {
+        "providerTransactionId": "1302531087"
+      },
+      "types": {
+        "type": "DEFAULT"
+      },
+      "status": "PENDING",
+      "providerMutability": "MUTABILITY_UNDEFINED"
+    },
+    {
+      "id": "78ad813bc71744f4a539d82bb2b66ad2",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-829",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "STORA COOP HUDDINGE",
+        "display": "Stora Coop Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-29"
+      },
+      "identifiers": {
+        "providerTransactionId": "1302767039"
+      },
+      "types": {
+        "type": "DEFAULT"
+      },
+      "status": "PENDING",
+      "providerMutability": "MUTABILITY_UNDEFINED"
+    },
+    {
+      "id": "88cd80945aec4254b42b57fff120710d",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-790",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "ZETTLE_*CREPES I SODER",
+        "display": "Zettle_*Crepes I Soder"
+      },
+      "dates": {
+        "booked": "2023-11-29"
+      },
+      "identifiers": {
+        "providerTransactionId": "1302725429"
+      },
+      "types": {
+        "type": "DEFAULT"
+      },
+      "status": "PENDING",
+      "providerMutability": "MUTABILITY_UNDEFINED"
+    },
+    {
+      "id": "95b88d648130459b952095dd943ae169",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-8250",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "G__ta Energi",
+        "display": "G__ta Energi"
+      },
+      "dates": {
+        "booked": "2023-11-29"
+      },
+      "identifiers": {
+        "providerTransactionId": "1302320527"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "551"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "G__ta Energi"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE450F6A0F71F46C00080008"
+    },
+    {
+      "id": "99bd6d9a7ad74abf94d34bebe2ab07d5",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-20908",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "KEYMATE.AI SUBSCRIBE",
+        "display": "Keymate.ai Subscribe"
+      },
+      "dates": {
+        "booked": "2023-11-29"
+      },
+      "identifiers": {
+        "providerTransactionId": "1302974265"
+      },
+      "types": {
+        "type": "DEFAULT"
+      },
+      "status": "PENDING",
+      "providerMutability": "MUTABILITY_UNDEFINED"
+    },
+    {
+      "id": "a91ddd015117436f92a04abaeb8d8556",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-790",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "BRAVO STOCKHOLM",
+        "display": "Bravo Stockholm"
+      },
+      "dates": {
+        "booked": "2023-11-29"
+      },
+      "identifiers": {
+        "providerTransactionId": "1302618388"
+      },
+      "types": {
+        "type": "DEFAULT"
+      },
+      "status": "PENDING",
+      "providerMutability": "MUTABILITY_UNDEFINED"
+    },
+    {
+      "id": "b5f21e6b5607473da6904d6610f00048",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1190",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "SpotifySE",
+        "display": "Spotify"
+      },
+      "dates": {
+        "booked": "2023-11-29"
+      },
+      "identifiers": {
+        "providerTransactionId": "1302181085"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "SpotifySE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE453B42C73B24A400080802"
+    },
+    {
+      "id": "c70a63a42deb4e78a2723ae899583c75",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-5199",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "DAKBOARD, LLC",
+        "display": "Dakboard, Llc"
+      },
+      "dates": {
+        "booked": "2023-11-29"
+      },
+      "identifiers": {
+        "providerTransactionId": "1303185050"
+      },
+      "types": {
+        "type": "DEFAULT"
+      },
+      "status": "PENDING",
+      "providerMutability": "MUTABILITY_UNDEFINED"
+    },
+    {
+      "id": "d571ecc5ddf74fae9df673e64e11af3f",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-550",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "4608381 Pressbyr",
+        "display": "Pressbyr"
+      },
+      "dates": {
+        "booked": "2023-11-29"
+      },
+      "identifiers": {
+        "providerTransactionId": "1302474453"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "4608381 Pressbyr"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE45E25F1442787600085C06"
+    },
+    {
+      "id": "df5e243be4ef427ab932abb3734b5881",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-13068",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "MIDJOURNEY INC.",
+        "display": "Midjourney Inc."
+      },
+      "dates": {
+        "booked": "2023-11-29"
+      },
+      "identifiers": {
+        "providerTransactionId": "1303020776"
+      },
+      "types": {
+        "type": "DEFAULT"
+      },
+      "status": "PENDING",
+      "providerMutability": "MUTABILITY_UNDEFINED"
+    },
+    {
+      "id": "0e08e7e8edf046709b528bb2f884e4a0",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-40770",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "NETONNET HANINGE",
+        "display": "Netonnet Haninge"
+      },
+      "dates": {
+        "booked": "2023-11-28"
+      },
+      "identifiers": {
+        "providerTransactionId": "1299794018"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "NETONNET HANINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE44A0B1FF3F261A00084806"
+    },
+    {
+      "id": "30e94efbf0a94e3799cd6d74f1770501",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-21324",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "CHATGPT SUBSCRIP",
+        "display": "Chatgpt Subscrip"
+      },
+      "dates": {
+        "booked": "2023-11-28"
+      },
+      "identifiers": {
+        "providerTransactionId": "1300071482"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "CHATGPT SUBSCRIP"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE4404C11A781C8200085409"
+    },
+    {
+      "id": "3945c04b4f164f6f8ccd451ab88b8e0d",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-520",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "4105818 Pressbyr",
+        "display": "Pressbyr"
+      },
+      "dates": {
+        "booked": "2023-11-28"
+      },
+      "identifiers": {
+        "providerTransactionId": "1299900290"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "4105818 Pressbyr"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE4404C119EF703000085809"
+    },
+    {
+      "id": "453afcc8a07f4305b94ddb3410d7271c",
+      "accountId": "9b34ffa854b74fa1a9a789389439a7ea",
+      "amount": {
+        "value": {
+          "unscaledValue": "-128675",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "VATTENFALL",
+        "display": "Vattenfall"
+      },
+      "dates": {
+        "booked": "2023-11-28"
+      },
+      "identifiers": {
+        "providerTransactionId": "1300514775"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "486"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "VATTENFALL"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE43F618DA40495600080408"
+    },
+    {
+      "id": "b79f3c077a0a4da5bc4e1a0f79c2d988",
+      "accountId": "9b34ffa854b74fa1a9a789389439a7ea",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish Comviq",
+        "display": "Swish Comviq"
+      },
+      "dates": {
+        "booked": "2023-11-28"
+      },
+      "identifiers": {
+        "providerTransactionId": "1301837575"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "663"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Comviq"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE448875B3E06FAC00080408"
+    },
+    {
+      "id": "db0cda1b1fe34744a759b8df5d5ac4a9",
+      "accountId": "9b34ffa854b74fa1a9a789389439a7ea",
+      "amount": {
+        "value": {
+          "unscaledValue": "-245290",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Bostadsagent",
+        "display": "Bostadsagent"
+      },
+      "dates": {
+        "booked": "2023-11-28"
+      },
+      "identifiers": {
+        "providerTransactionId": "1300514776"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "486"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Bostadsagent"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE43F618E078F5AC00080408"
+    },
+    {
+      "id": "dc323b912c3348efbbedb5d254e5ba73",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1190",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "T Hedvig 12",
+        "display": "T Hedvig 12"
+      },
+      "dates": {
+        "booked": "2023-11-28"
+      },
+      "identifiers": {
+        "providerTransactionId": "1300527126"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "486"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "T Hedvig  12"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE43EFDFF46AB2B800082408"
+    },
+    {
+      "id": "eeadf8a471db4df9962a47a529a11ea8",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1609",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "CIRCLE K HANDEN",
+        "display": "Circle K Handen"
+      },
+      "dates": {
+        "booked": "2023-11-28"
+      },
+      "identifiers": {
+        "providerTransactionId": "1299651883"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "CIRCLE K HANDEN"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE44A0B1FE1DE68A00085006"
+    },
+    {
+      "id": "fe1ce76d53da43b4924ca41a9b36fbce",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-6990",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "SATS",
+        "display": "Sats"
+      },
+      "dates": {
+        "booked": "2023-11-28"
+      },
+      "identifiers": {
+        "providerTransactionId": "1300527127"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "486"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "SATS"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE43EFDFF725C72C00080C08"
+    },
+    {
+      "id": "1b2ac84ba9604686a5761a4cbc03aa94",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "22900",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46765558275",
+        "display": "Swish +46765558275"
+      },
+      "dates": {
+        "booked": "2023-11-27"
+      },
+      "identifiers": {
+        "providerTransactionId": "1299743892"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE434F01C8BE3A1000081008"
+    },
+    {
+      "id": "245d78c216a14f71a865461644a4fd64",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "126250",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Dagersättning",
+        "display": "Dagersättning"
+      },
+      "dates": {
+        "booked": "2023-11-27"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295053720"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "409"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F49EA4E311BB800080C08"
+    },
+    {
+      "id": "6ddc7eff0bd841b5b9de54c8dfad0dc5",
+      "accountId": "9b34ffa854b74fa1a9a789389439a7ea",
+      "amount": {
+        "value": {
+          "unscaledValue": "-4400",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Bredband2",
+        "display": "Bredband2"
+      },
+      "dates": {
+        "booked": "2023-11-27"
+      },
+      "identifiers": {
+        "providerTransactionId": "1298457798"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "486"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Bredband2"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE42B03256D3D30E00085C06"
+    },
+    {
+      "id": "7b1c7b8b5e63476bad2fbcbb6ff05743",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-57000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish skickad +46703378474",
+        "display": "Swish +46703378474"
+      },
+      "dates": {
+        "booked": "2023-11-27"
+      },
+      "identifiers": {
+        "providerTransactionId": "1299287355"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "256"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE43027CAB6F502600085809"
+    },
+    {
+      "id": "88785a2d3bc4421a99e111a3935d22d0",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-2498",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKOP HUDDINGE",
+        "display": "Hemkop Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-27"
+      },
+      "identifiers": {
+        "providerTransactionId": "1297780868"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKOP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE435E14B74B41AC00080808"
+    },
+    {
+      "id": "9e484174d0b34f15bc8c492ed7088caa",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1450",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Fello",
+        "display": "Fello"
+      },
+      "dates": {
+        "booked": "2023-11-27"
+      },
+      "identifiers": {
+        "providerTransactionId": "1297701968"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Fello"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE42B99127C0146C00081402"
+    },
+    {
+      "id": "b329242e6ab247cb968f24ab0080b5af",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-260",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish AB STORSTOCK",
+        "display": "Swish Storstock"
+      },
+      "dates": {
+        "booked": "2023-11-27"
+      },
+      "identifiers": {
+        "providerTransactionId": "1299810287"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "663"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "AB STORSTOCKHOLMS LOKALTR"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE43593D08F5C5E400081008"
+    },
+    {
+      "id": "117cd956b00b47c3a794fd266d3d9da9",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-2095",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKÖP HUDDINGE",
+        "display": "Hemköp Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-26"
+      },
+      "identifiers": {
+        "providerTransactionId": "1296752270"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKÖP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE421AEA38B79D4E00081002"
+    },
+    {
+      "id": "13abee5cfdce486199ba91d5f63917cd",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-2847",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKÖP HUDDINGE",
+        "display": "Hemköp Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-26"
+      },
+      "identifiers": {
+        "providerTransactionId": "1296751704"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKÖP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE421AEA3583AEB400081002"
+    },
+    {
+      "id": "2907008f84e24002b745873f49c527d9",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-300",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Selecta AB",
+        "display": "Selecta"
+      },
+      "dates": {
+        "booked": "2023-11-26"
+      },
+      "identifiers": {
+        "providerTransactionId": "1296161817"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Selecta AB"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE421AEA33F6418200081002"
+    },
+    {
+      "id": "59caff4d202643cabbbc98c247fce3b4",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "2000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46703378474",
+        "display": "Swish +46703378474"
+      },
+      "dates": {
+        "booked": "2023-11-26"
+      },
+      "identifiers": {
+        "providerTransactionId": "1297724918"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE41E7B04566740600084809"
+    },
+    {
+      "id": "8809b436d8c944669425d33a6ba6e345",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "2000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46703378474",
+        "display": "Swish +46703378474"
+      },
+      "dates": {
+        "booked": "2023-11-26"
+      },
+      "identifiers": {
+        "providerTransactionId": "1297696781"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE41E2FBBAAFA10200085809"
+    },
+    {
+      "id": "a7dcef4a196c45c7895a6debae4ed7b8",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1890",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "JACKS BURGER HUD",
+        "display": "Jacks Burger Hud"
+      },
+      "dates": {
+        "booked": "2023-11-26"
+      },
+      "identifiers": {
+        "providerTransactionId": "1296619910"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "JACKS BURGER HUD"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE421AEA350D421000081002"
+    },
+    {
+      "id": "b6dbeed3bfe74c8aa9a1a23766dae41e",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-2190",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Zettle_*Vape Swe",
+        "display": "Zettle_*Vape Swe"
+      },
+      "dates": {
+        "booked": "2023-11-26"
+      },
+      "identifiers": {
+        "providerTransactionId": "1296637191"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Zettle_*Vape Swe"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE421AEA3547558000081002"
+    },
+    {
+      "id": "151616b0815a488c96e1bb96260a55d4",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1790",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "GOOGLE *YouTubeP",
+        "display": "Google *Youtubep"
+      },
+      "dates": {
+        "booked": "2023-11-25"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295910844"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "GOOGLE *YouTubeP"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE40DC9B235F5FB400084406"
+    },
+    {
+      "id": "1a6ff4b6522a442c9ce9841c0de10969",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-200",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "SJODALSTORGET S",
+        "display": "Sjodalstorget S"
+      },
+      "dates": {
+        "booked": "2023-11-25"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295259677"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "SJODALSTORGET S"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE40DC9B247A8F2400085C06"
+    },
+    {
+      "id": "267a6ea57d514af0bca11ce3585ab07f",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-4395",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKOP HUDDINGE",
+        "display": "Hemkop Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-25"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295404442"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKOP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE40DC9B2397384800084406"
+    },
+    {
+      "id": "34a504f63772404dbc5b05eabd4b1b6f",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1640",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "SURADEG TUMBA",
+        "display": "Suradeg Tumba"
+      },
+      "dates": {
+        "booked": "2023-11-25"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295160654"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "SURADEG TUMBA"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE40DC9B23CF022C00085C06"
+    },
+    {
+      "id": "535001047adf4686853e73ba43bf0be5",
+      "accountId": "9b34ffa854b74fa1a9a789389439a7ea",
+      "amount": {
+        "value": {
+          "unscaledValue": "56470",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46765563773",
+        "display": "Swish +46765563773"
+      },
+      "dates": {
+        "booked": "2023-11-25"
+      },
+      "identifiers": {
+        "providerTransactionId": "1296338683"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE4077A88F70612200085809"
+    },
+    {
+      "id": "91bc1d12a35842a6895b5461cfa9b855",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-390",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "APPLE.COM/BILL",
+        "display": "Apple.com/Bill"
+      },
+      "dates": {
+        "booked": "2023-11-25"
+      },
+      "identifiers": {
+        "providerTransactionId": "1296166457"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "APPLE.COM/BILL"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE40DC9B22A4359600085C06"
+    },
+    {
+      "id": "2bb781974b934cb392622df88a53d448",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "1000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Övf via internet 832796934713816",
+        "display": "Övf Via Internet 832796934713816"
+      },
+      "dates": {
+        "booked": "2023-11-24"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295160458"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "552"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F5BDE4434D1A800081002"
+    },
+    {
+      "id": "32a346a5993b486a96d1413e5bfc5c51",
+      "accountId": "9b34ffa854b74fa1a9a789389439a7ea",
+      "amount": {
+        "value": {
+          "unscaledValue": "56470",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46708822234",
+        "display": "Swish +46708822234"
+      },
+      "dates": {
+        "booked": "2023-11-24"
+      },
+      "identifiers": {
+        "providerTransactionId": "1294959245"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F44ABC8A6BE9000080008"
+    },
+    {
+      "id": "4f0e74fd0bca4885babb76a337ed886f",
+      "accountId": "9b34ffa854b74fa1a9a789389439a7ea",
+      "amount": {
+        "value": {
+          "unscaledValue": "56470",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46738307222",
+        "display": "Swish +46738307222"
+      },
+      "dates": {
+        "booked": "2023-11-24"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295620533"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F961C49362B8200080C08"
+    },
+    {
+      "id": "8fcec038b9b54915bf1b168fca5becb2",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "66000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46703378474",
+        "display": "Swish +46703378474"
+      },
+      "dates": {
+        "booked": "2023-11-24"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295486621"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F84668A28044800080408"
+    },
+    {
+      "id": "90bb245b42a447028102b7931f14398a",
+      "accountId": "9b34ffa854b74fa1a9a789389439a7ea",
+      "amount": {
+        "value": {
+          "unscaledValue": "56470",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46765558275",
+        "display": "Swish +46765558275"
+      },
+      "dates": {
+        "booked": "2023-11-24"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295091839"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F53BC9CE0481200084809"
+    },
+    {
+      "id": "96c301c62f1141f793bf478381292c96",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-56470",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish skickad +46736536035",
+        "display": "Swish +46736536035"
+      },
+      "dates": {
+        "booked": "2023-11-24"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295620527"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "256"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F961C1BCF8CAC00084C09"
+    },
+    {
+      "id": "99ed67747e5b4a169903a8d5fbcdc45c",
+      "accountId": "72088236db8345ce84d20c6102eca344",
+      "amount": {
+        "value": {
+          "unscaledValue": "-12000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Övf via internet 842029948670337",
+        "display": "Övf Via Internet 842029948670337"
+      },
+      "dates": {
+        "booked": "2023-11-24"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295108992"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "552"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F56171F1EAC8400085C06"
+    },
+    {
+      "id": "b12ad8181a4d499fb8e823129d705ef8",
+      "accountId": "72088236db8345ce84d20c6102eca344",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Övf via internet 842029948670337",
+        "display": "Övf Via Internet 842029948670337"
+      },
+      "dates": {
+        "booked": "2023-11-24"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295160497"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "552"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F5BDE4125B06200081402"
+    },
+    {
+      "id": "d3fbea1f7d2842f1878ef4e99cc914de",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-12000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish skickad +46703131267",
+        "display": "Swish +46703131267"
+      },
+      "dates": {
+        "booked": "2023-11-24"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295109531"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "256"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F56245E8184A600080008"
+    },
+    {
+      "id": "d554aea317a24f339b4a42aeb9b9a487",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "12000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Övf via internet 832796934713816",
+        "display": "Övf Via Internet 832796934713816"
+      },
+      "dates": {
+        "booked": "2023-11-24"
+      },
+      "identifiers": {
+        "providerTransactionId": "1295108975"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "552"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F561720DE951A00085C06"
+    },
+    {
+      "id": "e4a632a55cb74de489d8937fb459dc71",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1550",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "BRILLO PIZZA NOR",
+        "display": "Brillo Pizza Nor"
+      },
+      "dates": {
+        "booked": "2023-11-24"
+      },
+      "identifiers": {
+        "providerTransactionId": "1294042332"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "BRILLO PIZZA NOR"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3F975C198DDC7200080808"
+    },
+    {
+      "id": "47131dcf6999406d90207fd4df45a373",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-2080",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish AB STORSTOCK",
+        "display": "Swish Storstock"
+      },
+      "dates": {
+        "booked": "2023-11-23"
+      },
+      "identifiers": {
+        "providerTransactionId": "1294008129"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "663"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "AB STORSTOCKHOLMS LOKALTR"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3E579E19D3B8BA00080008"
+    },
+    {
+      "id": "9da07dde27d64815873956d997e77d9c",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-13000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Övf via internet 832796934713816",
+        "display": "Övf Via Internet 832796934713816"
+      },
+      "dates": {
+        "booked": "2023-11-23"
+      },
+      "identifiers": {
+        "providerTransactionId": "1294027607"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "552"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3E5C46592DD41200080802"
+    },
+    {
+      "id": "a045b6aa087846a5ae3bc19a417f3f64",
+      "accountId": "72088236db8345ce84d20c6102eca344",
+      "amount": {
+        "value": {
+          "unscaledValue": "13000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Övf via internet 842029948670337",
+        "display": "Övf Via Internet 842029948670337"
+      },
+      "dates": {
+        "booked": "2023-11-23"
+      },
+      "identifiers": {
+        "providerTransactionId": "1294027608"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "552"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3E5C465AA8EF4E00080802"
+    },
+    {
+      "id": "d3b080bdb32e4b7e84deecd0f32621b0",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "18000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Överföring",
+        "display": "Överföring"
+      },
+      "dates": {
+        "booked": "2023-11-23"
+      },
+      "identifiers": {
+        "providerTransactionId": "1293778325"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "50"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3E2CC38562776600085C06"
+    },
+    {
+      "id": "e0ce473d3e4542fe844fc057fe86970b",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-11885",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKOP HUDDINGE",
+        "display": "Hemkop Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-23"
+      },
+      "identifiers": {
+        "providerTransactionId": "1293076895"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKOP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3E562EB703480600081408"
+    },
+    {
+      "id": "6acfa1cb8183479493b3c142f6e7e0b2",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1490",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Lax and Poke",
+        "display": "Lax And Poke"
+      },
+      "dates": {
+        "booked": "2023-11-22"
+      },
+      "identifiers": {
+        "providerTransactionId": "1291970368"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Lax and Poke"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3D1536F7B1E2A000081802"
+    },
+    {
+      "id": "9a42536a5c8b4568afc9821c74ac2e04",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-2038",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKÖP HUDDINGE",
+        "display": "Hemköp Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-21"
+      },
+      "identifiers": {
+        "providerTransactionId": "1291048836"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKÖP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3B28A9FA44CE6000084806"
+    },
+    {
+      "id": "de6cc3cd27074defafc4c934c495c4d5",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-50",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKÖP HUDDINGE",
+        "display": "Hemköp Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-21"
+      },
+      "identifiers": {
+        "providerTransactionId": "1291048989"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKÖP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3B28A9FB49A39000084806"
+    },
+    {
+      "id": "e15122965086451c9eb502aa6afebe5e",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "2500",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46703378474",
+        "display": "Swish +46703378474"
+      },
+      "dates": {
+        "booked": "2023-11-21"
+      },
+      "identifiers": {
+        "providerTransactionId": "1291958632"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3BC3CADB1F4C2C00084809"
+    },
+    {
+      "id": "1e01e9975807412cb533084511ae9dbd",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-48412",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "OPENAI",
+        "display": "Openai"
+      },
+      "dates": {
+        "booked": "2023-11-20"
+      },
+      "identifiers": {
+        "providerTransactionId": "1290407833"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "OPENAI"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3A8E6EC2E42B4E00086C09"
+    },
+    {
+      "id": "3fbed63cbdd24951aa06a8fd8be3bd1b",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "8250",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Övf via internet Göta Energi",
+        "display": "Övf Via Internet Göta Energi"
+      },
+      "dates": {
+        "booked": "2023-11-20"
+      },
+      "identifiers": {
+        "providerTransactionId": "1290318334"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "552"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE39A16701B87F3800081802"
+    },
+    {
+      "id": "4278d7475a4d40f8b19e28da7a727bd8",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-260",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish AB STORSTOCK",
+        "display": "Swish Storstock"
+      },
+      "dates": {
+        "booked": "2023-11-20"
+      },
+      "identifiers": {
+        "providerTransactionId": "1290318990"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "663"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "AB STORSTOCKHOLMS LOKALTR"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE39A19C1889003A00084809"
+    },
+    {
+      "id": "86f75d266efe404480f5d1bcbdafa67b",
+      "accountId": "9b34ffa854b74fa1a9a789389439a7ea",
+      "amount": {
+        "value": {
+          "unscaledValue": "-8250",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Övf via internet Göta Energi",
+        "display": "Övf Via Internet Göta Energi"
+      },
+      "dates": {
+        "booked": "2023-11-20"
+      },
+      "identifiers": {
+        "providerTransactionId": "1290318333"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "552"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE39A16700120E2A00081802"
+    },
+    {
+      "id": "931e7b6b7c58424bb40c9a54746f9306",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-853",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "4615119 7-Eleven",
+        "display": "7-Eleven"
+      },
+      "dates": {
+        "booked": "2023-11-20"
+      },
+      "identifiers": {
+        "providerTransactionId": "1290333004"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "4615119 7-Eleven"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE39E6E71DDEC82600080802"
+    },
+    {
+      "id": "bc1564c256c446e38430d236caa53bd5",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1009",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKOP HUDDINGE",
+        "display": "Hemkop Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-20"
+      },
+      "identifiers": {
+        "providerTransactionId": "1290042671"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKOP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3A8E6EBF7BA7D200084809"
+    },
+    {
+      "id": "712ca3cfaf584c9ba0d0a3510a7564f0",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-5595",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKOP HUDDINGE",
+        "display": "Hemkop Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-19"
+      },
+      "identifiers": {
+        "providerTransactionId": "1289180652"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKOP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE394ADE6BE9A20400080802"
+    },
+    {
+      "id": "cf3ccc3d6998481588ca2a70ee3165cd",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-41298",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKOP HUDDINGE",
+        "display": "Hemkop Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-19"
+      },
+      "identifiers": {
+        "providerTransactionId": "1289325807"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKOP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE394ADE6C746BB400080802"
+    },
+    {
+      "id": "59230fc9236745ca85599e71f0dc1431",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "2000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46725732912",
+        "display": "Swish +46725732912"
+      },
+      "dates": {
+        "booked": "2023-11-18"
+      },
+      "identifiers": {
+        "providerTransactionId": "1289135353"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE37C678B8439C0800085009"
+    },
+    {
+      "id": "64b34f4a95dc43268573ab7085720658",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-110",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "LOOPIA AB",
+        "display": "Loopia"
+      },
+      "dates": {
+        "booked": "2023-11-18"
+      },
+      "identifiers": {
+        "providerTransactionId": "1288101857"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "LOOPIA AB"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE38059E80659F2000080808"
+    },
+    {
+      "id": "77abdf794c3b476eb983717fb762c8a8",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "2720",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Övf via internet Göta Energi",
+        "display": "Övf Via Internet Göta Energi"
+      },
+      "dates": {
+        "booked": "2023-11-18"
+      },
+      "identifiers": {
+        "providerTransactionId": "1289142449"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "552"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE37C7A616DE330800081802"
+    },
+    {
+      "id": "baeebe19e1604498923b1b39c9780b9c",
+      "accountId": "9b34ffa854b74fa1a9a789389439a7ea",
+      "amount": {
+        "value": {
+          "unscaledValue": "-2720",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Övf via internet Göta Energi",
+        "display": "Övf Via Internet Göta Energi"
+      },
+      "dates": {
+        "booked": "2023-11-18"
+      },
+      "identifiers": {
+        "providerTransactionId": "1289142448"
+      },
+      "types": {
+        "type": "TRANSFER",
+        "financialInstitutionTypeCode": "552"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE37C7A615719C1800081802"
+    },
+    {
+      "id": "c5dafe24cc1d4a4fbf40e7e4a40530c5",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1320",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "4608629 Pressbyr",
+        "display": "Pressbyr"
+      },
+      "dates": {
+        "booked": "2023-11-18"
+      },
+      "identifiers": {
+        "providerTransactionId": "1288672803"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "4608629 Pressbyr"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE38059E80B00F9A00081008"
+    },
+    {
+      "id": "ee3a014a627246969562bc9ced323f34",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "1000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46765563773",
+        "display": "Swish +46765563773"
+      },
+      "dates": {
+        "booked": "2023-11-18"
+      },
+      "identifiers": {
+        "providerTransactionId": "1289373094"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE37EF27A770FD8800085809"
+    },
+    {
+      "id": "d821256f19644c72944cbd667b2453b7",
+      "accountId": "9b34ffa854b74fa1a9a789389439a7ea",
+      "amount": {
+        "value": {
+          "unscaledValue": "56470",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46738174974",
+        "display": "Swish +46738174974"
+      },
+      "dates": {
+        "booked": "2023-11-17"
+      },
+      "identifiers": {
+        "providerTransactionId": "1288470918"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE36AE91986915DC00085809"
+    },
+    {
+      "id": "1c3329b759894c72bd5355fbec2e353f",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-12959",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKOP HUDDINGE",
+        "display": "Hemkop Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-16"
+      },
+      "identifiers": {
+        "providerTransactionId": "1286697527"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKOP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3587C9F9C0EFA200080C08"
+    },
+    {
+      "id": "228b3d45d0964ba9be542c5dc090df35",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "600",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46738174974",
+        "display": "Swish +46738174974"
+      },
+      "dates": {
+        "booked": "2023-11-16"
+      },
+      "identifiers": {
+        "providerTransactionId": "1287368235"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3552195FC4F01400085C09"
+    },
+    {
+      "id": "285d0388c1834cb2aca9d90e690d7a5e",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "400",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "SP NORDIC",
+        "display": "Sp Nordic"
+      },
+      "dates": {
+        "booked": "2023-11-16"
+      },
+      "identifiers": {
+        "providerTransactionId": "1287666634"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "SP NORDIC"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3587C9FB64278200080C08"
+    },
+    {
+      "id": "5ad9e46203044ce1a9d7cdf133866c2e",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "400",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "SP NORDIC",
+        "display": "Sp Nordic"
+      },
+      "dates": {
+        "booked": "2023-11-16"
+      },
+      "identifiers": {
+        "providerTransactionId": "1287666633"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "SP NORDIC"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3587C9FA46965600080C08"
+    },
+    {
+      "id": "6f065466884d4976800c48a405eb2e99",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-3199",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "KJELL & CO 99",
+        "display": "Kjell & Co 99"
+      },
+      "dates": {
+        "booked": "2023-11-16"
+      },
+      "identifiers": {
+        "providerTransactionId": "1286685872"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "KJELL & CO 99"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3587C9F9333CDA00080C08"
+    },
+    {
+      "id": "3ed25c1f4e5948aca9d7e19fd16a4bac",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-2650",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "SP NORDIC",
+        "display": "Sp Nordic"
+      },
+      "dates": {
+        "booked": "2023-11-15"
+      },
+      "identifiers": {
+        "providerTransactionId": "1285568507"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "SP NORDIC"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE339D08B88DD23C00084809"
+    },
+    {
+      "id": "6880a928a3c24be39636782decdc09e5",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-3095",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKOP HUDDINGE",
+        "display": "Hemkop Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-15"
+      },
+      "identifiers": {
+        "providerTransactionId": "1285694355"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKOP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE344623E13E309800081002"
+    },
+    {
+      "id": "7df8b48bac7e44afaf9dabdcca500512",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "4500",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46708822234",
+        "display": "Swish +46708822234"
+      },
+      "dates": {
+        "booked": "2023-11-15"
+      },
+      "identifiers": {
+        "providerTransactionId": "1286565378"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3431D18B54525C00080008"
+    },
+    {
+      "id": "c24c54f51d9b4ada91099921c9073835",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-560",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "ESPRESSO H 370",
+        "display": "Espresso H 370"
+      },
+      "dates": {
+        "booked": "2023-11-15"
+      },
+      "identifiers": {
+        "providerTransactionId": "1285526687"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "ESPRESSO H 370"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE344623E05BD51600081002"
+    },
+    {
+      "id": "d50ef301642b4851b5eb21169b0d8553",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-2650",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "SP NORDIC",
+        "display": "Sp Nordic"
+      },
+      "dates": {
+        "booked": "2023-11-15"
+      },
+      "identifiers": {
+        "providerTransactionId": "1285597459"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "SP NORDIC"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE339D08B8C6003000084809"
+    },
+    {
+      "id": "3f95335500d447db98bc9f32cad76052",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "560",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46765558275",
+        "display": "Swish +46765558275"
+      },
+      "dates": {
+        "booked": "2023-11-14"
+      },
+      "identifiers": {
+        "providerTransactionId": "1285546699"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE32D3FC0897EB1800080C08"
+    },
+    {
+      "id": "3fdcd566cb544790b9a433551ebb0918",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "560",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46765563773",
+        "display": "Swish +46765563773"
+      },
+      "dates": {
+        "booked": "2023-11-14"
+      },
+      "identifiers": {
+        "providerTransactionId": "1285547827"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE32D44859D8388600085809"
+    },
+    {
+      "id": "7a4ade37da5a4b21946a55e2cd9a2ca1",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1390",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Lax and Poke",
+        "display": "Lax And Poke"
+      },
+      "dates": {
+        "booked": "2023-11-14"
+      },
+      "identifiers": {
+        "providerTransactionId": "1284970759"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Lax and Poke"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE3304C43C958E8400084806"
+    },
+    {
+      "id": "a50798eb4f7848dea3c7d056d2be5e86",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "2000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46703378474",
+        "display": "Swish +46703378474"
+      },
+      "dates": {
+        "booked": "2023-11-14"
+      },
+      "identifiers": {
+        "providerTransactionId": "1285584635"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE32DC880746E65C00085C09"
+    },
+    {
+      "id": "82d5fdff8f43466b984effcc81b60296",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-420",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish skickad +46702525282",
+        "display": "Swish +46702525282"
+      },
+      "dates": {
+        "booked": "2023-11-13"
+      },
+      "identifiers": {
+        "providerTransactionId": "1284972753"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "256"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE31BDA181CAEF6C00085809"
+    },
+    {
+      "id": "e0644a22ccb9492a9d37b47192ca10ff",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-550",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish skickad +46738174974",
+        "display": "Swish +46738174974"
+      },
+      "dates": {
+        "booked": "2023-11-13"
+      },
+      "identifiers": {
+        "providerTransactionId": "1284705514"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "256"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE317F1502CE46E200084809"
+    },
+    {
+      "id": "bc2adc447ac2475d91ef28e192523eaa",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "5000",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Swish mottagen +46708822234",
+        "display": "Swish +46708822234"
+      },
+      "dates": {
+        "booked": "2023-11-12"
+      },
+      "identifiers": {
+        "providerTransactionId": "1284371050"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "255"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": " "
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE30BBEBA6E2515200081C02"
+    },
+    {
+      "id": "03c8aeee4a2c4874a5313ac77644c7e6",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-719",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKOP HUDDINGE",
+        "display": "Hemkop Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-11"
+      },
+      "identifiers": {
+        "providerTransactionId": "1282737130"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKOP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE2F3986CB157D1A00081002"
+    },
+    {
+      "id": "11f153f78bef4019bdfbfe8ad482eecb",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1390",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Lax and Poke",
+        "display": "Lax And Poke"
+      },
+      "dates": {
+        "booked": "2023-11-11"
+      },
+      "identifiers": {
+        "providerTransactionId": "1282701778"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Lax and Poke"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE2F3986CB7C530C00081802"
+    },
+    {
+      "id": "5f0f68392ed3440d9dc257b197b95172",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-99",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Teknikmagasinet",
+        "display": "Teknikmagasinet"
+      },
+      "dates": {
+        "booked": "2023-11-11"
+      },
+      "identifiers": {
+        "providerTransactionId": "1282222010"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Teknikmagasinet"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE2F3986CB4BC71200081002"
+    },
+    {
+      "id": "753940c6446d4ae3a0f616fcfb2ce263",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-10789",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "STORA COOP HUDDI",
+        "display": "Stora Coop Huddi"
+      },
+      "dates": {
+        "booked": "2023-11-11"
+      },
+      "identifiers": {
+        "providerTransactionId": "1282236394"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "STORA COOP HUDDI"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE2F3986CAE055A800081802"
+    },
+    {
+      "id": "a2db734402834f5fa4006801f64b1c3c",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-2190",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "Zettle_*Vape Swe",
+        "display": "Zettle_*Vape Swe"
+      },
+      "dates": {
+        "booked": "2023-11-11"
+      },
+      "identifiers": {
+        "providerTransactionId": "1282209942"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "Zettle_*Vape Swe"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE2F3986C9D9F72400081C02"
+    },
+    {
+      "id": "ffc2b466fe9845f29038132ef43c80b5",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "350",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "STORA COOP HUDDI",
+        "display": "Stora Coop Huddi"
+      },
+      "dates": {
+        "booked": "2023-11-11"
+      },
+      "identifiers": {
+        "providerTransactionId": "1283625396"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "STORA COOP HUDDI"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE2F3986CBAED36600081802"
+    },
+    {
+      "id": "16b18f9702274e13aceb206753ce9cee",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-1580",
+          "scale": "1"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "KORVMACKEN",
+        "display": "Korvmacken"
+      },
+      "dates": {
+        "booked": "2023-11-10"
+      },
+      "identifiers": {
+        "providerTransactionId": "1281121057"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "KORVMACKEN"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE2D57700C40372800084406"
+    },
+    {
+      "id": "5cd90b691dfc4b90b11f35997e5b12db",
+      "accountId": "c128ad19b6b54b09b00927e0c2cb2cd6",
+      "amount": {
+        "value": {
+          "unscaledValue": "-44707",
+          "scale": "2"
+        },
+        "currencyCode": "SEK"
+      },
+      "descriptions": {
+        "original": "HEMKOP HUDDINGE",
+        "display": "Hemkop Huddinge"
+      },
+      "dates": {
+        "booked": "2023-11-10"
+      },
+      "identifiers": {
+        "providerTransactionId": "1281896841"
+      },
+      "types": {
+        "type": "DEFAULT",
+        "financialInstitutionTypeCode": "261"
+      },
+      "status": "BOOKED",
+      "merchantInformation": {
+        "merchantName": "HEMKOP HUDDINGE"
+      },
+      "providerMutability": "MUTABILITY_UNDEFINED",
+      "reference": "00DE2DFD6B93E2EAA800080802"
+    }
+  ],
+  "nextPageToken": "QX8DAQEJTmV3Q3Vyc29yAf+AAAECAQ9PcmlnaW5hbFJlcXVlc3QBCgABEVNvcnRWYWx1ZXNMYXN0SGl0Af+CAAAAHP+BAgEBDltdaW50ZXJmYWNlIHt9Af+CAAEQAABs/4ABKAogNzUyYTM2YjY5ZDMxNGQ0NmJmNTc4NDgwYWFhN2QyZjUgZCoCCAEBAgdmbG9hdDY0CAgA+jg4jrt4QgZzdHJpbmcMIgAgNWNkOTBiNjkxZGZjNGI5MGIxMWYzNTk5N2U1YjEyZGIA18wi/nIWP4wkfVWHEgzxjUsatcN9sbrCS0z+F83CIS8="
+}
