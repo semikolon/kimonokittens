@@ -1,4 +1,3 @@
-
 *.xml
 venv/
 
@@ -45,3 +44,7 @@ rent.rb
 
 ticktick_env/
 ticktick_todos_long_titles.txt
+
+cron_log.log
+
+data/archive/
