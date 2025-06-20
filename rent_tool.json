@@ -1,0 +1,80 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Collective Rent Calculator",
+    "description": "Calculates the exact rent per person living in our villa collective.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api-d7b62b.stack.tryrelevance.com/latest/studios/6b7dac71-aeca-4740-a5bd-6824933e2d99/trigger_limited"
+    }
+  ],
+  "paths": {
+    "/": {
+      "post": {
+        "summary": "Calculate rent breakdown",
+        "operationId": "calculateRent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "electricity_bills": {
+                        "type": "number",
+                        "description": "The electricity bills for this month in SEK."
+                      },
+                      "drift_bill_this_month": {
+                        "type": "number",
+                        "description": "The operational bill for this month (quarterly)."
+                      }
+                    },
+                    "required": ["electricity_bills", "drift_bill_this_month"]
+                  },
+                  "project": {
+                    "type": "string",
+                    "description": "The project ID required by the API.",
+                    "default": "4d466f916519-4ccd-a00e-009c0666744a",
+                    "const": "4d466f916519-4ccd-a00e-009c0666744a"
+                  }
+                },
+                "required": ["params", "project"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rent breakdown calculated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rent_breakdown": {
+                      "type": "object",
+                      "description": "Breakdown of rent per person in the collective.",
+                      "additionalProperties": {
+                        "type": "number",
+                        "description": "Rent amount for each roomie in SEK."
+                      }
+                    },
+                    "Total": {
+                      "type": "number",
+                      "description": "Total calculated rent."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
