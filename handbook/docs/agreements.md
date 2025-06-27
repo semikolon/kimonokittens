@@ -29,4 +29,35 @@ This handbook application is designed to solve the problem of scattered or verba
 -   **Version Controlled:** Every change is tracked in Git, so we have a full history of all modifications.
 -   **Collaborative:** Changes can be proposed through the app's "edit-in-place" feature and must be approved by at least two other members before becoming official.
 
-By storing our contracts and house rules here, we create a reliable, transparent, and fair system for managing our shared home. 
+By storing our contracts and house rules here, we create a reliable, transparent, and fair system for managing our shared home.
+
+This document outlines the standard agreements for tenants of the Kimonokittens collective. It serves as the basis for all rental contracts and may be updated via the handbook's standard proposal workflow.
+
+## 1. Rental Agreement
+
+All tenants will sign a standard Swedish `hyreskontrakt` (rental agreement), which will be generated and managed through this handbook. Key terms include:
+
+-   **Uppsägningstid (Notice Period):** Standard notice periods apply as per Swedish law.
+-   **E-signing:** Contracts will be signed digitally using a verified e-signature provider (e.g., Scrive, integrated with BankID).
+
+## 2. Co-ownership of Communal Assets
+
+Living in a collective involves the shared ownership of various items. This is managed through two primary mechanisms: a general communal fund and specific item agreements.
+
+### 2.1. The Communal Pot (`samägningspott`)
+
+-   **Purpose:** To fund the purchase and replacement of common, everyday household items. This includes, but is not limited to, kitchenware, cleaning supplies, plants, light bulbs, and shared decorations (e.g., cushions, blankets).
+-   **Contribution:** Each tenant contributes a set amount (currently 2200 SEK) to this pot upon moving in. This is considered a shared investment, not a deposit.
+-   **Management:** The funds are held in a shared account. When a tenant leaves, their contribution is conceptually transferred to the next tenant, ensuring the pot remains stable.
+
+### 2.2. Specific Co-ownership Agreements
+
+For high-value items, specific, documented co-ownership agreements are required. This ensures clarity on investment, ownership stake, and buy-out procedures if a co-owner moves out.
+
+-   **Process:** A simple agreement will be drafted and signed by the co-owning parties, then stored digitally within this handbook.
+-   **Current Agreements:**
+    -   **Living Room Speakers (B&W):** Co-owned by Fredrik Bränström & Rasmus. Total value: ~2000 SEK (1000 SEK each).
+-   **Items Requiring Agreements:**
+    -   **Mesh Wifi System (TP-Link Deco):** Value ~3000 SEK. Current ownership needs to be clarified and documented.
+
+This section ensures that all members have a clear and transparent understanding of how shared property is managed. 
