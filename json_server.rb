@@ -22,13 +22,22 @@ Agoo::Log.configure(dir: '',
   })
 
 # Initialize the Agoo server with SSL configuration
-Agoo::Server.init(6464, 'root', thread_count: 0,
-  ssl_cert: "/etc/letsencrypt/live/kimonokittens.com/fullchain.pem",
-  ssl_key: "***REMOVED***",
-  bind: ['http://0.0.0.0:6464',
-          'https://0.0.0.0:6465',
-        ],
-)
+# Initialize the Agoo server - SSL only in production
+if ENV['RACK_ENV'] == 'production'
+  Agoo::Server.init(6464, 'root', thread_count: 0,
+    ssl_cert: "/etc/letsencrypt/live/kimonokittens.com/fullchain.pem",
+    ssl_key: "***REMOVED***",
+    bind: ['http://0.0.0.0:6464',
+            'https://0.0.0.0:6465',
+          ],
+  )
+else
+  # Development mode - no SSL
+  Agoo::Server.init(3001, 'root', thread_count: 0,
+    bind: ['http://0.0.0.0:3001'],
+  )
+  puts "Starting development server on http://localhost:3001"
+end
 
 require_relative 'handlers/electricity_stats_handler'
 require_relative 'handlers/proxy_handler'

@@ -27,3 +27,6 @@ gem 'ruby-openai', '~> 7.0'
 # Testing
 gem 'rspec', '~> 3.13'
 gem 'rack-test', '~> 2.1'
+
+# Git operations for handbook proposals
+gem 'rugged', '~> 1.7'
