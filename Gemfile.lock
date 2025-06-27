@@ -212,6 +212,7 @@ GEM
       faraday-multipart (>= 1)
     ruby2_keywords (0.0.5)
     rubyntlm (0.6.3)
+    rugged (1.9.0)
     signet (0.18.0)
       addressable (~> 2.8)
       faraday (>= 0.17.5, < 3.a)
@@ -259,6 +260,7 @@ DEPENDENCIES
   rack-test (~> 2.1)
   rspec (~> 3.13)
   ruby-openai (~> 7.0)
+  rugged (~> 1.7)
   table_print
   text
   vessel!
