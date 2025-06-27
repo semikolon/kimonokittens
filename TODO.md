@@ -70,16 +70,16 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 **Goal:** Create a functional, non-interactive frontend shell with all necessary libraries and components.
 
-- [ ] **(AI) Task 2.1: Initialize Vite Project**
-    - [ ] In the terminal, run `cd handbook`.
-    - [ ] Run `npm create vite@latest frontend -- --template react-ts`.
-- [ ] **(AI) Task 2.2: Install Core Dependencies**
-    - [ ] Run `cd frontend`.
-    - [ ] Run `npm install`.
-- [ ] **(AI) Task 2.3: Set up Tailwind CSS**
-    - [ ] Run `npm install -D tailwindcss postcss autoprefixer`.
-    - [ ] Run `npx tailwindcss init -p`. This will create `tailwind.config.js` and `postcss.config.js`.
-    - [ ] Edit `tailwind.config.js` to add paths to all template files:
+- [x] **(AI) Task 2.1: Initialize Vite Project**
+    - [x] In the terminal, run `cd handbook`.
+    - [x] Run `npm create vite@latest frontend -- --template react-ts`.
+- [x] **(AI) Task 2.2: Install Core Dependencies**
+    - [x] Run `cd frontend`.
+    - [x] Run `npm install`.
+- [x] **(AI) Task 2.3: Set up Tailwind CSS**
+    - [x] Run `npm install -D tailwindcss postcss autoprefixer`.
+    - [x] Run `npx tailwindcss init -p`. This will create `tailwind.config.js` and `postcss.config.js`.
+    - [x] Edit `tailwind.config.js` to add paths to all template files:
       ```javascript
       /** @type {import('tailwindcss').Config} */
       export default {
@@ -93,18 +93,18 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
         plugins: [],
       }
       ```
-    - [ ] Edit `handbook/frontend/src/index.css` and replace its content with the `@tailwind` directives:
+    - [x] Edit `handbook/frontend/src/index.css` and replace its content with the `@tailwind` directives:
       ```css
       @tailwind base;
       @tailwind components;
       @tailwind utilities;
       ```
-- [ ] **(AI) Task 2.4: Install UI & Editor Dependencies**
-    - [ ] Run `npm install @radix-ui/react-dialog @radix-ui/react-popover`.
-    - [ ] Run `npm install @tiptap/react @tiptap/pm @tiptap/starter-kit`.
-- [ ] **(AI) Task 2.5: Create Placeholder Components**
-    - [ ] Create directory `handbook/frontend/src/components`.
-    - [ ] Create `handbook/frontend/src/components/WikiPage.tsx` with this content:
+- [x] **(AI) Task 2.4: Install UI & Editor Dependencies**
+    - [x] Run `npm install @radix-ui/react-dialog @radix-ui/react-popover`.
+    - [x] Run `npm install @tiptap/react @tiptap/pm @tiptap/starter-kit`.
+- [x] **(AI) Task 2.5: Create Placeholder Components**
+    - [x] Create directory `handbook/frontend/src/components`.
+    - [x] Create `handbook/frontend/src/components/WikiPage.tsx` with this content:
       ```tsx
       import React from 'react';
 
@@ -122,7 +122,7 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
         );
       };
       ```
-    - [ ] Create `handbook/frontend/src/components/EditToolbar.tsx` with this content:
+    - [x] Create `handbook/frontend/src/components/EditToolbar.tsx` with this content:
       ```tsx
       import React from 'react';
       import { Editor } from '@tiptap/react';
