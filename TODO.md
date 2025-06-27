@@ -157,11 +157,11 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 **Goal:** Define the backend API contract with mock data and build the script to populate our AI's knowledge base.
 
-- [ ] **(AI) Task 3.1: Add `pinecone-client` to Gemfile**
-    - [ ] Edit the root `Gemfile` and add `gem 'pinecone-client', '~> 0.1'`.
-    - [ ] Run `bundle install` in the terminal.
-- [ ] **(AI) Task 3.2: Scaffold API Routes**
-    - [ ] Edit `json_server.rb`. Add a new handler class at the end of the file.
+- [x] **(AI) Task 3.1: Add `pinecone-client` to Gemfile**
+    - [x] Edit the root `Gemfile` and add `gem 'pinecone-client', '~> 0.1'`.
+    - [x] Run `bundle install` in the terminal.
+- [x] **(AI) Task 3.2: Scaffold API Routes**
+    - [x] Edit `json_server.rb`. Add a new handler class at the end of the file.
       ```ruby
       class HandbookHandler < WEBrick::HTTPServlet::AbstractServlet
         def do_GET(req, res)
@@ -204,12 +204,12 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
         end
       end
       ```
-    - [ ] In `json_server.rb`, find where other handlers are mounted (e.g., `server.mount "/api/...", ...`) and add the new handler:
+    - [x] In `json_server.rb`, find where other handlers are mounted (e.g., `server.mount "/api/...", ...`) and add the new handler:
       ```ruby
       server.mount "/api/handbook", HandbookHandler
       ```
-- [ ] **(AI) Task 3.3: Implement RAG Indexing Script**
-    - [ ] Create `handbook/scripts/index_documents.rb` with the following content. This script connects to Pinecone and indexes the content of our handbook documents.
+- [x] **(AI) Task 3.3: Implement RAG Indexing Script**
+    - [x] Create `handbook/scripts/index_documents.rb` with the following content. This script connects to Pinecone and indexes the content of our handbook documents.
       ```ruby
       require 'pinecone'
       require 'dotenv/load'
@@ -277,7 +277,7 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
       main if __FILE__ == $0
       ```
-    - [ ] Add a note to the user: A `PINECONE_ENVIRONMENT` variable will need to be added to the environment for the script to run.
+    - [x] Add a note to the user: A `PINECONE_ENVIRONMENT` variable will need to be added to the environment for the script to run.
 
 ---
 

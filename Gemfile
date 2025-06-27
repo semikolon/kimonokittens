@@ -19,3 +19,6 @@ gem 'text'
 gem 'google-apis-sheets_v4'
 
 gem "ferrum", "~> 0.13"
+
+# For the handbook AI/RAG pipeline
+gem 'pinecone', '~> 1.2'
