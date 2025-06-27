@@ -308,11 +308,27 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
     - [x] Create `handbook/frontend/src/components/QueryInterface.tsx` with text input, submit button, loading state, displays AI answer.
     - [x] Update `handbook/frontend/src/App.tsx` to include QueryInterface component.
 
-## Phase 6: Core Logic Implementation
+## Phase 6: Testing
+
+**Goal:** Ensure the application is robust and reliable with a comprehensive test suite.
+
+- [x] **(AI) Task 6.1: Implement Backend Specs**
+    - [x] Add `rspec` and `rack-test` to the Gemfile.
+    - [x] Create `spec/handbook_handler_spec.rb` to test the mock API, covering proposal CRUD, approvals, and mocked AI queries.
+- [x] **(AI) Task 6.2: Implement Frontend Specs**
+    - [x] Add `vitest` and `@testing-library/react` to `package.json`.
+    - [x] Configure Vite for testing with a `jsdom` environment.
+    - [x] Create unit tests for `WikiPage` and `ProposalList` components.
+
+## Phase 7: Core Logic Implementation
 
 **Goal:** Connect remaining pieces and implement production features.
 
 - [ ] **(USER)** Set up voice assistant hardware (Dell Optiplex, Google Homes).
 - [ ] **(BLOCKED)** Implement financial calculations and link `RentLedger` to the UI.
-- [ ] Implement Git-backed approval workflow (replace mock with real Git operations).
+- [ ] **(AI) Task 7.1: Implement Git-Backed Approval Workflow**
+    - [ ] Add the `rugged` gem to the `Gemfile` for Git operations from Ruby.
+    - [ ] Modify the `HandbookHandler` to create a new branch (e.g., `proposal/some-change`) when a proposal is submitted.
+    - [ ] On approval, use `rugged` to merge the proposal branch into `master`.
+    - [ ] **Conflict-Safety:** Implement a "dry-run" merge check to detect potential conflicts before enabling the merge button in the UI. The UI should show a warning if conflicts are found.
 - [ ] Set up proper authentication and user management.
