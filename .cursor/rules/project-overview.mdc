@@ -1,0 +1,17 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Project Overview – Kimonokittens Handbook
+
+The handbook is a Git-backed wiki and economic dashboard for the Kimonokittens collective.
+
+* **Audience**: house-mates and future residents.
+* **Goal**: keep agreements, procedures and finances transparent & easy to update.
+* **Stack**: React (Vite) + Tailwind v4 + Radix UI on the client; Ruby Agoo + Rugged + Postgres on the server.
+* **Auth**: Facebook OAuth via Next-Auth; avatar & first-name shown in UI.
+* **Workflow**: edit-in-place Markdown → proposal stored in `proposals/` → two approvals → auto-merge to `wiki/`.
+* **Real-time**: WebSocket push so pages refresh instantly after merge.
+* **Obsidian**: pull-only sync for those who prefer desktop vaults.
+* **Financial data**: Prisma models (`Tenant`, `RentLedger`) drive dynamic components like `<RentPanel/>` inside MDX pages.

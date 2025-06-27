@@ -1,0 +1,43 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Technical Decisions – Kimonokittens Handbook
+
+This file records **non-obvious architectural choices** so future contributors know the rationale.
+
+1. **Ruby Agoo vs Node/Express**  
+   * Server already runs `json_server.rb`; reusing Agoo keeps one runtime, one SSL config.  
+   * Rugged (libgit2) is best-in-class for low-latency Git writes from Ruby.
+
+2. **React (Vite) front-end even though the public site is Vue**  
+   * The handbook is a *separate SPA* mounted at `/wiki/` and ships its own static bundle.  
+   * React ecosystem (Radix UI, shadcn) gives accessible primitives and TipTap integration.
+
+3. **Tailwind v4 + Radix UI**  
+   * Tailwind utilities enable rapid custom styling while keeping CSS bundle small.  
+   * Radix gives a11y compliant dialogs, popovers, etc., skinnable by Tailwind classes.
+
+4. **Edit-in-place via TipTap**  
+   * Non-tech users stay on the page they read, lowering friction compared to a CMS back-office.
+
+5. **Two-approval merge policy**  
+   * Mirrors collective decision-making: no single person "owns" the wiki.  
+   * Implemented in business logic—not via Git branch protection—so it works offline too.
+
+6. **Facebook OAuth (Next-Auth)**  
+   * Everyone already has FB; avoids password resets.  
+   * First name + avatar personalises copy ("Hej Adam!") without extra profile table.
+
+7. **Prisma ORM over ActiveRecord / Sequel**  
+   * Front-end TypeScript gets auto-generated types for rent data.  
+   * Runs in a `ts-node` CLI in the deploy step; API still Ruby.
+
+8. **Dockerised Postgres in dev, system Postgres in prod**  
+   * Devs can `docker rm -f` to reset data; prod reuses existing DB server managed by `systemd`.
+
+9. **Obsidian-Git pull-only**  
+   * Prevents accidental direct commits that bypass approval workflow.
+
+Changes to these decisions require a new PR with an updated version of this document.
