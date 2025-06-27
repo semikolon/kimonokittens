@@ -50,6 +50,8 @@ The system is comprised of two main parts: the physical voice assistant hardware
 
 To ensure the AI provides accurate answers based *only* on our approved documents, we will use a RAG architecture.
 
+*   **Vector Database:** To minimize operational overhead, we will use **Pinecone**, a fully managed vector database service. The `PINECONE_API_KEY` is already configured in the deployment environment.
+
 1.  **Indexing:** When a document is added or changed in the `handbook/` git repo, a `post-commit` hook triggers an indexing script. This script splits the document into chunks, converts them to vector embeddings, and stores them in a local vector database (e.g., ChromaDB).
 2.  **Retrieval:** When a user asks a question, the system first retrieves the most semantically relevant document chunks from the vector database.
 3.  **Generation:** These relevant chunks are then passed to a Large Language Model (LLM) along with the original question in a carefully crafted prompt, instructing the LLM to formulate an answer based only on the provided context. This grounds the AI's responses in our "single source of truth" and prevents hallucination.
