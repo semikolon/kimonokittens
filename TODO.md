@@ -11,10 +11,10 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 - [x] **(AI)** Create this master plan `TODO.md` to track high-level progress.
 - [x] **(AI)** Update `handbook/docs/agreements.md` with co-ownership details.
 - [ ] **(USER)** Locate existing rent API implementation notes from Mac Mini. *(This is a prerequisite for all financial tasks)*.
-- [ ] **(AI) Task 1.1: Define Prisma Schema**
-    - [ ] Create a new directory: `handbook/prisma`.
-    - [ ] Create a new file: `handbook/prisma/schema.prisma`.
-    - [ ] Edit `handbook/prisma/schema.prisma` and add the following content. This defines the database connection and the models for tenants and co-owned items. The `RentLedger` is commented out as it's blocked.
+- [x] **(AI) Task 1.1: Define Prisma Schema**
+    - [x] Create a new directory: `handbook/prisma`.
+    - [x] Create a new file: `handbook/prisma/schema.prisma`.
+    - [x] Edit `handbook/prisma/schema.prisma` and add the following content. This defines the database connection and the models for tenants and co-owned items. The `RentLedger` is commented out as it's blocked.
       ```prisma
       // This is your Prisma schema file,
       // learn more about it in the docs: https://pris.ly/d/prisma-schema
