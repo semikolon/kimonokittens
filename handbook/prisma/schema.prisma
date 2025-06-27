@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // The connection URL will be provided later
+}
+
+model Tenant {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  avatarUrl    String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  coOwnedItems CoOwnedItem[] @relation("ItemOwners")
+
+  // rentLedger   RentLedger[]
+}
+
+model CoOwnedItem {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  purchaseDate DateTime
+  value        Float // Original value in SEK
+  owners       Tenant[] @relation("ItemOwners")
+}
+
+/*
+// BLOCKED until user provides rent calculation logic
+model RentLedger {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  period      DateTime // e.g., 2025-01-01 for Jan 2025
+  amountDue   Float
+  amountPaid  Float
+  paymentDate DateTime?
+  createdAt   DateTime @default(now())
+}
+*/ 
