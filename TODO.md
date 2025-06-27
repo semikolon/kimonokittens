@@ -281,11 +281,38 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 ---
 
-## Phase 4: Core Logic Implementation
+## Phase 4: Approval Workflow Implementation (UI & Mock Backend)
 
-**Goal:** Connect the scaffolded parts into a working application. This phase requires user input and is not fully automated.
+**Goal:** Build the user interface for proposing and approving changes, backed by a stateful mock API.
+
+- [x] **(AI) Task 4.1: Enhance the Mock Backend to be Stateful**
+    - [x] Edit `handlers/handbook_handler.rb` at the top of the `HandbookHandler` class to initialize: `@proposals = []` and `@next_proposal_id = 1`.
+    - [x] Modify `do_POST` on `/api/handbook/proposals` to parse JSON, create proposal hash with `{ id: @next_proposal_id, title: "Proposal for #{Time.now.strftime('%Y-%m-%d')}", content: parsed_body['content'], approvals: 0 }`, add to array, increment ID, return new proposal as JSON.
+    - [x] Modify `do_GET` on `/api/handbook/proposals` to return the `@proposals` array as JSON.
+    - [x] Add route for `POST /api/handbook/proposals/(\d+)/approve` that finds proposal by ID, increments `:approvals` count, returns updated proposal as JSON.
+- [x] **(AI) Task 4.2: Build Frontend UI for Proposals**
+    - [x] Create `handbook/frontend/src/components/ProposalList.tsx` that fetches from `/api/handbook/proposals`, stores in `useState`, maps over proposals to show title/approval count, has "Approve" button that POSTs to approve endpoint.
+    - [x] Create `handbook/frontend/src/components/Editor.tsx` using TipTap's `useEditor` hook with `StarterKit`, renders `EditToolbar` and `EditorContent`, has "Save Proposal" button that POSTs `editor.getHTML()` to `/api/handbook/proposals`.
+    - [x] Update `handbook/frontend/src/App.tsx` to remove default Vite content, add state for showing WikiPage vs Editor, render ProposalList component always visible.
+
+## Phase 5: AI Query Implementation
+
+**Goal:** Connect the RAG pipeline to a real UI, using a real embedding model and LLM.
+
+- [x] **(AI) Task 5.1: Update RAG Script for Real Embeddings**
+    - [x] Add `ruby-openai` gem to Gemfile and run `bundle install`.
+    - [x] Edit `handbook/scripts/index_documents.rb` to initialize OpenAI client, replace fake embeddings with real API calls to `text-embedding-3-small`, add error handling and rate limiting.
+- [x] **(AI) Task 5.2: Create AI Query Backend Endpoint**
+    - [x] Edit `handlers/handbook_handler.rb` to add route for `POST /api/handbook/query` that: parses question, embeds it, queries Pinecone for top results, constructs prompt with context, calls OpenAI chat completion, returns AI response.
+- [x] **(AI) Task 5.3: Build Frontend UI for AI Queries**
+    - [x] Create `handbook/frontend/src/components/QueryInterface.tsx` with text input, submit button, loading state, displays AI answer.
+    - [x] Update `handbook/frontend/src/App.tsx` to include QueryInterface component.
+
+## Phase 6: Core Logic Implementation
+
+**Goal:** Connect remaining pieces and implement production features.
 
 - [ ] **(USER)** Set up voice assistant hardware (Dell Optiplex, Google Homes).
-- [ ] Implement handbook approval workflow logic.
 - [ ] **(BLOCKED)** Implement financial calculations and link `RentLedger` to the UI.
-- [ ] Implement live AI queries against the RAG pipeline.
+- [ ] Implement Git-backed approval workflow (replace mock with real Git operations).
+- [ ] Set up proper authentication and user management.

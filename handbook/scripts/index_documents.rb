@@ -1,10 +1,11 @@
 require 'pinecone'
+require 'openai'
 require 'dotenv/load'
 
 # Configuration
 PINECONE_INDEX_NAME = 'kimonokittens-handbook'
 DOCS_PATH = File.expand_path('../../docs', __FILE__)
-# Standard dimension for OpenAI's text-embedding-ada-002
+# Standard dimension for OpenAI's text-embedding-3-small
 VECTOR_DIMENSION = 1536 
 
 def init_pinecone
@@ -16,9 +17,47 @@ def init_pinecone
   end
 end
 
+def init_openai
+  OpenAI.configure do |config|
+    config.access_token = ENV.fetch('OPENAI_API_KEY')
+  end
+  OpenAI::Client.new
+end
+
+def get_embedding(client, text)
+  # Rate limiting - be nice to the API
+  sleep(0.1)
+  
+  begin
+    response = client.embeddings(
+      parameters: {
+        model: "text-embedding-3-small",
+        input: text
+      }
+    )
+    
+    response.dig("data", 0, "embedding")
+  rescue => e
+    puts "Error getting embedding for text: #{e.message}"
+    puts "Using fallback fake embedding"
+    # Fallback to fake embedding if API fails
+    Array.new(VECTOR_DIMENSION) { rand(-1.0..1.0) }
+  end
+end
+
 def main
   init_pinecone
   pinecone = Pinecone::Client.new
+  
+  # Initialize OpenAI client
+  begin
+    openai_client = init_openai
+    puts "OpenAI client initialized successfully"
+    use_real_embeddings = true
+  rescue => e
+    puts "Warning: OpenAI not available (#{e.message}). Using fake embeddings."
+    use_real_embeddings = false
+  end
   
   # 1. Create index if it doesn't exist
   begin
@@ -49,16 +88,22 @@ def main
     chunks = content.split("\n\n").reject(&:empty?)
     
     chunks.each_with_index do |chunk, i|
-      # FAKE EMBEDDING: In a real scenario, you would call an embedding API here.
-      # For now, we generate a random vector.
-      fake_embedding = Array.new(VECTOR_DIMENSION) { rand(-1.0..1.0) }
+      # Skip very short chunks
+      next if chunk.strip.length < 50
+      
+      if use_real_embeddings
+        embedding = get_embedding(openai_client, chunk)
+      else
+        # FAKE EMBEDDING: For development/testing
+        embedding = Array.new(VECTOR_DIMENSION) { rand(-1.0..1.0) }
+      end
       
       vectors_to_upsert << {
         id: "#{File.basename(file_path, '.md')}-#{i}",
-        values: fake_embedding,
+        values: embedding,
         metadata: {
           file: File.basename(file_path),
-          text: chunk[0..200] # Store a snippet of the text
+          text: chunk[0..500] # Store more text for better context
         }
       }
     end
@@ -68,6 +113,12 @@ def main
   puts "Upserting #{vectors_to_upsert.length} vectors to Pinecone..."
   index.upsert(vectors: vectors_to_upsert)
   puts "Done!"
+  
+  if use_real_embeddings
+    puts "✅ Used real OpenAI embeddings"
+  else
+    puts "⚠️  Used fake embeddings - set OPENAI_API_KEY to use real ones"
+  end
 end
 
 main if __FILE__ == $0 

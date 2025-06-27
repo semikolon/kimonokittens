@@ -56,7 +56,7 @@ For high-value items, specific, documented co-ownership agreements are required.
 
 -   **Process:** A simple agreement will be drafted and signed by the co-owning parties, then stored digitally within this handbook.
 -   **Current Agreements:**
-    -   **Living Room Speakers (B&W):** Co-owned by Fredrik Bränström & Rasmus. Total value: ~2000 SEK (1000 SEK each).
+    -   **Living Room Speakers (B&W):** Co-owned by Fredrik & Rasmus. Total value: ~2000 SEK (1000 SEK each).
 -   **Items Requiring Agreements:**
     -   **Mesh Wifi System (TP-Link Deco):** Value ~3000 SEK. Current ownership needs to be clarified and documented.
 
