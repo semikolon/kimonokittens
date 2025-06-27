@@ -86,12 +86,15 @@ GEM
       eventmachine (>= 1.0.0.beta.4)
     em-synchrony (1.0.6)
       eventmachine (>= 1.0.0.beta.1)
+    event_stream_parser (1.0.0)
     eventmachine (1.2.7)
     eventmachine_httpserver (0.2.1)
     faraday (2.7.11)
       base64
       faraday-net_http (>= 2.0, < 3.1)
       ruby2_keywords (>= 0.0.4)
+    faraday-multipart (1.1.1)
+      multipart-post (~> 2.0)
     faraday-net_http (3.0.2)
     ferrum (0.14)
       addressable (~> 2.5)
@@ -152,6 +155,7 @@ GEM
     multi_json (1.15.0)
     multi_xml (0.7.2)
       bigdecimal (~> 3.1)
+    multipart-post (2.4.1)
     net-http-digest_auth (1.4.1)
     net-http-persistent (4.0.2)
       connection_pool (~> 2.2)
@@ -185,6 +189,10 @@ GEM
       uber (< 0.2.0)
     retriable (3.1.2)
     rexml (3.2.6)
+    ruby-openai (7.4.0)
+      event_stream_parser (>= 0.3.0, < 2.0.0)
+      faraday (>= 1)
+      faraday-multipart (>= 1)
     ruby2_keywords (0.0.5)
     rubyntlm (0.6.3)
     signet (0.18.0)
@@ -231,6 +239,7 @@ DEPENDENCIES
   pry
   pry-nav
   puffing-billy
+  ruby-openai (~> 7.0)
   table_print
   text
   vessel!
