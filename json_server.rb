@@ -48,6 +48,7 @@ require_relative 'handlers/strava_workouts_handler'
 require_relative 'handlers/bank_buster_handler'
 require_relative 'handlers/rent_and_finances_handler'
 require_relative 'handlers/handbook_handler'
+require_relative 'handlers/auth_handler'
 
 home_page_handler = HomePageHandler.new
 electricity_stats_handler = ElectricityStatsHandler.new
@@ -58,6 +59,7 @@ strava_workouts_handler = StravaWorkoutsHandler.new
 bank_buster_handler = BankBusterHandler.new
 rent_and_finances_handler = RentAndFinancesHandler.new
 handbook_handler = HandbookHandler.new
+auth_handler = AuthHandler.new
 
 Agoo::Server.handle(:GET, "/", home_page_handler)
 
@@ -67,6 +69,10 @@ Agoo::Server.handle(:GET, "/ws", bank_buster_handler)
 # Add Handbook API handlers
 Agoo::Server.handle(:GET, "/api/handbook/*", handbook_handler)
 Agoo::Server.handle(:POST, "/api/handbook/*", handbook_handler)
+
+# Add Authentication API handlers
+Agoo::Server.handle(:POST, "/api/auth/*", auth_handler)
+Agoo::Server.handle(:OPTIONS, "/api/auth/*", auth_handler)
 
 Agoo::Server.handle(:GET, "/*", static_handler)
 
