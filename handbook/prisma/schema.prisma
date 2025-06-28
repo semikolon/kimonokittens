@@ -12,6 +12,7 @@ datasource db {
 
 model Tenant {
   id           String        @id @default(cuid())
+  facebookId   String?       @unique // Facebook user ID for OAuth authentication
   name         String
   email        String        @unique
   avatarUrl    String?
