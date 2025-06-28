@@ -44,33 +44,33 @@ export const ProposalList: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <div className="p-4">Loading proposals...</div>;
+    return <div className="p-6">Loading proposals...</div>;
   }
 
   return (
-    <div className="p-4 border rounded-lg bg-gray-50">
-      <h2 className="text-xl font-bold mb-4">Proposals</h2>
+    <div className="p-6 border rounded-lg bg-purple-50 dark:bg-purple-900 border-purple-200 dark:border-purple-800">
+      <h2 className="text-xl font-bold mb-4 text-purple-900 dark:text-purple-100">Proposals for Review</h2>
       
       {proposals.length === 0 ? (
-        <p className="text-gray-600">No proposals yet.</p>
+        <p className="text-purple-700 dark:text-purple-300">No open proposals.</p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {proposals.map((proposal) => (
-            <div key={proposal.id} className="border p-3 rounded bg-white">
+            <div key={proposal.id} className="border p-4 rounded-md bg-white/50 dark:bg-purple-800/50 border-purple-200 dark:border-purple-700">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <h3 className="font-semibold">{proposal.title}</h3>
-                  <p className="text-sm text-gray-600">Created: {proposal.created_at}</p>
-                  <div className="mt-2 text-sm text-gray-800 prose prose-sm" 
+                  <h3 className="font-semibold text-purple-800 dark:text-purple-200">{proposal.title}</h3>
+                  <p className="text-sm text-purple-600 dark:text-purple-400">Created: {proposal.created_at}</p>
+                  <div className="mt-2 text-sm text-slate-700 dark:text-slate-300 prose prose-sm" 
                        dangerouslySetInnerHTML={{ __html: proposal.content }} />
                 </div>
-                <div className="ml-4 text-center">
-                  <div className="text-lg font-bold text-green-600">
+                <div className="ml-4 text-center flex-shrink-0">
+                  <div className="text-lg font-bold text-orange-600 dark:text-orange-500">
                     {proposal.approvals} approvals
                   </div>
                   <button
                     onClick={() => approveProposal(proposal.id)}
-                    className="mt-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                    className="mt-2 px-3 py-1 bg-orange-500 text-white text-sm font-semibold rounded-md hover:bg-orange-600 transition-colors"
                   >
                     Approve
                   </button>
