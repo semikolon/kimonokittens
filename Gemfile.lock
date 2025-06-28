@@ -250,7 +250,9 @@ DEPENDENCIES
   faraday
   ferrum (~> 0.13)
   google-apis-sheets_v4
+  httparty (~> 0.21)
   json
+  jwt (~> 2.7)
   oj
   ox
   pinecone (~> 1.2)

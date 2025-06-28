@@ -30,3 +30,7 @@ gem 'rack-test', '~> 2.1'
 
 # Git operations for handbook proposals
 gem 'rugged', '~> 1.7'
+
+# Authentication dependencies
+gem 'httparty', '~> 0.21'
+gem 'jwt', '~> 2.7'
