@@ -26,7 +26,7 @@ Agoo::Log.configure(dir: '',
 if ENV['RACK_ENV'] == 'production'
   Agoo::Server.init(6464, 'root', thread_count: 0,
     ssl_cert: "/etc/letsencrypt/live/kimonokittens.com/fullchain.pem",
-    ssl_key: "***REMOVED***",
+    ssl_key: ENV['SSL_KEY_PATH'] || "/etc/letsencrypt/live/kimonokittens.com/privkey.pem",
     bind: ['http://0.0.0.0:6464',
             'https://0.0.0.0:6465',
           ],

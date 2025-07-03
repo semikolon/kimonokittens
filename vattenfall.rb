@@ -1,4 +1,5 @@
 require 'dotenv/load'
+require 'dotenv/load'
 require 'awesome_print'
 require "json"
 require 'ferrum'
@@ -98,7 +99,7 @@ class Vattenfall < Vessel::Cargo
 
     page.headers.set({
       "accept" => 'application/json, text/plain, */*',
-      "ocp-apim-subscription-key" => '***REMOVED***'
+      "ocp-apim-subscription-key" => ENV['AZURE_SUBSCRIPTION_KEY']
     })
     today = Date.today
     if today.month == 1
