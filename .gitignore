@@ -45,3 +45,4 @@ ticktick_todos_long_titles.txt
 cron_log.log
 data/archive/
 tink-accounts.json
+.env
