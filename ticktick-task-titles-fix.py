@@ -2,9 +2,25 @@ from ticktick.oauth2 import OAuth2
 from ticktick.api import TickTickClient
 import re
 import time
+import os
 
-client_id = '84bz7TO6S54molh6Tf'
-client_secret = '***REMOVED***'
+# NOTE: This script references a local data file 'ticktick_todos_long_titles.txt' 
+# that contains private task data and is gitignored. The file exists locally 
+# on the MacBook Pro 2014 where this script was developed.
+
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Load credentials from .env file
+client_id = os.getenv('TICKTICK_CLIENT_ID')
+if not client_id:
+    raise ValueError("TICKTICK_CLIENT_ID not found in .env file")
+
+client_secret = os.getenv('TICKTICK_CLIENT_SECRET') 
+if not client_secret:
+    raise ValueError("TICKTICK_CLIENT_SECRET not found in .env file")
 
 redirect_uri = 'http://localhost'  # Ensure this matches your registered redirect URI
 
@@ -12,8 +28,13 @@ redirect_uri = 'http://localhost'  # Ensure this matches your registered redirec
 auth_client = OAuth2(client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri)
 
 # Initialize the TickTick client with username and password
-username = 'branstrom@gmail.com'
-password = '***REMOVED***'
+username = os.getenv('TICKTICK_USERNAME')
+if not username:
+    raise ValueError("TICKTICK_USERNAME not found in .env file")
+
+password = os.getenv('TICKTICK_PASSWORD')
+if not password:
+    raise ValueError("TICKTICK_PASSWORD not found in .env file")
 
 client = TickTickClient(username=username, password=password, oauth=auth_client)
 
@@ -54,9 +75,20 @@ import requests
 # from ticktick.api import TickTickClient
 import webbrowser
 import json
+import os
+from dotenv import load_dotenv
 
-client_id = '84bz7TO6S54molh6Tf'
-client_secret = '***REMOVED***'
+# Load environment variables from .env file
+load_dotenv()
+
+# Load credentials from .env file
+client_id = os.getenv('TICKTICK_CLIENT_ID')
+if not client_id:
+    raise ValueError("TICKTICK_CLIENT_ID not found in .env file")
+
+client_secret = os.getenv('TICKTICK_CLIENT_SECRET') 
+if not client_secret:
+    raise ValueError("TICKTICK_CLIENT_SECRET not found in .env file")
 
 redirect_uri = 'http://localhost'  # Ensure this matches your registered redirect URI
 
