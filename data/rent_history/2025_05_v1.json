@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "calculation_date": "2025-05-17T20:03:16+02:00",
+    "version": 1,
+    "title": "June 2025 - With Quarterly Invoice",
+    "ruby_version": "3.3.6"
+  },
+  "constants": {
+    "year": 2025,
+    "month": 5,
+    "kallhyra": 24530,
+    "el": 3319.3,
+    "bredband": 380,
+    "saldo_innan": 0,
+    "extra_in": 0
+  },
+  "roommates": {
+    "Fredrik": {},
+    "Rasmus": {},
+    "Elvira": {},
+    "Adam": {}
+  },
+  "final_results": {
+    "Fredrik": 7264,
+    "Rasmus": 7264,
+    "Elvira": 7264,
+    "Adam": 7264
+  }
+}

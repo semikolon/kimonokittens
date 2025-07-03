@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "calculation_date": "2024-12-17T16:03:43+01:00",
+    "version": 2,
+    "title": "November Recalculation with Elvira's Partial Stay",
+    "ruby_version": "3.3.6"
+  },
+  "constants": {
+    "year": 2024,
+    "month": 11,
+    "kallhyra": 24530,
+    "el": 1600,
+    "bredband": 400,
+    "drift_rakning": 2612
+  },
+  "roommates": {
+    "Fredrik": {
+      "days": 30,
+      "room_adjustment": 0
+    },
+    "Rasmus": {
+      "days": 30,
+      "room_adjustment": 0
+    },
+    "Frans-Lukas": {
+      "days": 30,
+      "room_adjustment": 0
+    },
+    "Astrid": {
+      "days": 30,
+      "room_adjustment": -1400
+    },
+    "Malin": {
+      "days": 21,
+      "room_adjustment": 0
+    },
+    "Elvira": {
+      "days": 8,
+      "room_adjustment": 0
+    }
+  },
+  "final_results": {
+    "Fredrik": 6150,
+    "Rasmus": 6150,
+    "Frans-Lukas": 6150,
+    "Astrid": 4750,
+    "Malin": 4305,
+    "Elvira": 1640
+  }
+}
