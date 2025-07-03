@@ -38,6 +38,7 @@ require_relative 'handlers/train_departure_handler'
 require_relative 'handlers/strava_workouts_handler'
 require_relative 'handlers/bank_buster_handler'
 require_relative 'handlers/rent_and_finances_handler'
+require_relative 'handlers/rent_calculator_handler'
 
 home_page_handler = HomePageHandler.new
 electricity_stats_handler = ElectricityStatsHandler.new
@@ -47,6 +48,7 @@ train_departure_handler = TrainDepartureHandler.new
 strava_workouts_handler = StravaWorkoutsHandler.new
 bank_buster_handler = BankBusterHandler.new
 rent_and_finances_handler = RentAndFinancesHandler.new
+rent_calculator_handler = RentCalculatorHandler.new
 
 Agoo::Server.handle(:GET, "/", home_page_handler)
 
@@ -60,7 +62,14 @@ Agoo::Server.handle(:GET, "/data/electricity", electricity_stats_handler)
 Agoo::Server.handle(:GET, "/data/train_departures", train_departure_handler)
 Agoo::Server.handle(:GET, "/data/strava_stats", strava_workouts_handler)
 
-Agoo::Server.handle(:GET, "/data/*", proxy_handler)
+# Add rent calculator endpoints
+Agoo::Server.handle(:GET, "/api/rent", rent_calculator_handler)
+Agoo::Server.handle(:GET, "/api/rent/history", rent_calculator_handler)
+Agoo::Server.handle(:GET, "/api/rent/roommates", rent_calculator_handler)
+Agoo::Server.handle(:POST, "/api/rent", rent_calculator_handler)
+Agoo::Server.handle(:POST, "/api/rent/roommates", rent_calculator_handler)
+Agoo::Server.handle(:PUT, "/api/rent/config", rent_calculator_handler)
 
+Agoo::Server.handle(:GET, "/data/*", proxy_handler)
 
 Agoo::Server.start()

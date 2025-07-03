@@ -19,3 +19,7 @@ gem 'text'
 gem 'google-apis-sheets_v4'
 
 gem "ferrum", "~> 0.13"
+
+gem "rspec", "~> 3.13"
+
+gem "sqlite3", "~> 2.5"

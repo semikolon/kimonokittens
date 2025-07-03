@@ -1,0 +1,6 @@
+require_relative 'rent_calculator/support/test_helpers'
+require_relative 'rent_calculator/config_spec'
+require_relative 'rent_calculator/weight_calculator_spec'
+require_relative 'rent_calculator/adjustment_calculator_spec'
+require_relative 'rent_calculator/calculator_spec'
+require_relative 'rent_calculator/integration_spec' 
