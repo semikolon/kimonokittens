@@ -46,3 +46,7 @@ cron_log.log
 data/archive/
 tink-accounts.json
 .env
+
+/vendor/bundle/
+/.bundle/
+/node_modules/

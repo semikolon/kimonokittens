@@ -8,15 +8,18 @@ This document contains technical implementation details, patterns, and guideline
 
 This section covers the architecture and logic of the Ruby-based rent calculation system. For a high-level overview, see the main [README.md](README.md).
 
-### 1. System Architecture & Components
+### 1. Unified System Architecture
 
-The system is composed of several key components that work together:
+The rent calculation system is being unified with the `handbook` application to create a single, robust service. The new architecture combines the strengths of the original Ruby business logic with a modern, type-safe persistence layer.
 
-*   **`RentCalculator` (`rent.rb`)**: The core engine responsible for all calculations. It takes roommate and cost data as input and produces a detailed breakdown and a user-friendly summary.
-*   **Persistent Storage**: A set of classes that manage the state of the system using the filesystem.
-    *   **`RentHistory` (`lib/rent_history.rb`)**: Manages versioned, historical records of all rent calculations in JSON files. This is the primary mechanism for storing and retrieving past results.
-*   **API Integration (`handlers/rent_calculator_handler.rb`)**: A RESTful API that exposes the calculator's functionality. It's designed to be used by front-end applications, voice assistants, or other scripts.
-    *   **Note**: The original design envisioned `ConfigStore` and `RoommateStore` as separate SQLite-backed libraries. This has been simplified in the current implementation, with configuration being passed directly to the calculator methods. The `RentHistory` module is the primary persistence mechanism.
+The key components are:
+
+*   **React Frontend (`handbook/frontend`)**: A user interface within the handbook for displaying financial data (e.g., `<RentPanel/>`) and allowing for administrative changes.
+*   **Ruby API (`handlers/rent_calculator_handler.rb`)**: The primary API for all rent-related operations. It contains the core calculation logic from `rent.rb` and is responsible for reading from and writing to the database. It's designed to be used by both the React frontend and by LLM-driven tools for natural language updates.
+*   **PostgreSQL Database with Prisma**:
+    *   **Database**: PostgreSQL is the authoritative datastore for all financial records, configuration, and tenant information.
+    *   **Schema**: The database schema is managed by Prisma in `handbook/prisma/schema.prisma`. This provides a single source of truth for our data models (`Tenant`, `RentLedger`, etc.).
+    *   **Client**: Prisma generates a type-safe JavaScript/TypeScript client, used by the frontend build process and any future Node.js scripts.
 
 ### 2. Core Logic & Calculation Model
 
@@ -43,7 +46,20 @@ The rent calculation follows a specific order to ensure fairness and precision.
     -   A remainder-distribution step ensures the sum of the rounded amounts exactly equals the total cost to be paid, preventing öre-level discrepancies.
     -   **Crucial Learning**: The remainder is distributed one öre at a time to the roommates with the largest fractional part in their un-rounded rent. This is fairer than giving it all to the single largest contributor, especially when multiple roommates have identical shares.
 
-### 3. Validation Rules and Safety Checks
+### 3. Data Persistence Model (PostgreSQL + Prisma)
+
+All persistent data for the rent system is stored in a PostgreSQL database, managed by Prisma. This replaces the previous system of JSON files (`RentHistory`) and SQLite databases (`ConfigStore`, `RoommateStore`).
+
+*   **Schema Source of Truth**: `handbook/prisma/schema.prisma` is the canonical source for all data models.
+*   **Primary Models**:
+    *   `Tenant`: Stores information about current and past roommates.
+    *   `RentLedger`: The central table for financial records. Each row represents a specific charge or payment for a tenant for a given period, replacing the old `RentHistory` JSON files.
+*   **Migrations**: Database schema changes are managed through Prisma Migrate. To create a new migration after editing the schema, run `npx prisma migrate dev --name <migration-name>`.
+*   **Data Access**:
+    *   The **Ruby API** will interact with the database directly, likely using the `pg` gem.
+    *   The **React frontend** and other Node.js tools can use the type-safe Prisma Client for data access.
+
+### 4. Validation Rules and Safety Checks
 
 The system includes several validation rules to prevent common errors and ensure data consistency. These are conceptual guards and may not all be implemented as explicit code checks yet.
 
@@ -52,7 +68,7 @@ The system includes several validation rules to prevent common errors and ensure
 *   **Stay Duration**: The number of days for a partial stay cannot exceed the number of days in the given month.
 *   **Data Consistency**: The calculator requires a minimum set of costs (`kallhyra`, `el`, `bredband`) to produce a valid result.
 
-### 4. Specific Business Logic
+### 5. Specific Business Logic
 
 #### Electricity Bill Handling
 
@@ -66,7 +82,7 @@ The system is designed to handle a specific billing cycle for electricity costs:
     4.  **Feb 27**: March rent is due, covering January's electricity costs.
 *   **Special Cases**: If a bill needs to be paid separately (e.g., it's overdue), the `el` cost for that period should be set to `0` in the next rent calculation to avoid double-charging. The special payment arrangement (e.g., Fredrik covering multiple shares) is noted in `docs/electricity_costs.md`.
 
-### 5. API and Usage Examples
+### 6. API and Usage Examples
 
 The primary entry points are `rent_breakdown` (for detailed analysis) and `calculate_and_save` (for generating official records).
 
@@ -97,19 +113,6 @@ RentCalculator.calculate_and_save(
 )
 ```
 
-### 6. RentHistory Persistence Details
-
-*   **Storage**: Files are stored in JSON format at:
-    *   Production: `data/rent_history/YYYY_MM_vN.json`
-    *   Testing: `spec/data/rent_history/YYYY_MM_vN.json`
-*   **Versioning**:
-    *   If no version `N` is provided on save, it auto-increments from the highest existing version for that month.
-    *   Use versions to track significant changes, like a roommate joining mid-month or a major correction.
-    *   Use `force: true` when saving to explicitly overwrite an existing version file.
-*   **Error Handling**: The module raises custom errors for common issues:
-    *   `RentHistory::VersionError` on version conflicts.
-    -   `RentHistory::DirectoryError` on filesystem permission issues.
-
 ### 7. Output Formats
 
 The calculator produces two primary outputs:
@@ -117,7 +120,18 @@ The calculator produces two primary outputs:
 1.  **Detailed Breakdown**: A hash containing a full breakdown of all costs, weights, and the final rent per roommate. This is used for record-keeping in `RentHistory` and for detailed verification.
 2.  **Friendly Message**: A concise, Markdown-formatted string suitable for sharing in a group chat (e.g., Facebook Messenger). It provides a clear summary of who pays what and when it's due.
 
-### 8. Recent Learnings & Key Decisions (July 2025)
+### 8. Migration Plan: Unifying the Systems
+
+We are currently migrating from a dual-system approach (Ruby/SQLite for backend logic, Node/Postgres for frontend concepts) to a single, unified architecture.
+
+The high-level plan is as follows:
+
+1.  **Commit to PostgreSQL and Prisma**: Adopt `schema.prisma` as the single source of truth for data models.
+2.  **Activate Schema**: Uncomment the `RentLedger` model and apply the database migration.
+3.  **Adapt Ruby API**: Modify the Ruby handlers (`rent_calculator_handler.rb`) to read from and write to the PostgreSQL database instead of using the old file-based persistence.
+4.  **Connect Frontend**: Fully implement frontend components like `<RentPanel/>` to consume data from the unified API.
+
+### 9. Recent Learnings & Key Decisions (July 2025)
 
 Our recent work reconstructing the `RentCalculator` yielded several important learnings:
 
@@ -127,13 +141,13 @@ Our recent work reconstructing the `RentCalculator` yielded several important le
 *   **Importance of Committing Untracked Files**: The original loss of the `rent.rb` file was due to it being untracked (`.gitignore`) and overwritten during a merge. This highlights the need to commit even work-in-progress code to a feature branch.
 *   **Clarity over cleverness**: The original `calculate_rent` tried to do too much. It now has a single responsibility: calculate the final, unrounded amounts per roommate. The separate `rent_breakdown` method handles rounding and formatting for presentation.
 
-### 9. Testing Considerations
+### 10. Testing Considerations
 
 1.  **Floating Point Precision**: Use RSpec's `be_within(0.01).of(expected)` for comparing floating-point numbers. Direct equality checks (`eq`) will often fail due to precision limits.
 2.  **Test Data Organization**: Use simple, round numbers (e.g., total rent of 10,000) for basic unit tests and real-world data (like the complex November 2024 scenario) for integration tests to catch nuanced edge cases.
 3.  **RentHistory Testing**: Tests must handle file I/O carefully, creating and cleaning up test-specific data directories and files to avoid polluting real data or failing due to existing state.
 
-### 10. Common Gotchas
+### 11. Common Gotchas
 
 1.  **Drift Calculation**: When a quarterly invoice (`drift_rakning`) is present for a month, it **replaces** the standard monthly fees (`vattenavgift`, `va`, `larm`). The monthly fees are only used if `drift_rakning` is zero or not present.
 2.  **Room Adjustments**: Remember that adjustments are prorated. A -1000 SEK adjustment for someone staying half the month will only result in a -500 SEK reduction in their final rent.

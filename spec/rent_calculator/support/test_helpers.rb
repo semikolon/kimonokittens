@@ -1,9 +1,22 @@
 require 'rspec'
+require 'rack/test'
+require 'dotenv/load'
 require_relative '../../../rent'
+require_relative '../../../lib/rent_db'
+# require_relative '../../support/database_cleaner'
 require_relative '../../../lib/rent_history'
 
 module RentCalculatorSpec
   module TestHelpers
+    include Rack::Test::Methods
+
+    def clean_database
+      # A simple, direct way to clean the database for tests.
+      db = RentDb.instance
+      # TRUNCATE is fast and resets auto-incrementing counters.
+      db.conn.exec('TRUNCATE TABLE "Tenant", "RentConfig", "RentLedger" RESTART IDENTITY;')
+    end
+
     def test_config_with_drift(year: nil, month: nil)
       RentCalculator::Config.new(
         year: year, month: month,
@@ -56,4 +69,10 @@ end
 
 RSpec.configure do |config|
   config.include RentCalculatorSpec::TestHelpers
+
+  config.before(:each) do
+    config.include RentCalculatorSpec::TestHelpers
+    # Call our new cleaning method
+    clean_database
+  end
 end 

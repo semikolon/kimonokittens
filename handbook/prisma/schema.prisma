@@ -20,7 +20,7 @@ model Tenant {
   updatedAt    DateTime      @updatedAt
   coOwnedItems CoOwnedItem[] @relation("ItemOwners")
 
-  // rentLedger   RentLedger[]
+  rentLedger   RentLedger[]
 }
 
 model CoOwnedItem {
@@ -30,6 +30,25 @@ model CoOwnedItem {
   purchaseDate DateTime
   value        Float // Original value in SEK
   owners       Tenant[] @relation("ItemOwners")
+}
+
+model RentLedger {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  period      DateTime // e.g., 2025-01-01 for Jan 2025
+  amountDue   Float
+  amountPaid  Float
+  paymentDate DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model RentConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 /*

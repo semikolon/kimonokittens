@@ -12,24 +12,24 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
     -   [ ] **HandbookHandler:** All 12 specs for `handbook_handler_spec.rb` are failing.
 -   [ ] **Improve Test Coverage:**
     -   [ ] The `if __FILE__ == $0` block in `rent.rb` contains a manual test case. This logic should be moved into a new integration spec in `spec/rent_calculator/` to ensure it's part of the automated test suite.
--   [ ] **(USER)** Locate existing rent API implementation notes from Mac Mini. *(This is a prerequisite for all financial tasks)*.
+-   [x] **(USER)** Locate existing rent API implementation notes from Mac Mini. *(This is a prerequisite for all financial tasks)*
 
 ---
 
-## Phase 1: Foundational Data Structures (Blocked)
+## Phase 1: Foundational Data Structures
 
 **Goal:** Define the core data models for the handbook before any code is written.
 
-- [ ] **(BLOCKED) Task 1.1: Define Prisma Schema**
-    - [ ] Blocked until user provides rent calculation logic notes to finalize `RentLedger`.
+- [ ] **Task 1.1: Define Prisma Schema**
+    - [ ] Finalize `RentLedger` based on the newly merged rent calculation logic.
 
 ---
 
-## Phase 2: Handbook Frontend Scaffolding (Blocked)
+## Phase 2: Handbook Frontend Scaffolding
 
 **Goal:** Create a functional, non-interactive frontend shell with all necessary libraries and components.
 
-- [ ] **(BLOCKED) Task 2.6: Create `<RentPanel/>` component.** This depends on the user's notes.
+- [ ] **Task 2.6: Create `<RentPanel/>` component.** This depends on the user's notes.
 
 ---
 
@@ -238,7 +238,7 @@ g state, displays AI answer.
 **Goal:** Connect remaining pieces and implement production features.
 
 - [ ] **(USER)** Set up voice assistant hardware (Dell Optiplex, Google Homes).
-- [ ] **(BLOCKED)** Implement financial calculations and link `RentLedger` to the UI.
+- [ ] Implement financial calculations and link `RentLedger` to the UI.
 - [ ] **(AI) Task 7.1: Implement Git-Backed Approval Workflow**
     - [ ] Add the `rugged` gem to the `Gemfile` for Git operations from Ruby.
     - [ ] Modify the `HandbookHandler` to create a new branch (e.g., `proposal/some-change`) when a proposal 

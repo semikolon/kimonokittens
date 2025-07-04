@@ -17,6 +17,17 @@ gem 'break'
 gem 'activesupport', '~> 6.1.4'
 gem 'text'
 gem 'google-apis-sheets_v4'
+gem 'sinatra'
+
+# Local rent calculator dependencies
+gem "sqlite3", "~> 2.5"
+
+# Git operations for handbook proposals
+gem 'rugged', '~> 1.7'
+# PostgreSQL database access
+gem 'pg'
+# For generating Prisma-compatible CUIDs
+gem 'cuid'
 
 gem "ferrum", "~> 0.13"
 
@@ -28,12 +39,17 @@ gem 'ruby-openai', '~> 7.0'
 gem 'rspec', '~> 3.13'
 gem 'rack-test', '~> 2.1'
 
-# Git operations for handbook proposals
-gem 'rugged', '~> 1.7'
-
 # Authentication dependencies
 gem 'httparty', '~> 0.21'
 gem 'jwt', '~> 2.7'
 
-# Local rent calculator dependencies
-gem "sqlite3", "~> 2.5"
+group :development, :test do
+  gem 'pry'
+  # gem 'byebug'
+end
+
+group :test do
+  gem 'rspec', '~> 3.13'
+  gem 'rack-test', '~> 2.1'
+  gem 'dotenv-rails'
+end

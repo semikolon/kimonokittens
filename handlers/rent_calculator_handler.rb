@@ -46,7 +46,7 @@
 
 require 'agoo'
 require_relative '../rent'
-require_relative '../lib/rent_history'
+require_relative '../lib/rent_db'
 require 'json'
 
 class RentCalculatorHandler
@@ -85,13 +85,14 @@ class RentCalculatorHandler
     # Parse request body
     body = JSON.parse(req.body.read)
     
-    # Extract data from request
-    config = extract_config(body)
-    roommates = extract_roommates(body)
+    # Fetch current state from the database
+    config = extract_config
+    roommates = extract_roommates(year: config['year'], month: config['month'])
     history_options = extract_history_options(body)
 
     # Calculate rent
     if history_options
+      # TODO: Refactor calculate_and_save to write to RentLedger
       results = RentCalculator.calculate_and_save(
         roommates: roommates,
         config: config,
@@ -113,20 +114,18 @@ class RentCalculatorHandler
   end
 
   def handle_history_request(req)
+    # TODO: Refactor this completely to use RentDb and the RentLedger table.
+    # The new logic will query the RentLedger table for records matching
+    # the given year and month.
+
     query = Rack::Utils.parse_query(req['QUERY_STRING'])
     year = query['year']&.to_i || Time.now.year
     month = query['month']&.to_i || Time.now.month
-    version = query['version']&.to_i
 
-    if version
-      month_data = RentHistory::Month.load(year: year, month: month, version: version)
-      return [404, { 'Content-Type' => 'application/json' }, [{ error: 'Version not found' }.to_json]] unless month_data
-      
-      [200, { 'Content-Type' => 'application/json' }, [month_data_to_json(month_data)]]
-    else
-      versions = RentHistory::Month.versions(year: year, month: month)
-      [200, { 'Content-Type' => 'application/json' }, [{ versions: versions }.to_json]]
-    end
+    # This is a placeholder until the RentDb methods are implemented
+    history_data = RentDb.instance.get_rent_history(year: year, month: month)
+
+    [200, { 'Content-Type' => 'application/json' }, [history_data.to_json]]
   end
 
   def handle_documentation(req)
@@ -244,121 +243,76 @@ class RentCalculatorHandler
   def handle_config_update(req)
     body = JSON.parse(req.body.read)
     updates = body['updates']
-    year = body['year']&.to_i
-    month = body['month']&.to_i
 
+    unless updates.is_a?(Hash)
+      return [400, { 'Content-Type' => 'application/json' }, [{ error: 'The "updates" key must be a JSON object.' }.to_json]]
+    end
+
+    db = RentDb.instance
     updates.each do |key, value|
-      RentCalculator::ConfigStore.instance.set(key, value, year, month)
+      db.set_config(key, value.to_s)
     end
 
-    # Return current config state
-    config = if year && month
-      RentCalculator::ConfigStore.instance.month_config(year, month)
-    else
-      RentCalculator::ConfigStore.instance.current_config
-    end
-
-    [200, { 'Content-Type' => 'application/json' }, [config.to_json]]
+    [200, { 'Content-Type' => 'application/json' }, [{ status: 'success', updated: updates.keys }.to_json]]
   end
 
   def handle_roommate_update(req)
     body = JSON.parse(req.body.read)
     action = body['action']
-    store = RentCalculator::RoommateStore.instance
+    name = body['name']
+
+    db = RentDb.instance
+    response = { status: 'success' }
 
     case action
     when 'add_permanent'
-      store.add_permanent_roommate(
-        body['name'],
-        body['room_adjustment'],
-        Date.parse(body['start_date'] || Date.today.to_s)
-      )
-    when 'set_departure'
-      store.set_departure(
-        body['name'],
-        Date.parse(body['end_date'])
-      )
-    when 'set_temporary'
-      store.set_monthly_stay(
-        body['name'],
-        body['year'],
-        body['month'],
-        days: body['days'],
-        room_adjustment: body['room_adjustment']
-      )
-    when 'update_adjustment'
-      store.update_room_adjustment(
-        body['name'],
-        body['room_adjustment']
-      )
+      # For now, we only support adding a name.
+      # TODO: Add support for email, avatarUrl, etc.
+      new_tenant = db.add_tenant(name: name)
+      response[:new_tenant] = new_tenant
+    # TODO: Implement other actions like 'set_departure', 'set_temporary', etc.
     else
-      return [400, { 'Content-Type' => 'application/json' }, [{ error: 'Invalid action' }.to_json]]
+      return [400, { 'Content-Type' => 'application/json' }, [{ error: "Invalid action: #{action}" }.to_json]]
     end
-
-    # Return current roommate state
-    roommates = if body['year'] && body['month']
-      store.get_roommates(body['year'], body['month'])
-    else
-      store.get_permanent_roommates
-    end
-
-    [200, { 'Content-Type' => 'application/json' }, [roommates.to_json]]
-  end
-
-  def handle_roommate_list(req)
-    query = Rack::Utils.parse_query(req['QUERY_STRING'])
-    year = query['year']&.to_i
-    month = query['month']&.to_i
-    include_history = query['history'] == 'true'
-
-    store = RentCalculator::RoommateStore.instance
-    
-    response = {
-      roommates: if year && month
-        store.get_roommates(year, month)
-      else
-        store.get_permanent_roommates
-      end
-    }
-
-    response[:history] = store.get_changes if include_history
 
     [200, { 'Content-Type' => 'application/json' }, [response.to_json]]
   end
 
-  def extract_config(body)
-    config = body['config'] || {}
+  def handle_roommate_list(req)
+    # TODO: Add support for querying by year/month to handle temporary stays.
+    # For now, this just returns all current tenants.
+    tenants = RentDb.instance.get_tenants
+    [200, { 'Content-Type' => 'application/json' }, [tenants.to_json]]
+  end
+
+  def extract_config
+    db = RentDb.instance
+    # This is a simplified version. A real implementation would fetch all
+    # necessary config keys from the RentConfig table.
     {
-      year: config['year'],
-      month: config['month'],
-      kallhyra: config['kallhyra'],
-      el: config['el'],
-      bredband: config['bredband'],
-      vattenavgift: config['vattenavgift'],
-      va: config['va'],
-      larm: config['larm'],
-      drift_rakning: config['drift_rakning'],
-      saldo_innan: config['saldo_innan'] || 0,
-      extra_in: config['extra_in'] || 0
+      'year' => Time.now.year,
+      'month' => Time.now.month,
+      'kallhyra' => db.get_config('kallhyra')&.to_i || 0,
+      'el' => db.get_config('el')&.to_i || 0,
+      'bredband' => db.get_config('bredband')&.to_i || 0,
+      'drift_rakning' => db.get_config('drift_rakning')&.to_i || 0
+      # etc. for other config values
     }
   end
 
-  def extract_roommates(body)
-    roommates = body['roommates'] || {}
-    roommates.transform_values do |info|
-      info ||= {}  # Handle case where roommate has empty object
-      result = {}
-      
-      # Only include days if specified
-      result[:days] = info['days'] if info['days']
-      
-      # Only include room_adjustment if non-zero
-      if info['room_adjustment'] && info['room_adjustment'] != 0
-        result[:room_adjustment] = info['room_adjustment']
-      end
-      
-      result
+  def extract_roommates(year:, month:)
+    # TODO: This needs to be more sophisticated to handle temporary stays
+    # and adjustments for a specific month. For now, it just gets all tenants.
+    tenants = RentDb.instance.get_tenants
+    
+    # Convert the tenant list into the format expected by RentCalculator
+    roommates = {}
+    tenants.each do |tenant|
+      roommates[tenant['name']] = {
+        # Default to full month, no adjustment
+      }
     end
+    roommates
   end
 
   def extract_history_options(body)

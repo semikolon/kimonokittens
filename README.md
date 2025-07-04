@@ -8,7 +8,7 @@ Active sub-projects:
 |------|---------|
 | `handbook/` | Live wiki & handbook for the kollektiv (React + Ruby Agoo) |
 | `bankbuster/`| Automated downloader & parser for Bankgirot camt.054 reports (Ruby + Vue dashboard) |
-| `rent.rb`   | Core system for calculating and storing roommate rent. |
+| `rent.rb`   | Core logic for the rent calculation system, integrated with the `handbook` backend. |
 
 
 When working in Cursor:
