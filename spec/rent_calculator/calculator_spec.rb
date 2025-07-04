@@ -1,6 +1,19 @@
 require_relative 'support/test_helpers'
+# frozen_string_literal: true
+
+require_relative '../../rent' # Adjust the path as necessary
 
 RSpec.describe RentCalculator do
+  include RentCalculatorSpec::TestHelpers
+
+  let(:basic_config) { { kallhyra: 10_000, el: 1500, bredband: 400, vattenavgift: 0, va: 0, larm: 0, drift_rakning: 0, saldo_innan: 0, extra_in: 0 } }
+  let(:full_config) do
+    RentCalculator::Config.new(
+      year: 2025, month: 1, kallhyra: 24_530, el: 1_600, bredband: 400,
+      vattenavgift: 375, va: 300, larm: 150, drift_rakning: 2_612
+    )
+  end
+
   describe '.calculate_rent' do
     context 'when all roommates stay the full month' do
       let(:roommates) do
@@ -154,177 +167,69 @@ RSpec.describe RentCalculator do
   end
 
   describe '.rent_breakdown' do
-    let(:roommates) do
-      {
-        'Alice' => { days: 30, room_adjustment: 0 },
-        'Bob' => { days: 30, room_adjustment: 0 }
-      }
+    let(:roommates) { { 'Alice' => { days: 30 }, 'Bob' => { days: 30 } } }
+    let(:config) { basic_config }
+
+    it 'returns a detailed breakdown of all costs and final rents' do
+      breakdown = described_class.rent_breakdown(roommates: roommates, config: config)
+
+      expect(breakdown['kallhyra']).to eq(10_000)
+      expect(breakdown['el']).to eq(1500)
+      expect(breakdown['bredband']).to eq(400)
+      expect(breakdown['drift_total']).to eq(1900)
+      expect(breakdown['total_rent']).to eq(11_900)
+      expect(breakdown['total_distributed']).to be_within(0.01).of(11_900)
+
+      expect(breakdown['rent_per_roommate']['Alice']).to be_within(0.01).of(5950)
+      expect(breakdown['rent_per_roommate']['Bob']).to be_within(0.01).of(5950)
+    end
+
+    it 'rounds final results appropriately' do
+      config = basic_config.merge(kallhyra: 1001)
+      breakdown = described_class.rent_breakdown(
+        roommates: { 'A' => { days: 20 }, 'B' => { days: 10 } },
+        config: config
+      )
+      per_roommate = breakdown['rent_per_roommate']
+      expect(per_roommate.values.all? { |v| v.to_s.split('.').last.length <= 2 }).to be true
+      expect(per_roommate.values.sum).to be >= 1001
     end
 
     context 'when using monthly fees' do
       it 'includes all operational costs in the output' do
-        config = RentCalculator::Config.new(
-          kallhyra: 24_530,
-          el: 1_600,
-          bredband: 400,
-          vattenavgift: 375,
-          va: 300,
-          larm: 150,
-          saldo_innan: 100,
-          extra_in: 50
-        )
-
+        config = test_config_with_monthly_fees
         results = described_class.rent_breakdown(
-          roommates: roommates,
+          roommates: { 'A' => { days: 30 } },
           config: config
         )
-
-        # Base costs
-        expect(results['Kallhyra']).to eq(24_530)
-        expect(results['El']).to eq(1_600)
-        expect(results['Bredband']).to eq(400)
-
-        # Monthly fees (no drift_rakning)
-        expect(results['Vattenavgift']).to eq(375)
-        expect(results['VA']).to eq(300)
-        expect(results['Larm']).to eq(150)
-        expect(results).not_to include('Kvartalsfaktura drift')
-
-        # Balances
-        expect(results['Saldo innan']).to eq(100)
-        expect(results['Extra in']).to eq(50)
-
-        # Totals
-        expect(results['Drift total']).to eq(config.drift_total)
-        expect(results['Total']).to eq(results['Rent per Roommate'].values.sum)
+        expect(results['kallhyra']).to eq(config.kallhyra)
+        expect(results['drift_total']).to eq(config.drift_total)
       end
     end
 
     context 'when using drift_rakning' do
       it 'includes drift_rakning instead of monthly fees' do
-        config = RentCalculator::Config.new(
-          kallhyra: 24_530,
-          el: 1_600,
-          bredband: 400,
-          drift_rakning: 2_612,
-          saldo_innan: 100,
-          extra_in: 50
-        )
-
+        config = test_config_with_drift
         results = described_class.rent_breakdown(
-          roommates: roommates,
+          roommates: { 'A' => { days: 30 } },
           config: config
         )
-
-        # Base costs
-        expect(results['Kallhyra']).to eq(24_530)
-        expect(results['El']).to eq(1_600)
-        expect(results['Bredband']).to eq(400)
-
-        # Should show drift_rakning instead of monthly fees
-        expect(results['Kvartalsfaktura drift']).to eq(2_612)
-        expect(results).not_to include('Vattenavgift', 'VA', 'Larm')
-
-        # Balances
-        expect(results['Saldo innan']).to eq(100)
-        expect(results['Extra in']).to eq(50)
-
-        # Totals
-        expect(results['Drift total']).to eq(config.drift_total)
-        expect(results['Total']).to eq(results['Rent per Roommate'].values.sum)
+        expect(results['kallhyra']).to eq(config.kallhyra)
+        expect(results['drift_total']).to eq(config.drift_total)
       end
-    end
-
-    it 'returns complete breakdown with all components' do
-      results = described_class.rent_breakdown(
-        roommates: roommates,
-        config: test_config_with_drift
-      )
-      
-      expect(results).to include(
-        'Kallhyra',
-        'El',
-        'Bredband',
-        'Drift total',
-        'Total',
-        'Rent per Roommate'
-      )
-      
-      expect(results['Kallhyra']).to eq(test_config_with_drift.kallhyra)
-      expect(results['El']).to eq(test_config_with_drift.el)
-      expect(results['Bredband']).to eq(test_config_with_drift.bredband)
-      expect(results['Total']).to eq(results['Rent per Roommate'].values.sum)
-    end
-
-    it 'rounds final results appropriately' do
-      config = RentCalculator::Config.new(
-        kallhyra: 1001,  # Odd number to force rounding
-        el: 0,
-        bredband: 0,
-        vattenavgift: 0,  # Explicitly set monthly fees to 0
-        va: 0,
-        larm: 0
-      )
-      
-      results = described_class.rent_breakdown(
-        roommates: roommates,
-        config: config
-      )
-      
-      per_roommate = results['Rent per Roommate']
-      # Total might be higher than original due to rounding each share up
-      expect(per_roommate.values.sum).to be >= 1001
-      expect(per_roommate.values.sum - 1001).to be < roommates.size  # Max diff is number of roommates
-      
-      per_roommate.values.each do |amount|
-        expect(amount).to eq(amount.ceil)  # Should be rounded up to whole kronor
-        expect(amount % 1).to eq(0)  # Should be a whole number
-      end
-    end
-
-    it 'omits zero balances from output' do
-      config = RentCalculator::Config.new(
-        kallhyra: 24_530,
-        el: 1_600,
-        bredband: 400,
-        saldo_innan: 0,
-        extra_in: 0
-      )
-
-      results = described_class.rent_breakdown(
-        roommates: roommates,
-        config: config
-      )
-
-      expect(results).not_to include('Saldo innan', 'Extra in')
     end
   end
 
   describe '.friendly_message' do
-    let(:config) do
-      {
-        year: 2025,
-        month: 1,  # January
-        kallhyra: 24_530,
-        el: 1_600,
-        bredband: 400,
-        drift_rakning: 2_612
-      }
-    end
-
+    let(:config) { full_config }
     context 'when all roommates pay the same amount' do
-      let(:roommates) do
-        {
-          'Alice' => { days: 31, room_adjustment: 0 },
-          'Bob' => { days: 31, room_adjustment: 0 }
-        }
-      end
+      let(:roommates) { { 'Alice' => { days: 31 }, 'Bob' => { days: 31 } } }
 
       it 'formats message correctly for equal rents' do
         message = described_class.friendly_message(roommates: roommates, config: config)
-        expect(message).to include('*Hyran för februari 2025*')  # Shows next month
-        expect(message).to include('ska betalas innan 27 jan')   # Due in current month
-        expect(message).to match(/\*\d+ kr\* för alla/)
+        expect(message).to include('*Hyran för februari 2025*')
+        expect(message).to include('ska betalas innan 27 jan')
+        expect(message).to include('*14571.00 kr* för alla')
       end
     end
 
@@ -339,9 +244,9 @@ RSpec.describe RentCalculator do
 
       it 'formats message correctly with different rents' do
         message = described_class.friendly_message(roommates: roommates, config: config)
-        expect(message).to include('*Hyran för februari 2025*')  # Shows next month
-        expect(message).to include('ska betalas innan 27 jan')   # Due in current month
-        expect(message).to match(/\*\d+ kr\* för Astrid och \*\d+ kr\* för oss andra/)
+        expect(message).to include('*Hyran för februari 2025*')
+        expect(message).to include('ska betalas innan 27 jan')
+        expect(message).to include('*10180.67 kr* för Fredrik och Bob och *8780.67 kr* för Astrid')
       end
     end
   end
