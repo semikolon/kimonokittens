@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProposalList } from './components/ProposalList';
 import { Editor } from './components/Editor';
 import { WikiPage } from './components/WikiPage';
@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginButton from './components/LoginButton';
 import RentPanel from './components/RentPanel';
 import './App.css';
+import { Toaster } from './components/ui/toaster';
+import useWebSocket from 'react-use-websocket';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState<'wiki' | 'editor'>('wiki');
@@ -43,9 +45,29 @@ function AppContent() {
 }
 
 function App() {
+  const socketUrl = 'ws://localhost:3001/handbook/ws';
+
+  const { lastMessage } = useWebSocket(socketUrl, {
+    onOpen: () => console.log('WebSocket connection established.'),
+    onClose: () => console.log('WebSocket connection closed.'),
+    shouldReconnect: (closeEvent) => true,
+  });
+
+  // Effect to handle incoming messages
+  useEffect(() => {
+    if (lastMessage !== null) {
+      console.log('Received WebSocket message:', lastMessage.data);
+      if (lastMessage.data === 'rent_data_updated' || lastMessage.data === 'handbook_updated') {
+        console.log('Relevant data updated on server. Reloading page...');
+        window.location.reload();
+      }
+    }
+  }, [lastMessage]);
+
   return (
     <AuthProvider>
       <AppContent />
+      <Toaster />
     </AuthProvider>
   );
 }
