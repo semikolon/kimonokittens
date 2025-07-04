@@ -7,6 +7,7 @@ require 'cuid'
 # It replaces the legacy SQLite and file-based persistence mechanisms.
 class RentDb
   include Singleton
+  attr_reader :conn
 
   def initialize
     @conn = PG.connect(ENV.fetch('DATABASE_URL'))
@@ -59,12 +60,13 @@ class RentDb
   def set_config(key, value)
     # Use an UPSERT-like query to either insert a new key or update an existing one.
     query = <<-SQL
-      INSERT INTO "RentConfig" (key, value, "createdAt", "updatedAt")
-      VALUES ($1, $2, NOW(), NOW())
+      INSERT INTO "RentConfig" (id, key, value, "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, NOW(), NOW())
       ON CONFLICT (key) DO UPDATE
-      SET value = $2, "updatedAt" = NOW()
+      SET value = $3, "updatedAt" = NOW()
     SQL
-    @conn.exec_params(query, [key, value])
+    id = Cuid.generate
+    @conn.exec_params(query, [id, key, value])
   end
 
   def add_tenant(name:)

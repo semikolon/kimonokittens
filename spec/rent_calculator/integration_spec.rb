@@ -1,62 +1,58 @@
 require_relative 'support/test_helpers'
+require_relative '../../handlers/rent_calculator_handler'
 
 RSpec.describe 'RentCalculator Integration' do
   let(:db) { RentDb.instance }
 
   describe 'Database-driven workflow' do
     before(:each) do
-      # DatabaseCleaner will handle cleanup
-      db.set_config('kallhyra', '10000')
+      # This test simulates a month WITHOUT a quarterly invoice (drift_rakning)
+      db.set_config('kallhyra', '10001') # Use an odd number to make the total even
       db.set_config('bredband', '400')
       db.set_config('el', '1500')
+      db.set_config('vattenavgift', '375')
+      db.set_config('va', '300')
+      db.set_config('larm', '150')
       
       db.add_tenant(name: 'Alice')
       db.add_tenant(name: 'Bob')
     end
 
     it 'calculates rent using data from the database' do
-      # This test assumes the handler's extract_config and extract_roommates
-      # methods are correctly fetching data from the DB.
-      
-      # TODO: This test is incomplete. We need to actually call the API
-      # endpoint and verify the results. This requires the handler to be
-      # fully refactored.
-      
       config = RentCalculatorHandler.new.send(:extract_config)
       roommates = RentCalculatorHandler.new.send(:extract_roommates, year: 2024, month: 1)
 
-      expect(config['kallhyra']).to eq(10000)
+      expect(config[:kallhyra]).to eq(10001) # Expect the symbol-keyed value
       expect(roommates.keys).to contain_exactly('Alice', 'Bob')
 
       results = RentCalculator.rent_breakdown(roommates: roommates, config: config)
-      expect(results['Total']).to be > 11900
+      
+      # Total = kallhyra + bredband + el + vattenavgift + va + larm
+      expected_total = 10001 + 400 + 1500 + 375 + 300 + 150
+      expect(results['Total']).to be_within(1).of(expected_total)
       expect(results['Rent per Roommate']['Alice']).to eq(results['Rent per Roommate']['Bob'])
     end
   end
 
   describe 'November 2024 scenario' do
     before(:each) do
-      # Set up the specific config for this scenario
+      # This test simulates a month WITH a quarterly invoice (drift_rakning)
+      # The monthly fees (vatten, va, larm) should be ignored in the calculation.
       db.set_config('kallhyra', '24530')
       db.set_config('el', '1600')
       db.set_config('bredband', '400')
-      db.set_config('drift_rakning', '2612')
+      db.set_config('drift_rakning', '2612') # This REPLACES the monthly fees
+      db.set_config('vattenavgift', '9999') # Set to an obviously wrong value to ensure it's ignored
       
-      # Add tenants
       ['Fredrik', 'Rasmus', 'Frans-Lukas', 'Astrid', 'Malin', 'Elvira'].each do |name|
         db.add_tenant(name: name)
       end
     end
 
     it 'calculates November rent correctly using data from the database' do
-      # This is a simplified version of the old test.
-      # A full test would involve setting up temporary stays and adjustments
-      # in the database and verifying the pro-rated calculations.
-      
       config = RentCalculatorHandler.new.send(:extract_config)
       
-      # TODO: The `extract_roommates` method needs to be updated to handle
-      # adjustments and partial stays from the database.
+      # TODO: This still needs to be refactored to handle adjustments from DB
       roommates = {
         'Fredrik' => { days: 30, room_adjustment: 0 },
         'Rasmus' => { days: 30, room_adjustment: 0 },
@@ -68,9 +64,10 @@ RSpec.describe 'RentCalculator Integration' do
 
       results = RentCalculator.rent_breakdown(roommates: roommates, config: config)
       
+      # Total = kallhyra + el + bredband + drift_rakning (monthly fees are ignored)
       total = 24530 + 1600 + 400 + 2612
       
-      expect(results['Total']).to be >= total
+      expect(results['Total']).to be_within(roommates.size).of(total)
       expect(results['Rent per Roommate']['Astrid']).to be < results['Rent per Roommate']['Fredrik']
       expect(results['Rent per Roommate']['Elvira']).to be < results['Rent per Roommate']['Malin']
     end

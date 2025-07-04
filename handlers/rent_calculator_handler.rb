@@ -287,17 +287,22 @@ class RentCalculatorHandler
 
   def extract_config
     db = RentDb.instance
-    # This is a simplified version. A real implementation would fetch all
-    # necessary config keys from the RentConfig table.
-    {
+    # Fetch all necessary config keys from the RentConfig table.
+    config_hash = {
       'year' => Time.now.year,
       'month' => Time.now.month,
       'kallhyra' => db.get_config('kallhyra')&.to_i || 0,
       'el' => db.get_config('el')&.to_i || 0,
       'bredband' => db.get_config('bredband')&.to_i || 0,
-      'drift_rakning' => db.get_config('drift_rakning')&.to_i || 0
-      # etc. for other config values
+      'vattenavgift' => db.get_config('vattenavgift')&.to_i || 0,
+      'va' => db.get_config('va')&.to_i || 0,
+      'larm' => db.get_config('larm')&.to_i || 0,
+      'drift_rakning' => db.get_config('drift_rakning')&.to_i || 0,
+      'saldo_innan' => db.get_config('saldo_innan')&.to_i || 0,
+      'extra_in' => db.get_config('extra_in')&.to_i || 0
     }
+    # The Config class expects symbol keys, but our DB returns string keys.
+    config_hash.transform_keys(&:to_sym)
   end
 
   def extract_roommates(year:, month:)

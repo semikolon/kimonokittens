@@ -14,7 +14,8 @@ module RentCalculatorSpec
       # A simple, direct way to clean the database for tests.
       db = RentDb.instance
       # TRUNCATE is fast and resets auto-incrementing counters.
-      db.conn.exec('TRUNCATE TABLE "Tenant", "RentConfig", "RentLedger" RESTART IDENTITY;')
+      # CASCADE is needed to also truncate related tables (like _ItemOwners).
+      db.conn.exec('TRUNCATE TABLE "Tenant", "RentConfig", "RentLedger" RESTART IDENTITY CASCADE;')
     end
 
     def test_config_with_drift(year: nil, month: nil)
