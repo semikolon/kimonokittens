@@ -145,7 +145,7 @@ Our recent work reconstructing the `RentCalculator` yielded several important le
 
 1.  **Floating Point Precision**: Use RSpec's `be_within(0.01).of(expected)` for comparing floating-point numbers. Direct equality checks (`eq`) will often fail due to precision limits.
 2.  **Test Data Organization**: Use simple, round numbers (e.g., total rent of 10,000) for basic unit tests and real-world data (like the complex November 2024 scenario) for integration tests to catch nuanced edge cases.
-3.  **RentHistory Testing**: Tests must handle file I/O carefully, creating and cleaning up test-specific data directories and files to avoid polluting real data or failing due to existing state.
+3.  **Database Test Cleaning**: When using `TRUNCATE` to clean a PostgreSQL database between tests, foreign key constraints will cause errors. The `TRUNCATE TABLE "MyTable" RESTART IDENTITY CASCADE;` command is essential. `CASCADE` ensures that any tables with a foreign key reference to `"MyTable"` are also truncated, which is necessary when dealing with Prisma's relational tables (e.g., `_ItemOwners`).
 
 ### 11. Common Gotchas
 
@@ -154,37 +154,38 @@ Our recent work reconstructing the `RentCalculator` yielded several important le
 3.  **Data Persistence**: Use versioning in `RentHistory` to track significant changes or different scenarios for a single month.
 4.  **Script-based testing**: The `if __FILE__ == $0` block at the end of `rent.rb` is useful for quick, manual testing. However, any logic or scenario tested there should ideally be moved into a proper RSpec integration test to ensure it runs as part of the automated suite.
 
-### 9. **Obsidian-Git pull-only**  
-   * Prevents accidental direct commits that bypass approval workflow.
+---
 
-Changes to these decisions require a new PR with an updated version of this document.
-
-## Recent Learnings & Gotchas
+## Key Technical Decisions & Learnings
 
 This section captures non-obvious lessons learned during development. Adding to this list after a debugging session is highly encouraged.
 
-*   **Frontend Dependency Conflicts (React 19):** The `react-facebook-login` package is deprecated and incompatible with React 19, causing `npm install` to fail with `ERESOLVE` errors. The fix was to replace it with a modern, maintained alternative (`@greatsumini/react-facebook-login`). This highlights the need to vet older packages when upgrading the core stack.
+1. **Prisma ORM & PostgreSQL for All Financial Data**
+    * **System:** All financial data, including configuration (`RentConfig`) and historical calculations (`RentLedger`), is stored in PostgreSQL and managed via Prisma.
+    * **Replaces:** This unified system replaces a legacy file-based approach that used SQLite for configuration and versioned JSON files (`data/rent_history/`) for calculation history.
+    * **Rationale:**
+        *   **Single Source of Truth:** Consolidates all data into one database, making it easier to manage and backup.
+        *   **Queryability:** Allows for complex queries and data analysis that were impossible with the old system (e.g., historical trends).
+        *   **Frontend Integration:** Auto-generated TypeScript types from Prisma provide type safety for frontend components like `<RentPanel/>` that consume financial data. The API for this is still Ruby.
+        *   **Transactional Integrity:** Ensures that updates to rent data are atomic, reducing risks of corruption.
 
-*   **Ruby `pg` Gem and DATABASE_URL:** The Ruby `pg` gem does not support the `?schema=public` parameter in the `DATABASE_URL` string, which is often added by Prisma. This causes a `PG::Error: invalid URI query parameter` on connection. The parameter must be removed from the `.env` file for the Ruby backend to connect.
+2. **Frontend-Backend Integration (`<RentPanel/>`)**
+    *   **Proxy:** The Vite frontend server (`handbook/frontend`) is configured in `vite.config.ts` to proxy all requests from `/api` to the backend Ruby server running on port `3001`. This allows the frontend to make API calls to its own origin, simplifying development.
+    *   **Data Flow:** The `<RentPanel/>` component fetches data from `/api/rent/history`. The backend `rent_calculator_handler` checks for saved data for the current month. If none exists, it calls `generate_rent_forecast` to create a new forecast on the fly, using historical data and defaults.
+    *   **Key Learning (Data Structure):** The structure of the JSON object returned by the forecast method must exactly match the interface expected by the React component (`RentDetails`). A mismatch here (e.g., `Total` vs `total`) can cause silent failures where data appears as `0` or `null`.
 
-*   **Ruby Hash Keys: String vs. Symbol:** A recurring source of subtle bugs. The `RentCalculator::Config` class expects a hash with **symbol** keys (e.g., `:kallhyra`), as its internal defaults use symbols. When a hash with string keys (often from JSON parsing or, in our case, the API handler) is passed, the `DEFAULTS.merge(params)` operation fails silently, leading to incorrect calculations. Always ensure data passed between application layers (especially to core business logic) has the correct key types. Using `transform_keys(&:to_sym)` is the standard solution.
+3. **Historical Data Correction (`json_server.rb`)**
+    *   **Problem:** The `Tenant` table in the database lacked accurate `startDate` and `departureDate` information, leading to incorrect filtering in the rent forecast.
+    *   **Solution:** A `startDate` column was added via a Prisma migration. A one-time data correction script was added to `json_server.rb` to run on startup, ensuring that the database is always populated with the correct historical timeline for all tenants. This makes the system resilient to database resets during development.
 
-*   **Database Test Cleaning:** When using `TRUNCATE` to clean a PostgreSQL database between tests, foreign key constraints will cause errors. The `TRUNCATE TABLE "MyTable" RESTART IDENTITY CASCADE;` command is essential. `CASCADE` ensures that any tables with a foreign key reference to `"MyTable"` are also truncated, which is necessary when dealing with Prisma's relational tables (e.g., `_ItemOwners`).
+4. **Ruby Hash Keys: String vs. Symbol**
+    *   **Problem:** A recurring source of subtle bugs. The core `RentCalculator` logic often expects hashes with **symbol** keys (e.g., `:kallhyra`), while data parsed from JSON API requests has **string** keys. This can lead to default values not being overridden correctly.
+    *   **Decision:** For any data structure passed from an external source (like an API handler) into core business logic, keys must be consistently transformed. Use `transform_keys(&:to_sym)` or be explicit when accessing values (e.g., `breakdown['Total']`).
 
-6. **Facebook OAuth (Next-Auth)**  
-   * Everyone already has FB; avoids password resets.  
-   * First name + avatar personalises copy ("Hej Adam!") without extra profile table.
+5. **Frontend Dependencies & Environment**
+    *   **React 19 & `react-facebook-login`:** The legacy `react-facebook-login` package is incompatible with React 19. It was replaced with the maintained `@greatsumini/react-facebook-login` fork.
+    *   **Facebook SDK Initialization:** The error `FB.login() called before FB.init()` occurs when the Facebook SDK is not initialized with a valid App ID.
+    *   **Solution:** The App ID must be provided via a `VITE_FACEBOOK_APP_ID` environment variable. For local development, this should be placed in an untracked `handbook/frontend/.env.local` file.
 
-7. **Prisma ORM & PostgreSQL for All Financial Data**  
-   * **System:** All financial data, including configuration (`RentConfig`) and historical calculations (`RentLedger`), is stored in PostgreSQL and managed via Prisma.  
-   * **Replaces:** This unified system replaces a legacy file-based approach that used SQLite for configuration and versioned JSON files (`data/rent_history/`) for calculation history.
-   * **Rationale:**
-     *   **Single Source of Truth:** Consolidates all data into one database, making it easier to manage and backup.
-     *   **Queryability:** Allows for complex queries and data analysis that were impossible with the old system (e.g., historical trends).
-     *   **Frontend Integration:** Auto-generated TypeScript types from Prisma provide type safety for frontend components like `<RentPanel/>` that consume financial data. The API for this is still Ruby.
-     *   **Transactional Integrity:** Ensures that updates to rent data are atomic, reducing risks of corruption.
-
-8. **Dockerised Postgres in dev, system Postgres in prod**  
-   * Devs can `docker rm -f` to reset data; prod reuses existing DB server managed by `systemd`.
-
-Changes to these decisions require a new PR with an updated version of this document. 
+6. **Ruby `pg` Gem and `DATABASE_URL`**
+    *   The Ruby `pg` gem does not support the `?schema=public` parameter in the `DATABASE_URL` string, which is often added by Prisma. This causes a `PG::Error: invalid URI query parameter` on connection. The parameter must be removed from the `.env` file for the Ruby backend to connect.

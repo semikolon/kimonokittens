@@ -11,7 +11,12 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
     -   [ ] **BankBuster:** All 5 specs for `bank_buster_spec.rb` are failing.
     -   [ ] **HandbookHandler:** All 12 specs for `handbook_handler_spec.rb` are failing.
 -   [ ] **Improve Test Coverage:**
+    -   [ ] **Rent Calculator Handler:** Write an RSpec test for `handlers/rent_calculator_handler.rb` to cover the `generate_rent_forecast` logic, including tenant filtering and config defaults.
+    -   [ ] **RentPanel Component:** Write a Vitest/RTL test for `handbook/frontend/src/components/RentPanel.tsx` to verify it renders correctly with mock data.
     -   [ ] The `if __FILE__ == $0` block in `rent.rb` contains a manual test case. This logic should be moved into a new integration spec in `spec/rent_calculator/` to ensure it's part of the automated test suite.
+-   [ ] **(BLOCKED)** **Enable Facebook Login:**
+    -   [ ] **(USER)** Create the Facebook App in the Meta Developer Console to get an App ID.
+    -   [ ] Create a `handbook/frontend/.env.local` file and add the `VITE_FACEBOOK_APP_ID`.
 -   [x] **(USER)** Locate existing rent API implementation notes from Mac Mini. *(This is a prerequisite for all financial tasks)*
 
 ---
@@ -20,8 +25,9 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 **Goal:** Define the core data models for the handbook before any code is written.
 
-- [ ] **Task 1.1: Define Prisma Schema**
-    - [ ] Finalize `RentLedger` based on the newly merged rent calculation logic.
+- [x] **Task 1.1: Define Prisma Schema**
+    - [x] Finalize `RentLedger` based on the newly merged rent calculation logic.
+    - [x] Added `startDate` to `Tenant` model.
 
 ---
 
@@ -29,7 +35,7 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 **Goal:** Create a functional, non-interactive frontend shell with all necessary libraries and components.
 
-- [ ] **Task 2.6: Create `<RentPanel/>` component.** This depends on the user's notes.
+- [x] **Task 2.6: Create `<RentPanel/>` component.**
 
 ---
 

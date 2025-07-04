@@ -16,4 +16,9 @@ This file tracks major completed tasks and project milestones.
     - **Outcome:** All 53 tests for the `RentCalculator` and `RentHistory` systems are now passing. Key bugs related to key symbolization, float vs. integer rounding, remainder distribution, and presentation logic were identified and fixed. The system is now stable.
     *   **Key Learning:** This event underscored the value of a comprehensive test suite and the importance of committing all work, even if incomplete. Technical learnings from this process have been documented in `DEVELOPMENT.md`.
 
-*   **Migrated the core `RentCalculator` backend from a legacy file-based system (SQLite and versioned JSON files) to a unified PostgreSQL database managed by Prisma. This involved a significant refactoring of the API handler and a complete rewrite of the integration test suite to be database-driven.** 
+*   **Migrated the core `RentCalculator` backend from a legacy file-based system (SQLite and versioned JSON files) to a unified PostgreSQL database managed by Prisma. This involved a significant refactoring of the API handler and a complete rewrite of the integration test suite to be database-driven.**
+
+*   **Implemented the `<RentPanel/>` UI and Backend Forecasting (July 5, 2025)**
+    *   **Context:** The application needed a primary user interface to display rent calculations and forecasts.
+    *   **Action:** Developed a new React component (`<RentPanel/>`) to show a detailed rent breakdown. The backend was enhanced to generate on-the-fly forecasts for future months. A data correction script was created to populate historical tenant start and departure dates, ensuring forecast accuracy.
+    *   **Outcome:** The application now has a functional UI for viewing rent data. Numerous frontend (React/Vite) and backend (Ruby/Postgres) integration bugs were resolved, including data type mismatches, key inconsistencies, and environment configuration issues. 
