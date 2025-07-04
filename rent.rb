@@ -293,12 +293,24 @@ module RentCalculator
       # Ensure the sum of rounded rents covers the total
       total_rounded = rounded_rents.values.sum
       total_rent = config.total_rent
-      if total_rounded < total_rent
-        largest_contributor = rounded_rents.max_by { |_k, v| v }[0]
-        rounded_rents[largest_contributor] += (total_rent - total_rounded)
-      elsif total_rounded > total_rent
-        largest_contributor = rounded_rents.max_by { |_k, v| v }[0]
-        rounded_rents[largest_contributor] -= (total_rounded - total_rent)
+      remainder = total_rent - total_rounded
+
+      # Distribute remainder more fairly - prioritize those with higher fractional parts
+      if remainder != 0
+        # Calculate fractional parts for fair distribution
+        fractional_parts = final_rents.map do |name, rent|
+          [name, rent - rent.floor]
+        end.sort_by { |_name, fraction| -fraction }  # Sort by highest fraction first
+        
+        # Distribute remainder starting with highest fractional parts
+        remainder.abs.times do |i|
+          name = fractional_parts[i % fractional_parts.size][0]
+          if remainder > 0
+            rounded_rents[name] += 1
+          else
+            rounded_rents[name] -= 1
+          end
+        end
       end
 
       # Re-round after remainder correction to ensure integers
