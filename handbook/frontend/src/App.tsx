@@ -4,7 +4,8 @@ import { Editor } from './components/Editor';
 import { WikiPage } from './components/WikiPage';
 import { QueryInterface } from './components/QueryInterface';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { LoginButton } from './components/LoginButton';
+import LoginButton from './components/LoginButton';
+import RentPanel from './components/RentPanel';
 import './App.css';
 
 function AppContent() {
@@ -109,6 +110,7 @@ function AppContent() {
             <ProposalList />
           </div>
         </div>
+        <RentPanel />
       </main>
     </div>
   );
