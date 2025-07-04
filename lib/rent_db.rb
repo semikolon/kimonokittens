@@ -1,6 +1,7 @@
 require 'pg'
 require 'singleton'
 require 'cuid'
+require 'date'
 
 # RentDb provides a unified interface to the PostgreSQL database for the
 # Kimonokittens handbook and rent calculation system.
@@ -70,7 +71,7 @@ class RentDb
       )
       SELECT key, value FROM ranked_configs WHERE rn = 1;
     SQL
-    @conn.exec_params(query, [end_of_month.iso8601])
+    @conn.exec_params(query, [end_of_month.strftime('%Y-%m-%dT%H:%M:%S.%3NZ')])
   end
 
   def set_config(key, value, period = Time.now)
@@ -80,7 +81,8 @@ class RentDb
       VALUES ($1, $2, $3, $4, NOW(), NOW())
     SQL
     id = Cuid.generate
-    @conn.exec_params(query, [id, key, value, period.utc.iso8601])
+    @conn.exec_params(query, [id, key, value, period.utc.strftime('%Y-%m-%dT%H:%M:%S.%3NZ')])
+    $pubsub&.publish("rent_data_updated")
   end
 
   def find_tenant_by_facebook_id(facebook_id)
@@ -114,6 +116,7 @@ class RentDb
       WHERE name = $2
     SQL
     @conn.exec_params(query, [date, name])
+    $pubsub&.publish("rent_data_updated")
   end
 
   def set_departure_date(name:, date:)
@@ -123,6 +126,7 @@ class RentDb
       WHERE name = $2
     SQL
     @conn.exec_params(query, [date, name])
+    $pubsub&.publish("rent_data_updated")
   end
 
   def set_room_adjustment(name:, adjustment:)
@@ -132,6 +136,7 @@ class RentDb
       WHERE name = $2
     SQL
     @conn.exec_params(query, [adjustment, name])
+    $pubsub&.publish("rent_data_updated")
   end
 
   private

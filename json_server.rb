@@ -94,9 +94,63 @@ def run_one_time_data_correction
   puts "Data corrections complete."
 end
 
+# --- WebSocket Pub/Sub Manager ---
+# A simple in-memory manager for WebSocket connections.
+class PubSub
+  def initialize
+    @clients = {}
+    @mutex = Mutex.new
+  end
+
+  def subscribe(client)
+    @mutex.synchronize do
+      @clients[client.hash] = client
+    end
+    puts "Client subscribed: #{client.hash}"
+  end
+
+  def unsubscribe(client)
+    @mutex.synchronize do
+      @clients.delete(client.hash)
+    end
+    puts "Client unsubscribed: #{client.hash}"
+  end
+
+  def publish(message)
+    @mutex.synchronize do
+      @clients.values.each do |client|
+        # Agoo's #write is thread-safe
+        client.write(message)
+      end
+    end
+    puts "Published message to #{@clients.size} clients: #{message}"
+  end
+end
+
+$pubsub = PubSub.new
+
+class WsHandler
+  def on_open(client)
+    $pubsub.subscribe(client)
+  end
+
+  def on_close(client)
+    $pubsub.unsubscribe(client)
+  end
+
+  def on_message(client, data)
+    # For now, we just echo back messages for debugging.
+    # The primary flow is server-to-client pushes.
+    client.write("echo: #{data}")
+  end
+end
+
 run_one_time_data_correction()
 
 Agoo::Server.handle(:GET, "/", home_page_handler)
+
+# Add WebSocket handler for the Handbook
+Agoo::Server.handle(:GET, "/handbook/ws", WsHandler.new)
 
 # Add WebSocket handler for BankBuster
 Agoo::Server.handle(:GET, "/ws", bank_buster_handler)
