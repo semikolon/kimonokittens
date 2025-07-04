@@ -3,153 +3,48 @@
 This document provides a detailed, step-by-step implementation plan for the Kimonokittens monorepo projects. It is designed to be executed by an AI assistant with minimal context loss. Execute tasks sequentially unless marked as `(BLOCKED)`.
 
 ---
+## Immediate Tasks & Repository Hygiene
 
-## Phase 1: Foundational Data Structures
+**Goal:** Address outstanding technical debt and improve overall code quality.
 
-**Goal:** Define the core data models for the handbook before any code is written.
-
-- [x] **(AI)** Create this master plan `TODO.md` to track high-level progress.
-- [x] **(AI)** Update `handbook/docs/agreements.md` with co-ownership details.
-- [ ] **(USER)** Locate existing rent API implementation notes from Mac Mini. *(This is a prerequisite for all financial tasks)*.
-- [x] **(AI) Task 1.1: Define Prisma Schema**
-    - [x] Create a new directory: `handbook/prisma`.
-    - [x] Create a new file: `handbook/prisma/schema.prisma`.
-    - [x] Edit `handbook/prisma/schema.prisma` and add the following content. This defines the database connection and the models for tenants and co-owned items. The `RentLedger` is commented out as it's blocked.
-      ```prisma
-      // This is your Prisma schema file,
-      // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-      generator client {
-        provider = "prisma-client-js"
-      }
-
-      datasource db {
-        provider = "postgresql"
-        url      = env("DATABASE_URL") // The connection URL will be provided later
-      }
-
-      model Tenant {
-        id           String        @id @default(cuid())
-        name         String
-        email        String        @unique
-        avatarUrl    String?
-        createdAt    DateTime      @default(now())
-        updatedAt    DateTime      @updatedAt
-        coOwnedItems CoOwnedItem[] @relation("ItemOwners")
-
-        // rentLedger   RentLedger[]
-      }
-
-      model CoOwnedItem {
-        id           String   @id @default(cuid())
-        name         String
-        description  String?
-        purchaseDate DateTime
-        value        Float // Original value in SEK
-        owners       Tenant[] @relation("ItemOwners")
-      }
-
-      /*
-      // BLOCKED until user provides rent calculation logic
-      model RentLedger {
-        id          String   @id @default(cuid())
-        tenantId    String
-        tenant      Tenant   @relation(fields: [tenantId], references: [id])
-        period      DateTime // e.g., 2025-01-01 for Jan 2025
-        amountDue   Float
-        amountPaid  Float
-        paymentDate DateTime?
-        createdAt   DateTime @default(now())
-      }
-      */
-      ```
+-   [ ] **Fix Failing Specs:**
+    -   [ ] **BankBuster:** All 5 specs for `bank_buster_spec.rb` are failing.
+    -   [ ] **HandbookHandler:** All 12 specs for `handbook_handler_spec.rb` are failing.
+-   [ ] **Improve Test Coverage:**
+    -   [ ] The `if __FILE__ == $0` block in `rent.rb` contains a manual test case. This logic should be moved into a new integration spec in `spec/rent_calculator/` to ensure it's part of the automated test suite.
+-   [ ] **(USER)** Locate existing rent API implementation notes from Mac Mini. *(This is a prerequisite for all financial tasks)*.
 
 ---
 
-## Phase 2: Handbook Frontend Scaffolding
+## Phase 1: Foundational Data Structures (Blocked)
+
+**Goal:** Define the core data models for the handbook before any code is written.
+
+- [ ] **(BLOCKED) Task 1.1: Define Prisma Schema**
+    - [ ] Blocked until user provides rent calculation logic notes to finalize `RentLedger`.
+
+---
+
+## Phase 2: Handbook Frontend Scaffolding (Blocked)
 
 **Goal:** Create a functional, non-interactive frontend shell with all necessary libraries and components.
 
-- [x] **(AI) Task 2.1: Initialize Vite Project**
-    - [x] In the terminal, run `cd handbook`.
-    - [x] Run `npm create vite@latest frontend -- --template react-ts`.
-- [x] **(AI) Task 2.2: Install Core Dependencies**
-    - [x] Run `cd frontend`.
-    - [x] Run `npm install`.
-- [x] **(AI) Task 2.3: Set up Tailwind CSS**
-    - [x] Run `npm install -D tailwindcss postcss autoprefixer`.
-    - [x] Run `npx tailwindcss init -p`. This will create `tailwind.config.js` and `postcss.config.js`.
-    - [x] Edit `tailwind.config.js` to add paths to all template files:
-      ```javascript
-      /** @type {import('tailwindcss').Config} */
-      export default {
-        content: [
-          "./index.html",
-          "./src/**/*.{js,ts,jsx,tsx}",
-        ],
-        theme: {
-          extend: {},
-        },
-        plugins: [],
-      }
-      ```
-    - [x] Edit `handbook/frontend/src/index.css` and replace its content with the `@tailwind` directives:
-      ```css
-      @tailwind base;
-      @tailwind components;
-      @tailwind utilities;
-      ```
-- [x] **(AI) Task 2.4: Install UI & Editor Dependencies**
-    - [x] Run `npm install @radix-ui/react-dialog @radix-ui/react-popover`.
-    - [x] Run `npm install @tiptap/react @tiptap/pm @tiptap/starter-kit`.
-- [x] **(AI) Task 2.5: Create Placeholder Components**
-    - [x] Create directory `handbook/frontend/src/components`.
-    - [x] Create `handbook/frontend/src/components/WikiPage.tsx` with this content:
-      ```tsx
-      import React from 'react';
-
-      interface WikiPageProps {
-        title: string;
-        content: string; // This will later be HTML from TipTap
-      }
-
-      export const WikiPage: React.FC<WikiPageProps> = ({ title, content }) => {
-        return (
-          <article className="prose lg:prose-xl">
-            <h1>{title}</h1>
-            <div dangerouslySetInnerHTML={{ __html: content }} />
-          </article>
-        );
-      };
-      ```
-    - [x] Create `handbook/frontend/src/components/EditToolbar.tsx` with this content:
-      ```tsx
-      import React from 'react';
-      import { Editor } from '@tiptap/react';
-
-      interface EditToolbarProps {
-        editor: Editor | null;
-      }
-
-      export const EditToolbar: React.FC<EditToolbarProps> = ({ editor }) => {
-        if (!editor) {
-          return null;
-        }
-
-        return (
-          <div className="border border-gray-300 rounded-t-lg p-2">
-            <button
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              className={editor.isActive('bold') ? 'is-active' : ''}
-            >
-              Bold
-            </button>
-            {/* Add more buttons for italic, headings, etc. */}
-          </div>
-        );
-      };
-      ```
 - [ ] **(BLOCKED) Task 2.6: Create `<RentPanel/>` component.** This depends on the user's notes.
+
+---
+
+## Phase 3-7: Backend, AI, & Core Logic (Pending)
+
+**Goal:** Implement the full approval workflow, AI query pipeline, and other production features.
+
+- [ ] **(AI) Task 7.1: Implement Git-Backed Approval Workflow**
+    - [ ] Add the `rugged` gem to the `Gemfile` for Git operations from Ruby.
+    - [ ] Modify the `HandbookHandler` to create a new branch (e.g., `proposal/some-change`) when a proposal is submitted.
+    - [ ] On approval, use `rugged` to merge the proposal branch into `master`.
+    - [ ] **Conflict-Safety:** Implement a "dry-run" merge check to detect potential conflicts before enabling the merge button in the UI. The UI should show a warning if conflicts are found.
+- [ ] Set up proper authentication and user management.
+- [ ] **(USER)** Set up voice assistant hardware (Dell Optiplex, Google Homes).
+- [ ] And other tasks from the original plan...
 
 ---
 
