@@ -265,36 +265,34 @@ module RentCalculator
         final_rents[name] = base_rent + adjustment
       end
 
-      # For transparency, add detailed breakdown
-      detailed_breakdown = {
-        total_rent: config.total_rent,
-        total_weight: total_weight,
-        rent_per_weight_point: rent_per_weight_point,
-        prorated_adjustments: prorated_adjustments,
-        total_adjustment: total_adjustment,
-        distributable_rent: distributable_rent
-      }
-
-      {
-        final_rents: final_rents,
-        detailed_breakdown: detailed_breakdown
-      }
+      # Return simple hash of roommate names to rent amounts
+      final_rents
     end
 
     # Provides a detailed breakdown of the rent calculation, with final amounts rounded.
     # This method is for display and saving, not for intermediate calculations.
     def rent_breakdown(roommates:, config: {})
       config = Config.new(config) unless config.is_a?(Config)
-      calculation = calculate_rent(roommates: roommates, config: config)
-      final_rents = calculation[:final_rents]
-      detailed_breakdown = calculation[:detailed_breakdown]
+      total_days = config.days_in_month
+
+      # Recalculate the detailed breakdown
+      weight_calculator = WeightCalculator.new(roommates, total_days)
+      weights, total_weight = weight_calculator.calculate
+
+      adjustment_calculator = AdjustmentCalculator.new(roommates, total_days)
+      prorated_adjustments, total_adjustment = adjustment_calculator.calculate
+
+      distributable_rent = config.total_rent - total_adjustment
+      rent_per_weight_point = distributable_rent / total_weight
+
+      final_rents = calculate_rent(roommates: roommates, config: config)
 
       # Round only the final rent amounts for display (integer kronor)
       rounded_rents = final_rents.transform_values { |rent| rent.round }
 
       # Ensure the sum of rounded rents covers the total
       total_rounded = rounded_rents.values.sum
-      total_rent = detailed_breakdown[:total_rent]
+      total_rent = config.total_rent
       if total_rounded < total_rent
         largest_contributor = rounded_rents.max_by { |_k, v| v }[0]
         rounded_rents[largest_contributor] += (total_rent - total_rounded)
@@ -303,19 +301,49 @@ module RentCalculator
         rounded_rents[largest_contributor] -= (total_rounded - total_rent)
       end
 
-      {
-        config: config.to_h,
-        rents: rounded_rents.transform_values { |rent| rent.round }, # Round again after correction
-        total_rent: total_rent,
-        total_paid: rounded_rents.values.sum.round(2),
-        calculation_details: {
-          total_weight: detailed_breakdown[:total_weight].round(4),
-          rent_per_weight_point: detailed_breakdown[:rent_per_weight_point].round(2),
-          prorated_adjustments: detailed_breakdown[:prorated_adjustments].transform_values { |adj| adj.round(2) },
-          total_adjustment: detailed_breakdown[:total_adjustment].round(2),
-          distributable_rent: detailed_breakdown[:distributable_rent].round(2)
-        }
+      # Re-round after remainder correction to ensure integers
+      rounded_rents.transform_values!(&:round)
+
+      # Build the breakdown with string keys for compatibility with tests
+      result = {
+        'Kallhyra' => config.kallhyra,
+        'El' => config.el,
+        'Bredband' => config.bredband,
+        'Drift total' => config.drift_total,
+        'Total' => total_rent,
+        'Rent per Roommate' => rounded_rents
       }
+
+      # Add individual cost components based on config
+      if config.drift_rakning && config.drift_rakning > 0
+        result['Kvartalsfaktura drift'] = config.drift_rakning
+      else
+        result['Vattenavgift'] = config.vattenavgift
+        result['VA'] = config.va
+        result['Larm'] = config.larm
+      end
+
+      # Add balances if non-zero
+      result['Saldo innan'] = config.saldo_innan if config.saldo_innan != 0
+      result['Extra in'] = config.extra_in if config.extra_in != 0
+
+      # Add detailed calculation info
+      result.merge!({
+        config: config.to_h,
+        rents: rounded_rents,
+        total_rent: total_rent,
+        total_paid: rounded_rents.values.sum,
+        calculation_details: {
+          total_weight: total_weight.round(4),
+          rent_per_weight_point: rent_per_weight_point.round(2),
+          prorated_adjustments: prorated_adjustments.transform_values { |adj| adj.round(2) },
+          total_adjustment: total_adjustment.round(2),
+          distributable_rent: distributable_rent.round(2)
+        }
+      })
+
+      # Ensure returned hash uses string keys
+      result.transform_keys(&:to_s)
     end
 
     # Calculates and saves the rent for a given month to a JSON file.
@@ -333,7 +361,8 @@ module RentCalculator
 
       history.constants = config.to_h
       history.roommates = roommates
-      history.record_results(breakdown)
+      # Record only the roommate amounts, not the entire breakdown
+      history.record_results(breakdown['Rent per Roommate'])
       history.save(force: history_options.fetch(:force, false))
 
       breakdown
@@ -343,21 +372,43 @@ module RentCalculator
     def friendly_message(roommates:, config: {})
       config = Config.new(config) unless config.is_a?(Config)
       breakdown = rent_breakdown(roommates: roommates, config: config)
-      rents = breakdown[:rents]
+      rents = breakdown['Rent per Roommate']
 
-      month_name = Helpers.swedish_month_name(config.month)
-      due_month_index = config.month - 1 <= 0 ? 12 : config.month - 1
-      due_month_abbr = Helpers.swedish_month_abbr(due_month_index)
-      header = "*Hyra för #{month_name} #{config.year}* – betalas innan 27 #{due_month_abbr}"
+      # The message shows the NEXT month (what we're paying for)
+      # Since rent is paid in advance, January rent is paid in December
+      next_month = config.month == 12 ? 1 : config.month + 1
+      next_year = config.month == 12 ? config.year + 1 : config.year
+      month_name = Helpers.swedish_month_name(next_month)
+      
+      # Due date is 27th of the current month (before the rent month)
+      due_abbr = Helpers.swedish_month_abbr(config.month)
+      header = "*Hyran för #{month_name} #{next_year}* ska betalas innan 27 #{due_abbr}"
 
       grouped = rents.group_by { |_n, amt| amt }
 
       if grouped.size == 1
-        amount = grouped.keys.first.round
-        return "#{header}\nAlla betalar #{amount} kr den här månaden."
+        amount = grouped.keys.first
+        return "#{header}\n*#{amount} kr* för alla"
       end
 
-      message_lines = rents.map { |name, amt| "#{name}: #{amt.round} kr" }
+      # Handle different amounts - check if it's a simple discount case
+      sorted_amounts = grouped.keys.sort
+      if sorted_amounts.size == 2
+        lower_amount = sorted_amounts[0]
+        higher_amount = sorted_amounts[1]
+        
+        lower_people = grouped[lower_amount].map(&:first)
+        higher_people = grouped[higher_amount].map(&:first)
+        
+        # Check if it's exactly one person with discount vs others
+        if lower_people.size == 1 && higher_people.size >= 1
+          discounted_person = lower_people.first
+          return "#{header}\n*#{lower_amount} kr* för #{discounted_person} och *#{higher_amount} kr* för oss andra"
+        end
+      end
+
+      # Fallback to individual listing
+      message_lines = rents.map { |name, amt| "#{name}: #{amt} kr" }
       "#{header}\n\n#{message_lines.join("\n")}"
     end
   end
