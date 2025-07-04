@@ -25,11 +25,11 @@ RSpec.describe 'RentCalculator Integration' do
     end
 
     before(:each) do
-      # Create data directory
-      data_dir = File.join(File.dirname(__FILE__), '..', '..', 'data', 'rent_history')
+      # Create data directory inside the spec folder for test artifacts
+      data_dir = File.join(File.dirname(__FILE__), '..', 'data', 'rent_history')
       FileUtils.mkdir_p(data_dir)
 
-      # Clean up any existing test files
+      # Clean up any existing test files from the spec/data directory
       [
         "#{test_year}_#{test_month.to_s.rjust(2, '0')}*.json",  # March test files
         "2024_11*.json"  # November test files
@@ -39,8 +39,8 @@ RSpec.describe 'RentCalculator Integration' do
     end
 
     after(:each) do
-      # Clean up test files
-      data_dir = File.join(File.dirname(__FILE__), '..', '..', 'data', 'rent_history')
+      # Clean up test files from the spec/data directory
+      data_dir = File.join(File.dirname(__FILE__), '..', 'data', 'rent_history')
       [
         "#{test_year}_#{test_month.to_s.rjust(2, '0')}*.json",  # March test files
         "2024_11*.json"  # November test files
@@ -55,7 +55,8 @@ RSpec.describe 'RentCalculator Integration' do
         config: test_config,
         history_options: {
           version: 1,
-          title: "Integration Test"
+          title: "Integration Test",
+          test_mode: true
         }
       )
 
@@ -67,7 +68,8 @@ RSpec.describe 'RentCalculator Integration' do
       month = RentHistory::Month.load(
         year: test_year,
         month: test_month,
-        version: 1
+        version: 1,
+        test_mode: true
       )
 
       expect(month.year).to eq(test_year)
@@ -85,7 +87,8 @@ RSpec.describe 'RentCalculator Integration' do
         config: test_config,
         history_options: {
           version: 1,
-          title: "First Version"
+          title: "First Version",
+          test_mode: true
         }
       )
 
@@ -95,7 +98,8 @@ RSpec.describe 'RentCalculator Integration' do
           config: test_config,
           history_options: {
             version: 1,
-            title: "Duplicate Version"
+            title: "Duplicate Version",
+            test_mode: true
           }
         )
       }.to raise_error(RentHistory::VersionError)
@@ -155,11 +159,12 @@ RSpec.describe 'RentCalculator Integration' do
         config: november_config,
         history_options: {
           version: 2,
-          title: "November Recalculation with Elvira's Partial Stay"
+          title: "November Recalculation with Elvira's Partial Stay",
+          test_mode: true
         }
       )
 
-      month = RentHistory::Month.load(year: 2024, month: 11, version: 2)
+      month = RentHistory::Month.load(year: 2024, month: 11, version: 2, test_mode: true)
       expect(month.final_results).to eq(results['Rent per Roommate'])
       
       total_rent = november_config[:kallhyra] + 
