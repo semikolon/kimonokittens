@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 
 interface RentData {
-  // Define the structure of the rent data we expect from the API
-  // This is a placeholder and should be updated to match the actual API response
-  total: number;
-  rentPerRoommate: { [name: string]: number };
+  Total: number;
+  'Rent per Roommate': { [name: string]: number };
 }
 
 const RentPanel: React.FC = () => {
@@ -15,24 +14,19 @@ const RentPanel: React.FC = () => {
   useEffect(() => {
     const fetchRentData = async () => {
       try {
-        // We'll fetch the latest for the current month.
-        // The handler currently fetches all history for a month, so we'll take the last entry.
         const response = await fetch('/api/rent/history');
         if (!response.ok) {
-          throw new Error('Failed to fetch rent data');
+          const errorText = await response.text();
+          console.error('Failed to fetch rent data:', errorText);
+          throw new Error(`Network response was not ok: ${response.statusText}`);
         }
         const data = await response.json();
         
-        // Assuming the API returns an array of calculations for the month,
-        // we'll take the most recent one.
         if (data && data.length > 0) {
-          // This assumes the last entry is the most recent, which our handler provides.
-          // The structure of this object needs to match what the Ruby API sends.
-          // We'll need to adjust this after seeing a real response.
-          const latestCalculation = data[data.length - 1];
-          setRentData(latestCalculation.final_results); // Placeholder for actual structure
+          setRentData(data[data.length - 1].final_results);
+        } else {
+          setRentData(null); // No data available
         }
-
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
       } finally {
@@ -44,36 +38,56 @@ const RentPanel: React.FC = () => {
   }, []);
 
   if (isLoading) {
-    return <div className="p-4 bg-gray-100 rounded-lg">Loading rent data...</div>;
+    return (
+      <div className="p-6 bg-white rounded-xl shadow-md flex items-center justify-center h-64">
+        <p className="text-slate-500">Loading rent data...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-4 bg-red-100 text-red-700 rounded-lg">Error: {error}</div>;
+    return (
+      <div className="p-6 bg-red-50 text-red-700 rounded-xl shadow-md">
+        <div className="flex items-center gap-3">
+          <AlertCircle className="h-6 w-6" />
+          <h3 className="text-lg font-semibold">Error Loading Rent Data</h3>
+        </div>
+        <p className="mt-2 text-sm">{error}</p>
+      </div>
+    );
   }
 
   if (!rentData) {
-    return <div className="p-4 bg-gray-100 rounded-lg">No rent data available for this month.</div>;
+    return (
+      <div className="p-6 bg-white rounded-xl shadow-md">
+        <h3 className="text-lg font-semibold text-slate-800">Monthly Rent Summary</h3>
+        <p className="mt-2 text-slate-500">No rent data is available for the current period.</p>
+      </div>
+    );
   }
 
   return (
     <div className="p-6 bg-white rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">Monthly Rent Summary</h2>
-      <div className="space-y-4">
-        <div className="flex justify-between items-center text-lg">
-          <span className="text-gray-600">Total Rent:</span>
-          <span className="font-semibold text-gray-900">{rentData.total.toLocaleString()} kr</span>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold mb-2 text-gray-700">Rent per Roommate:</h3>
-          <ul className="space-y-2">
-            {Object.entries(rentData.rentPerRoommate).map(([name, amount]) => (
-              <li key={name} className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
-                <span>{name}</span>
-                <span className="font-mono text-gray-800">{amount.toLocaleString()} kr</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div className="flex justify-between items-start mb-4">
+        <h2 className="text-xl font-bold text-slate-800">Monthly Rent Summary</h2>
+        <span className="text-sm font-medium text-slate-500">July 2025</span>
+      </div>
+      
+      <div className="mb-6">
+        <p className="text-sm text-slate-500 mb-1">Total Rent</p>
+        <p className="text-4xl font-extrabold text-slate-900">{rentData.Total.toLocaleString('sv-SE')} kr</p>
+      </div>
+
+      <div>
+        <h3 className="text-md font-semibold mb-3 text-slate-700">Rent per Roommate</h3>
+        <ul className="space-y-3">
+          {Object.entries(rentData['Rent per Roommate']).map(([name, amount]) => (
+            <li key={name} className="flex justify-between items-center bg-slate-50 p-4 rounded-lg">
+              <span className="font-medium text-slate-800">{name}</span>
+              <span className="font-mono text-slate-900 font-semibold">{amount.toLocaleString('sv-SE')} kr</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
