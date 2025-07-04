@@ -106,4 +106,4 @@ Your final task is to ensure the application is still robust by updating the tes
 2.  **Frontend Tests (`handbook/frontend/src/**/*.test.tsx`):**
     *   The `fetch` mocks in the tests need to be updated to reflect the new API responses.
     *   Proposal IDs in mock data should now look like Git branch names.
-    *   Add a test case for how `ProposalList.tsx` renders a proposal that has a merge conflict. 
+    *   Add a test case for how `ProposalList.tsx` renders a proposal that has a merge conflict.

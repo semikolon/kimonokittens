@@ -101,18 +101,18 @@ class PubSub
     @mutex = Mutex.new
   end
 
-  def subscribe(client)
+  def subscribe(con_id, client)
     @mutex.synchronize do
-      @clients[client.hash] = client
+      @clients[con_id] = client
     end
-    puts "Client subscribed: #{client.hash}"
+    puts "Client subscribed with con_id: #{con_id}"
   end
 
-  def unsubscribe(client)
+  def unsubscribe(con_id)
     @mutex.synchronize do
-      @clients.delete(client.hash)
+      @clients.delete(con_id)
     end
-    puts "Client unsubscribed: #{client.hash}"
+    puts "Client unsubscribed with con_id: #{con_id}"
   end
 
   def publish(message)
@@ -129,37 +129,32 @@ end
 $pubsub = PubSub.new
 
 class WsHandler
-  def call(env)
-    return unless env['rack.upgrade?'] == :websocket
-
-    io = env['rack.hijack'].call
-    ws = Agoo::Upgraded.new(io, self)
-    ws.each do |msg|
-      handle_message(ws, msg)
-    end
+  # Called once when the WebSocket connection is established.
+  def on_open(client)
+    @con_id = client.con_id
+    $pubsub.subscribe(@con_id, client)
   end
 
-  def on_open(upgraded)
-    $pubsub.subscribe(upgraded)
-    puts "WebSocket connection opened"
+  # Called when the connection is closed.
+  def on_close(client)
+    $pubsub.unsubscribe(@con_id) if @con_id
   end
 
-  def on_close(upgraded)
-    $pubsub.unsubscribe(upgraded)
-    puts "WebSocket connection closed"
-  end
-
-  def on_message(upgraded, msg)
-    puts "Received WebSocket message: #{msg}"
+  # Called when a message is received from the client.
+  def on_message(client, msg)
+    puts "Received WebSocket message from #{@con_id}: #{msg}"
     # Echo back messages for debugging
-    upgraded.write("echo: #{msg}")
+    client.write("echo: #{msg}")
   end
 
-  private
-
-  def handle_message(ws, msg)
-    # Handle incoming messages
-    on_message(ws, msg)
+  # This method is required by Agoo for handling the initial HTTP upgrade request.
+  # We leave it empty because the on_* callbacks handle the logic.
+  def call(env)
+    # The 'rack.upgrade' check is implicitly handled by Agoo when assigning
+    # a handler to a route, so we don't need to check for it here.
+    # The return value of [0, {}, []] is a valid empty Rack response,
+    # though it's not strictly used after the upgrade.
+    [0, {}, []]
   end
 end
 

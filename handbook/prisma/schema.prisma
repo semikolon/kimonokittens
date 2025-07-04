@@ -17,7 +17,7 @@ model Tenant {
   facebookId     String?     @unique
   avatarUrl      String?
   roomAdjustment Float?
-  startDate      DateTime?
+  startDate      DateTime?   // Add the missing start date
   departureDate  DateTime?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt

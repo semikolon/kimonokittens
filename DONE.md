@@ -22,3 +22,8 @@ This file tracks major completed tasks and project milestones.
     *   **Context:** The application needed a primary user interface to display rent calculations and forecasts.
     *   **Action:** Developed a new React component (`<RentPanel/>`) to show a detailed rent breakdown. The backend was enhanced to generate on-the-fly forecasts for future months. A data correction script was created to populate historical tenant start and departure dates, ensuring forecast accuracy.
     *   **Outcome:** The application now has a functional UI for viewing rent data. Numerous frontend (React/Vite) and backend (Ruby/Postgres) integration bugs were resolved, including data type mismatches, key inconsistencies, and environment configuration issues. 
+
+*   **Implemented Real-Time Updates for the Rent Panel (July 5, 2025)**
+    *   **Context:** The `<RentPanel/>` needed to reflect database changes instantly without requiring a manual page refresh.
+    *   **Action:** A full-stack WebSocket system was implemented. The Ruby backend now broadcasts a `rent_data_updated` message whenever financial data is changed. The React frontend listens for this message and automatically reloads the page.
+    *   **Outcome:** The user experience is now seamless and reactive. All API and WebSocket proxy issues in the Vite development environment were resolved, and the backend server was stabilized by fixing several gem dependency conflicts. 
