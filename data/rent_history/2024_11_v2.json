@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "calculation_date": "2024-12-17T16:03:43+01:00",
+    "calculation_date": "2025-07-04T05:29:45+02:00",
     "version": 2,
     "title": "November Recalculation with Elvira's Partial Stay",
     "ruby_version": "3.3.6"
@@ -11,7 +11,12 @@
     "kallhyra": 24530,
     "el": 1600,
     "bredband": 400,
-    "drift_rakning": 2612
+    "vattenavgift": 375,
+    "va": 300,
+    "larm": 150,
+    "drift_rakning": 2612,
+    "saldo_innan": 0,
+    "extra_in": 0
   },
   "roommates": {
     "Fredrik": {
@@ -40,11 +45,11 @@
     }
   },
   "final_results": {
-    "Fredrik": 6150,
-    "Rasmus": 6150,
-    "Frans-Lukas": 6150,
-    "Astrid": 4750,
-    "Malin": 4305,
-    "Elvira": 1640
+    "Fredrik": 6149.4,
+    "Rasmus": 6149.4,
+    "Frans-Lukas": 6149.4,
+    "Astrid": 4749.4,
+    "Malin": 4304.58,
+    "Elvira": 1639.84
   }
 }

@@ -1,6 +1,6 @@
 require 'rspec'
 require 'rspec/mocks'
-require 'bank_buster'
+require_relative '../bank_buster'
 
 # The tests will now include some typical happy path scenarios
 

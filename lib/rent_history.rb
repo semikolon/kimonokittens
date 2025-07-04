@@ -169,7 +169,7 @@ module RentHistory
       instance.instance_variable_set(:@metadata, data['metadata'])
       instance.instance_variable_set(:@constants, symbolize_keys(data['constants']))
       instance.instance_variable_set(:@roommates, transform_roommates(data['roommates']))
-      instance.instance_variable_set(:@final_results, data['final_results'])
+      instance.instance_variable_set(:@final_results, symbolize_keys(data['final_results']))
       instance.instance_variable_set(:@version, data['metadata']['version'])
       instance.title = data['metadata']['title']
       instance

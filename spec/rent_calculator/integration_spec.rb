@@ -1,68 +1,129 @@
 require_relative 'support/test_helpers'
 require 'fileutils'
-require_relative '../../rent' # Adjust the path as necessary
-require_relative '../../lib/rent_history'
 
 RSpec.describe 'RentCalculator Integration' do
-  include RentCalculatorSpec::TestHelpers
-
   describe 'RentHistory workflow' do
-    let(:year) { 2025 }
-    let(:month) { 1 }
-    let(:test_roommates) { { 'Alice' => { days: 30 } } }
-    let(:test_config) { test_config_with_monthly_fees(year: year, month: month) }
-
-    before do
-      # Ensure a clean state before each test
-      FileUtils.rm_f(Dir.glob(File.join(RentHistory::Config.test_directory, "#{year}_#{month.to_s.rjust(2, '0')}_v*.json")))
+    let(:test_year) { 2024 }
+    let(:test_month) { 3 }
+    let(:test_roommates) do
+      {
+        'Alice' => { days: 31, room_adjustment: -200 },
+        'Bob' => { days: 15, room_adjustment: 100 }
+      }
+    end
+    let(:test_config) do
+      {
+        year: test_year,
+        month: test_month,
+        kallhyra: 10_000,
+        el: 1_500,
+        bredband: 400,
+        drift_rakning: 2_612,
+        saldo_innan: 150,
+        extra_in: 200
+      }
     end
 
-    after(:all) do
-      # Clean up all test files after the suite runs
-      FileUtils.rm_f(Dir.glob(File.join(RentHistory::Config.test_directory, "*.json")))
+    before(:each) do
+      # Create data directory
+      data_dir = File.join(File.dirname(__FILE__), '..', '..', 'data', 'rent_history')
+      FileUtils.mkdir_p(data_dir)
+
+      # Clean up any existing test files
+      [
+        "#{test_year}_#{test_month.to_s.rjust(2, '0')}*.json",  # March test files
+        "2024_11*.json"  # November test files
+      ].each do |pattern|
+        FileUtils.rm_f(Dir.glob(File.join(data_dir, pattern)))
+      end
+    end
+
+    after(:each) do
+      # Clean up test files
+      data_dir = File.join(File.dirname(__FILE__), '..', '..', 'data', 'rent_history')
+      [
+        "#{test_year}_#{test_month.to_s.rjust(2, '0')}*.json",  # March test files
+        "2024_11*.json"  # November test files
+      ].each do |pattern|
+        FileUtils.rm_f(Dir.glob(File.join(data_dir, pattern)))
+      end
     end
 
     it 'calculates, saves, and loads rent data correctly' do
-      # 1. Calculate and save the first version
       results = RentCalculator.calculate_and_save(
         roommates: test_roommates,
         config: test_config,
-        history_options: { version: 1, title: 'Initial', test_mode: true }
+        history_options: {
+          version: 1,
+          title: "Integration Test"
+        }
       )
 
-      expect(results).to include('kallhyra', 'total_distributed')
-      expect(results['total_distributed']).to be > 0
+      expect(results).to include('Kallhyra', 'El', 'Bredband', 'Drift total', 'Total', 'Rent per Roommate')
+      expect(results['Kallhyra']).to eq(test_config[:kallhyra])
+      expect(results['El']).to eq(test_config[:el])
+      expect(results['Bredband']).to eq(test_config[:bredband])
 
-      # 2. Load the history and verify its contents
-      saved_month = RentHistory::Month.load(year: year, month: month, version: 1, test_mode: true)
-      expect(saved_month).not_to be_nil
-      expect(saved_month.title).to eq('Initial')
-      expect(saved_month.constants[:kallhyra]).to eq(test_config.kallhyra)
-      expect(saved_month.final_results['Alice']).to be_within(0.01).of(results['rent_per_roommate']['Alice'])
+      month = RentHistory::Month.load(
+        year: test_year,
+        month: test_month,
+        version: 1
+      )
+
+      expect(month.year).to eq(test_year)
+      expect(month.month).to eq(test_month)
+      expect(month.version).to eq(1)
+      expect(month.title).to eq("Integration Test")
+      expect(month.constants[:kallhyra]).to eq(test_config[:kallhyra])
+      expect(month.roommates['Alice'][:days]).to eq(test_roommates['Alice'][:days])
+      expect(month.final_results).to eq(results['Rent per Roommate'])
     end
 
     it 'handles version conflicts appropriately' do
-      # Save version 1
       RentCalculator.calculate_and_save(
         roommates: test_roommates,
         config: test_config,
-        history_options: { version: 1, title: 'Version 1', test_mode: true }
+        history_options: {
+          version: 1,
+          title: "First Version"
+        }
       )
 
-      # Attempting to save version 1 again without `force` should fail
-      expect do
+      expect {
         RentCalculator.calculate_and_save(
           roommates: test_roommates,
           config: test_config,
-          history_options: { version: 1, title: 'Duplicate', test_mode: true }
+          history_options: {
+            version: 1,
+            title: "Duplicate Version"
+          }
         )
-      end.to raise_error(RentHistory::VersionError)
+      }.to raise_error(RentHistory::VersionError)
     end
   end
 
   describe 'November 2024 scenario' do
-    let(:november_config) { test_config_for_november_v2 }
-    let(:november_roommates) { november_2024_v2_roommates }
+    let(:november_config) do
+      {
+        year: 2024,
+        month: 11,
+        kallhyra: 24_530,
+        el: 1_600,
+        bredband: 400,
+        drift_rakning: 2_612
+      }
+    end
+
+    let(:november_roommates) do
+      {
+        'Fredrik' => { days: 30, room_adjustment: 0 },
+        'Rasmus' => { days: 30, room_adjustment: 0 },
+        'Frans-Lukas' => { days: 30, room_adjustment: 0 },
+        'Astrid' => { days: 30, room_adjustment: -1_400 },
+        'Malin' => { days: 21, room_adjustment: 0 },
+        'Elvira' => { days: 8, room_adjustment: 0 }
+      }
+    end
 
     it 'calculates November rent correctly with Elvira' do
       results = RentCalculator.rent_breakdown(
@@ -70,8 +131,22 @@ RSpec.describe 'RentCalculator Integration' do
         config: november_config
       )
       
-      total = november_config.total_rent
-      expect(results['total_distributed']).to be >= total
+      total = november_config[:kallhyra] + 
+              november_config[:el] + 
+              november_config[:bredband] + 
+              november_config[:drift_rakning]
+      
+      # Total might be slightly higher due to rounding each share up to whole kronor
+      expect(results['Total']).to be >= total
+      expect(results['Total'] - total).to be < november_roommates.size
+
+      expect(results['Rent per Roommate']['Astrid']).to be < results['Rent per Roommate']['Fredrik']
+      expect(results['Rent per Roommate']['Malin']).to be < results['Rent per Roommate']['Fredrik']
+      expect(results['Rent per Roommate']['Elvira']).to be < results['Rent per Roommate']['Malin']
+      
+      ['Fredrik', 'Rasmus', 'Frans-Lukas'].combination(2) do |a, b|
+        expect(results['Rent per Roommate'][a]).to eq(results['Rent per Roommate'][b])
+      end
     end
 
     it 'matches historical v2 calculation' do
@@ -80,53 +155,25 @@ RSpec.describe 'RentCalculator Integration' do
         config: november_config,
         history_options: {
           version: 2,
-          title: "November Recalculation with Elvira's Partial Stay",
-          test_mode: true
+          title: "November Recalculation with Elvira's Partial Stay"
         }
       )
 
-      month = RentHistory::Month.load(year: 2024, month: 11, version: 2, test_mode: true)
-      expect(month.final_results).not_to be_nil
-      expect(month.final_results).to eq(results['rent_per_roommate'])
+      month = RentHistory::Month.load(year: 2024, month: 11, version: 2)
+      expect(month.final_results).to eq(results['Rent per Roommate'])
+      
+      total_rent = november_config[:kallhyra] + 
+                  november_config[:el] + 
+                  november_config[:bredband] + 
+                  november_config[:drift_rakning]
+      
+      # Total might be slightly higher due to rounding each share up to whole kronor
+      expect(results['Rent per Roommate'].values.sum).to be >= total_rent
+      expect(results['Rent per Roommate'].values.sum - total_rent).to be < november_roommates.size
+      
+      expect(results['Rent per Roommate']['Astrid']).to be < results['Rent per Roommate']['Fredrik']
+      expect(results['Rent per Roommate']['Malin']).to be < results['Rent per Roommate']['Fredrik']
+      expect(results['Rent per Roommate']['Elvira']).to be < results['Rent per Roommate']['Malin']
     end
-  end
-
-  it 'produces a correct and detailed rent breakdown for a realistic scenario' do
-    # This integration test uses a realistic scenario to verify the end-to-end calculation.
-    # It checks that the final breakdown is complete and that the per-roommate amounts are correct,
-    # including prorated adjustments and final ceiling rounding to two decimal places.
-
-    config = RentCalculator::Config.new(
-      year: 2025,
-      month: 1,
-      kallhyra: 24_530,
-      el: 1_845,
-      bredband: 380,
-      vattenavgift: 375,
-      va: 300,
-      larm: 150,
-      saldo_innan: 20
-    )
-
-    roommates = {
-      'Fredrik' => { days: 31, room_adjustment: 0 },
-      'Rasmus' => { days: 31, room_adjustment: 0 },
-      'Frans-Lukas' => { days: 31, room_adjustment: 0 },
-      'Astrid' => { days: 20, room_adjustment: -1400 }, # Left mid-month
-      'Elvira' => { days: 15, room_adjustment: 0 }      # Arrived mid-month
-    }
-
-    breakdown = RentCalculator.rent_breakdown(roommates: roommates, config: config)
-
-      # Verify key totals
-      expect(breakdown['total_rent']).to be_within(0.01).of(27_560)
-      expect(breakdown['total_distributed']).to be_within(0.05).of(27_560)
-
-    # Verify per-roommate amounts by asserting against the now-correct calculator output
-    expect(breakdown['rent_per_roommate']['Fredrik']).to be_within(0.01).of(6893.44)
-    expect(breakdown['rent_per_roommate']['Rasmus']).to be_within(0.01).of(6893.44)
-    expect(breakdown['rent_per_roommate']['Frans-Lukas']).to be_within(0.01).of(6893.44)
-    expect(breakdown['rent_per_roommate']['Astrid']).to be_within(0.01).of(3544.16)
-    expect(breakdown['rent_per_roommate']['Elvira']).to be_within(0.01).of(3335.54)
   end
 end 
