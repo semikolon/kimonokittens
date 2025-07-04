@@ -1,55 +1,38 @@
-source 'https://rubygems.org'
-gem 'vessel', github: 'rubycdp/vessel', branch: 'main'
+source "https://rubygems.org"
+
+# Specify your gem's dependencies in kimonokittens.gemspec
+# gemspec
+
 gem 'json'
-gem 'oj'
-gem 'ox'
-gem 'awesome_print'
-gem 'agoo', '~> 2.15', '>= 2.15.4'
-gem 'faraday'
-gem 'dotenv'
-gem 'whenever', require: false
-gem 'colorize'
-gem 'puffing-billy'
-gem 'table_print'
-gem 'pry'
-gem 'pry-nav'
-gem 'break'
-gem 'activesupport', '~> 6.1.4'
-gem 'text'
-gem 'google-apis-sheets_v4'
-gem 'sinatra'
+gem 'sqlite3', '~> 1.7'
+gem 'httparty'
+gem 'activesupport'
+gem 'dotenv-rails'
 
-# Local rent calculator dependencies
-gem "sqlite3", "~> 2.5"
+# Agoo is the web server
+gem 'agoo', '>= 1.2.1'
 
-# Git operations for handbook proposals
-gem 'rugged', '~> 1.7'
-# PostgreSQL database access
-gem 'pg'
-# For generating Prisma-compatible CUIDs
-gem 'cuid'
+# For Git operations in the handbook
+# gem 'rugged'
 
-gem "ferrum", "~> 0.13"
-
-# For the handbook AI/RAG pipeline
+# For AI search capabilities in the handbook
 gem 'pinecone', '~> 1.2'
-gem 'ruby-openai', '~> 7.0'
+gem 'ruby-openai', '~> 6.4'
 
-# Testing
-gem 'rspec', '~> 3.13'
-gem 'rack-test', '~> 2.1'
-
-# Authentication dependencies
-gem 'httparty', '~> 0.21'
-gem 'jwt', '~> 2.7'
+# For PostgreSQL database connection
+gem 'pg', '~> 1.5'
+gem 'cuid', '~> 1.0'
+gem 'rack-test'
+gem 'awesome_print'
 
 group :development, :test do
   gem 'pry'
   # gem 'byebug'
+  gem 'rspec', '~> 3.13'
 end
 
-group :test do
-  gem 'rspec', '~> 3.13'
-  gem 'rack-test', '~> 2.1'
-  gem 'dotenv-rails'
+# Gems used only for assets and not required
+# in production environments by default.
+group :assets do
+  gem 'sass-embedded', '~> 1.74'
 end

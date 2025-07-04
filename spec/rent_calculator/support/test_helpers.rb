@@ -72,8 +72,10 @@ RSpec.configure do |config|
   config.include RentCalculatorSpec::TestHelpers
 
   config.before(:each) do
+    # This is not ideal, but it ensures that the helpers are included
+    # for every test group without needing to manually include them.
     config.include RentCalculatorSpec::TestHelpers
     # Call our new cleaning method
     clean_database
   end
-end 
+end

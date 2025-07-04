@@ -63,7 +63,9 @@ class RentCalculatorHandler
     when 'PUT'
       handle_config_update(req)
     when 'GET'
-      if req['PATH_INFO'].include?('/history')
+      if req['PATH_INFO'].include?('/forecast')
+        handle_forecast_request(req)
+      elsif req['PATH_INFO'].include?('/history')
         handle_history_request(req)
       elsif req['PATH_INFO'].include?('/roommates')
         handle_roommate_list(req)
@@ -122,17 +124,16 @@ class RentCalculatorHandler
 
     history_data = RentDb.instance.get_rent_history(year: year, month: month)
 
-    # If no history exists for the requested period, generate a new forecast.
-    if history_data.empty?
-      puts "No rent history found for #{year}-#{month}. Generating a new forecast."
-      forecast_data = generate_rent_forecast(year: year, month: month)
-      # The forecast is a single calculation, but the endpoint is expected to return
-      # an array of historical records. We wrap it in an array.
-      response_json = [forecast_data].to_json
-      return [200, { 'Content-Type' => 'application/json' }, [response_json]]
-    end
-
     [200, { 'Content-Type' => 'application/json' }, [history_data.to_json]]
+  end
+
+  def handle_forecast_request(req)
+    query = Rack::Utils.parse_query(req['QUERY_STRING'])
+    year = query['year']&.to_i || Time.now.year
+    month = query['month']&.to_i || Time.now.month
+
+    forecast_data = generate_rent_forecast(year: year, month: month)
+    [200, { 'Content-Type' => 'application/json' }, [forecast_data.to_json]]
   end
 
   def handle_documentation(req)
@@ -140,6 +141,7 @@ class RentCalculatorHandler
       description: 'API for calculating rent shares among roommates',
       endpoints: {
         'GET /api/rent': 'Get this documentation',
+        'GET /api/rent/forecast?year=YYYY&month=MM': 'Generate a rent forecast for a future month',
         'GET /api/rent/history': 'List available versions for a month',
         'GET /api/rent/history?year=YYYY&month=MM&version=V': 'Get specific calculation version',
         'GET /api/rent/roommates': 'List current roommates',
@@ -398,8 +400,13 @@ class RentCalculatorHandler
       next if departure_date && departure_date < period_start
       next if start_date && start_date > period_end
 
+      # Calculate the actual days stayed within the period
+      actual_start = [start_date, period_start].compact.max
+      actual_end = [departure_date, period_end].compact.min
+      days_stayed = (actual_end - actual_start).to_i + 1
+
       hash[tenant['name']] = {
-        days: total_days,
+        days: days_stayed,
         room_adjustment: (tenant['roomAdjustment'] || 0).to_i
       }
     end

@@ -53,23 +53,24 @@ class RentDb
 
   def get_rent_config(year:, month:)
     # This query finds the most recent value for each configuration key
-    # for a given month. It uses a window function to partition by key
-    # and order by creation date, taking only the latest one (rank = 1)
-    # at or before the end of the specified month.
-    end_of_month = Time.new(year, month, 1, 23, 59, 59, '+00:00') + (31 * 24 * 60 * 60)
+    # that is effective for a given month. It uses a window function to
+    # partition by key and order by the effective period, taking only
+    # the latest one (rank = 1) at or before the specified month.
+    # Correctly determine the last moment of the given month.
+    end_of_month = (Date.new(year, month, 1).next_month - 1).to_time.utc
     query = <<-SQL
       WITH ranked_configs AS (
         SELECT
           key,
           value,
-          "createdAt",
-          ROW_NUMBER() OVER(PARTITION BY key ORDER BY "createdAt" DESC) as rn
+          period,
+          ROW_NUMBER() OVER(PARTITION BY key ORDER BY period DESC) as rn
         FROM "RentConfig"
-        WHERE "createdAt" <= $1
+        WHERE period <= $1
       )
       SELECT key, value FROM ranked_configs WHERE rn = 1;
     SQL
-    @conn.exec_params(query, [end_of_month.utc.iso8601])
+    @conn.exec_params(query, [end_of_month.iso8601])
   end
 
   def set_config(key, value, period = Time.now)
@@ -94,16 +95,16 @@ class RentDb
     result.ntuples.zero? ? nil : result.first
   end
 
-  def add_tenant(name:, email: nil, facebookId: nil, avatarUrl: nil)
+  def add_tenant(name:, email: nil, facebookId: nil, avatarUrl: nil, start_date: nil, departure_date: nil)
     id = Cuid.generate
     # Generate a placeholder email if none is provided, preserving old behavior
     # for test setups and other non-OAuth tenant creation.
     email ||= "#{name.downcase.gsub(/\s+/, '.')}@kimonokittens.com"
     query = <<-SQL
-      INSERT INTO "Tenant" (id, name, email, "facebookId", "avatarUrl", "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+      INSERT INTO "Tenant" (id, name, email, "facebookId", "avatarUrl", "startDate", "departureDate", "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
     SQL
-    @conn.exec_params(query, [id, name, email, facebookId, avatarUrl])
+    @conn.exec_params(query, [id, name, email, facebookId, avatarUrl, start_date, departure_date])
   end
 
   def set_start_date(name:, date:)
