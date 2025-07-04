@@ -54,16 +54,28 @@ const RentPanel: React.FC = () => {
 
   useEffect(() => {
     const fetchRentData = async () => {
+      // Per user instruction, we are in July 2025
+      const now = new Date('2025-07-04T12:00:00Z');
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+
       try {
-        const response = await fetch('/api/rent/history');
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Failed to fetch rent data:', errorText);
-          throw new Error(`Network response was not ok: ${errorText || response.statusText}`);
+        // Step 1: Try to fetch historical data for the current month
+        let response = await fetch(`/api/rent/history?year=${year}&month=${month}`);
+        let data: RentHistoryRecord[] = await response.json();
+
+        // Step 2: If no data, fetch a forecast
+        if (!response.ok || data.length === 0) {
+          response = await fetch(`/api/rent/forecast?year=${year}&month=${month}`);
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Failed to fetch rent forecast:', errorText);
+            throw new Error(`Network response was not ok for forecast: ${errorText || response.statusText}`);
+          }
+          data = [await response.json()]; // Wrap forecast in array to match history structure
         }
-        const data: RentHistoryRecord[] = await response.json();
         
-        // Use the most recent entry from the history
+        // Use the most recent entry from the history or the forecast
         if (data && data.length > 0) {
           const latestRecord = data[data.length - 1];
           setRentDetails(latestRecord.final_results);

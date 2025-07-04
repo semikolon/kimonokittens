@@ -1,8 +1,8 @@
 require 'faraday'
 require 'oj'
 require 'awesome_print'
-require 'pry'
-require 'pry-nav'
+# require 'pry'  # Temporarily disabled due to gem conflict
+# require 'pry-nav'  # Temporarily disabled due to gem conflict
 require 'active_support/time'
 
 # def to_sentence(array)

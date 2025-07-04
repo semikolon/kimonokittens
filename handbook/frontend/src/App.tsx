@@ -4,7 +4,7 @@ import { Editor } from './components/Editor';
 import { WikiPage } from './components/WikiPage';
 import { QueryInterface } from './components/QueryInterface';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import LoginButton from './components/LoginButton';
+// import LoginButton from './components/LoginButton';
 import RentPanel from './components/RentPanel';
 import './App.css';
 import { Toaster } from './components/ui/toaster';
@@ -19,7 +19,7 @@ function AppContent() {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-slate-800">Kimonokittens Handbook</h1>
-          <LoginButton />
+          {/* <LoginButton /> */}
         </div>
       </header>
       
@@ -45,7 +45,9 @@ function AppContent() {
 }
 
 function App() {
-  const socketUrl = 'ws://localhost:3001/handbook/ws';
+  // Use a relative URL for the WebSocket.
+  // The Vite dev server will proxy this to the backend.
+  const socketUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/handbook/ws`;
 
   const { lastMessage } = useWebSocket(socketUrl, {
     onOpen: () => console.log('WebSocket connection established.'),

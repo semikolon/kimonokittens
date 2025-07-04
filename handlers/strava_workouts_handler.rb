@@ -1,7 +1,7 @@
 require 'faraday'
 require 'oj'
-require 'pry'
-require 'pry-nav'
+# require 'pry'  # Temporarily disabled due to gem conflict
+# require 'pry-nav'  # Temporarily disabled due to gem conflict
 
 class StravaWorkoutsHandler
   STRAVA_API_URL = 'https://www.strava.com/api/v3'

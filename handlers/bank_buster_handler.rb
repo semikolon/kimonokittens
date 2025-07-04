@@ -1,6 +1,6 @@
 # require_relative '../bank_buster'
 require 'oj'
-require 'pry'
+# require 'pry'  # Temporarily disabled due to gem conflict
 require 'agoo'
 
 class BankBusterHandler

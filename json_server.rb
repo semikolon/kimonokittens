@@ -3,7 +3,7 @@ require 'agoo'
 require 'faraday'
 require 'oj'
 require 'awesome_print'
-require 'pry'
+# require 'pry'  # Temporarily disabled due to gem conflict
 
 # Configure Agoo logging
 Agoo::Log.configure(dir: '',
@@ -129,18 +129,37 @@ end
 $pubsub = PubSub.new
 
 class WsHandler
-  def on_open(client)
-    $pubsub.subscribe(client)
+  def call(env)
+    return unless env['rack.upgrade?'] == :websocket
+
+    io = env['rack.hijack'].call
+    ws = Agoo::Upgraded.new(io, self)
+    ws.each do |msg|
+      handle_message(ws, msg)
+    end
   end
 
-  def on_close(client)
-    $pubsub.unsubscribe(client)
+  def on_open(upgraded)
+    $pubsub.subscribe(upgraded)
+    puts "WebSocket connection opened"
   end
 
-  def on_message(client, data)
-    # For now, we just echo back messages for debugging.
-    # The primary flow is server-to-client pushes.
-    client.write("echo: #{data}")
+  def on_close(upgraded)
+    $pubsub.unsubscribe(upgraded)
+    puts "WebSocket connection closed"
+  end
+
+  def on_message(upgraded, msg)
+    puts "Received WebSocket message: #{msg}"
+    # Echo back messages for debugging
+    upgraded.write("echo: #{msg}")
+  end
+
+  private
+
+  def handle_message(ws, msg)
+    # Handle incoming messages
+    on_message(ws, msg)
   end
 end
 
@@ -171,6 +190,7 @@ Agoo::Server.handle(:GET, "/data/strava_stats", strava_workouts_handler)
 
 # Add rent calculator endpoints
 Agoo::Server.handle(:GET, "/api/rent", rent_calculator_handler)
+Agoo::Server.handle(:GET, "/api/rent/forecast", rent_calculator_handler)
 Agoo::Server.handle(:GET, "/api/rent/history", rent_calculator_handler)
 Agoo::Server.handle(:GET, "/api/rent/roommates", rent_calculator_handler)
 Agoo::Server.handle(:POST, "/api/rent", rent_calculator_handler)

@@ -17,6 +17,10 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
+      '/handbook/ws': {
+        target: 'ws://localhost:3001',
+        ws: true,
+      },
     },
   },
   test: {

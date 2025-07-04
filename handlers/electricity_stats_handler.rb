@@ -1,7 +1,7 @@
 require 'oj'
 require 'awesome_print'
-require 'pry'
-require 'pry-nav'
+# require 'pry'  # Temporarily disabled due to gem conflict
+# require 'pry-nav'  # Temporarily disabled due to gem conflict
 
 # I maj 2023 använde vi 900 kWh och betalade 616 kr till elhandelsbolaget.
 # Samt till elnätsbolaget 1299 kr - varav 467 kr är en statisk månadsavgift.
