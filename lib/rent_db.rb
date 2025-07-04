@@ -70,22 +70,18 @@ class RentDb
   end
 
   def add_tenant(name:)
-    # For simplicity, we're not including all fields yet.
-    # A real implementation would take more arguments.
-    # The email is required to be unique, so we generate a placeholder.
-    email = "#{name.downcase.gsub(/\s+/, '.')}@kimonokittens.com"
-    
-    query = <<-SQL
-      INSERT INTO "Tenant" (id, name, email, "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, NOW(), NOW())
-      RETURNING *
-    SQL
-    
-    # Generate a CUID for the ID, similar to Prisma's default
     id = Cuid.generate
+    email = "#{name.downcase.gsub(/\s+/, '.')}@kimonokittens.com"
+    @conn.exec_params('INSERT INTO "Tenant" (id, name, email, "createdAt", "updatedAt") VALUES ($1, $2, $3, NOW(), NOW())', [id, name, email])
+  end
 
-    result = @conn.exec_params(query, [id, name, email])
-    result.first
+  def set_room_adjustment(name:, adjustment:)
+    query = <<-SQL
+      UPDATE "Tenant"
+      SET "roomAdjustment" = $1
+      WHERE name = $2
+    SQL
+    @conn.exec_params(query, [adjustment, name])
   end
 
   private

@@ -44,23 +44,24 @@ RSpec.describe 'RentCalculator Integration' do
       db.set_config('drift_rakning', '2612') # This REPLACES the monthly fees
       db.set_config('vattenavgift', '9999') # Set to an obviously wrong value to ensure it's ignored
       
-      ['Fredrik', 'Rasmus', 'Frans-Lukas', 'Astrid', 'Malin', 'Elvira'].each do |name|
+      ['Fredrik', 'Rasmus', 'Frans-Lukas', 'Malin', 'Elvira'].each do |name|
         db.add_tenant(name: name)
       end
+      # Astrid has a room adjustment
+      db.add_tenant(name: 'Astrid')
+      db.set_room_adjustment(name: 'Astrid', adjustment: -1400)
     end
 
     it 'calculates November rent correctly using data from the database' do
       config = RentCalculatorHandler.new.send(:extract_config)
       
-      # TODO: This still needs to be refactored to handle adjustments from DB
-      roommates = {
-        'Fredrik' => { days: 30, room_adjustment: 0 },
-        'Rasmus' => { days: 30, room_adjustment: 0 },
-        'Frans-Lukas' => { days: 30, room_adjustment: 0 },
-        'Astrid' => { days: 30, room_adjustment: -1400 },
-        'Malin' => { days: 21, room_adjustment: 0 },
-        'Elvira' => { days: 8, room_adjustment: 0 }
-      }
+      # Now we fetch roommates from the DB, including their adjustments
+      roommates = RentCalculatorHandler.new.send(:extract_roommates, year: 2024, month: 11)
+
+      # For this specific scenario, we need to manually override partial stays
+      # as this logic is not yet in the DB handler.
+      roommates['Malin'][:days] = 21
+      roommates['Elvira'][:days] = 8
 
       results = RentCalculator.rent_breakdown(roommates: roommates, config: config)
       

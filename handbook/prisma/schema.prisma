@@ -18,6 +18,7 @@ model Tenant {
   avatarUrl    String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  roomAdjustment Int           @default(0)
   coOwnedItems CoOwnedItem[] @relation("ItemOwners")
 
   rentLedger   RentLedger[]

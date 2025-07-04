@@ -306,18 +306,20 @@ class RentCalculatorHandler
   end
 
   def extract_roommates(year:, month:)
-    # TODO: This needs to be more sophisticated to handle temporary stays
-    # and adjustments for a specific month. For now, it just gets all tenants.
-    tenants = RentDb.instance.get_tenants
+    db = RentDb.instance
+    tenants = db.get_tenants
     
-    # Convert the tenant list into the format expected by RentCalculator
-    roommates = {}
-    tenants.each do |tenant|
-      roommates[tenant['name']] = {
-        # Default to full month, no adjustment
+    # The calculator expects a hash like:
+    # { 'Fredrik' => { days: 30, room_adjustment: 0 } }
+    # For now, we assume full month stays. Partial stays would require more logic.
+    total_days = RentCalculator::Helpers.days_in_month(year, month)
+    
+    tenants.each_with_object({}) do |tenant, hash|
+      hash[tenant['name']] = {
+        days: total_days,
+        room_adjustment: tenant['roomAdjustment'].to_i || 0
       }
     end
-    roommates
   end
 
   def extract_history_options(body)
