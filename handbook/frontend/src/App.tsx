@@ -47,7 +47,9 @@ function AppContent() {
 function App() {
   // Use a relative URL for the WebSocket.
   // The Vite dev server will proxy this to the backend.
-  const socketUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/handbook/ws`;
+  // In development, this will be proxied to ws://localhost:3001/handbook/ws
+  // In production, this will connect directly to the same host
+  const socketUrl = `/handbook/ws`;
 
   const { lastMessage } = useWebSocket(socketUrl, {
     onOpen: () => console.log('WebSocket connection established.'),

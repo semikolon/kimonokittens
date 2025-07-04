@@ -13,6 +13,7 @@ gem 'activesupport'
 gem 'awesome_print'
 gem 'dotenv-rails'
 gem 'httparty'
+gem 'jwt'
 
 # Database
 gem 'pg', '~> 1.5' # For PostgreSQL
