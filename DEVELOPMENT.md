@@ -189,3 +189,9 @@ This section captures non-obvious lessons learned during development. Adding to 
 
 6. **Ruby `pg` Gem and `DATABASE_URL`**
     *   The Ruby `pg` gem does not support the `?schema=public` parameter in the `DATABASE_URL` string, which is often added by Prisma. This causes a `PG::Error: invalid URI query parameter` on connection. The parameter must be removed from the `.env` file for the Ruby backend to connect.
+
+7. **Dockerised Postgres in dev, system Postgres in prod**
+    *   Devs can `docker rm -f` to reset data; prod reuses existing DB server managed by `systemd`.
+
+8. **Obsidian-Git pull-only**
+    *   Prevents accidental direct commits that bypass approval workflow.
