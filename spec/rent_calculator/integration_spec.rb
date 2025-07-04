@@ -107,7 +107,7 @@ RSpec.describe 'RentCalculator Integration' do
       db.add_tenant(name: 'Frans-Lukas', start_date: '2023-12-01')
       db.add_tenant(name: 'Malin', start_date: '2023-02-01', departure_date: '2024-11-21')
       db.add_tenant(name: 'Elvira', start_date: '2024-11-22')
-      db.add_tenant(name: 'Astrid', start_date: '2024-02-01')
+      db.add_tenant(name: 'Astrid', start_date: '2024-02-01', departure_date: '2024-11-30')
       db.set_room_adjustment(name: 'Astrid', adjustment: -1400)
     end
 

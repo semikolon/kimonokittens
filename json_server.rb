@@ -67,19 +67,21 @@ def run_one_time_data_correction
   puts "Running one-time data corrections..."
   db = RentDb.instance
 
-  # Define tenant records with their historical data
-  # For current tenants, departureDate is nil.
-  tenant_records = {
+  # This is a critical data correction block that runs on server start.
+  # It ensures that tenant data in the database is consistent with our
+  # historical records.
+  tenant_data = {
     'Fredrik' => { startDate: '2023-02-01', departureDate: nil },
-    'Malin' => { startDate: '2023-02-01', departureDate: '2024-11-23' },
     'Rasmus' => { startDate: '2023-06-01', departureDate: nil },
-    'Astrid' => { startDate: '2024-02-01', departureDate: '2024-12-31' },
-    'Frans-Lukas' => { startDate: '2023-12-01', departureDate: '2025-02-28' },
-    'Elvira' => { startDate: '2024-11-24', departureDate: nil },
-    'Adam' => { startDate: '2025-03-01', departureDate: nil }
+    'Elvira' => { startDate: '2024-11-22', departureDate: nil },
+    'Adam' => { startDate: '2025-03-01', departureDate: nil },
+    'Frans-Lukas' => { startDate: '2023-12-01', departureDate: '2025-03-01' },
+    'Malin' => { startDate: '2023-02-01', departureDate: '2024-11-21' },
+    'Astrid' => { startDate: '2024-02-01', departureDate: '2024-11-30' },
+    'Camila' => { startDate: '2023-02-01', departureDate: '2023-05-31' }
   }
 
-  tenant_records.each do |name, dates|
+  tenant_data.each do |name, dates|
     # Ensure the tenant exists
     email = "#{name.downcase.gsub(/\\s+/, '.')}@kimonokittens.com"
     db.add_tenant(name: name) unless db.find_tenant_by_email(email)
