@@ -45,9 +45,11 @@
 # retrieving this information.
 
 require 'agoo'
+require 'rack'
 require_relative '../rent'
 require_relative '../lib/rent_db'
 require 'json'
+require 'date'
 
 class RentCalculatorHandler
   def call(req)
@@ -86,8 +88,8 @@ class RentCalculatorHandler
     body = JSON.parse(req.body.read)
     
     # Fetch current state from the database
-    config = extract_config
-    roommates = extract_roommates(year: config['year'], month: config['month'])
+    config = extract_config(year: body['year'], month: body['month'])
+    roommates = extract_roommates(year: body['year'], month: body['month'])
     history_options = extract_history_options(body)
 
     # Calculate rent
@@ -114,16 +116,21 @@ class RentCalculatorHandler
   end
 
   def handle_history_request(req)
-    # TODO: Refactor this completely to use RentDb and the RentLedger table.
-    # The new logic will query the RentLedger table for records matching
-    # the given year and month.
-
     query = Rack::Utils.parse_query(req['QUERY_STRING'])
     year = query['year']&.to_i || Time.now.year
     month = query['month']&.to_i || Time.now.month
 
-    # This is a placeholder until the RentDb methods are implemented
     history_data = RentDb.instance.get_rent_history(year: year, month: month)
+
+    # If no history exists for the requested period, generate a new forecast.
+    if history_data.empty?
+      puts "No rent history found for #{year}-#{month}. Generating a new forecast."
+      forecast_data = generate_rent_forecast(year: year, month: month)
+      # The forecast is a single calculation, but the endpoint is expected to return
+      # an array of historical records. We wrap it in an array.
+      response_json = [forecast_data].to_json
+      return [200, { 'Content-Type' => 'application/json' }, [response_json]]
+    end
 
     [200, { 'Content-Type' => 'application/json' }, [history_data.to_json]]
   end
@@ -285,24 +292,88 @@ class RentCalculatorHandler
     [200, { 'Content-Type' => 'application/json' }, [tenants.to_json]]
   end
 
-  def extract_config
-    db = RentDb.instance
-    # Fetch all necessary config keys from the RentConfig table.
-    config_hash = {
-      'year' => Time.now.year,
-      'month' => Time.now.month,
-      'kallhyra' => db.get_config('kallhyra')&.to_i || 0,
-      'el' => db.get_config('el')&.to_i || 0,
-      'bredband' => db.get_config('bredband')&.to_i || 0,
-      'vattenavgift' => db.get_config('vattenavgift')&.to_i || 0,
-      'va' => db.get_config('va')&.to_i || 0,
-      'larm' => db.get_config('larm')&.to_i || 0,
-      'drift_rakning' => db.get_config('drift_rakning')&.to_i || 0,
-      'saldo_innan' => db.get_config('saldo_innan')&.to_i || 0,
-      'extra_in' => db.get_config('extra_in')&.to_i || 0
-    }
-    # The Config class expects symbol keys, but our DB returns string keys.
-    config_hash.transform_keys(&:to_sym)
+  def extract_config(year:, month:)
+    # Fetches the active configuration for a specific month.
+    # If a quarterly invoice (drift_rakning) is present for the month,
+    # it takes precedence over regular monthly fees.
+    config = RentDb.instance.get_rent_config(year: year, month: month)
+    config_hash = Hash[config.map { |row| [row['key'].to_sym, row['value'].to_f] }]
+
+    # If drift_rakning is present and non-zero, it replaces monthly fees
+    if config_hash[:drift_rakning] && config_hash[:drift_rakning] > 0
+      config_hash.delete(:vattenavgift)
+      config_hash.delete(:va) # Assuming 'va' is another monthly fee
+      config_hash.delete(:larm)
+    end
+    
+    # Provide safe defaults if values are missing, to prevent crashes.
+    defaults = RentCalculator::Config::DEFAULTS.merge({
+      year: year,
+      month: month
+    })
+
+    merged = defaults.merge(config_hash)
+
+    # Ensure correct types by creating a new hash
+    final_config = {}
+    merged.each do |key, value|
+      final_config[key] = if [:year, :month].include?(key)
+        value.to_i
+      else
+        value
+      end
+    end
+    final_config
+  end
+
+  def get_historical_electricity_cost(year:, month:)
+    # This helper parses the electricity_bills_history.txt file to find the
+    # total electricity cost for a given consumption month.
+    # It assumes the bill for month M is paid in month M+1, so to find the
+    # cost for July 2024 consumption, it looks for bills dated August 2024.
+    history_file = File.expand_path('../../electricity_bills_history.txt', __FILE__)
+    return 0 unless File.exist?(history_file)
+    
+    lines = File.readlines(history_file)
+    
+    # To find the cost for 'month', we look at bills from 'month + 1'.
+    forecast_month = month + 1
+    forecast_year = year - 1
+    if forecast_month > 12
+      forecast_month = 1
+      forecast_year += 1
+    end
+
+    target_month_str = "#{forecast_year}-#{format('%02d', forecast_month)}"
+    
+    vattenfall_cost = 0
+    fortum_cost = 0
+    in_fortum_section = false
+    
+    lines.each do |line|
+      next if line.strip.empty?
+      
+      if line.include?('Fortum')
+        in_fortum_section = true
+        next
+      elsif line.include?('Vattenfall')
+        in_fortum_section = false
+        next
+      end
+
+      next unless line.start_with?(target_month_str)
+      
+      cost = line.split('kr').first.split.last.to_f
+      
+      if in_fortum_section
+        fortum_cost = cost if fortum_cost == 0 # Take the first match
+      else
+        vattenfall_cost = cost if vattenfall_cost == 0 # Take the first match
+      end
+    end
+    
+    # Return the sum of the two costs
+    (vattenfall_cost + fortum_cost).round
   end
 
   def extract_roommates(year:, month:)
@@ -314,10 +385,22 @@ class RentCalculatorHandler
     # For now, we assume full month stays. Partial stays would require more logic.
     total_days = RentCalculator::Helpers.days_in_month(year, month)
     
+    period_start = Date.new(year, month, 1)
+    period_end   = Date.new(year, month, RentCalculator::Helpers.days_in_month(year, month))
+
     tenants.each_with_object({}) do |tenant, hash|
+      # Parse dates; assume ISO strings like "2025-03-01"
+      start_date_raw = tenant['startDate']
+      start_date = start_date_raw ? Date.parse(start_date_raw) : nil
+      departure_date = tenant['departureDate'] ? Date.parse(tenant['departureDate']) : nil
+
+      # Exclude if departed before the period starts or not yet arrived
+      next if departure_date && departure_date < period_start
+      next if start_date && start_date > period_end
+
       hash[tenant['name']] = {
         days: total_days,
-        room_adjustment: tenant['roomAdjustment'].to_i || 0
+        room_adjustment: (tenant['roomAdjustment'] || 0).to_i
       }
     end
   end
@@ -339,5 +422,34 @@ class RentCalculatorHandler
       roommates: month.roommates,
       final_results: month.final_results
     }.to_json
+  end
+
+  def generate_rent_forecast(year:, month:)
+    config_hash = extract_config(year: year, month: month)
+    roommates_hash = extract_roommates(year: year, month: month)
+
+    # Override the electricity cost with our historical forecast
+    historical_el = get_historical_electricity_cost(year: year, month: month)
+    config_hash[:el] = historical_el if historical_el > 0
+
+    breakdown = RentCalculator.rent_breakdown(roommates: roommates_hash, config: config_hash)
+
+    # We build a record that mimics the structure of a saved RentLedger entry
+    # so the frontend can process it consistently.
+    # The key is to match the frontend's `RentDetails` interface.
+    final_results = {
+      total: breakdown['Total'], # Align key from 'Total' to total
+      rent_per_roommate: breakdown['Rent per Roommate'], # Align key
+      config: config_hash, # Pass the config used for the calculation
+      roommates: roommates_hash # Pass the roommate details used
+    }
+    
+    {
+      id: "forecast-#{Cuid.generate}",
+      title: "Forecast for #{Date::MONTHNAMES[month]} #{year}",
+      period: Time.new(year, month, 1).utc.iso8601,
+      final_results: final_results, # Use the correctly structured hash
+      createdAt: Time.now.utc.iso8601
+    }
   end
 end 

@@ -103,16 +103,19 @@ module RentCalculator
     def initialize(params = {})
       # Convert Config to hash if needed, then merge with defaults
       params_hash = params.is_a?(Config) ? params.to_h : params
+      
+      # Prioritize year and month from params, and ensure they are integers
+      @year = (params_hash[:year] || DEFAULTS[:year])&.to_i
+      @month = (params_hash[:month] || DEFAULTS[:month])&.to_i
+
       params_with_defaults = DEFAULTS.merge(params_hash)
 
-      @year = params_with_defaults[:year]
-      @month = params_with_defaults[:month]
       @kallhyra = params_with_defaults[:kallhyra]
       @el = params_with_defaults[:el]
       @bredband = params_with_defaults[:bredband]
-      @vattenavgift = params_with_defaults[:vattenavgift]
-      @va = params_with_defaults[:va]
-      @larm = params_with_defaults[:larm]
+      @vattenavgift = (params_with_defaults[:vattenavgift].nil? || params_with_defaults[:vattenavgift].zero?) ? DEFAULTS[:vattenavgift] : params_with_defaults[:vattenavgift]
+      @va = (params_with_defaults[:va].nil? || params_with_defaults[:va].zero?) ? DEFAULTS[:va] : params_with_defaults[:va]
+      @larm = (params_with_defaults[:larm].nil? || params_with_defaults[:larm].zero?) ? DEFAULTS[:larm] : params_with_defaults[:larm]
       @drift_rakning = params_with_defaults[:drift_rakning]
       @saldo_innan = params_with_defaults[:saldo_innan]
       @extra_in = params_with_defaults[:extra_in]
@@ -295,17 +298,20 @@ module RentCalculator
       total_rent = config.total_rent
       remainder = total_rent - total_rounded
 
+      # Convert remainder to an integer to avoid calling `.times` on a Float
+      remainder_int = remainder.round
+
       # Distribute remainder more fairly - prioritize those with higher fractional parts
-      if remainder != 0
+      if remainder_int != 0
         # Calculate fractional parts for fair distribution
         fractional_parts = final_rents.map do |name, rent|
           [name, rent - rent.floor]
         end.sort_by { |_name, fraction| -fraction }  # Sort by highest fraction first
         
         # Distribute remainder starting with highest fractional parts
-        remainder.abs.times do |i|
+        remainder_int.abs.times do |i|
           name = fractional_parts[i % fractional_parts.size][0]
-          if remainder > 0
+          if remainder_int > 0
             rounded_rents[name] += 1
           else
             rounded_rents[name] -= 1

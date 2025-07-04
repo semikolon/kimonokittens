@@ -63,6 +63,37 @@ rent_calculator_handler = RentCalculatorHandler.new
 handbook_handler = HandbookHandler.new
 auth_handler = AuthHandler.new
 
+def run_one_time_data_correction
+  puts "Running one-time data corrections..."
+  db = RentDb.instance
+
+  # Define tenant records with their historical data
+  # For current tenants, departureDate is nil.
+  tenant_records = {
+    'Fredrik' => { startDate: '2023-02-01', departureDate: nil },
+    'Malin' => { startDate: '2023-02-01', departureDate: '2024-11-23' },
+    'Rasmus' => { startDate: '2023-06-01', departureDate: nil },
+    'Astrid' => { startDate: '2024-02-01', departureDate: '2024-12-31' },
+    'Frans-Lukas' => { startDate: '2023-12-01', departureDate: '2025-02-28' },
+    'Elvira' => { startDate: '2024-11-24', departureDate: nil },
+    'Adam' => { startDate: '2025-03-01', departureDate: nil }
+  }
+
+  tenant_records.each do |name, dates|
+    # Ensure the tenant exists
+    email = "#{name.downcase.gsub(/\\s+/, '.')}@kimonokittens.com"
+    db.add_tenant(name: name) unless db.find_tenant_by_email(email)
+
+    # Set start and departure dates
+    db.set_start_date(name: name, date: dates[:startDate]) if dates[:startDate]
+    db.set_departure_date(name: name, date: dates[:departureDate]) if dates[:departureDate]
+  end
+
+  puts "Data corrections complete."
+end
+
+run_one_time_data_correction()
+
 Agoo::Server.handle(:GET, "/", home_page_handler)
 
 # Add WebSocket handler for BankBuster

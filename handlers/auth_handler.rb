@@ -1,104 +1,107 @@
+require 'agoo'
 require 'httparty'
 require 'jwt'
 require 'json'
+require 'faraday'
+require_relative '../lib/rent_db' # Use our new DB module
 
-class AuthHandler < WEBrick::HTTPServlet::AbstractServlet
-  def initialize(server)
-    super
+# AuthHandler now follows the Agoo pattern: a plain Ruby class with a `call` method.
+# It handles Facebook OAuth callbacks, verifies the token, finds or creates a user
+# in our database, and returns a JWT for session management.
+class AuthHandler
+  def initialize
     @facebook_app_id = ENV['FACEBOOK_APP_ID']
     @facebook_app_secret = ENV['FACEBOOK_APP_SECRET']
     @jwt_secret = ENV['JWT_SECRET']
   end
 
-  def do_POST(req, res)
-    res['Content-Type'] = 'application/json'
-    res['Access-Control-Allow-Origin'] = '*'
-    res['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-    res['Access-Control-Allow-Headers'] = 'Content-Type'
+  def call(req)
+    # Handle CORS preflight requests
+    if req['REQUEST_METHOD'] == 'OPTIONS'
+      return [204, cors_headers, []]
+    end
 
-    case req.path
+    case req['PATH_INFO']
     when '/api/auth/facebook'
-      handle_facebook_login(req, res)
+      handle_facebook_login(req)
     else
-      res.status = 404
-      res.body = { error: 'Not Found' }.to_json
+      [404, { 'Content-Type' => 'application/json' }, [{ error: 'Not Found' }.to_json]]
     end
   rescue => e
     puts "Auth error: #{e.message}"
     puts e.backtrace
-    res.status = 500
-    res.body = { error: 'Internal server error' }.to_json
-  end
-
-  def do_OPTIONS(req, res)
-    res['Access-Control-Allow-Origin'] = '*'
-    res['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-    res['Access-Control-Allow-Headers'] = 'Content-Type'
-    res.status = 200
-    res.body = ''
+    [500, { 'Content-Type' => 'application/json' }, [{ error: 'Internal server error' }.to_json]]
   end
 
   private
 
-  def handle_facebook_login(req, res)
-    # Parse request body
-    request_body = JSON.parse(req.body)
+  def handle_facebook_login(req)
+    # Parse request body from Agoo request
+    request_body = JSON.parse(req['rack.input'].read)
     access_token = request_body['accessToken']
 
     unless access_token
-      res.status = 400
-      res.body = { error: 'Missing accessToken' }.to_json
-      return
+      return [400, cors_headers, [{ error: 'Missing accessToken' }.to_json]]
     end
 
     # Verify token with Facebook
     facebook_user = verify_facebook_token(access_token)
     unless facebook_user
-      res.status = 401
-      res.body = { error: 'Invalid Facebook token' }.to_json
-      return
+      return [401, cors_headers, [{ error: 'Invalid Facebook token' }.to_json]]
     end
 
-    # Find or create tenant
+    # Find or create tenant in our actual database
     tenant = find_or_create_tenant(facebook_user)
     unless tenant
-      res.status = 500
-      res.body = { error: 'Failed to create user account' }.to_json
-      return
+      return [500, cors_headers, [{ error: 'Failed to find or create user account' }.to_json]]
     end
 
     # Generate JWT
-    jwt_token = generate_jwt(tenant[:id])
+    jwt_token = generate_jwt(tenant['id'])
 
-    # Set secure cookie
-    set_auth_cookie(res, jwt_token)
+    # Prepare response headers, including the auth cookie
+    headers = cors_headers.merge('Set-Cookie' => auth_cookie_string(jwt_token))
 
-    # Return user data
-    res.status = 200
-    res.body = {
+    # Return user data in the response body
+    response_body = {
       user: {
-        id: tenant[:id],
-        name: tenant[:name],
-        avatarUrl: tenant[:avatarUrl]
+        id: tenant['id'],
+        name: tenant['name'],
+        avatarUrl: tenant['avatarUrl']
       }
     }.to_json
+
+    [200, headers, [response_body]]
+  end
+  
+  def cors_headers
+    {
+      'Content-Type' => 'application/json',
+      'Access-Control-Allow-Origin' => 'http://localhost:5173', # Be specific for security
+      'Access-Control-Allow-Methods' => 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials' => 'true'
+    }
   end
 
   def verify_facebook_token(access_token)
-    # Debug token with Facebook's API
+    # This method remains largely the same, using HTTParty to call Facebook's API.
     debug_url = "https://graph.facebook.com/debug_token"
     debug_response = HTTParty.get(debug_url, query: {
       input_token: access_token,
       access_token: "#{@facebook_app_id}|#{@facebook_app_secret}"
     })
 
-    unless debug_response.success? && debug_response['data']['is_valid']
+    unless debug_response.success? && debug_response.dig('data', 'is_valid')
       puts "Facebook token verification failed: #{debug_response.body}"
       return nil
     end
 
+    user_id = debug_response.dig('data', 'user_id')
+    return nil unless user_id
+
     # Get user profile
-    profile_url = "https://graph.facebook.com/me"
+    profile_url = "https://graph.facebook.com/#{user_id}"
     profile_response = HTTParty.get(profile_url, query: {
       access_token: access_token,
       fields: 'id,first_name,picture.type(large)'
@@ -110,23 +113,35 @@ class AuthHandler < WEBrick::HTTPServlet::AbstractServlet
     end
 
     {
-      id: profile_response['id'],
+      facebookId: profile_response['id'],
       name: profile_response['first_name'],
       avatarUrl: profile_response.dig('picture', 'data', 'url')
     }
   end
 
   def find_or_create_tenant(facebook_user)
-    # This is a mock implementation since we don't have Prisma set up yet
-    # In a real implementation, this would use Prisma to query/create the tenant
+    # Replace mock implementation with a call to our RentDb module.
+    db = RentDb.instance
     
-    # For now, return a mock tenant object
-    {
-      id: "tenant_#{facebook_user[:id]}",
+    # Check if a tenant with this Facebook ID already exists.
+    existing_tenant = db.find_tenant_by_facebook_id(facebook_user[:facebookId])
+    return existing_tenant if existing_tenant
+
+    # If not, create a new tenant.
+    # Note: The `add_tenant` method in RentDb will need to handle this structure.
+    # We might need to adjust it if it doesn't match.
+    new_tenant_data = {
       name: facebook_user[:name],
+      facebookId: facebook_user[:facebookId],
       avatarUrl: facebook_user[:avatarUrl],
-      facebookId: facebook_user[:id]
+      # Email is required by the schema, but not provided by FB basic login.
+      # We'll use a placeholder.
+      email: "#{facebook_user[:facebookId]}@facebook.placeholder.com"
     }
+    db.add_tenant(**new_tenant_data.transform_keys(&:to_sym))
+    
+    # Fetch the newly created tenant to ensure we have the CUID etc.
+    db.find_tenant_by_facebook_id(facebook_user[:facebookId])
   end
 
   def generate_jwt(tenant_id)
@@ -137,8 +152,8 @@ class AuthHandler < WEBrick::HTTPServlet::AbstractServlet
     JWT.encode(payload, @jwt_secret, 'HS256')
   end
 
-  def set_auth_cookie(res, jwt_token)
-    # Set secure HTTP-only cookie
+  def auth_cookie_string(jwt_token)
+    # Consolidate cookie attributes into a single string.
     cookie_attributes = [
       "auth_token=#{jwt_token}",
       "HttpOnly",
@@ -152,6 +167,6 @@ class AuthHandler < WEBrick::HTTPServlet::AbstractServlet
       cookie_attributes << "Secure"
     end
 
-    res['Set-Cookie'] = cookie_attributes.join('; ')
+    cookie_attributes.join('; ')
   end
 end 

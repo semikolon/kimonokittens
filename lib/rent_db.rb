@@ -23,7 +23,7 @@ class RentDb
   # roommates for a specific month, etc.
   def get_tenants
     tenants = []
-    @conn.exec("SELECT id, name, email FROM \"Tenant\" ORDER BY name") do |result|
+    @conn.exec("SELECT id, name, email, \"startDate\", \"departureDate\", \"roomAdjustment\" FROM \"Tenant\" ORDER BY name") do |result|
       result.each do |row|
         tenants << row
       end
@@ -51,28 +51,77 @@ class RentDb
     history
   end
 
-  def get_config(key)
-    query = 'SELECT value FROM "RentConfig" WHERE key = $1'
-    result = @conn.exec_params(query, [key])
-    result.ntuples.zero? ? nil : result.getvalue(0, 0)
+  def get_rent_config(year:, month:)
+    # This query finds the most recent value for each configuration key
+    # for a given month. It uses a window function to partition by key
+    # and order by creation date, taking only the latest one (rank = 1)
+    # at or before the end of the specified month.
+    end_of_month = Time.new(year, month, 1, 23, 59, 59, '+00:00') + (31 * 24 * 60 * 60)
+    query = <<-SQL
+      WITH ranked_configs AS (
+        SELECT
+          key,
+          value,
+          "createdAt",
+          ROW_NUMBER() OVER(PARTITION BY key ORDER BY "createdAt" DESC) as rn
+        FROM "RentConfig"
+        WHERE "createdAt" <= $1
+      )
+      SELECT key, value FROM ranked_configs WHERE rn = 1;
+    SQL
+    @conn.exec_params(query, [end_of_month.utc.iso8601])
   end
 
-  def set_config(key, value)
-    # Use an UPSERT-like query to either insert a new key or update an existing one.
+  def set_config(key, value, period = Time.now)
+    # This method now saves configuration values with a specific period.
     query = <<-SQL
-      INSERT INTO "RentConfig" (id, key, value, "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, NOW(), NOW())
-      ON CONFLICT (key) DO UPDATE
-      SET value = $3, "updatedAt" = NOW()
+      INSERT INTO "RentConfig" (id, key, value, period, "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, NOW(), NOW())
     SQL
     id = Cuid.generate
-    @conn.exec_params(query, [id, key, value])
+    @conn.exec_params(query, [id, key, value, period.utc.iso8601])
   end
 
-  def add_tenant(name:)
+  def find_tenant_by_facebook_id(facebook_id)
+    query = 'SELECT * FROM "Tenant" WHERE "facebookId" = $1'
+    result = @conn.exec_params(query, [facebook_id])
+    result.ntuples.zero? ? nil : result.first
+  end
+
+  def find_tenant_by_email(email)
+    query = 'SELECT * FROM "Tenant" WHERE email = $1'
+    result = @conn.exec_params(query, [email])
+    result.ntuples.zero? ? nil : result.first
+  end
+
+  def add_tenant(name:, email: nil, facebookId: nil, avatarUrl: nil)
     id = Cuid.generate
-    email = "#{name.downcase.gsub(/\s+/, '.')}@kimonokittens.com"
-    @conn.exec_params('INSERT INTO "Tenant" (id, name, email, "createdAt", "updatedAt") VALUES ($1, $2, $3, NOW(), NOW())', [id, name, email])
+    # Generate a placeholder email if none is provided, preserving old behavior
+    # for test setups and other non-OAuth tenant creation.
+    email ||= "#{name.downcase.gsub(/\s+/, '.')}@kimonokittens.com"
+    query = <<-SQL
+      INSERT INTO "Tenant" (id, name, email, "facebookId", "avatarUrl", "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+    SQL
+    @conn.exec_params(query, [id, name, email, facebookId, avatarUrl])
+  end
+
+  def set_start_date(name:, date:)
+    query = <<-SQL
+      UPDATE "Tenant"
+      SET "startDate" = $1
+      WHERE name = $2
+    SQL
+    @conn.exec_params(query, [date, name])
+  end
+
+  def set_departure_date(name:, date:)
+    query = <<-SQL
+      UPDATE "Tenant"
+      SET "departureDate" = $1
+      WHERE name = $2
+    SQL
+    @conn.exec_params(query, [date, name])
   end
 
   def set_room_adjustment(name:, adjustment:)
