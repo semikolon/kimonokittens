@@ -4,7 +4,6 @@ require 'faraday'
 require 'oj'
 require 'awesome_print'
 require 'pry'
-require 'pry-nav'
 
 # Configure Agoo logging
 Agoo::Log.configure(dir: '',
