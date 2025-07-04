@@ -13,6 +13,7 @@ interface AuthContextType {
   login: (accessToken: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
+  setAuthData: React.Dispatch<React.SetStateAction<any>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,8 +23,12 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [authData, setAuthData] = useState<any>({
+    isLoggedIn: false,
+    name: '',
+    picture: '',
+    accessToken: null,
+  });
   const [loading, setLoading] = useState(true);
 
   // Check for existing authentication on mount
@@ -42,8 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (authCookie) {
         // In a real implementation, you'd verify the token with the backend
         // For now, we'll assume it's valid
-        setIsAuthenticated(true);
-        // You'd fetch user data here
+        setAuthData({ isLoggedIn: true, user: null });
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
@@ -67,8 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.user);
-        setIsAuthenticated(true);
+        setAuthData({ isLoggedIn: true, user: data.user, accessToken });
         return true;
       } else {
         console.error('Login failed:', await response.text());
@@ -86,16 +89,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Clear the auth cookie
     document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     
-    setIsAuthenticated(false);
-    setUser(null);
+    setAuthData({ isLoggedIn: false, user: null });
   };
 
   const value: AuthContextType = {
-    isAuthenticated,
-    user,
+    isAuthenticated: authData.isLoggedIn,
+    user: authData.user,
     login,
     logout,
     loading,
+    setAuthData,
   };
 
   return (

@@ -152,4 +152,21 @@ Our recent work reconstructing the `RentCalculator` yielded several important le
 1.  **Drift Calculation**: When a quarterly invoice (`drift_rakning`) is present for a month, it **replaces** the standard monthly fees (`vattenavgift`, `va`, `larm`). The monthly fees are only used if `drift_rakning` is zero or not present.
 2.  **Room Adjustments**: Remember that adjustments are prorated. A -1000 SEK adjustment for someone staying half the month will only result in a -500 SEK reduction in their final rent.
 3.  **Data Persistence**: Use versioning in `RentHistory` to track significant changes or different scenarios for a single month.
-4.  **Script-based testing**: The `if __FILE__ == $0` block at the end of `rent.rb` is useful for quick, manual testing. However, any logic or scenario tested there should ideally be moved into a proper RSpec integration test to ensure it runs as part of the automated suite. 
+4.  **Script-based testing**: The `if __FILE__ == $0` block at the end of `rent.rb` is useful for quick, manual testing. However, any logic or scenario tested there should ideally be moved into a proper RSpec integration test to ensure it runs as part of the automated suite.
+
+### 9. **Obsidian-Git pull-only**  
+   * Prevents accidental direct commits that bypass approval workflow.
+
+Changes to these decisions require a new PR with an updated version of this document.
+
+## Recent Learnings & Gotchas
+
+This section captures non-obvious lessons learned during development. Adding to this list after a debugging session is highly encouraged.
+
+*   **Frontend Dependency Conflicts (React 19):** The `react-facebook-login` package is deprecated and incompatible with React 19, causing `npm install` to fail with `ERESOLVE` errors. The fix was to replace it with a modern, maintained alternative (`@greatsumini/react-facebook-login`). This highlights the need to vet older packages when upgrading the core stack.
+
+*   **Ruby `pg` Gem and DATABASE_URL:** The Ruby `pg` gem does not support the `?schema=public` parameter in the `DATABASE_URL` string, which is often added by Prisma. This causes a `PG::Error: invalid URI query parameter` on connection. The parameter must be removed from the `.env` file for the Ruby backend to connect.
+
+*   **Ruby Hash Keys: String vs. Symbol:** A recurring source of subtle bugs. The `RentCalculator::Config` class expects a hash with **symbol** keys (e.g., `:kallhyra`), as its internal defaults use symbols. When a hash with string keys (often from JSON parsing or, in our case, the API handler) is passed, the `DEFAULTS.merge(params)` operation fails silently, leading to incorrect calculations. Always ensure data passed between application layers (especially to core business logic) has the correct key types. Using `transform_keys(&:to_sym)` is the standard solution.
+
+*   **Database Test Cleaning:** When using `TRUNCATE` to clean a PostgreSQL database between tests, foreign key constraints will cause errors. The `TRUNCATE TABLE "MyTable" RESTART IDENTITY CASCADE;` command is essential. `CASCADE` ensures that any tables with a foreign key reference to `"MyTable"` are also truncated, which is necessary when dealing with Prisma's relational tables (e.g., `_ItemOwners`). 
