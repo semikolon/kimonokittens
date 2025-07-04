@@ -169,4 +169,22 @@ This section captures non-obvious lessons learned during development. Adding to 
 
 *   **Ruby Hash Keys: String vs. Symbol:** A recurring source of subtle bugs. The `RentCalculator::Config` class expects a hash with **symbol** keys (e.g., `:kallhyra`), as its internal defaults use symbols. When a hash with string keys (often from JSON parsing or, in our case, the API handler) is passed, the `DEFAULTS.merge(params)` operation fails silently, leading to incorrect calculations. Always ensure data passed between application layers (especially to core business logic) has the correct key types. Using `transform_keys(&:to_sym)` is the standard solution.
 
-*   **Database Test Cleaning:** When using `TRUNCATE` to clean a PostgreSQL database between tests, foreign key constraints will cause errors. The `TRUNCATE TABLE "MyTable" RESTART IDENTITY CASCADE;` command is essential. `CASCADE` ensures that any tables with a foreign key reference to `"MyTable"` are also truncated, which is necessary when dealing with Prisma's relational tables (e.g., `_ItemOwners`). 
+*   **Database Test Cleaning:** When using `TRUNCATE` to clean a PostgreSQL database between tests, foreign key constraints will cause errors. The `TRUNCATE TABLE "MyTable" RESTART IDENTITY CASCADE;` command is essential. `CASCADE` ensures that any tables with a foreign key reference to `"MyTable"` are also truncated, which is necessary when dealing with Prisma's relational tables (e.g., `_ItemOwners`).
+
+6. **Facebook OAuth (Next-Auth)**  
+   * Everyone already has FB; avoids password resets.  
+   * First name + avatar personalises copy ("Hej Adam!") without extra profile table.
+
+7. **Prisma ORM & PostgreSQL for All Financial Data**  
+   * **System:** All financial data, including configuration (`RentConfig`) and historical calculations (`RentLedger`), is stored in PostgreSQL and managed via Prisma.  
+   * **Replaces:** This unified system replaces a legacy file-based approach that used SQLite for configuration and versioned JSON files (`data/rent_history/`) for calculation history.
+   * **Rationale:**
+     *   **Single Source of Truth:** Consolidates all data into one database, making it easier to manage and backup.
+     *   **Queryability:** Allows for complex queries and data analysis that were impossible with the old system (e.g., historical trends).
+     *   **Frontend Integration:** Auto-generated TypeScript types from Prisma provide type safety for frontend components like `<RentPanel/>` that consume financial data. The API for this is still Ruby.
+     *   **Transactional Integrity:** Ensures that updates to rent data are atomic, reducing risks of corruption.
+
+8. **Dockerised Postgres in dev, system Postgres in prod**  
+   * Devs can `docker rm -f` to reset data; prod reuses existing DB server managed by `systemd`.
+
+Changes to these decisions require a new PR with an updated version of this document. 
