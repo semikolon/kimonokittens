@@ -1,4 +1,14 @@
-# Handoff Plan: Stabilizing WebSocket Server & Fixing Critical Issues
+# [OBSOLETE] Handoff Plan: Stabilizing WebSocket Server & Fixing Critical Issues
+
+**This document is now obsolete.**
+
+All issues described here (WebSocket 500 errors, segfaults, and train API failures) have been fully resolved as of July 2025. The canonical reference for Agoo/WebSocket integration, train API migration, and all recent architectural learnings is now in [DEVELOPMENT.md](DEVELOPMENT.md).
+
+This file is retained for historical context only.
+
+---
+
+[The remainder of this file documents the original handoff plan and is no longer the source of truth.]
 
 **To Claude:**
 

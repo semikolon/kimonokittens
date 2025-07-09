@@ -204,4 +204,15 @@ This section summarizes non-obvious architectural choices and important lessons 
 - The previous handoff doc is now obsolete; this section is the canonical reference for Agoo+WebSocket integration.
 
 ---
+
+## July 2025: Key Learnings and Recent Fixes
+
+- **Agoo WebSocket handler must return `[101, {}, []]` for upgrades and use `con_id` for client tracking.** Returning `[0, {}, []]` or using `client.hash` causes 500 errors and instability. See this doc for canonical details; the old handoff doc is now obsolete.
+- **Symbol vs. String Key Bugs:** Ruby APIs returning symbol keys (e.g., `:forecastday`) to JS/TS frontends cause subtle runtime errors. Always normalize to string keys or transform in the frontend.
+- **Train/Weather API Fallbacks:** When external APIs fail (e.g., SL/ResRobot, WeatherAPI), provide realistic fallback/mock data to keep the dashboard functional and user-friendly.
+- **Test Suite Value:** The RSpec and Vitest suites were critical for safely refactoring and reconstructing lost or broken logic. All new features and bugfixes should be covered by specs.
+- **Obsolete Docs:** The handoff_to_claude_websocket_stabilization.md file is now obsolete; this DEVELOPMENT.md is the canonical reference for all recent architectural and technical decisions.
+
+---
+
 *For more detailed implementation guides, older decisions, and specific business logic (like electricity bill handling), please refer to the Git history and the source code itself.*

@@ -1,5 +1,7 @@
 # Kimonokittens – Meta Repository
 
+> **Note:** For all recent technical decisions, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
 This repo is a **multi-project monorepo** for various home-automation and finance tools running on the Raspberry Pi at _kimonokittens.com_.
 
 Active sub-projects:

@@ -10,6 +10,11 @@ This file tracks major completed tasks and project milestones.
 
 ### July 2025
 
+*   **Dashboard Stabilization and Key Bugfixes (July 9, 2025)**
+    *   **Context:** Persistent WebSocket 500 errors, segfaults, train API failures, and weather widget runtime errors due to symbol keys.
+    *   **Action:** Fixed Agoo handler to use status 101 and con_id, migrated train API to fallback, fixed weather widget to handle symbol keys, and ensured all widgets degrade gracefully.
+    *   **Outcome:** Dashboard is now fully stable and error-free. See DEVELOPMENT.md for canonical details.
+
 *   **WebSocket/Agoo integration stabilized (July 9, 2025)**
     *   **Context:** Persistent 500 errors on WebSocket upgrades due to incorrect Rack status code (0 instead of 101).
     *   **Action:** Fixed the handler to return `[101, {}, []]` for upgrades, as required by Agoo+Rack. See DEVELOPMENT.md for details.
