@@ -1,4 +1,11 @@
 {
+  "name": "kimonokittens-monorepo",
+  "private": true,
+  "workspaces": [
+    "handbook/frontend",
+    "dashboard",
+    "packages/*"
+  ],
   "devDependencies": {
     "prisma": "^6.11.1"
   },
