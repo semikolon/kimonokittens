@@ -51,8 +51,12 @@ function App() {
   // In production, this will connect directly to the same host
   const socketUrl = `/handbook/ws`;
 
-  const { lastMessage } = useWebSocket(socketUrl, {
-    onOpen: () => console.log('WebSocket connection established.'),
+  const { lastMessage, sendMessage } = useWebSocket(socketUrl, {
+    onOpen: () => {
+      console.log('WebSocket connection established.');
+      console.log('Sending test message: Hello Server!');
+      sendMessage('Hello Server!');
+    },
     onClose: () => console.log('WebSocket connection closed.'),
     shouldReconnect: (closeEvent) => true,
   });

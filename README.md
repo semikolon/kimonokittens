@@ -34,3 +34,5 @@ A Ruby system for calculating rent distribution among roommates and maintaining 
 For detailed technical implementation guides, testing strategies, and recent architectural decisions, please see [**DEVELOPMENT.md**](DEVELOPMENT.md).
 
 For a log of major accomplishments and project milestones, see [**DONE.md**](DONE.md).
+
+> For Agoo WebSocket integration details (status code 101, con_id gotcha), see DEVELOPMENT.md.

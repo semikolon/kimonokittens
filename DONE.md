@@ -10,6 +10,11 @@ This file tracks major completed tasks and project milestones.
 
 ### July 2025
 
+*   **WebSocket/Agoo integration stabilized (July 9, 2025)**
+    *   **Context:** Persistent 500 errors on WebSocket upgrades due to incorrect Rack status code (0 instead of 101).
+    *   **Action:** Fixed the handler to return `[101, {}, []]` for upgrades, as required by Agoo+Rack. See DEVELOPMENT.md for details.
+    *   **Outcome:** Real-time updates are now stable and working. Canonical reference is now in DEVELOPMENT.md.
+
 *   **Reconstructed and Stabilized the `RentCalculator` Module (July 4, 2025)**
     *   **Context:** A critical `rent.rb` file containing all business logic was accidentally deleted due to being untracked in git.
     *   **Action:** The module was successfully reconstructed from scratch by using the existing RSpec test suite as a guide for the required behavior.

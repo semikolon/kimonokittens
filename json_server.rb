@@ -12,7 +12,7 @@ Agoo::Log.configure(dir: '',
   colorize: true,
   states: {
     INFO: true,
-    DEBUG: false,
+    DEBUG: true,
     connect: true,
     request: true,
     response: true,
@@ -126,35 +126,34 @@ class PubSub
   end
 end
 
-$pubsub = PubSub.new
-
 class WsHandler
-  # Called once when the WebSocket connection is established.
+  def call(env)
+    if env['rack.upgrade?'] == :websocket
+      env['rack.upgrade'] = self.class   # hand the CLASS, not an instance
+      # DO NOT CHANGE THIS STATUS CODE! Agoo+Rack requires 101 (Switching Protocols) for WebSocket upgrades.
+      # See: https://github.com/ohler55/agoo/issues/216
+      return [101, {}, []]               # 101 Switching Protocols is the correct status
+    end
+    [404, { 'Content-Type' => 'text/plain' }, ['Not Found']]
+  end
+
   def on_open(client)
-    @con_id = client.con_id
-    $pubsub.subscribe(@con_id, client)
+    con_id = client.con_id
+    client.vars[:con_id] = con_id        # store per-connection state
+    $pubsub.subscribe(con_id, client)
+    puts "HANDBOOK WS: open #{con_id}"
   end
 
-  # Called when the connection is closed.
-  def on_close(client)
-    $pubsub.unsubscribe(@con_id) if @con_id
-  end
-
-  # Called when a message is received from the client.
   def on_message(client, msg)
-    puts "Received WebSocket message from #{@con_id}: #{msg}"
-    # Echo back messages for debugging
+    con_id = client.vars[:con_id]
+    puts "HANDBOOK WS: #{con_id} -> #{msg}"
     client.write("echo: #{msg}")
   end
 
-  # This method is required by Agoo for handling the initial HTTP upgrade request.
-  # We leave it empty because the on_* callbacks handle the logic.
-  def call(env)
-    # The 'rack.upgrade' check is implicitly handled by Agoo when assigning
-    # a handler to a route, so we don't need to check for it here.
-    # The return value of [0, {}, []] is a valid empty Rack response,
-    # though it's not strictly used after the upgrade.
-    [0, {}, []]
+  def on_close(client)
+    con_id = client.vars[:con_id]
+    $pubsub.unsubscribe(con_id) if con_id
+    puts "HANDBOOK WS: close #{con_id}"
   end
 end
 

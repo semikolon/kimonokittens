@@ -1,3 +1,4 @@
+# OBSOLETE: See DEVELOPMENT.md for the canonical Agoo/WebSocket fix (July 2025)
 
 ## Handoff Plan: Stabilizing the WebSocket Server
 

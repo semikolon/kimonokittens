@@ -195,5 +195,13 @@ This section summarizes non-obvious architectural choices and important lessons 
 
 13.  **Clarity over cleverness**: The original `calculate_rent` tried to do too much. It now has a single responsibility: calculate the final, unrounded amounts per roommate. The separate `rent_breakdown` method handles rounding and formatting for presentation.
 
+### WebSocket/Agoo Integration (July 2025)
+
+- **Agoo WebSocket handler must return `[101, {}, []]` for upgrades.** Returning `[0, {}, []]` causes a 500 error due to invalid Rack status code. See: https://github.com/ohler55/agoo/issues/216
+- **Set `env['rack.upgrade'] = self.class`** (or `self`) in the handler. Do not manually hijack IO or use Upgraded.new for this pattern.
+- **Use `con_id` as the only stable identifier** for WebSocket clients in PubSub. Do not use `client.hash`.
+- The Vite dev server must proxy `/handbook/ws` to the backend for local dev.
+- The previous handoff doc is now obsolete; this section is the canonical reference for Agoo+WebSocket integration.
+
 ---
 *For more detailed implementation guides, older decisions, and specific business logic (like electricity bill handling), please refer to the Git history and the source code itself.*

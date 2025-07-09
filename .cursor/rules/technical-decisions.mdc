@@ -1,8 +1,3 @@
----
-description:
-globs:
-alwaysApply: true
----
 # Technical Decisions – Kimonokittens Handbook
 
 This file records **non-obvious architectural choices** so future contributors know the rationale.
@@ -36,6 +31,14 @@ This file records **non-obvious architectural choices** so future contributors k
 
 8. **Dockerised Postgres in dev, system Postgres in prod**  
    * Devs can `docker rm -f` to reset data; prod reuses existing DB server managed by `systemd`.
+
+9. **Obsidian-Git pull-only**  
+   * Prevents accidental direct commits that bypass approval workflow.
+
+10. **Agoo WebSocket Upgrade Status Code**  
+   * The WebSocket handler must return `[101, {}, []]` for upgrades. Returning `[0, {}, []]` causes a 500 error. See: https://github.com/ohler55/agoo/issues/216
+
+Changes to these decisions require a new PR with an updated version of this document.
 
 9. **Obsidian-Git pull-only**  
    * Prevents accidental direct commits that bypass approval workflow.
