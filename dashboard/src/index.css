@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    @apply h-full overflow-hidden;
+  }
+  
+  body {
+    @apply bg-storm-blue-950 text-white font-mono;
+  }
+}
+
+@layer components {
+  .dashboard-grid {
+    @apply h-screen w-screen grid grid-cols-3 gap-8 p-8;
+  }
+  
+  .widget {
+    @apply flex flex-col space-y-4;
+  }
+  
+  .widget-title {
+    @apply text-xl font-semibold text-gray-300 uppercase tracking-wider;
+  }
+  
+  .widget-content {
+    @apply text-white;
+  }
+}

@@ -49,6 +49,7 @@ require_relative 'handlers/rent_and_finances_handler'
 require_relative 'handlers/rent_calculator_handler'
 require_relative 'handlers/handbook_handler'
 require_relative 'handlers/auth_handler'
+require_relative 'handlers/weather_handler'
 
 home_page_handler = HomePageHandler.new
 electricity_stats_handler = ElectricityStatsHandler.new
@@ -61,6 +62,7 @@ rent_and_finances_handler = RentAndFinancesHandler.new
 rent_calculator_handler = RentCalculatorHandler.new
 handbook_handler = HandbookHandler.new
 auth_handler = AuthHandler.new
+weather_handler = WeatherHandler.new
 
 def run_one_time_data_correction
   puts "Running one-time data corrections..."
@@ -159,10 +161,16 @@ end
 
 run_one_time_data_correction()
 
+# Initialize global PubSub instance
+$pubsub = PubSub.new
+
 Agoo::Server.handle(:GET, "/", home_page_handler)
 
 # Add WebSocket handler for the Handbook
 Agoo::Server.handle(:GET, "/handbook/ws", WsHandler.new)
+
+# Add WebSocket handler for the Dashboard
+Agoo::Server.handle(:GET, "/dashboard/ws", WsHandler.new)
 
 # Add WebSocket handler for BankBuster
 Agoo::Server.handle(:GET, "/ws", bank_buster_handler)
@@ -181,6 +189,7 @@ Agoo::Server.handle(:GET, "/data/rent_and_finances", rent_and_finances_handler)
 Agoo::Server.handle(:GET, "/data/electricity", electricity_stats_handler)
 Agoo::Server.handle(:GET, "/data/train_departures", train_departure_handler)
 Agoo::Server.handle(:GET, "/data/strava_stats", strava_workouts_handler)
+Agoo::Server.handle(:GET, "/data/weather", weather_handler)
 
 # Add rent calculator endpoints
 Agoo::Server.handle(:GET, "/api/rent", rent_calculator_handler)
