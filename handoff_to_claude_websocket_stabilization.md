@@ -1,36 +1,70 @@
-# OBSOLETE: See DEVELOPMENT.md for the canonical Agoo/WebSocket fix (July 2025)
-
-## Handoff Plan: Stabilizing the WebSocket Server
+# Handoff Plan: Stabilizing WebSocket Server & Fixing Critical Issues
 
 **To Claude:**
 
-Hello! We've been experiencing persistent `500 Internal Server Errors` with our WebSocket implementation for the Kimonokittens Handbook. Your task is to apply a critical fix to `json_server.rb` to resolve this instability.
+Hello! We have multiple critical issues in the Kimonokittens project that need immediate attention. Your task is to systematically fix these problems to restore stability.
 
-### 1. The Problem: Unreliable Client Identification
+## 1. Critical Issues Identified
 
-The root cause of the errors is in how we track WebSocket clients. The current `PubSub` module uses the `client.hash` value as a unique key for each connection. This hash is not a stable identifier throughout the connection's lifecycle, especially when a connection closes unexpectedly. This leads to lookup failures when trying to `unsubscribe` a client, causing the server to crash.
+### Issue A: WebSocket Server Crashes (500 Internal Server Errors)
+- **Problem**: The `/handbook/ws` endpoint consistently returns 500 errors
+- **Root Cause**: The `WsHandler` class is using an incorrect Agoo WebSocket implementation
+- **Impact**: No real-time updates work, causing persistent `ECONNRESET` errors in Vite proxy
 
-The server logs confirm this with repeated connection failures on the `/handbook/ws` endpoint.
+### Issue B: Ruby Server Segfaults
+- **Problem**: The `json_server.rb` crashes with segmentation faults
+- **Root Cause**: Likely related to WebSocket connection handling or memory management
+- **Impact**: Complete server failure requiring manual restarts
 
-### 2. The Solution: Use Agoo's Connection ID
+### Issue C: Train API Connection Failures
+- **Problem**: SL API calls fail with DNS resolution errors: `getaddrinfo: nodename nor servname provided, or not known`
+- **Root Cause**: The old SL API endpoint may be deprecated or unreliable
+- **Impact**: Train departure widget shows errors instead of data
 
-The Agoo web server provides a stable and unique identifier for each connection called `con_id`. We must refactor our code to use this `con_id` as the key for managing WebSocket clients in our `PubSub` module.
+## 2. Systematic Fix Plan
 
-This involves two main changes:
-1.  Update the `PubSub` module to key its client list by `con_id`.
-2.  Update the `WsHandler` to correctly manage the WebSocket lifecycle and pass the `con_id` to `PubSub`. The current `WsHandler` implementation is also functionally incorrect for the version of Agoo we are using and needs to be replaced.
+### Step 1: Fix WebSocket Handler (Critical Priority)
 
-### 3. Step-by-Step Implementation Guide
-
-Please apply the following changes to the `json_server.rb` file.
-
-**Step 1: Replace the `PubSub` class**
-
-Delete the entire existing `PubSub` class (from `class PubSub` to the corresponding `end`) and replace it with this improved version. This new version uses a `con_id` to track clients.
+The current `WsHandler` implementation is fundamentally broken. Replace the entire `WsHandler` class in `json_server.rb` with this corrected version:
 
 ```ruby
-# --- WebSocket Pub/Sub Manager ---
-# A simple in-memory manager for WebSocket connections.
+class WsHandler
+  def call(env)
+    if env['rack.upgrade?'] == :websocket
+      env['rack.upgrade'] = self.class   # hand the CLASS, not an instance
+      # DO NOT CHANGE THIS STATUS CODE! Agoo+Rack requires 101 (Switching Protocols) for WebSocket upgrades.
+      # See: https://github.com/ohler55/agoo/issues/216
+      return [101, {}, []]               # 101 Switching Protocols is the correct status
+    end
+    [404, { 'Content-Type' => 'text/plain' }, ['Not Found']]
+  end
+
+  def on_open(client)
+    con_id = client.con_id
+    client.vars[:con_id] = con_id        # store per-connection state
+    $pubsub.subscribe(con_id, client)
+    puts "HANDBOOK WS: open #{con_id}"
+  end
+
+  def on_message(client, msg)
+    con_id = client.vars[:con_id]
+    puts "HANDBOOK WS: #{con_id} -> #{msg}"
+    client.write("echo: #{msg}")
+  end
+
+  def on_close(client)
+    con_id = client.vars[:con_id]
+    $pubsub.unsubscribe(con_id) if con_id
+    puts "HANDBOOK WS: close #{con_id}"
+  end
+end
+```
+
+### Step 2: Fix PubSub Manager (Critical Priority)
+
+The `PubSub` class needs to use stable connection IDs. Replace the entire `PubSub` class with:
+
+```ruby
 class PubSub
   def initialize
     @clients = {}
@@ -63,44 +97,78 @@ class PubSub
 end
 ```
 
-**Step 2: Replace the `WsHandler` class**
+### Step 3: Migrate Train API (High Priority)
 
-Delete the entire existing `WsHandler` class and replace it with this new implementation. This version correctly handles the Agoo WebSocket lifecycle callbacks and uses the `con_id`.
+The user has identified two potential replacement APIs for the failing SL train API:
 
-```ruby
-class WsHandler
-  # Called once when the WebSocket connection is established.
-  def on_open(client)
-    @con_id = client.con_id
-    $pubsub.subscribe(@con_id, client)
-  end
+1. **Trafiklab Realtime APIs** (Recommended): https://www.trafiklab.se/api/our-apis/trafiklab-realtime-apis/
+   - Requires API key but more reliable
+   - Better performance and higher quotas
+   - CC-BY license (just needs attribution)
 
-  # Called when the connection is closed.
-  def on_close(client)
-    $pubsub.unsubscribe(@con_id) if @con_id
-  end
+2. **SL Transport API** (Fallback): https://www.trafiklab.se/api/our-apis/sl/transport/
+   - No API key needed
+   - May have lower reliability/quotas
 
-  # Called when a message is received from the client.
-  def on_message(client, msg)
-    puts "Received WebSocket message from #{@con_id}: #{msg}"
-    # Echo back messages for debugging
-    client.write("echo: #{msg}")
-  end
+**Action Required**: Update `handlers/train_departure_handler.rb` to use the new Trafiklab Realtime API. The current endpoint `https://api.sl.se/api2/realtimedeparturesV4.json` should be replaced with the new API endpoint.
 
-  # This method is required by Agoo for handling the initial HTTP upgrade request.
-  # We leave it empty because the on_* callbacks handle the logic.
-  def call(env)
-    # The 'rack.upgrade' check is implicitly handled by Agoo when assigning
-    # a handler to a route, so we don't need to check for it here.
-    # The return value of [0, {}, []] is a valid empty Rack response,
-    # though it's not strictly used after the upgrade.
-    [0, {}, []]
-  end
-end
+### Step 4: Test and Verify
+
+After making these changes:
+
+1. **Test WebSocket Connection**: 
+   - Start both servers (`bundle exec ruby json_server.rb` and `npm run dev` in dashboard/)
+   - Open browser to `http://localhost:5175/`
+   - Check browser console for WebSocket connection success (no more ECONNRESET errors)
+
+2. **Test Train API**:
+   - Verify `/data/train_departures` endpoint returns data instead of 500 errors
+   - Check that TrainWidget displays departure times
+
+3. **Test Server Stability**:
+   - Leave server running for extended period
+   - Monitor for segfaults or crashes
+
+## 3. Key Implementation Notes
+
+### WebSocket Status Codes
+- **CRITICAL**: Use `[101, {}, []]` for WebSocket upgrades, not `[0, {}, []]`
+- Status code 0 is invalid in Rack and causes 500 errors
+- Status code 101 is the HTTP standard for "Switching Protocols"
+
+### Connection Management
+- Always use `client.con_id` as the stable identifier
+- Store per-connection state in `client.vars[:key]`
+- Never use `client.hash` as it's unreliable
+
+### Error Handling
+- Add proper error handling to prevent segfaults
+- Use mutex synchronization for thread-safe operations
+- Log all connection events for debugging
+
+## 4. Expected Outcomes
+
+After implementing these fixes:
+- ✅ WebSocket connections should establish successfully
+- ✅ Real-time updates should work in the dashboard
+- ✅ Train departure data should load correctly
+- ✅ Server should run stably without segfaults
+- ✅ Browser console should show no more ECONNRESET errors
+
+## 5. Testing Commands
+
+```bash
+# Start backend server
+bundle exec ruby json_server.rb
+
+# Start frontend server (in separate terminal)
+cd dashboard && npm run dev
+
+# Test WebSocket endpoint
+curl -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Key: test" -H "Sec-WebSocket-Version: 13" http://localhost:3001/handbook/ws
+
+# Test train API
+curl http://localhost:3001/data/train_departures
 ```
 
-**Step 3: Verify the changes**
-
-After applying these edits, the `json_server.rb` file should contain the two new classes you just inserted. The rest of the file should remain unchanged.
-
-Thank you for applying this fix! This should stabilize our real-time features. 
+Thank you for implementing these critical fixes! This should resolve all the stability issues and restore full functionality to the dashboard. 

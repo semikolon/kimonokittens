@@ -47,7 +47,30 @@ export function WeatherWidget() {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`)
         }
-        const weatherData = await response.json()
+        const rawData = await response.json()
+        
+        // Transform the server response format (with colons) to our expected format
+        const weatherData: WeatherData = {
+          current: {
+            temp_c: rawData[':current']?.[':temp_c'] || null,
+            condition: {
+              text: rawData[':current']?.[':condition']?.[':text'] || 'Okänt',
+              icon: rawData[':current']?.[':condition']?.[':icon'] || ''
+            },
+            humidity: rawData[':current']?.[':humidity'] || null,
+            wind_kph: rawData[':current']?.[':wind_kph'] || null,
+            wind_dir: rawData[':current']?.[':wind_dir'] || null
+          },
+          forecast: {
+            forecastday: rawData[':forecast']?.[':forecastday'] || []
+          },
+          location: {
+            name: rawData[':location']?.[':name'] || 'Okänd plats',
+            country: rawData[':location']?.[':country'] || 'Okänt land'
+          },
+          error: rawData[':error']
+        }
+        
         setData(weatherData)
         setError(null)
       } catch (error) {
@@ -98,7 +121,7 @@ export function WeatherWidget() {
   }
 
   const current = data.current
-  const today = data.forecast.forecastday[0]
+  const today = data.forecast.forecastday && data.forecast.forecastday.length > 0 ? data.forecast.forecastday[0] : null
 
   return (
     <div className="widget">
