@@ -17,15 +17,21 @@ interface TemperatureData {
 export function TemperatureWidget() {
   const [data, setData] = useState<TemperatureData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchTemperature = async () => {
       try {
-        const response = await fetch('http://localhost:3001/data/temperature')
+        const response = await fetch('/data/temperature')
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
         const tempData = await response.json()
         setData(tempData)
+        setError(null)
       } catch (error) {
         console.error('Failed to fetch temperature data:', error)
+        setError(error instanceof Error ? error.message : 'Unknown error')
       } finally {
         setLoading(false)
       }
@@ -48,6 +54,17 @@ export function TemperatureWidget() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="widget">
+        <div className="widget-title">Inomhus</div>
+        <div className="widget-content">
+          <div className="text-red-400">Fel: {error}</div>
+        </div>
+      </div>
+    )
+  }
+
   if (!data) {
     return (
       <div className="widget">
@@ -59,34 +76,81 @@ export function TemperatureWidget() {
     )
   }
 
+  const getTemperatureIcon = (temp: string, target: string) => {
+    const tempNum = parseFloat(temp.replace('º', ''))
+    const targetNum = parseFloat(target.replace('º', ''))
+    
+    if (tempNum > targetNum + 1) return '🔥'
+    if (tempNum < targetNum - 1) return '❄️'
+    return '🌡️'
+  }
+
+  const getHumidityIcon = (humidity: string) => {
+    const humidityNum = parseFloat(humidity.replace('%', ''))
+    if (humidityNum > 60) return '💧'
+    if (humidityNum < 40) return '🏜️'
+    return '💨'
+  }
+
   return (
     <div className="widget">
       <div className="widget-title">Inomhus</div>
-      <div className="widget-content space-y-2">
-        <div className="flex justify-between">
-          <span>Temperatur:</span>
-          <span className="font-bold">{data.indoor_temperature}</span>
+      <div className="widget-content">
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="flex items-center">
+            <span className="text-2xl mr-2">
+              {getTemperatureIcon(data.indoor_temperature, data.target_temperature)}
+            </span>
+            <div>
+              <div className="text-2xl font-bold">{data.indoor_temperature}</div>
+              <div className="text-xs text-gray-400">Temperatur</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center">
+            <span className="text-2xl mr-2">🎯</span>
+            <div>
+              <div className="text-2xl font-bold">{data.target_temperature}</div>
+              <div className="text-xs text-gray-400">Mål</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center">
+            <span className="text-2xl mr-2">
+              {getHumidityIcon(data.indoor_humidity)}
+            </span>
+            <div>
+              <div className="text-2xl font-bold">{data.indoor_humidity}</div>
+              <div className="text-xs text-gray-400">Luftfuktighet</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center">
+            <span className="text-2xl mr-2">♨️</span>
+            <div>
+              <div className="text-2xl font-bold">{data.hotwater_temperature}</div>
+              <div className="text-xs text-gray-400">Varmvatten</div>
+            </div>
+          </div>
         </div>
-        <div className="flex justify-between">
-          <span>Mål:</span>
-          <span>{data.target_temperature}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Luftfuktighet:</span>
-          <span>{data.indoor_humidity}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Varmvatten:</span>
-          <span>{data.hotwater_temperature}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Värme:</span>
-          <span className={data.heating_demand === 'NEJ' ? 'text-green-400' : 'text-red-400'}>
-            {data.heating_demand}
-          </span>
-        </div>
-        <div className="text-xs text-gray-400 mt-2">
-          Uppdaterad: {data.last_updated_date} {data.last_updated_time}
+
+        <div className="text-xs text-gray-400 space-y-1">
+          <div className="flex justify-between">
+            <span>Värmepump:</span>
+            <span className={data.heatpump_disabled ? 'text-red-400' : 'text-green-400'}>
+              {data.heatpump_disabled ? 'Av' : 'På'}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span>Värmebehov:</span>
+            <span className={data.heating_demand === 'JA' ? 'text-orange-400' : 'text-gray-400'}>
+              {data.heating_demand}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span>Uppdaterad:</span>
+            <span>{data.last_updated_date} {data.last_updated_time}</span>
+          </div>
         </div>
       </div>
     </div>
