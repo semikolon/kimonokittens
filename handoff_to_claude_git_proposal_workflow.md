@@ -1,5 +1,7 @@
 # Handoff Plan for Claude: Implementing the Git-Backed Proposal Workflow
 
+> **Status (as of July 9, 2025):** This document is still relevant for the planned Git-backed proposal/approval workflow, which is not yet fully implemented. For current status, see DEVELOPMENT.md.
+
 **Objective:** Replace the current in-memory mock proposal system with a robust solution using Git for persistence. This involves reading from and writing to a local Git repository using the `rugged` Ruby gem.
 
 **Current Situation:**

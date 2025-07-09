@@ -1,5 +1,7 @@
 # Handoff to Claude: Kimonokittens Hallway Dashboard Project
 
+> **Status (as of July 9, 2025):** This document is partially historical. The dashboard is fully implemented and stabilized. For the latest technical details, see DEVELOPMENT.md. Retained for project vision, phased plan, and context.
+
 ## 1. Project Goal
 
 The primary objective is to build a new, modern, real-time hallway information dashboard for the Kimonokittens collective. This dashboard will replace an old, defunct Dakboard setup and will run on a large, ultra-widescreen monitor mounted in the hallway. It should serve as a central hub for at-a-glance information, house-related tasks, and personal stats, with a clean, "no-boxes" aesthetic.

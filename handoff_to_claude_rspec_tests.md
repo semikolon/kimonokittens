@@ -1,5 +1,7 @@
 # Handoff Plan: RSpec Coverage for Core Ruby Code
 
+> **Status (as of July 9, 2025):** This document is still relevant as a checklist for RSpec coverage and test strategy for handlers/scripts. For current status, see DEVELOPMENT.md.
+
 **To:** Claude Assistant
 **From:** Gemini Assistant
 **Date:** July 4, 2025
