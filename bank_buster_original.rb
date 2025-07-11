@@ -36,31 +36,28 @@ class FileRetrievalError < StandardError; end
 class BankBuster < Vessel::Cargo
   INFO_INTERVAL = 20
   MAX_ATTEMPTS = 10 # Define the maximum number of attempts
-
-  # Tell Vessel where to start crawling so `page` is initialized.
-  domain ENV['BANK_DOMAIN'] if ENV['BANK_DOMAIN']
-  start_urls ENV['BANK_LOGIN_URL'] if ENV['BANK_LOGIN_URL']
-  
-  # Configure browser options for the modern Vessel API
-  def self.browser_options
-    {
-      headless: ENV['BANKBUSTER_HEADLESS'] != 'false',  # Default to headless
-      window_size: [1200, 800],
-      save_path: TRANSACTIONS_DIR,
-      timeout: 30,
-      process_timeout: 180,
-      browser_options: {
+  driver :ferrum,
+    # slowmo: 2.0,
+    # port: 9222, # for remote debugging
+    # host: 'localhost',
+    save_path: TRANSACTIONS_DIR,
+    # headless: false,
+    browser_options: {
         'no-default-browser-check' => true,
         'disable-extensions' => true,
         'disable-translate' => true,
         'mute-audio' => true,
-        'disable-sync' => true,
-        'disable-web-security' => true,
-        'disable-features' => 'VizDisplayCompositor',
-        'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
-      }
-    }
-  end
+        'disable-sync' => true
+        #"proxy-bypass-list" => "<-loopback>"
+    },
+    # proxy: { host: "localhost", port: "3399" },
+    # logger: FerrumLogger.new(Logger.new("browser.log")),
+    timeout: 10,
+    process_timeout: 120
+    # delay 2
+    domain ENV['BANK_DOMAIN']
+    start_urls ENV['BANK_LOGIN_URL']
+    # TODO: Start on /start-page and reuse login from last session if possible, need to save and reuse cookies for that though
 
   def log_existing_files
     yield({ type: 'LOG', data: "Transactions Dir: #{TRANSACTIONS_DIR}" }) if block_given?
@@ -68,27 +65,27 @@ class BankBuster < Vessel::Cargo
     yield({ type: 'LOG', data: "Files found: #{Dir.glob("#{TRANSACTIONS_DIR}/#{PAYMENT_FILENAME_PATTERN}").count}" }) if block_given?
   end
   
-  def parse
-    log_existing_files { |event| yield event }
-    
+  def parse(&block)
+    log_existing_files(&block)
     # Filter out non-essential requests
     filter_out_non_essentials
     wait_for_idle_or_rescue
-    
     # Accept cookies on the page
-    accept_cookies { |event| yield event }
-    wait_for_idle_or_rescue
-    
-    # Start the login process. If this raises a LoginError, it will now
-    # propagate up and halt the execution, which is the correct behavior.
-    login_process { |event| yield event }
-    
-    # This part will only be reached after a successful login.
-    retrieve_and_parse_files { |event| yield event }
-      
-  # The rescue block is now simplified. A failure in login_process will be caught
-  # by the default Vessel error handler, which will terminate the run.
-  # We only need to catch specific Ferrum errors if we want to add custom logging.
+    accept_cookies(&block)
+    wait_for_idle_or_rescue(timeout: 1)
+    # Start the login process
+    login_process(&block)
+    # Retrieve files and pass the block to the method
+    retrieve_and_parse_files(&block)
+    # Reset the browser to be able to reuse the crawler instance
+    reset_browser
+
+  rescue LoginError => e
+    yield({ type: 'ERROR', error: 'Login error occurred', message: e.message }) if block_given?
+    handle_login_errors(e)
+  rescue FileRetrievalError => e
+    yield({ type: 'ERROR', error: 'File retrieval error occurred', message: e.message }) if block_given?
+    handle_file_errors(e)
   rescue Ferrum::DeadBrowserError => e
     yield({ type: 'ERROR', error: 'Browser error occurred', message: e.message }) if block_given?
     yield({ type: 'LOG', data: "Browser died." }) if block_given?
@@ -105,8 +102,8 @@ class BankBuster < Vessel::Cargo
     "#<#{self.class}:0x#{object_id.to_s(16)}>"
   end
 
-  def wait_for_idle_or_rescue(timeout: 5)
-    page.network.wait_for_idle(timeout: timeout)
+  def wait_for_idle_or_rescue(...)
+    page.network.wait_for_idle(...)
   rescue Ferrum::TimeoutError
     yield({ type: 'ERROR', error: 'Timeout while waiting for update' })
   end
@@ -152,51 +149,21 @@ class BankBuster < Vessel::Cargo
     raise LoginError, 'Unable to login' if message&.include?('Det gick inte att logga in')
         
     qr_code_url = "#{SCREENSHOTS_DIR}/qr_code.jpg"
-    qr_found = false
-    qr_selectors = ['img.mobile-bank-id__qr-code--image']
-    
-    # Keep checking for QR code updates
-    attempts = 0
-    while attempts < 30  # Check for 30 seconds
-      qr_selectors.each do |selector|
-        begin
-          qr_element = at_css(selector)
-          if qr_element
-            # Don't take screenshot again if we already have it
-            unless qr_found
-              page.screenshot(path: qr_code_url, selector: selector)
-              yield({ type: 'QR_UPDATE', qr_code_url: qr_code_url }) if block_given?
-              qr_found = true
-            end
-            # We can break the inner loop once found
-            break
-          end
-        rescue => e
-          # Ignore errors during polling
-        end
-      end
-
-      # Now check if the BankID session on the page has timed out
-      message_element = at_css("span[slot=message]")
-      if message_element && message_element.text.include?('för lång tid')
-        yield({ type: 'LOG', data: 'BankID timed out on page, attempting to retry...' }) if block_given?
-        retry_button = at_css("acorn-button[label='Försök igen']")
-        if retry_button
-          retry_button.click
-          # After clicking retry, we exit this method. The main loop in `login_process`
-          # will then call us again to restart the SSN entry.
-          yield({ type: 'LOG', data: 'Clicked "Try Again". Restarting login.' }) if block_given?
-          return # Exit to allow the retry loop to take over
-        end
-      end
-      
-      break if qr_found
+    while at_css("img.mobile-bank-id__qr-code--image")
+      #yield({ type: 'LOG', data: "Open BankID app and scan QR code below:\n" }) if block_given?
+      page.screenshot(path: qr_code_url, selector: 'img.mobile-bank-id__qr-code--image')
+      yield({ type: 'QR_UPDATE', qr_code_url: qr_code_url })
       sleep 1
-      attempts += 1
+      wait_for_idle_or_rescue(timeout: 1)
+    end
+    yield({ type: 'LOG', data: "\n" }) if block_given?
+
+    message = at_css("span[slot=message]")&.text
+    if message&.include?('för lång tid')
+      puts 'Timed out. Restarting login attempt...'
+      at_css("acorn-button[label='Försök igen']").click
       wait_for_idle_or_rescue
     end
-    
-    yield({ type: 'LOG', data: "QR code polling finished" }) if block_given?
   end
 
   def download_all_payment_files(&block)
@@ -271,25 +238,18 @@ class BankBuster < Vessel::Cargo
     filename
   end
   
-  def login_process
-    yield({ type: 'LOG', data: 'Starting login process...' }) if block_given?
+  def login_process(&block)
     attempts = 0
-    # This loop is crucial. It retries the entire SSN input and QR code scan
-    # process if the BankID authentication doesn't complete in time.
     until at_css("p[data-cy='verify-yourself']")&.text == ENV['BANK_ID_AUTH_TEXT']
-      input_login_and_get_qr_code { |event| yield event }
+      input_login_and_get_qr_code(&block)
       attempts += 1
       if attempts > MAX_ATTEMPTS
-        error_message = 'Login process timed out after multiple attempts.'
-        yield({ type: 'ERROR', error: 'Login Timeout', message: error_message }) if block_given?
-        raise LoginError, error_message
+        yield({ type: 'ERROR', error: 'Timeout while waiting for update' })
+        return
       end
-      # Give it a moment before retrying
-      sleep 1
     end
-    
     puts 'QR code picked up. Authenticate with BankID.'.yellow
-    yield({ type: 'QR_CODE_PICKED_UP' }) if block_given?
+    yield({ type: 'QR_CODE_PICKED_UP' })
     
     until at_css('acorn-section-header')&.attribute('heading') == ENV['PROFILE_SELECT_TEXT']
       sleep 0.2
@@ -311,8 +271,6 @@ class BankBuster < Vessel::Cargo
       attempts += 1
     end
     puts "\n"
-    
-    yield({ type: 'LOG', data: 'Successfully logged in to bank account' }) if block_given?
   end
   
 
@@ -352,9 +310,11 @@ class BankBuster < Vessel::Cargo
   end
 end
 
-# This line is from the old Vessel API and is no longer valid.
-# The modern Vessel/Ferrum gems handle logging differently.
-# Vessel::Logger.instance.level = ::Logger::WARN
+Vessel::Logger.instance.level = ::Logger::WARN
+
+# yield({ type: 'LOG', data: "Transactions Dir: #{TRANSACTIONS_DIR}" }) if block_given?
+# yield({ type: 'LOG', data: "Pattern: #{PAYMENT_FILENAME_PATTERN}" }) if block_given?
+# yield({ type: 'LOG', data: "Files found: #{Dir.glob("#{TRANSACTIONS_DIR}/#{PAYMENT_FILENAME_PATTERN}").count}" }) if block_given?
 
 # When running in the terminal:
 if __FILE__ == $PROGRAM_NAME

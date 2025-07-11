@@ -1,7 +1,7 @@
 require 'agoo'
 
 class StaticHandler
-  WWW_DIR = File.expand_path("../www", __FILE__)
+  WWW_DIR = File.expand_path("../../www", __FILE__)
 
   def call(req)
     path = File.join(WWW_DIR, req['PATH_INFO'])

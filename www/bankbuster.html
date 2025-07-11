@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankBuster Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .console {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .qr-container {
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-connecting { background-color: #fbbf24; }
+        .status-connected { background-color: #10b981; }
+        .status-disconnected { background-color: #ef4444; }
+        .status-running { background-color: #3b82f6; }
+        .status-dot.disconnected { background-color: #f44336; }
+        .status-dot.connecting { background-color: #ff9800; }
+        .status-dot.connected { background-color: #4caf50; }
+        .files-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .files-table th, .files-table td { border: 1px solid #444; padding: 8px; text-align: left; }
+        .files-table th { background-color: #333; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-4xl font-bold">BankBuster Dashboard</h1>
+            <div class="flex items-center">
+                <span id="status-dot" class="status-dot disconnected mr-2" title="Disconnected"></span>
+                <span id="status-text">Disconnected</span>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-2xl font-semibold mb-4">Controls</h2>
+            <div class="flex space-x-4">
+                <button id="connect-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200">Connect WebSocket</button>
+                <button id="disconnect-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200" disabled>Disconnect</button>
+                <button id="start-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200" disabled>Start BankBuster</button>
+            </div>
+            <div id="auto-status-message" class="mt-4 text-gray-400"></div>
+        </div>
+
+        <div id="qr-section" class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6 hidden">
+            <h2 class="text-2xl font-semibold mb-4">BankID QR Code</h2>
+                <div class="qr-container">
+                    <img id="qr-code-img" src="" alt="QR Code" class="w-full h-auto border-2 border-gray-300 rounded">
+                </div>
+                <p class="text-center text-sm text-gray-600 mt-4">Open your BankID app and scan the QR code above</p>
+            </div>
+
+            <!-- Console Output -->
+            <div id="console-output" class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+                <h2 class="text-2xl font-semibold mb-4">Console Output</h2>
+                <div id="console" class="console">
+                    <div class="text-gray-400">Ready to connect...</div>
+                </div>
+            </div>
+
+            <!-- Files Retrieved -->
+            <div id="results-section" class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6 hidden">
+                <h2 class="text-2xl font-semibold mb-4">Files Retrieved</h2>
+                <table id="files-table" class="files-table">
+                    <thead>
+                        <tr>
+                            <th>Debtor Name</th>
+                            <th>Payment Date</th>
+                            <th>Total Amount</th>
+                            <th>Reference</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Files will be populated here by the script -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const connectButton = document.getElementById('connect-button');
+            const disconnectButton = document.getElementById('disconnect-button');
+            const startButton = document.getElementById('start-button');
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            const autoStatusMessage = document.getElementById('auto-status-message');
+            const consoleOutput = document.getElementById('console-output');
+            const qrSection = document.getElementById('qr-section');
+            const qrCodeImg = document.getElementById('qr-code-img');
+            const progressBar = document.getElementById('progress-bar');
+            const progressContainer = document.getElementById('progress-container');
+            const resultsSection = document.getElementById('results-section');
+            const filesTableBody = document.querySelector('#files-table tbody');
+
+            let socket = null;
+            let reconnectInterval = null;
+            const WS_URL = 'ws://localhost:3001/ws';
+            const RECONNECT_DELAY = 5000; // 5 seconds
+            const MIN_RUN_INTERVAL = 10 * 60 * 1000; // 10 minutes
+
+            const logToConsole = (message, type = 'INFO') => {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.innerHTML = `<span class="text-gray-500">${timestamp}</span> <span class="font-bold text-yellow-400">[${type}]</span> ${message}`;
+                consoleOutput.appendChild(logEntry);
+                consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            };
+
+            const updateStatus = (state, text) => {
+                statusDot.className = `status-dot ${state}`;
+                statusDot.title = text;
+                statusText.textContent = text;
+            };
+
+            const handleServerMessage = (event) => {
+                const data = JSON.parse(event.data);
+                switch (data.type) {
+                    case 'LOG':
+                        logToConsole(data.data, 'LOG');
+                        break;
+                    case 'ERROR':
+                    case 'FATAL_ERROR':
+                        logToConsole(`<span class="text-red-500">${data.error}: ${data.message}</span>`, 'ERROR');
+                        break;
+                    case 'QR_UPDATE':
+                        logToConsole('QR Code updated. Please scan with BankID.', 'QR');
+                        qrSection.classList.remove('hidden');
+                        // Add a cache-busting query param to force reload
+                        qrCodeImg.src = data.qr_code_url + '?t=' + new Date().getTime();
+                        break;
+                    case 'QR_CODE_PICKED_UP':
+                        logToConsole('QR Code scanned. Authenticating...', 'AUTH');
+                        qrSection.classList.add('hidden');
+                        break;
+                    case 'PROGRESS_UPDATE':
+                        logToConsole(`Download progress: ${data.progress}%`, 'PROGRESS');
+                        progressContainer.classList.remove('hidden');
+                        progressBar.style.width = `${data.progress}%`;
+                        break;
+                    case 'FILES_RETRIEVED':
+                        logToConsole('File processing complete.', 'SUCCESS');
+                        localStorage.setItem('lastBankBusterSuccess', new Date().getTime());
+                        progressContainer.classList.add('hidden');
+                        resultsSection.classList.remove('hidden');
+                        filesTableBody.innerHTML = ''; // Clear previous results
+                        data.data.forEach(file => {
+                            const row = filesTableBody.insertRow();
+                            row.innerHTML = `<td>${file.debtor_name}</td><td>${file.payment_date}</td><td>${file.total_amount}</td><td>${file.reference || ''}</td>`;
+                        });
+                        break;
+                }
+            };
+
+            const connect = () => {
+                if (socket && socket.readyState === WebSocket.OPEN) return;
+                clearTimeout(reconnectInterval);
+
+                logToConsole('Attempting to connect to WebSocket...', 'SYSTEM');
+                updateStatus('connecting', 'Connecting...');
+                
+                socket = new WebSocket(WS_URL);
+
+                socket.onopen = () => {
+                    logToConsole('WebSocket connection established.', 'SYSTEM');
+                    updateStatus('connected', 'Connected');
+                    connectButton.disabled = true;
+                    disconnectButton.disabled = false;
+                    startButton.disabled = false;
+                    checkAndStartBankBuster();
+                };
+
+                socket.onmessage = handleServerMessage;
+
+                socket.onclose = () => {
+                    logToConsole(`WebSocket disconnected. Retrying in ${RECONNECT_DELAY / 1000} seconds...`, 'SYSTEM');
+                    updateStatus('disconnected', 'Disconnected');
+                    connectButton.disabled = false;
+                    disconnectButton.disabled = true;
+                    startButton.disabled = true;
+                    socket = null;
+                    reconnectInterval = setTimeout(connect, RECONNECT_DELAY);
+                };
+
+                socket.onerror = (err) => {
+                    logToConsole('WebSocket error.', 'ERROR');
+                    console.error('Socket error:', err);
+                    // onclose will be called subsequently, triggering the reconnect logic
+                };
+            };
+
+            const disconnect = () => {
+                if (socket) {
+                    clearTimeout(reconnectInterval); // Stop automatic reconnections
+                    socket.close();
+                    logToConsole('WebSocket manually disconnected.', 'SYSTEM');
+                }
+            };
+            
+            const checkAndStartBankBuster = () => {
+                const lastSuccess = localStorage.getItem('lastBankBusterSuccess');
+                const now = new Date().getTime();
+
+                if (!lastSuccess || (now - lastSuccess > MIN_RUN_INTERVAL)) {
+                    logToConsole('Conditions met. Automatically starting BankBuster process.', 'AUTO');
+                    autoStatusMessage.textContent = 'Conditions met. Automatically starting BankBuster...';
+                    socket.send('START');
+                    startButton.disabled = true; // Disable manual start while auto-run is active
+                } else {
+                    const waitTime = MIN_RUN_INTERVAL - (now - lastSuccess);
+                    const minutesLeft = Math.ceil(waitTime / (60 * 1000));
+                    const message = `Last successful run was recent. Waiting for ~${minutesLeft} more minute(s).`;
+                    logToConsole(message, 'AUTO');
+                    autoStatusMessage.textContent = message;
+                    
+                    // Set a timeout to re-check after the cooldown period
+                    setTimeout(checkAndStartBankBuster, waitTime + 1000); // Re-check after cooldown + 1s buffer
+                }
+            };
+
+            // Manual button bindings
+            connectButton.addEventListener('click', connect);
+            disconnectButton.addEventListener('click', disconnect);
+            startButton.addEventListener('click', () => {
+                 if (socket && socket.readyState === WebSocket.OPEN) {
+                    logToConsole('Manual start initiated.', 'USER');
+                    socket.send('START');
+                } else {
+                    logToConsole('Cannot start, WebSocket is not connected.', 'ERROR');
+                }
+            });
+
+            // Initial connection attempt on page load
+            connect();
+        });
+    </script>
+</body>
+</html> 
