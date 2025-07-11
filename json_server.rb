@@ -185,11 +185,11 @@ Agoo::Server.handle(:OPTIONS, "/api/auth/*", auth_handler)
 
 Agoo::Server.handle(:GET, "/*", static_handler)
 
-Agoo::Server.handle(:GET, "/data/rent_and_finances", rent_and_finances_handler)
-Agoo::Server.handle(:GET, "/data/electricity", electricity_stats_handler)
-Agoo::Server.handle(:GET, "/data/train_departures", train_departure_handler)
-Agoo::Server.handle(:GET, "/data/strava_stats", strava_workouts_handler)
-Agoo::Server.handle(:GET, "/data/weather", weather_handler)
+Agoo::Server.handle(:GET, "/api/v1/rent_and_finances", rent_and_finances_handler)
+Agoo::Server.handle(:GET, "/api/v1/electricity", electricity_stats_handler)
+Agoo::Server.handle(:GET, "/api/v1/train_departures", train_departure_handler)
+Agoo::Server.handle(:GET, "/api/v1/strava_stats", strava_workouts_handler)
+Agoo::Server.handle(:GET, "/api/v1/weather", weather_handler)
 
 # Add rent calculator endpoints
 Agoo::Server.handle(:GET, "/api/rent", rent_calculator_handler)
