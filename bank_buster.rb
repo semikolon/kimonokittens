@@ -36,11 +36,13 @@ class FileRetrievalError < StandardError; end
 class BankBuster < Vessel::Cargo
   INFO_INTERVAL = 20
   MAX_ATTEMPTS = 10 # Define the maximum number of attempts
-
-  # Tell Vessel where to start crawling so `page` is initialized.
-  domain ENV['BANK_DOMAIN'] if ENV['BANK_DOMAIN']
-  start_urls ENV['BANK_LOGIN_URL'] if ENV['BANK_LOGIN_URL']
   
+  # Tell Vessel which domain we are on, but we will control the navigation manually.
+  domain ENV['BANK_DOMAIN'] if ENV['BANK_DOMAIN']
+  
+  # We are removing start_urls to take manual control of the first page load.
+  # start_urls ENV['BANK_LOGIN_URL'] if ENV['BANK_LOGIN_URL']
+   
   # Configure browser options for the modern Vessel API
   def self.browser_options
     {
@@ -69,6 +71,19 @@ class BankBuster < Vessel::Cargo
   end
   
   def parse
+    # Manually navigate to the start page to gain more control and better error handling.
+    begin
+      yield({ type: 'LOG', data: "Manually navigating to #{ENV['BANK_LOGIN_URL']}..." }) if block_given?
+      page.go_to(ENV['BANK_LOGIN_URL'])
+    rescue Ferrum::TimeoutError => e
+      yield({ type: 'ERROR', error: 'Navigation Timeout', message: "The page took too long to become idle. This is common on complex sites. The page content may have loaded anyway." }) if block_given?
+      
+      # If we time out, let's take a screenshot to see what the page looks like.
+      screenshot_path = "#{SCREENSHOTS_DIR}/timeout_error_page.jpg"
+      page.screenshot(path: screenshot_path)
+      yield({ type: 'LOG', data: "Saved a screenshot of the timed-out page to: #{screenshot_path}" }) if block_given?
+    end
+
     log_existing_files { |event| yield event }
     
     # Filter out non-essential requests
@@ -358,24 +373,8 @@ end
 
 # When running in the terminal:
 if __FILE__ == $PROGRAM_NAME
+  # When run as a standalone script, it will now output a stream of JSON objects.
   BankBuster.run do |event|
-    case event[:type]
-    when 'LOG'
-      puts event[:data]
-    when 'ERROR'
-      puts "Error: #{event[:error]} - #{event[:message]}".red
-    when 'QR_UPDATE'
-      system("clear")
-      puts "Open BankID app and scan QR code below:\n".green
-      system("./imgcat -H 40% #{event[:qr_code_url]}")
-    when 'PROGRESS_UPDATE'
-      system("clear")
-      puts "Progress: #{event[:progress]}%".yellow
-    when 'FILES_RETRIEVED'
-      system("clear")
-      puts "Files retrieved successfully.".green
-      puts "Files stored in: #{TRANSACTIONS_DIR}"
-      ap event[:data]
-    end
+    puts Oj.dump(event)
   end
 end

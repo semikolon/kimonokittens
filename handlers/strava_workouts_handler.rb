@@ -31,7 +31,9 @@ class StravaWorkoutsHandler
       return [500, { 'Content-Type' => 'application/json' }, [ Oj.dump({ 'error': 'Failed to fetch stats from Strava' }) ]]
     end
 
-    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(stats) ]]
+    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(stats, mode: :compat) ]]
+  rescue Faraday::Error => e
+    [500, { 'Content-Type' => 'application/json' }, [ Oj.dump({ 'error' => "Strava API error: #{e.message}" }, mode: :compat) ]]
   end
 
   def transform_stats(stats)
@@ -132,7 +134,7 @@ class StravaWorkoutsHandler
 
     since_date = (Time.now - 4 * 7 * 24 * 60 * 60).strftime("%-d %b").downcase
     {
-      runs: "<strong>#{recent_distance} km</strong> sedan #{since_date} - #{recent_distance_per_run} km per tur - #{recent_pace} min/km<br/>
+      'runs' => "<strong>#{recent_distance} km</strong> sedan #{since_date} - #{recent_distance_per_run} km per tur - #{recent_pace} min/km<br/>
         <strong>#{ytd_distance} km</strong> sedan 1 jan - #{ytd_distance_per_run} km per tur - #{ytd_pace} min/km"
     }
 
@@ -146,6 +148,7 @@ class StravaWorkoutsHandler
       req.params['client_secret'] = CLIENT_SECRET
       req.params['refresh_token'] = @refresh_token
       req.params['grant_type'] = 'refresh_token'
+      req.options.timeout = 10 # Longer timeout for token refresh
     end
 
     if response.success?

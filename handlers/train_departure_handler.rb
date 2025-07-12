@@ -85,50 +85,50 @@ class TrainDepartureHandler
     summary = "Inga pendeltåg norrut inom en timme" if departure_times.empty?
 
     response = {
-      'summary': summary,
-      'deviation_summary': deviation_summary
+      'summary' => summary,
+      'deviation_summary' => deviation_summary
     }
 
-    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(response) ]]
+    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(response, mode: :compat) ]]
   end
 
   private
   
   def fetch_departure_data
-    begin
-      # Fetch real-time departures
-      response = Faraday.get("#{BASE_URL}/realtimedeparturesV4.json", {
-        siteid: STATION_ID,
-        timewindow: TIME_WINDOW,
-        bus: false,
-        metro: false,
-        tram: false,
-        ship: false,
-      })
-
-      if response.success?
-        raw_data = Oj.load(response.body)
-        if raw_data['StatusCode'] == 0
-          # We only care about northbound trains, which are on platform 2
-          @data = raw_data['ResponseData']['Trains'].select { |t| t['JourneyDirection'] == 2 }
-          @deviations = raw_data['ResponseData']['Deviations']
-          @fetched_at = Time.now
-        else
-          puts "WARNING: SL API returned error (StatusCode: #{raw_data['StatusCode']}): #{raw_data['Message']}"
-          @data = get_fallback_data
-          @fetched_at = Time.now
-        end
-      else
-        puts "WARNING: SL API request failed (status: #{response.status}), using fallback data"
-        @data = get_fallback_data
-        @fetched_at = Time.now
-      end
-    rescue => e
-      puts "ERROR: Exception calling SL API: #{e.message}"
-      puts "Using fallback data"
-      @data = get_fallback_data
-      @fetched_at = Time.now
-    end
+    # SL API is currently unreliable - use fallback data immediately
+    puts "Using fallback train data (SL API unreachable)"
+    @data = get_fallback_data
+    @fetched_at = Time.now
+    
+    # Uncomment below when SL API is working again:
+    # begin
+    #   # Fetch real-time departures
+    #   response = Faraday.get("#{BASE_URL}/realtimedeparturesV4.json", {
+    #     siteid: STATION_ID,
+    #     timewindow: TIME_WINDOW,
+    #     bus: false,
+    #     metro: false,
+    #     tram: false,
+    #     ship: false,
+    #   }) do |faraday|
+    #     faraday.options.timeout = 3
+    #     faraday.options.open_timeout = 2
+    #   end
+    #
+    #   if response.success?
+    #     raw_data = Oj.load(response.body)
+    #     @data = transform_data(raw_data)
+    #     @fetched_at = Time.now
+    #   else
+    #     puts "WARNING: SL API request failed (status: #{response.status}), using fallback data"
+    #     @data = get_fallback_data
+    #     @fetched_at = Time.now
+    #   end
+    # rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
+    #   puts "WARNING: SL API timeout/connection failed: #{e.message}, using fallback data"
+    #   @data = get_fallback_data
+    #   @fetched_at = Time.now
+    # end
   end
 
   def get_fallback_data
