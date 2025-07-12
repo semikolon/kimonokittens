@@ -32,7 +32,7 @@ if ENV['RACK_ENV'] == 'production'
   )
 else
   # Development mode - no SSL
-  Agoo::Server.init(3001, 'root',
+  Agoo::Server.init(3001, 'root', thread_count: 0,
     bind: ['http://0.0.0.0:3001'],
   )
   puts "Starting development server on http://localhost:3001"
@@ -44,7 +44,7 @@ require_relative 'handlers/home_page_handler'
 require_relative 'handlers/static_handler'
 require_relative 'handlers/train_departure_handler'
 require_relative 'handlers/strava_workouts_handler'
-# require_relative 'handlers/bank_buster_handler'  # Temporarily disabled for isolated testing
+# require_relative 'handlers/bank_buster_handler'  # Temporarily disabled
 require_relative 'handlers/rent_and_finances_handler'
 require_relative 'handlers/rent_calculator_handler'
 require_relative 'handlers/handbook_handler'
@@ -57,7 +57,7 @@ proxy_handler = ProxyHandler.new
 static_handler = StaticHandler.new
 train_departure_handler = TrainDepartureHandler.new
 strava_workouts_handler = StravaWorkoutsHandler.new
-# bank_buster_handler = BankBusterHandler.new
+# bank_buster_handler = BankBusterHandler.new # Temporarily disabled
 rent_and_finances_handler = RentAndFinancesHandler.new
 rent_calculator_handler = RentCalculatorHandler.new
 handbook_handler = HandbookHandler.new
@@ -159,7 +159,7 @@ class WsHandler
   end
 end
 
-run_one_time_data_correction unless ENV['SKIP_TENANT_FIX'] == '1'
+run_one_time_data_correction()
 
 # Initialize global PubSub instance
 $pubsub = PubSub.new
@@ -185,7 +185,6 @@ Agoo::Server.handle(:OPTIONS, "/api/auth/*", auth_handler)
 
 Agoo::Server.handle(:GET, "/*", static_handler)
 
-# Revert to /data/ paths to keep existing frontend widgets functional
 Agoo::Server.handle(:GET, "/data/rent_and_finances", rent_and_finances_handler)
 Agoo::Server.handle(:GET, "/data/electricity", electricity_stats_handler)
 Agoo::Server.handle(:GET, "/data/train_departures", train_departure_handler)
@@ -204,4 +203,3 @@ Agoo::Server.handle(:PUT, "/api/rent/config", rent_calculator_handler)
 Agoo::Server.handle(:GET, "/data/*", proxy_handler)
 
 Agoo::Server.start()
-sleep # Keep the server running
