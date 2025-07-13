@@ -44,7 +44,7 @@ require_relative 'handlers/home_page_handler'
 require_relative 'handlers/static_handler'
 require_relative 'handlers/train_departure_handler'
 require_relative 'handlers/strava_workouts_handler'
-# require_relative 'handlers/bank_buster_handler'  # Temporarily disabled
+require_relative 'handlers/bank_buster_handler'
 require_relative 'handlers/rent_and_finances_handler'
 require_relative 'handlers/rent_calculator_handler'
 require_relative 'handlers/handbook_handler'
@@ -57,7 +57,7 @@ proxy_handler = ProxyHandler.new
 static_handler = StaticHandler.new
 train_departure_handler = TrainDepartureHandler.new
 strava_workouts_handler = StravaWorkoutsHandler.new
-# bank_buster_handler = BankBusterHandler.new # Temporarily disabled
+bank_buster_handler = BankBusterHandler.new
 rent_and_finances_handler = RentAndFinancesHandler.new
 rent_calculator_handler = RentCalculatorHandler.new
 handbook_handler = HandbookHandler.new
@@ -166,14 +166,11 @@ $pubsub = PubSub.new
 
 Agoo::Server.handle(:GET, "/", home_page_handler)
 
-# Add WebSocket handler for the Handbook
-Agoo::Server.handle(:GET, "/handbook/ws", WsHandler.new)
-
 # Add WebSocket handler for the Dashboard
 Agoo::Server.handle(:GET, "/dashboard/ws", WsHandler.new)
 
 # Add WebSocket handler for BankBuster
-# Agoo::Server.handle(:GET, "/ws", bank_buster_handler)  # Temporarily disabled
+Agoo::Server.handle(:GET, "/ws", bank_buster_handler)
 
 # Add Handbook API handlers
 Agoo::Server.handle(:GET, "/api/handbook/*", handbook_handler)
