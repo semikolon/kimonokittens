@@ -94,11 +94,12 @@ module RentCalculator
       larm: 150,        # Monthly alarm system fee (part of quarterly invoice)
       drift_rakning: nil, # Quarterly invoice (~2600 kr) that replaces the above monthly fees
       saldo_innan: 0,    # Default to no previous balance
-      extra_in: 0        # Extra income that reduces total rent
+      extra_in: 0,       # Extra income that reduces total rent
+      gas: 0             # Gas for stove as additional cost
     }.freeze
 
     attr_reader :year, :month, :kallhyra, :el, :bredband, :vattenavgift,
-                :va, :larm, :drift_rakning, :saldo_innan, :extra_in
+                :va, :larm, :drift_rakning, :saldo_innan, :extra_in, :gas
 
     def initialize(params = {})
       # Convert Config to hash if needed, then merge with defaults
@@ -119,6 +120,7 @@ module RentCalculator
       @drift_rakning = params_with_defaults[:drift_rakning]
       @saldo_innan = params_with_defaults[:saldo_innan]
       @extra_in = params_with_defaults[:extra_in]
+      @gas = params_with_defaults[:gas] || 0
       validate!
     end
 
@@ -136,7 +138,7 @@ module RentCalculator
       else
         vattenavgift + va + larm  # Otherwise use sum of monthly fees
       end
-      el + bredband + monthly_fees
+      el + bredband + monthly_fees + gas
     end
 
     # Calculate total rent to be distributed among roommates
@@ -156,7 +158,8 @@ module RentCalculator
         larm: @larm,
         drift_rakning: @drift_rakning,
         saldo_innan: @saldo_innan,
-        extra_in: @extra_in
+        extra_in: @extra_in,
+        gas: @gas
       }
     end
 
@@ -341,6 +344,9 @@ module RentCalculator
         result['Larm'] = config.larm
       end
 
+      # Add gas if non-zero
+      result['Gasol'] = config.gas if config.gas != 0
+      
       # Add balances if non-zero
       result['Saldo innan'] = config.saldo_innan if config.saldo_innan != 0
       result['Extra in'] = config.extra_in if config.extra_in != 0
@@ -391,6 +397,7 @@ module RentCalculator
       config = Config.new(config) unless config.is_a?(Config)
       breakdown = rent_breakdown(roommates: roommates, config: config)
       rents = breakdown['Rent per Roommate']
+      total_days = config.days_in_month
 
       # The message shows the NEXT month (what we're paying for)
       # Since rent is paid in advance, January rent is paid in December
@@ -402,31 +409,53 @@ module RentCalculator
       due_abbr = Helpers.swedish_month_abbr(config.month)
       header = "*Hyran för #{month_name} #{next_year}* ska betalas innan 27 #{due_abbr}"
 
-      grouped = rents.group_by { |_n, amt| amt }
+      # Group by rent amount and collect info about days
+      grouped = {}
+      rents.each do |name, amount|
+        days = roommates[name][:days] || total_days
+        grouped[amount] ||= []
+        grouped[amount] << { name: name, days: days }
+      end
 
+      # If everyone pays the same
       if grouped.size == 1
         amount = grouped.keys.first
         return "#{header}\n*#{amount} kr* för alla"
       end
 
-      # Handle different amounts - check if it's a simple discount case
-      sorted_amounts = grouped.keys.sort
-      if sorted_amounts.size == 2
-        lower_amount = sorted_amounts[0]
-        higher_amount = sorted_amounts[1]
-        
-        lower_people = grouped[lower_amount].map(&:first)
-        higher_people = grouped[higher_amount].map(&:first)
-        
-        # Check if it's exactly one person with discount vs others
-        if lower_people.size == 1 && higher_people.size >= 1
-          discounted_person = lower_people.first
-          return "#{header}\n*#{lower_amount} kr* för #{discounted_person} och *#{higher_amount} kr* för oss andra"
+      # Build message with grouped amounts
+      message_lines = []
+      grouped.sort_by { |amt, _| -amt }.each do |amount, people|
+        if people.size == 1
+          person = people.first
+          if person[:days] != total_days
+            days_text = person[:days] == 1 ? "dags" : "dagars"
+            message_lines << "#{person[:name]}: #{amount} kr (#{person[:days]} #{days_text} boende)"
+          else
+            message_lines << "#{person[:name]}: #{amount} kr"
+          end
+        else
+          # Group multiple people with same amount
+          # Check if all have same days
+          all_same_days = people.map { |p| p[:days] }.uniq.size == 1
+          if all_same_days && people.first[:days] == total_days
+            # All full month, no notation needed
+            names = people.map { |p| p[:name] }.join(', ')
+            message_lines << "#{names}: #{amount} kr"
+          else
+            # Mixed or all prorated - show individually
+            people.each do |person|
+              if person[:days] != total_days
+                days_text = person[:days] == 1 ? "dags" : "dagars"
+                message_lines << "#{person[:name]}: #{amount} kr (#{person[:days]} #{days_text} boende)"
+              else
+                message_lines << "#{person[:name]}: #{amount} kr"
+              end
+            end
+          end
         end
       end
 
-      # Fallback to individual listing
-      message_lines = rents.map { |name, amt| "#{name}: #{amt} kr" }
       "#{header}\n\n#{message_lines.join("\n")}"
     end
   end

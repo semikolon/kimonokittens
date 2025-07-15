@@ -87,10 +87,20 @@ class RentCalculatorHandler
 
   def handle_calculation(req)
     # Parse request body
-    body = JSON.parse(req.body.read)
+    body_content = req['rack.input'].read
+    req['rack.input'].rewind
+    body = JSON.parse(body_content)
     
     # Fetch current state from the database
     config = extract_config(year: body['year'], month: body['month'])
+    
+    # Merge request body config overrides if present
+    if body['config']
+      body['config'].each do |key, value|
+        config[key.to_sym] = value
+      end
+    end
+    
     roommates = extract_roommates(year: body['year'], month: body['month'])
     history_options = extract_history_options(body)
 
@@ -163,7 +173,8 @@ class RentCalculatorHandler
           larm: 'Alarm system fee',
           drift_rakning: 'Quarterly invoice (optional)',
           saldo_innan: 'Previous balance (optional, defaults to 0)',
-          extra_in: 'Extra income (optional, defaults to 0)'
+          extra_in: 'Extra income (optional, defaults to 0)',
+          gas: 'Gas for stove (optional, defaults to 0)'
         },
         roommates: {
           'name': {
@@ -250,7 +261,9 @@ class RentCalculatorHandler
   end
 
   def handle_config_update(req)
-    body = JSON.parse(req.body.read)
+    body_content = req['rack.input'].read
+    req['rack.input'].rewind
+    body = JSON.parse(body_content)
     updates = body['updates']
 
     unless updates.is_a?(Hash)
@@ -266,7 +279,9 @@ class RentCalculatorHandler
   end
 
   def handle_roommate_update(req)
-    body = JSON.parse(req.body.read)
+    body_content = req['rack.input'].read
+    req['rack.input'].rewind
+    body = JSON.parse(body_content)
     action = body['action']
     name = body['name']
 
@@ -275,11 +290,27 @@ class RentCalculatorHandler
 
     case action
     when 'add_permanent'
-      # For now, we only support adding a name.
-      # TODO: Add support for email, avatarUrl, etc.
-      new_tenant = db.add_tenant(name: name)
+      start_date = body['start_date']
+      new_tenant = db.add_tenant(name: name, start_date: start_date)
       response[:new_tenant] = new_tenant
-    # TODO: Implement other actions like 'set_departure', 'set_temporary', etc.
+    when 'set_departure'
+      end_date = body['end_date']
+      unless end_date
+        return [400, { 'Content-Type' => 'application/json' }, [{ error: 'end_date is required for set_departure action' }.to_json]]
+      end
+      db.set_departure_date(name: name, date: end_date)
+      response[:message] = "Set departure date for #{name} to #{end_date}"
+    when 'update_adjustment'
+      room_adjustment = body['room_adjustment']
+      unless room_adjustment
+        return [400, { 'Content-Type' => 'application/json' }, [{ error: 'room_adjustment is required for update_adjustment action' }.to_json]]
+      end
+      db.set_room_adjustment(name: name, adjustment: room_adjustment)
+      response[:message] = "Updated room adjustment for #{name} to #{room_adjustment}"
+    when 'set_temporary'
+      # TODO: Implement temporary stay logic - this would require more complex logic
+      # to handle month-specific stays rather than permanent tenant records
+      return [400, { 'Content-Type' => 'application/json' }, [{ error: 'set_temporary action not yet implemented' }.to_json]]
     else
       return [400, { 'Content-Type' => 'application/json' }, [{ error: "Invalid action: #{action}" }.to_json]]
     end
