@@ -3,6 +3,7 @@ require 'oj'
 # require 'pry'  # Temporarily disabled due to gem conflict
 require 'agoo'
 
+=begin
 class BankBusterHandler
   def initialize
     puts "Initializing BankBusterHandler..."
@@ -10,12 +11,12 @@ class BankBusterHandler
   end
 
   def call(env)
-    if env['rack.upgrade?'] == :websocket
-      env['rack.upgrade'] = self
+    if env[\'rack.upgrade?\'] == :websocket
+      env[\'rack.upgrade\'] = self
       # DO NOT CHANGE THIS STATUS CODE! Agoo+Rack requires 101 for WebSocket upgrades.
       return [101, {}, []]
     end
-    [404, { 'Content-Type' => 'text/plain' }, ['Not Found']]
+    [404, { \'Content-Type\' => \'text/plain\' }, [\'Not Found\']]
   end
 
   def on_open(client)
@@ -25,9 +26,9 @@ class BankBusterHandler
   def on_message(client, msg)
     puts "BANKBUSTER WS: Received message: #{msg}"
     
-    if msg == 'START'
+    if msg == \'START\'
       puts "BANKBUSTER WS: Received start message"
-      client.write('echo: START received')
+      client.write(\'echo: START received\')
     end
   end
 
@@ -35,3 +36,4 @@ class BankBusterHandler
     puts "BANKBUSTER WS: Closing socket connection."
   end
 end
+=end
