@@ -50,3 +50,5 @@ tink-accounts.json
 /vendor/bundle/
 /.bundle/
 /node_modules/
+
+tmp/
