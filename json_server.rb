@@ -64,37 +64,6 @@ handbook_handler = HandbookHandler.new
 auth_handler = AuthHandler.new
 weather_handler = WeatherHandler.new
 
-def run_one_time_data_correction
-  puts "Running one-time data corrections..."
-  db = RentDb.instance
-
-  # This is a critical data correction block that runs on server start.
-  # It ensures that tenant data in the database is consistent with our
-  # historical records.
-  tenant_data = {
-    'Fredrik' => { startDate: '2023-02-01', departureDate: nil },
-    'Rasmus' => { startDate: '2023-06-01', departureDate: nil },
-    'Elvira' => { startDate: '2024-11-22', departureDate: nil },
-    'Adam' => { startDate: '2025-03-01', departureDate: nil },
-    'Frans-Lukas' => { startDate: '2023-12-01', departureDate: '2025-03-01' },
-    'Malin' => { startDate: '2023-02-01', departureDate: '2024-11-21' },
-    'Astrid' => { startDate: '2024-02-01', departureDate: '2024-11-30' },
-    'Camila' => { startDate: '2023-02-01', departureDate: '2023-05-31' }
-  }
-
-  tenant_data.each do |name, dates|
-    # Ensure the tenant exists
-    email = "#{name.downcase.gsub(/\\s+/, '.')}@kimonokittens.com"
-    db.add_tenant(name: name) unless db.find_tenant_by_email(email)
-
-    # Set start and departure dates
-    db.set_start_date(name: name, date: dates[:startDate]) if dates[:startDate]
-    db.set_departure_date(name: name, date: dates[:departureDate]) if dates[:departureDate]
-  end
-
-  puts "Data corrections complete."
-end
-
 # --- WebSocket Pub/Sub Manager ---
 # A simple in-memory manager for WebSocket connections.
 class PubSub
@@ -158,8 +127,6 @@ class WsHandler
     puts "HANDBOOK WS: close #{con_id}"
   end
 end
-
-# run_one_time_data_correction() # One-time correction already completed
 
 # Initialize global PubSub instance
 $pubsub = PubSub.new
