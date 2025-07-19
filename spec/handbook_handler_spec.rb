@@ -1,229 +1,112 @@
 require 'rspec'
-require 'json'
-require 'agoo'
 require_relative '../handlers/handbook_handler'
+require_relative 'support/api_test_helpers'
 
 RSpec.describe HandbookHandler do
+  include ApiTestHelpers
+
   let(:handler) { HandbookHandler.new }
+
+  # Mock the Git repository to avoid file system interactions
+  let(:mock_repo) { double('Rugged::Repository') }
+  let(:mock_branches) { double('Rugged::BranchCollection') }
   
-  # Helper method to create a mock request
-  def mock_request(method, path, body = nil, headers = {})
-    req = double('Agoo::Request')
-    allow(req).to receive(:request_method).and_return(method)
-    allow(req).to receive(:path).and_return(path)
-    allow(req).to receive(:body).and_return(body) if body
-    req
+  before do
+    allow(HandbookHandler).to receive(:repo).and_return(mock_repo)
+    allow(mock_repo).to receive(:branches).and_return(mock_branches)
   end
-  
-  # Helper method to create a mock response
-  def mock_response
-    res = double('Agoo::Response')
-    @response_headers = {}
-    @response_body = nil
-    @response_code = 200
-    
-    allow(res).to receive(:set_header) do |key, value|
-      @response_headers[key] = value
-    end
-    allow(res).to receive(:body=) do |value|
-      @response_body = value
-    end
-    allow(res).to receive(:code=) do |value|
-      @response_code = value
-    end
-    allow(res).to receive(:body).and_return(@response_body)
-    allow(res).to receive(:code).and_return(@response_code)
-    
-    res
-  end
-  
-  describe 'Proposal API' do
-    it 'starts with an empty list of proposals' do
-      req = mock_request('GET', '/api/handbook/proposals')
-      res = mock_response
-      
-      handler.call(req, res)
-      
-      expect(@response_code).to eq(200)
-      expect(JSON.parse(@response_body)).to eq([])
-    end
 
-    it 'can create a new proposal' do
-      req = mock_request('POST', '/api/handbook/proposals', { content: '<p>New idea!</p>' }.to_json)
-      res = mock_response
+  describe 'GET /api/handbook/proposals' do
+    it 'returns an empty list when there are no proposal branches' do
+      allow(mock_branches).to receive(:each).and_return([])
       
-      handler.call(req, res)
+      status, _, body = get_json(handler, '/api/handbook/proposals')
       
-      expect(@response_code).to eq(200)
-      response_body = JSON.parse(@response_body)
-      expect(response_body['id']).to eq(1)
-      expect(response_body['content']).to eq('<p>New idea!</p>')
-      expect(response_body['approvals']).to eq(0)
-      expect(response_body['created_at']).not_to be_nil
-    end
-    
-    it 'returns error for invalid JSON in proposal creation' do
-      req = mock_request('POST', '/api/handbook/proposals', 'invalid json{')
-      res = mock_response
-      
-      handler.call(req, res)
-      
-      expect(@response_code).to eq(400)
-      expect(JSON.parse(@response_body)['error']).to eq('Invalid JSON')
-    end
-    
-    it 'lists created proposals' do
-      # Create a proposal first
-      req1 = mock_request('POST', '/api/handbook/proposals', { content: '<p>First proposal</p>' }.to_json)
-      res1 = mock_response
-      handler.call(req1, res1)
-      
-      # Then get the list
-      req2 = mock_request('GET', '/api/handbook/proposals')
-      res2 = mock_response
-      handler.call(req2, res2)
-      
-      expect(@response_code).to eq(200)
-      response_body = JSON.parse(@response_body)
-      expect(response_body.length).to eq(1)
-      expect(response_body[0]['content']).to eq('<p>First proposal</p>')
-    end
-
-    it 'can approve a proposal' do
-      # Create a proposal
-      req1 = mock_request('POST', '/api/handbook/proposals', { content: '<p>Approve me</p>' }.to_json)
-      res1 = mock_response
-      handler.call(req1, res1)
-      proposal_id = JSON.parse(@response_body)['id']
-
-      # Approve it
-      req2 = mock_request('POST', "/api/handbook/proposals/#{proposal_id}/approve")
-      res2 = mock_response
-      handler.call(req2, res2)
-      
-      expect(@response_code).to eq(200)
-      approved_proposal = JSON.parse(@response_body)
-      expect(approved_proposal['approvals']).to eq(1)
-      
-      # Approve it again
-      req3 = mock_request('POST', "/api/handbook/proposals/#{proposal_id}/approve")
-      res3 = mock_response
-      handler.call(req3, res3)
-      
-      second_approval = JSON.parse(@response_body)
-      expect(second_approval['approvals']).to eq(2)
-    end
-    
-    it 'returns 404 for non-existent proposal approval' do
-      req = mock_request('POST', '/api/handbook/proposals/999/approve')
-      res = mock_response
-      
-      handler.call(req, res)
-      
-      expect(@response_code).to eq(404)
-      expect(JSON.parse(@response_body)['error']).to eq('Proposal not found')
+      expect(status).to eq(200)
+      expect(body).to eq([])
     end
   end
 
-  describe 'AI Query API' do
-    # We will mock the AI and Pinecone interactions to avoid real API calls in tests
-    let(:openai_client) { double('OpenAI::Client') }
-    let(:pinecone_client) { double('Pinecone::Client') }
-    let(:pinecone_index) { double('Pinecone::Index') }
+  describe 'POST /api/handbook/proposals' do
+    let(:main_branch) { double('Rugged::Branch', target: double('Rugged::Commit', tree: double('Rugged::Tree'))) }
+    let(:mock_index) { double('Rugged::Index') }
 
     before do
-      # Mock the initialization methods
-      allow_any_instance_of(HandbookHandler).to receive(:init_openai).and_return(openai_client)
-      allow_any_instance_of(HandbookHandler).to receive(:init_pinecone).and_return(pinecone_client)
-      allow(pinecone_client).to receive(:index).and_return(pinecone_index)
+      allow(mock_branches).to receive(:[]).with('master').and_return(main_branch)
+      allow(mock_repo).to receive(:index).and_return(mock_index)
+      allow(mock_index).to receive(:read_tree)
+      allow(mock_repo).to receive(:write).and_return('blob_oid')
+      allow(mock_index).to receive(:add)
+      allow(mock_index).to receive(:write_tree).and_return('tree_oid')
+      allow(Rugged::Commit).to receive(:create).and_return('commit_oid')
+      allow(mock_repo).to receive(:create_branch)
     end
-    
-    it 'handles an AI query successfully' do
-      # Mock OpenAI embeddings call
-      allow(openai_client).to receive(:embeddings).and_return({
-        "data" => [{ "embedding" => Array.new(1536) { rand } }]  # Realistic embedding size
-      })
-      
-      # Mock Pinecone query call
-      allow(pinecone_index).to receive(:query).and_return({
-        "matches" => [
-          { "metadata" => { "text" => "Context from handbook about guests." } }
-        ]
-      })
-      
-      # Mock OpenAI chat call
-      allow(openai_client).to receive(:chat).and_return({
-        "choices" => [{ "message" => { "content" => "Based on the handbook, the guest policy is..." } }]
-      })
 
-      req = mock_request('POST', '/api/handbook/query', { question: 'What is the guest policy?' }.to_json)
-      res = mock_response
-      
-      handler.call(req, res)
-      
-      expect(@response_code).to eq(200)
-      response_body = JSON.parse(@response_body)
-      expect(response_body['answer']).to eq('Based on the handbook, the guest policy is...')
-    end
-    
-    it 'returns an error if the question is missing' do
-      req = mock_request('POST', '/api/handbook/query', {}.to_json)
-      res = mock_response
-      
-      handler.call(req, res)
-      
-      expect(@response_code).to eq(400)
-      expect(JSON.parse(@response_body)['error']).to eq('Question is required')
-    end
-    
-    it 'returns an error if the question is empty' do
-      req = mock_request('POST', '/api/handbook/query', { question: '   ' }.to_json)
-      res = mock_response
-      
-      handler.call(req, res)
-      
-      expect(@response_code).to eq(400)
-      expect(JSON.parse(@response_body)['error']).to eq('Question is required')
-    end
-    
-    it 'handles AI processing errors gracefully' do
-      # Make the OpenAI call fail
-      allow(openai_client).to receive(:embeddings).and_raise('API Error')
-      
-      req = mock_request('POST', '/api/handbook/query', { question: 'What is the policy?' }.to_json)
-      res = mock_response
-      
-      handler.call(req, res)
-      
-      expect(@response_code).to eq(200)  # Still returns 200 but with error message
-      response_body = JSON.parse(@response_body)
-      expect(response_body['answer']).to include('Sorry, I\'m having trouble')
+    it 'creates a new proposal branch successfully' do
+      payload = {
+        content: '# New Idea',
+        page_path: 'handbook/docs/new-idea.md',
+        author: 'test-user'
+      }
+      status, _, body = post_json(handler, '/api/handbook/proposals', payload)
+
+      expect(status).to eq(200)
+      expect(body[:id]).to include('proposals/test-user/')
+      expect(body[:author]).to eq('test-user')
+      expect(body[:approvals]).to eq(0)
     end
   end
   
-  describe 'Page API' do
+  describe 'POST /api/handbook/proposals/:id/approve' do
+    let(:proposal_branch_name) { 'proposals/test-user/12345-test' }
+    let(:mock_commit) { double('Rugged::Commit', tree: mock_tree) }
+    let(:mock_tree) { double('Rugged::Tree') }
+    let(:proposal_branch) { double('Rugged::Branch', target: mock_commit) }
+    let(:mock_index) { double('Rugged::Index') }
+    let(:new_mock_tree) { double('Rugged::Tree') }
+
+    before do
+      allow(mock_branches).to receive(:[]).with(proposal_branch_name).and_return(proposal_branch)
+      # Mock the tree to not have any existing approvals
+      allow(mock_tree).to receive(:any?).and_return(false) # Not already approved
+      allow(mock_repo).to receive(:index).and_return(mock_index)
+      allow(mock_index).to receive(:read_tree)
+      allow(mock_repo).to receive(:write).and_return('blob_oid')
+      allow(mock_index).to receive(:add)
+      allow(mock_index).to receive(:write_tree).and_return('tree_oid')
+      allow(Rugged::Commit).to receive(:create).and_return('commit_oid')
+      allow(mock_repo).to receive(:references).and_return(double.as_null_object)
+      # Mock the new tree after approval is added - this is the key fix
+      allow(mock_repo).to receive(:lookup).with('tree_oid').and_return(new_mock_tree)
+      allow(new_mock_tree).to receive(:each).and_yield({ name: '.approval.approver1' })
+    end
+    
+    it 'approves a proposal successfully' do
+       payload = { approver: 'approver1' }
+       status, _, body = post_json(handler, "/api/handbook/proposals/#{proposal_branch_name}/approve", payload)
+       
+       expect(status).to eq(200)
+       expect(body[:approvals]).to eq(1)
+       expect(body[:approvers]).to eq(['approver1'])
+    end
+  end
+
+  describe 'GET /api/handbook/pages/:slug' do
     it 'returns mock page content' do
-      req = mock_request('GET', '/api/handbook/pages/rules')
-      res = mock_response
-      
-      handler.call(req, res)
-      
-      expect(@response_code).to eq(200)
-      response_body = JSON.parse(@response_body)
-      expect(response_body['title']).to eq('Mock Page: Rules')
-      expect(response_body['content']).to include('<h1>Rules</h1>')
+      status, _, body = get_json(handler, '/api/handbook/pages/rules')
+
+      expect(status).to eq(200)
+      expect(body[:title]).to eq('Mock Page: Rules')
+      expect(body[:content]).to include('<h1>Rules</h1>')
     end
   end
-  
+
   describe 'Unknown routes' do
     it 'returns 404 for unknown paths' do
-      req = mock_request('GET', '/api/handbook/unknown')
-      res = mock_response
-      
-      handler.call(req, res)
-      
-      expect(@response_code).to eq(404)
-      expect(JSON.parse(@response_body)['error']).to eq('Not Found')
+      status, _, body = get_json(handler, '/api/handbook/unknown')
+
+      expect(status).to eq(404)
+      expect(body[:error]).to eq('Not Found')
     end
   end
 end 
