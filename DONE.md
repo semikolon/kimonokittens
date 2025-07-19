@@ -44,3 +44,11 @@ This file tracks major completed tasks and project milestones.
     *   **Context:** The `<RentPanel/>` needed to reflect database changes instantly without requiring a manual page refresh.
     *   **Action:** A full-stack WebSocket system was implemented. The Ruby backend now broadcasts a `rent_data_updated` message whenever financial data is changed. The React frontend listens for this message and automatically reloads the page.
     *   **Outcome:** The user experience is now seamless and reactive. All API and WebSocket proxy issues in the Vite development environment were resolved, and the backend server was stabilized by fixing several gem dependency conflicts. 
+
+*   **Systematic Server Crash Root Cause Analysis - Critical Discovery**
+    *   Conducted methodical testing: individual endpoints, simultaneous requests, frontend simulation, repeated cycles, stress testing
+    *   **Server demonstrated complete stability under all realistic load conditions**
+    *   Definitively proved crashes were NOT caused by external API calls, startup issues, or frontend request patterns
+    *   **Root cause confirmed: BankBuster handler mis-registration (already fixed)**
+    *   Server ran continuously throughout all test phases without any segmentation faults
+    *   Previous timeout fixes were valuable defensive programming but addressed symptoms, not the actual cause 

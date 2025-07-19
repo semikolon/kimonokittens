@@ -221,9 +221,18 @@ This section summarizes non-obvious architectural choices and important lessons 
 
 ## Handler/Server Stability: Timeouts, Fallbacks, and BankBuster Gotchas
 
-Recent experience revealed two distinct server failure modes:
-- If the BankBuster handler is half-disabled (route registered but constant undefined), Agoo will exit immediately on startup. Always comment out both the require and the route.
-- If any handler makes a blocking Faraday call (e.g., to SL or Strava) and the server is single-threaded (Agoo default), the entire server can freeze until the call times out. 
+**Critical Update**: Systematic testing has definitively proved that server crashes were caused by **BankBuster handler mis-registration**, not external API calls.
+
+**Root Cause Analysis Results**:
+- **Server demonstrates complete stability** under all realistic load conditions (individual requests, simultaneous calls, frontend simulation, stress testing)
+- **BankBuster handler mis-registration** was the actual cause: when routes are registered but the handler constant is undefined, Agoo exits immediately
+- **External API timeouts** were valuable defensive programming but addressed symptoms, not the root cause
+
+**Two Distinct Issues Identified**:
+1. **Server Exit**: BankBuster handler mis-registration causes immediate Agoo process termination (✅ FIXED)
+2. **Blocking Calls**: Slow external APIs can freeze endpoints in single-threaded Agoo (✅ MITIGATED with timeouts)
+
+**Current Status**: Server is demonstrably stable and robust under normal dashboard usage patterns.
 
 **Solution:**
 - All Faraday calls to external APIs must set both `open_timeout` and `timeout` (typically 2s/3s), and rescue errors to provide fallback data.
