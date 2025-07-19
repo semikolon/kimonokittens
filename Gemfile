@@ -17,6 +17,7 @@ gem 'awesome_print'
 gem 'dotenv-rails'
 gem 'httparty'
 gem 'jwt'
+gem 'mutex_m'
 
 # Database
 gem 'pg', '~> 1.5' # For PostgreSQL

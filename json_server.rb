@@ -3,7 +3,12 @@ require 'agoo'
 require 'faraday'
 require 'oj'
 require 'awesome_print'
+require 'active_support/all'
 # require 'pry'  # Temporarily disabled due to gem conflict
+
+# Set timezone to avoid segfaults in rufus-scheduler/et-orbi
+Time.zone = 'Europe/Stockholm'
+ENV['TZ'] = Time.zone.name
 
 # Load the DataBroadcaster
 require_relative 'lib/data_broadcaster'
