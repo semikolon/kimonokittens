@@ -49,7 +49,10 @@ class TrainDepartureHandler
           id: STATION_ID,
           duration: TIME_WINDOW,
           format: 'json'
-        })
+        }) do |faraday|
+          faraday.options.open_timeout = 2  # TCP connection timeout
+          faraday.options.timeout = 3       # Overall request timeout
+        end
 
         if response.success?
           raw_data = Oj.load(response.body)
@@ -134,11 +137,11 @@ class TrainDepartureHandler
     summary = "Inga pendeltåg inom en timme" if departure_times.empty? || departure_times.all? { |t| t.include?('inställt') }
 
     response = {
-      'summary': summary,
-      'deviation_summary': deviation_summary
+      "summary" => summary,
+      "deviation_summary" => deviation_summary
     }
 
-    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(response) ]]
+    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(response, mode: :compat) ]]
   end
 
   private

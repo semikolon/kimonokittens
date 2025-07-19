@@ -17,21 +17,30 @@ class StravaWorkoutsHandler
   end
 
   def call(req)
-    response = Faraday.get("#{STRAVA_API_URL}/athletes/6878181/stats", {}, { 'Authorization' => "Bearer #{@access_token}" })
+    response = Faraday.get("#{STRAVA_API_URL}/athletes/6878181/stats", {}, { 'Authorization' => "Bearer #{@access_token}" }) do |faraday|
+      faraday.options.open_timeout = 2  # TCP connection timeout
+      faraday.options.timeout = 3       # Overall request timeout
+    end
 
     if response.status == 401 # Unauthorized, possibly due to expired token
       refresh_access_token
-      response = Faraday.get("#{STRAVA_API_URL}/athletes/6878181/stats", {}, { 'Authorization' => "Bearer #{@access_token}" })
+      response = Faraday.get("#{STRAVA_API_URL}/athletes/6878181/stats", {}, { 'Authorization' => "Bearer #{@access_token}" }) do |faraday|
+        faraday.options.open_timeout = 2  # TCP connection timeout
+        faraday.options.timeout = 3       # Overall request timeout
+      end
     end
 
     if response.success?
-      stats = Oj.load(response.body)
-      stats = transform_stats(stats)
+      data = Oj.load(response.body)
+      stats = transform_stats(data)
     else
-      return [500, { 'Content-Type' => 'application/json' }, [ Oj.dump({ 'error': 'Failed to fetch stats from Strava' }) ]]
+      return [500, { 'Content-Type' => 'application/json' }, [ Oj.dump({ 'error' => 'Failed to fetch stats from Strava' }, mode: :compat) ]]
     end
 
-    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(stats) ]]
+    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(stats, mode: :compat) ]]
+  rescue Faraday::Error => e
+    puts "ERROR: Strava API call failed: #{e.message}"
+    [504, { 'Content-Type' => 'application/json' }, [ Oj.dump({ 'error' => "Strava API error: #{e.message}" }, mode: :compat) ]]
   end
 
   def transform_stats(stats)
@@ -146,6 +155,8 @@ class StravaWorkoutsHandler
       req.params['client_secret'] = CLIENT_SECRET
       req.params['refresh_token'] = @refresh_token
       req.params['grant_type'] = 'refresh_token'
+      req.options.open_timeout = 2  # TCP connection timeout
+      req.options.timeout = 5       # Longer timeout for token refresh
     end
 
     if response.success?
