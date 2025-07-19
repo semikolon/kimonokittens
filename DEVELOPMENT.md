@@ -132,6 +132,8 @@ The calculator produces two primary outputs:
 
 ## 9. Testing Considerations
 
+See also: [handoff_to_claude_rspec_tests.md](handoff_to_claude_rspec_tests.md) for the original RSpec/spec coverage plan. Most handler specs are now in place, but new handler logic (timeouts/fallbacks) and frontend widget tests are still missing and should be tracked in TODO.md.
+
 1.  **Floating Point Precision**: Use RSpec's `be_within(0.01).of(expected)` for comparing floating-point numbers. Direct equality checks (`eq`) will often fail due to precision limits.
 2.  **Test Data Organization**: Use simple, round numbers (e.g., total rent of 10,000) for basic unit tests and real-world data (like the complex November 2024 scenario) for integration tests to catch nuanced edge cases.
 3.  **Database Test Cleaning**: When using `TRUNCATE` to clean a PostgreSQL database between tests, foreign key constraints will cause errors. The `TRUNCATE TABLE "MyTable" RESTART IDENTITY CASCADE;` command is essential. `CASCADE` ensures that any tables with a foreign key reference to `"MyTable"` are also truncated, which is necessary when dealing with Prisma's relational tables (e.g., `_ItemOwners`).
@@ -216,3 +218,17 @@ This section summarizes non-obvious architectural choices and important lessons 
 ---
 
 *For more detailed implementation guides, older decisions, and specific business logic (like electricity bill handling), please refer to the Git history and the source code itself.*
+
+## Handler/Server Stability: Timeouts, Fallbacks, and BankBuster Gotchas
+
+Recent experience revealed two distinct server failure modes:
+- If the BankBuster handler is half-disabled (route registered but constant undefined), Agoo will exit immediately on startup. Always comment out both the require and the route.
+- If any handler makes a blocking Faraday call (e.g., to SL or Strava) and the server is single-threaded (Agoo default), the entire server can freeze until the call times out. 
+
+**Solution:**
+- All Faraday calls to external APIs must set both `open_timeout` and `timeout` (typically 2s/3s), and rescue errors to provide fallback data.
+- SL API is currently returning fallback data due to missing accessId (see TODO.md for next steps).
+
+**See also:**
+- The canonical plan for the upcoming Git-backed proposal/approval workflow is in `handoff_to_claude_git_proposal_workflow.md`.
+- All handler/server stability patterns are now documented here.

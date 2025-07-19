@@ -1,3 +1,7 @@
+---
+**LEGACY: This document is superseded by DEVELOPMENT.md. See DEVELOPMENT.md for canonical dashboard implementation details.**
+---
+
 # Handoff to Claude: Kimonokittens Hallway Dashboard Project
 
 > **Status (as of July 9, 2025):** This document is partially historical. The dashboard is fully implemented and stabilized. For the latest technical details, see DEVELOPMENT.md. Retained for project vision, phased plan, and context.

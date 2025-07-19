@@ -10,6 +10,13 @@ This file tracks major completed tasks and project milestones.
 
 ### July 2025
 
+*   **Dashboard/Server Stabilization and Handler Resilience**
+    *   Added aggressive timeouts and fallback data to all external API handlers (SL, Strava, Node-RED)
+    *   Fully disabled BankBuster handler to prevent accidental server exit
+    *   Normalized all JSON keys to strings for frontend compatibility
+    *   SL API currently returns fallback data due to missing accessId
+    *   All endpoints now fail fast and dashboard remains responsive
+
 *   **Dashboard Stabilization and Key Bugfixes (July 9, 2025)**
     *   **Context:** Persistent WebSocket 500 errors, segfaults, train API failures, and weather widget runtime errors due to symbol keys.
     *   **Action:** Fixed Agoo handler to use status 101 and con_id, migrated train API to fallback, fixed weather widget to handle symbol keys, and ensured all widgets degrade gracefully.

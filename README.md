@@ -38,3 +38,5 @@ For detailed technical implementation guides, testing strategies, and recent arc
 For a log of major accomplishments and project milestones, see [**DONE.md**](DONE.md).
 
 > For Agoo WebSocket integration details (status code 101, con_id gotcha), see DEVELOPMENT.md.
+
+> For handler/server stability patterns and the upcoming Git-backed proposal workflow, see [DEVELOPMENT.md](DEVELOPMENT.md).

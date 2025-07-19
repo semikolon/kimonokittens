@@ -37,10 +37,7 @@ This file records **non-obvious architectural choices** so future contributors k
 
 10. **Agoo WebSocket Upgrade Status Code**  
    * The WebSocket handler must return `[101, {}, []]` for upgrades. Returning `[0, {}, []]` causes a 500 error. See: https://github.com/ohler55/agoo/issues/216
-
-Changes to these decisions require a new PR with an updated version of this document.
-
-9. **Obsidian-Git pull-only**  
-   * Prevents accidental direct commits that bypass approval workflow.
+   * **Agoo is single-threaded by default; blocking Faraday calls can freeze all endpoints. Always use timeouts and fallback data for external APIs.**
+   * **BankBuster handler mis-registration (route registered but constant undefined) can cause instant server exit.**
 
 Changes to these decisions require a new PR with an updated version of this document.

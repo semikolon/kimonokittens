@@ -9,17 +9,17 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 **Goal:** Address outstanding technical debt and improve overall code quality.
 
--   [ ] **Fix Failing Specs:**
+-   [ ] **Fix Failing Specs: [In Progress]**
     -   [ ] **BankBuster:** All 5 specs for `bank_buster_spec.rb` are failing.
     -   [ ] **HandbookHandler:** All 12 specs for `handbook_handler_spec.rb` are failing.
--   [ ] **Improve Test Coverage:**
-    -   [ ] **Rent Calculator Handler:** Write an RSpec test for `handlers/rent_calculator_handler.rb` to cover the `generate_rent_forecast` logic, including tenant filtering and config defaults.
-    -   [ ] **RentPanel Component:** Write a Vitest/RTL test for `handbook/frontend/src/components/RentPanel.tsx` to verify it renders correctly with mock data.
-    -   [ ] The `if __FILE__ == $0` block in `rent.rb` contains a manual test case. This logic should be moved into a new integration spec in `spec/rent_calculator/` to ensure it's part of the automated test suite.
--   [ ] **(BLOCKED)** **Enable Facebook Login:**
-    -   [ ] **(USER)** Create the Facebook App in the Meta Developer Console to get an App ID.
-    -   [ ] Create a `handbook/frontend/.env.local` file and add the `VITE_FACEBOOK_APP_ID`.
--   [x] **(USER)** Locate existing rent API implementation notes from Mac Mini. *(This is a prerequisite for all financial tasks)*
+-   [ ] **Decide fate of BankBuster: modernise or archive**
+-   [ ] **Add fast spec for handler timeouts/fallbacks**
+-   [ ] **See handoff_to_claude_git_proposal_workflow.md for proposal workflow plan**
+-   [ ] **See handoff_to_claude_rspec_tests.md for remaining handler/spec coverage items**
+-   [ ] **Add/complete specs for new handler logic (timeouts/fallbacks) and frontend widget tests**
+
+# SL API Note
+- SL train departures currently use fallback data due to missing accessId. See DEVELOPMENT.md and TODO.md for next steps.
 
 ---
 

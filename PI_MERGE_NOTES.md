@@ -1,3 +1,7 @@
+---
+**LEGACY: Merge workflow is now documented in DEVELOPMENT.md and handoff_to_claude_git_proposal_workflow.md.**
+---
+
 ## Kimono Kittens – Pi Snapshot vs GitHub Repo
 
 _Last updated: 2025-06-20_

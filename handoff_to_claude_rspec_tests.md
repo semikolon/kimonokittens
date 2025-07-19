@@ -1,3 +1,7 @@
+---
+**LEGACY: Most of this document is now historical. See TODO.md and DEVELOPMENT.md for current test/spec status. Most core handler specs are now in place, but new handler logic (timeouts/fallbacks) and frontend widget tests are still missing. Use this as a checklist for any remaining gaps.**
+---
+
 # Handoff Plan: RSpec Coverage for Core Ruby Code
 
 > **Status (as of July 9, 2025):** This document is still relevant as a checklist for RSpec coverage and test strategy for handlers/scripts. For current status, see DEVELOPMENT.md.

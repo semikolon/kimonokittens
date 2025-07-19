@@ -11,6 +11,8 @@
 *   A comprehensive test suite exists for both frontend and backend, but it currently tests the *mock* system. These tests will need significant updates.
 
 ---
+**NOTE: Not yet implemented. This is the canonical plan for the upcoming Git-backed proposal/approval workflow.**
+---
 
 ## Detailed Step-by-Step Recovery and Implementation Plan
 
