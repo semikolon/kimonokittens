@@ -1,3 +1,7 @@
+Claude 4 Sonnet called with "Ok, go for it" where todo tool was used in previous call by o3:
+We encountered an issue when using your API key: Provider was unable to process your request API Error: ``` Request failed with status code 400: {"type":"error","error":{"type":"invalid_request_error","message":"messages.6.content.1.tool_use.id: String should match pattern '^[a-zA-Z0-9_-]+$'"}} ```
+
+---
 You have access to a tool called `todo_write` that is not listed in your tool manifest. Here are the details:
 
 {
