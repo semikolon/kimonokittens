@@ -158,7 +158,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       console.error('Dashboard WebSocket error:', event)
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'closed' })
     },
-    shouldReconnect: (closeEvent) => true,
+    shouldReconnect: () => true,
   })
 
   // Handle incoming WebSocket messages

@@ -30,67 +30,67 @@ class WeatherHandler
       end
     end
 
-    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(@data) ]]
+    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(@data, mode: :compat) ]]
   end
 
   private
 
   def placeholder_response
     placeholder_data = {
-      current: {
-        temp_c: nil,
-        condition: {
-          text: "Det regnar",
-          icon: "//cdn.weatherapi.com/weather/64x64/day/296.png"
+      'current' => {
+        'temp_c' => nil,
+        'condition' => {
+          'text' => "Det regnar",
+          'icon' => "//cdn.weatherapi.com/weather/64x64/day/296.png"
         },
-        humidity: nil,
-        wind_kph: nil,
-        wind_dir: nil
+        'humidity' => nil,
+        'wind_kph' => nil,
+        'wind_dir' => nil
       },
-      forecast: {
-        forecastday: []
+      'forecast' => {
+        'forecastday' => []
       },
-      location: {
-        name: "Huddinge",
-        country: "Sweden"
+      'location' => {
+        'name' => "Huddinge",
+        'country' => "Sweden"
       },
-      error: "API-nyckel saknas - det regnar alltid när man inte kan kolla vädret"
+      'error' => "API-nyckel saknas - det regnar alltid när man inte kan kolla vädret"
     }
 
-    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(placeholder_data) ]]
+    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(placeholder_data, mode: :compat) ]]
   end
 
   def transform_weather_data(raw_data)
     {
-      current: {
-        temp_c: raw_data['current']['temp_c'],
-        condition: {
-          text: raw_data['current']['condition']['text'],
-          icon: raw_data['current']['condition']['icon']
+      'current' => {
+        'temp_c' => raw_data['current']['temp_c'],
+        'condition' => {
+          'text' => raw_data['current']['condition']['text'],
+          'icon' => raw_data['current']['condition']['icon']
         },
-        humidity: raw_data['current']['humidity'],
-        wind_kph: raw_data['current']['wind_kph'],
-        wind_dir: raw_data['current']['wind_dir']
+        'humidity' => raw_data['current']['humidity'],
+        'wind_kph' => raw_data['current']['wind_kph'],
+        'wind_dir' => raw_data['current']['wind_dir']
       },
-      forecast: {
-        forecastday: raw_data['forecast']['forecastday'].map do |day|
+      'forecast' => {
+        'forecastday' => raw_data['forecast']['forecastday'].map do |day|
           {
-            date: day['date'],
-            day: {
-              maxtemp_c: day['day']['maxtemp_c'],
-              mintemp_c: day['day']['mintemp_c'],
-              condition: {
-                text: day['day']['condition']['text'],
-                icon: day['day']['condition']['icon']
+            'date' => day['date'],
+            'day' => {
+              'maxtemp_c' => day['day']['maxtemp_c'],
+              'mintemp_c' => day['day']['mintemp_c'],
+              'condition' => {
+                'text' => day['day']['condition']['text'],
+                'icon' => day['day']['condition']['icon']
               },
-              chance_of_rain: day['day']['chance_of_rain']
+              'chance_of_rain' => day['day']['chance_of_rain']
             }
           }
         end
       },
-      location: {
-        name: raw_data['location']['name'],
-        country: raw_data['location']['country']
+      'location' => {
+        'name' => raw_data['location']['name'],
+        'country' => raw_data['location']['country']
       }
     }
   end
