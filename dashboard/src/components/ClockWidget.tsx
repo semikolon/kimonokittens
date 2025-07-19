@@ -41,7 +41,7 @@ export function ClockWidget() {
     <div className="widget">
       <div className="widget-title">Tid</div>
       <div className="widget-content">
-        <div className="text-6xl font-bold mb-2 font-mono tracking-tight">
+        <div className="text-6xl font-bold mb-2 font-sans tracking-tight">
           {formatTime(time)}
         </div>
         <div className="text-lg text-gray-300 mb-3 capitalize">

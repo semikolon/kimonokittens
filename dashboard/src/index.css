@@ -8,7 +8,7 @@
   }
   
   body {
-    @apply bg-storm-blue-950 text-white font-mono;
+    @apply bg-storm-blue-950 text-white font-sans;
   }
 }
 

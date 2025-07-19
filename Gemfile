@@ -5,6 +5,9 @@ gem 'agoo', '~> 2.15.3'
 gem 'puma' # Often used in production environments
 gem 'webrick' # Required for some dependencies
 
+# Scheduling
+gem 'rufus-scheduler', '~> 3.9'
+
 # Core
 gem 'json'
 gem 'oj'

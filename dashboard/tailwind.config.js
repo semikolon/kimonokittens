@@ -22,6 +22,7 @@ export default {
         }
       },
       fontFamily: {
+        'sans': ['Galvji', 'sans-serif'],
         'mono': ['JetBrains Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
       }
     },

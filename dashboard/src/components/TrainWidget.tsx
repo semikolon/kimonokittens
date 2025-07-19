@@ -1,38 +1,12 @@
-import React, { useState, useEffect } from 'react'
-
-interface TrainData {
-  summary: string
-  deviation_summary: string
-}
+import React from 'react'
+import { useData } from '../context/DataContext'
 
 export function TrainWidget() {
-  const [data, setData] = useState<TrainData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchTrainData = async () => {
-      try {
-        const response = await fetch('/data/train_departures')
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
-        }
-        const trainData = await response.json()
-        setData(trainData)
-        setError(null)
-      } catch (error) {
-        console.error('Failed to fetch train data:', error)
-        setError(error instanceof Error ? error.message : 'Unknown error')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchTrainData()
-    const interval = setInterval(fetchTrainData, 60000) // Update every minute
-
-    return () => clearInterval(interval)
-  }, [])
+  const { state } = useData()
+  const { trainData, connectionStatus } = state
+  
+  const loading = connectionStatus === 'connecting' && !trainData
+  const error = connectionStatus === 'closed' ? 'WebSocket-anslutning avbruten' : null
 
   if (loading) {
     return (
@@ -59,7 +33,7 @@ export function TrainWidget() {
     )
   }
 
-  if (!data) {
+  if (!trainData) {
     return (
       <div className="widget">
         <div className="widget-title">Pendeltåg Norrut</div>
@@ -76,11 +50,11 @@ export function TrainWidget() {
       <div className="widget-content">
         <div 
           className="text-sm leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: data.summary }}
+          dangerouslySetInnerHTML={{ __html: trainData.summary }}
         />
-        {data.deviation_summary && (
+        {trainData.deviation_summary && (
           <div className="mt-3 text-xs text-yellow-400 bg-yellow-400/10 p-2 rounded">
-            <strong>Störningar:</strong> {data.deviation_summary}
+            <strong>Störningar:</strong> {trainData.deviation_summary}
           </div>
         )}
       </div>

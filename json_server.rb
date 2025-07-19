@@ -5,6 +5,9 @@ require 'oj'
 require 'awesome_print'
 # require 'pry'  # Temporarily disabled due to gem conflict
 
+# Load the DataBroadcaster
+require_relative 'lib/data_broadcaster'
+
 # Configure Agoo logging
 Agoo::Log.configure(dir: '',
   console: true,
@@ -49,7 +52,7 @@ require_relative 'handlers/rent_and_finances_handler'
 require_relative 'handlers/rent_calculator_handler'
 require_relative 'handlers/handbook_handler'
 # require_relative 'handlers/auth_handler'
-# require_relative 'handlers/weather_handler'
+require_relative 'handlers/weather_handler'
 
 home_page_handler = HomePageHandler.new
 # electricity_stats_handler = ElectricityStatsHandler.new
@@ -62,7 +65,7 @@ rent_and_finances_handler = RentAndFinancesHandler.new
 rent_calculator_handler = RentCalculatorHandler.new
 handbook_handler = HandbookHandler.new
 # auth_handler = AuthHandler.new
-# weather_handler = WeatherHandler.new
+weather_handler = WeatherHandler.new
 
 # --- WebSocket Pub/Sub Manager ---
 # A simple in-memory manager for WebSocket connections.
@@ -128,13 +131,14 @@ class WsHandler
   end
 end
 
-# Initialize global PubSub instance
+# Initialize global PubSub instance and DataBroadcaster
 $pubsub = PubSub.new
+$data_broadcaster = DataBroadcaster.new($pubsub)
 
 Agoo::Server.handle(:GET, "/", home_page_handler)
 
 # Add WebSocket handler for the Dashboard
-# Agoo::Server.handle(:GET, "/dashboard/ws", WsHandler.new)
+Agoo::Server.handle(:GET, "/dashboard/ws", WsHandler.new)
 
 # Add WebSocket handler for BankBuster
 # Agoo::Server.handle(:GET, "/ws", bank_buster_handler)
@@ -153,7 +157,7 @@ Agoo::Server.handle(:GET, "/*", static_handler)
 # Agoo::Server.handle(:GET, "/data/electricity", electricity_stats_handler)
 Agoo::Server.handle(:GET, "/data/train_departures", train_departure_handler)
 Agoo::Server.handle(:GET, "/data/strava_stats", strava_workouts_handler)
-# Agoo::Server.handle(:GET, "/data/weather", weather_handler)
+Agoo::Server.handle(:GET, "/data/weather", weather_handler)
 
 # Add rent calculator endpoints
 Agoo::Server.handle(:GET, "/api/rent", rent_calculator_handler)
@@ -165,5 +169,8 @@ Agoo::Server.handle(:POST, "/api/rent/roommates", rent_calculator_handler)
 Agoo::Server.handle(:PUT, "/api/rent/config", rent_calculator_handler)
 
 Agoo::Server.handle(:GET, "/data/*", proxy_handler)
+
+# Start the data broadcaster
+$data_broadcaster.start
 
 Agoo::Server.start()

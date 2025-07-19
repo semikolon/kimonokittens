@@ -1,47 +1,12 @@
-import React, { useState, useEffect } from 'react'
-
-interface TemperatureData {
-  indoor_temperature: string
-  target_temperature: string
-  supplyline_temperature: string
-  hotwater_temperature: string
-  indoor_humidity: string
-  heatpump_disabled: number
-  heating_demand: string
-  current_schedule: string
-  last_updated_time: string
-  last_updated_date: string
-  offline_percentage: string
-}
+import React from 'react'
+import { useData } from '../context/DataContext'
 
 export function TemperatureWidget() {
-  const [data, setData] = useState<TemperatureData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchTemperature = async () => {
-      try {
-        const response = await fetch('/data/temperature')
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
-        }
-        const tempData = await response.json()
-        setData(tempData)
-        setError(null)
-      } catch (error) {
-        console.error('Failed to fetch temperature data:', error)
-        setError(error instanceof Error ? error.message : 'Unknown error')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchTemperature()
-    const interval = setInterval(fetchTemperature, 30000) // Update every 30 seconds
-
-    return () => clearInterval(interval)
-  }, [])
+  const { state } = useData()
+  const { temperatureData, connectionStatus } = state
+  
+  const loading = connectionStatus === 'connecting' && !temperatureData
+  const error = connectionStatus === 'closed' ? 'WebSocket-anslutning avbruten' : null
 
   if (loading) {
     return (
@@ -65,7 +30,7 @@ export function TemperatureWidget() {
     )
   }
 
-  if (!data) {
+  if (!temperatureData) {
     return (
       <div className="widget">
         <div className="widget-title">Inomhus</div>
@@ -99,10 +64,10 @@ export function TemperatureWidget() {
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="flex items-center">
             <span className="text-2xl mr-2">
-              {getTemperatureIcon(data.indoor_temperature, data.target_temperature)}
+              {getTemperatureIcon(temperatureData.indoor_temperature, temperatureData.target_temperature)}
             </span>
             <div>
-              <div className="text-2xl font-bold">{data.indoor_temperature}</div>
+              <div className="text-2xl font-bold">{temperatureData.indoor_temperature}</div>
               <div className="text-xs text-gray-400">Temperatur</div>
             </div>
           </div>
@@ -110,17 +75,17 @@ export function TemperatureWidget() {
           <div className="flex items-center">
             <span className="text-2xl mr-2">🎯</span>
             <div>
-              <div className="text-2xl font-bold">{data.target_temperature}</div>
+              <div className="text-2xl font-bold">{temperatureData.target_temperature}</div>
               <div className="text-xs text-gray-400">Mål</div>
             </div>
           </div>
           
           <div className="flex items-center">
             <span className="text-2xl mr-2">
-              {getHumidityIcon(data.indoor_humidity)}
+              {getHumidityIcon(temperatureData.indoor_humidity)}
             </span>
             <div>
-              <div className="text-2xl font-bold">{data.indoor_humidity}</div>
+              <div className="text-2xl font-bold">{temperatureData.indoor_humidity}</div>
               <div className="text-xs text-gray-400">Luftfuktighet</div>
             </div>
           </div>
@@ -128,7 +93,7 @@ export function TemperatureWidget() {
           <div className="flex items-center">
             <span className="text-2xl mr-2">♨️</span>
             <div>
-              <div className="text-2xl font-bold">{data.hotwater_temperature}</div>
+              <div className="text-2xl font-bold">{temperatureData.hotwater_temperature}</div>
               <div className="text-xs text-gray-400">Varmvatten</div>
             </div>
           </div>
@@ -137,19 +102,19 @@ export function TemperatureWidget() {
         <div className="text-xs text-gray-400 space-y-1">
           <div className="flex justify-between">
             <span>Värmepump:</span>
-            <span className={data.heatpump_disabled ? 'text-red-400' : 'text-green-400'}>
-              {data.heatpump_disabled ? 'Av' : 'På'}
+            <span className={temperatureData.heatpump_disabled ? 'text-red-400' : 'text-green-400'}>
+              {temperatureData.heatpump_disabled ? 'Av' : 'På'}
             </span>
           </div>
           <div className="flex justify-between">
             <span>Värmebehov:</span>
-            <span className={data.heating_demand === 'JA' ? 'text-orange-400' : 'text-gray-400'}>
-              {data.heating_demand}
+            <span className={temperatureData.heating_demand === 'JA' ? 'text-orange-400' : 'text-gray-400'}>
+              {temperatureData.heating_demand}
             </span>
           </div>
           <div className="flex justify-between">
             <span>Uppdaterad:</span>
-            <span>{data.last_updated_date} {data.last_updated_time}</span>
+            <span>{temperatureData.last_updated_date} {temperatureData.last_updated_time}</span>
           </div>
         </div>
       </div>
