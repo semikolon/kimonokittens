@@ -6,6 +6,8 @@ require 'awesome_print'
 require 'active_support/all'
 # require 'pry'  # Temporarily disabled due to gem conflict
 
+puts "Agoo version: #{Agoo::VERSION}"
+
 # Set timezone to avoid segfaults in rufus-scheduler/et-orbi
 Time.zone = 'Europe/Stockholm'
 ENV['TZ'] = Time.zone.name
@@ -25,7 +27,7 @@ Agoo::Log.configure(dir: '',
     request: true,
     response: true,
     eval: true,
-    push: false
+    push: true
   })
 
 # Initialize the Agoo server with SSL configuration
@@ -107,8 +109,10 @@ end
 
 class WsHandler
   def call(env)
+    puts "WsHandler#call - rack.upgrade? = #{env['rack.upgrade?']}"
     if env['rack.upgrade?'] == :websocket
       env['rack.upgrade'] = self.class   # hand the CLASS, not an instance
+      puts "WsHandler#call - Setting env['rack.upgrade'] to #{env['rack.upgrade']} (class: #{env['rack.upgrade'].class}, object_id: #{env['rack.upgrade'].object_id})"
       # DO NOT CHANGE THIS STATUS CODE! Agoo+Rack requires 101 (Switching Protocols) for WebSocket upgrades.
       # See: https://github.com/ohler55/agoo/issues/216
       return [101, {}, []]               # 101 Switching Protocols is the correct status
@@ -136,6 +140,33 @@ class WsHandler
   end
 end
 
+# Minimal debug WebSocket handler for testing on_open callbacks
+class DebugWsHandler
+  def call(env)
+    puts "DebugWsHandler#call - rack.upgrade? = #{env['rack.upgrade?']}"
+    if env['rack.upgrade?'] == :websocket
+      env['rack.upgrade'] = self.class
+      puts "DebugWsHandler#call - Setting env['rack.upgrade'] to #{env['rack.upgrade']} (class: #{env['rack.upgrade'].class}, object_id: #{env['rack.upgrade'].object_id})"
+      return [101, {}, []]
+    end
+    [404, { 'Content-Type' => 'text/plain' }, ['Not Found']]
+  end
+
+  def on_open(client)
+    puts "*** DEBUG WS: on_open fired! Client con_id: #{client.con_id} ***"
+    client.write("DEBUG: Connection established at #{Time.now}")
+  end
+
+  def on_message(client, msg)
+    puts "DEBUG WS: Received message: #{msg}"
+    client.write("DEBUG: Echo at #{Time.now.strftime('%H:%M:%S')} - #{msg}")
+  end
+
+  def on_close(client)
+    puts "*** DEBUG WS: on_close fired! Client con_id: #{client.con_id} ***"
+  end
+end
+
 # Initialize global PubSub instance and DataBroadcaster
 $pubsub = PubSub.new
 $data_broadcaster = DataBroadcaster.new($pubsub)
@@ -144,6 +175,9 @@ Agoo::Server.handle(:GET, "/", home_page_handler)
 
 # Add WebSocket handler for the Dashboard
 Agoo::Server.handle(:GET, "/dashboard/ws", WsHandler.new)
+
+# Add debug WebSocket handler for testing on_open callbacks
+Agoo::Server.handle(:GET, "/debug/ws", DebugWsHandler.new)
 
 # Add WebSocket handler for BankBuster
 # Agoo::Server.handle(:GET, "/ws", bank_buster_handler)
@@ -176,6 +210,15 @@ Agoo::Server.handle(:PUT, "/api/rent/config", rent_calculator_handler)
 Agoo::Server.handle(:GET, "/data/*", proxy_handler)
 
 # Start the data broadcaster
-$data_broadcaster.start
+
+if ENV.fetch('ENABLE_BROADCASTER', '0') == '1'
+  begin
+    $data_broadcaster.start
+  rescue => e
+    puts "Failed to start DataBroadcaster: #{e.message}"
+  end
+else
+  puts "DataBroadcaster disabled (set ENABLE_BROADCASTER=1 to enable)"
+end
 
 Agoo::Server.start()

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; }
+        button { margin: 10px; padding: 10px 20px; font-size: 14px; }
+        .log { background: #f5f5f5; border: 1px solid #ccc; padding: 10px; margin: 10px 0; height: 300px; overflow-y: auto; font-family: monospace; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .connected { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .disconnected { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .connecting { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Connection Test</h1>
+        
+        <h2>Debug WebSocket (/debug/ws)</h2>
+        <button onclick="connectDebug()">Connect to Debug WS</button>
+        <button onclick="sendDebugMessage()">Send Test Message</button>
+        <button onclick="disconnectDebug()">Disconnect</button>
+        <div id="debugStatus" class="status disconnected">Disconnected</div>
+        <div id="debugLog" class="log"></div>
+
+        <h2>Dashboard WebSocket (/dashboard/ws)</h2>
+        <button onclick="connectDashboard()">Connect to Dashboard WS</button>
+        <button onclick="sendDashboardMessage()">Send Test Message</button>
+        <button onclick="disconnectDashboard()">Disconnect</button>
+        <div id="dashboardStatus" class="status disconnected">Disconnected</div>
+        <div id="dashboardLog" class="log"></div>
+    </div>
+
+    <script>
+        let debugWs = null;
+        let dashboardWs = null;
+
+        function log(elementId, message) {
+            const logElement = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}<br>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(elementId, status, className) {
+            const statusElement = document.getElementById(elementId);
+            statusElement.textContent = status;
+            statusElement.className = `status ${className}`;
+        }
+
+        // Debug WebSocket functions
+        function connectDebug() {
+            if (debugWs) {
+                debugWs.close();
+            }
+
+            log('debugLog', 'Attempting to connect to ws://localhost:3001/debug/ws');
+            updateStatus('debugStatus', 'Connecting...', 'connecting');
+            
+            debugWs = new WebSocket('ws://localhost:3001/debug/ws');
+            
+            debugWs.onopen = function(event) {
+                log('debugLog', '✅ DEBUG WS: Connected successfully!');
+                updateStatus('debugStatus', 'Connected', 'connected');
+            };
+            
+            debugWs.onmessage = function(event) {
+                log('debugLog', `📨 DEBUG WS: Received: ${event.data}`);
+            };
+            
+            debugWs.onerror = function(error) {
+                log('debugLog', `❌ DEBUG WS: Error: ${error.message || 'Connection error'}`);
+                updateStatus('debugStatus', 'Error', 'disconnected');
+            };
+            
+            debugWs.onclose = function(event) {
+                log('debugLog', `🔌 DEBUG WS: Connection closed (code: ${event.code}, reason: ${event.reason})`);
+                updateStatus('debugStatus', 'Disconnected', 'disconnected');
+            };
+        }
+
+        function sendDebugMessage() {
+            if (debugWs && debugWs.readyState === WebSocket.OPEN) {
+                const message = `Test message from browser at ${new Date().toLocaleTimeString()}`;
+                debugWs.send(message);
+                log('debugLog', `📤 DEBUG WS: Sent: ${message}`);
+            } else {
+                log('debugLog', '❌ DEBUG WS: Not connected');
+            }
+        }
+
+        function disconnectDebug() {
+            if (debugWs) {
+                debugWs.close();
+                debugWs = null;
+            }
+        }
+
+        // Dashboard WebSocket functions
+        function connectDashboard() {
+            if (dashboardWs) {
+                dashboardWs.close();
+            }
+
+            log('dashboardLog', 'Attempting to connect to ws://localhost:3001/dashboard/ws');
+            updateStatus('dashboardStatus', 'Connecting...', 'connecting');
+            
+            dashboardWs = new WebSocket('ws://localhost:3001/dashboard/ws');
+            
+            dashboardWs.onopen = function(event) {
+                log('dashboardLog', '✅ DASHBOARD WS: Connected successfully!');
+                updateStatus('dashboardStatus', 'Connected', 'connected');
+            };
+            
+            dashboardWs.onmessage = function(event) {
+                log('dashboardLog', `📨 DASHBOARD WS: Received: ${event.data}`);
+            };
+            
+            dashboardWs.onerror = function(error) {
+                log('dashboardLog', `❌ DASHBOARD WS: Error: ${error.message || 'Connection error'}`);
+                updateStatus('dashboardStatus', 'Error', 'disconnected');
+            };
+            
+            dashboardWs.onclose = function(event) {
+                log('dashboardLog', `🔌 DASHBOARD WS: Connection closed (code: ${event.code}, reason: ${event.reason})`);
+                updateStatus('dashboardStatus', 'Disconnected', 'disconnected');
+            };
+        }
+
+        function sendDashboardMessage() {
+            if (dashboardWs && dashboardWs.readyState === WebSocket.OPEN) {
+                const message = `Test message from browser at ${new Date().toLocaleTimeString()}`;
+                dashboardWs.send(message);
+                log('dashboardLog', `📤 DASHBOARD WS: Sent: ${message}`);
+            } else {
+                log('dashboardLog', '❌ DASHBOARD WS: Not connected');
+            }
+        }
+
+        function disconnectDashboard() {
+            if (dashboardWs) {
+                dashboardWs.close();
+                dashboardWs = null;
+            }
+        }
+    </script>
+</body>
+</html> 

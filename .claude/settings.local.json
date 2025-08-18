@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__diulela-browser-tools-mcp__takeScreenshot",
+      "mcp__diulela-browser-tools-mcp__getConsoleLogs",
+      "mcp__zen__chat",
+      "Bash(cat:*)",
+      "Bash(echo:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(ccr:*)",
+      "mcp__exa__web_search_exa",
+      "mcp__browsermcp__browser_navigate",
+      "mcp__exa__crawling_exa",
+      "Bash(grep:*)",
+      "WebFetch(domain:api.openai.com)",
+      "WebFetch(domain:platform.openai.com)",
+      "WebFetch(domain:github.com)",
+      "mcp__zen__planner",
+      "WebFetch(domain:charm.land)",
+      "Bash(git log:*)",
+      "mcp__graphiti__search_memory_nodes",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebSearch",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": []
+  }
+}
