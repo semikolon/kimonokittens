@@ -22,7 +22,27 @@
       "WebFetch(domain:www.anthropic.com)",
       "WebSearch",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(go:*)",
+      "mcp__graphiti__search_memory_facts",
+      "mcp__graphiti__get_episodes",
+      "Read(//Users/fredrikbranstrom/**)",
+      "mcp__graphiti__add_memory",
+      "Read(//private/tmp/**)",
+      "Bash(lsof:*)",
+      "Bash(docker logs:*)",
+      "Bash(curl:*)",
+      "mcp__exa__deep_researcher_start",
+      "mcp__exa__deep_researcher_check",
+      "Bash(find:*)",
+      "Bash(zed:*)",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__onboarding",
+      "mcp__serena__list_dir",
+      "mcp__serena__find_file",
+      "Bash(bundle exec rspec:*)",
+      "mcp__zen__thinkdeep",
+      "mcp__serena__write_memory"
     ],
     "deny": []
   }

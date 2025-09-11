@@ -325,6 +325,16 @@ module RentCalculator
       # Re-round after remainder correction to ensure integers
       rounded_rents.transform_values!(&:round)
 
+      # Optional equalization of small differences: if the max-min is less than 10 kr,
+      # set everyone to the same highest amount to avoid tiny discrepancies.
+      if rounded_rents.size > 1
+        min_amt = rounded_rents.values.min
+        max_amt = rounded_rents.values.max
+        if (max_amt - min_amt).abs < 10 && max_amt != min_amt
+          rounded_rents.keys.each { |k| rounded_rents[k] = max_amt }
+        end
+      end
+
       # Build the breakdown with string keys for compatibility with tests
       result = {
         'Kallhyra' => config.kallhyra,

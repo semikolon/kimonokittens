@@ -4,6 +4,7 @@ require 'faraday'
 require 'oj'
 require 'awesome_print'
 require 'active_support/all'
+require 'fileutils'
 # require 'pry'  # Temporarily disabled due to gem conflict
 
 puts "Agoo version: #{Agoo::VERSION}"
@@ -16,19 +17,45 @@ ENV['TZ'] = Time.zone.name
 require_relative 'lib/data_broadcaster'
 
 # Configure Agoo logging
-Agoo::Log.configure(dir: '',
-  console: true,
-  classic: true,
-  colorize: true,
-  states: {
-    INFO: true,
-    DEBUG: true,
-    connect: true,
-    request: true,
-    response: true,
-    eval: true,
-    push: true
-  })
+if ENV['RACK_ENV'] == 'production'
+  # In production, write to system log directory and disable console logging
+  log_dir = '/var/log/kimonokittens'
+  # Do not attempt to create the system directory here; ensure it exists in deployment
+  Agoo::Log.configure(
+    dir: log_dir,
+    console: false,
+    classic: true,
+    colorize: false,
+    states: {
+      INFO: true,
+      DEBUG: true,
+      connect: true,
+      request: true,
+      response: true,
+      eval: true,
+      push: true
+    }
+  )
+else
+  # In development, write to repo-local log/ and keep console logging
+  log_dir = File.expand_path('log', __dir__)
+  FileUtils.mkdir_p(log_dir)
+  Agoo::Log.configure(
+    dir: log_dir,
+    console: true,
+    classic: true,
+    colorize: true,
+    states: {
+      INFO: true,
+      DEBUG: true,
+      connect: true,
+      request: true,
+      response: true,
+      eval: true,
+      push: true
+    }
+  )
+end
 
 # Initialize the Agoo server with SSL configuration
 # Initialize the Agoo server - SSL only in production
