@@ -82,7 +82,7 @@ RSpec.describe TrainDepartureHandler do
         expect(Faraday).to receive(:get).with(
           'https://api.resrobot.se/v2.1/departureBoard',
           {
-            key: 'mock_api_key',
+            accessId: 'mock_api_key',
             id: '740000003',
             duration: 60,
             format: 'json'

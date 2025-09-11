@@ -45,7 +45,7 @@ class TrainDepartureHandler
       # ResRobot Timetables API: https://www.trafiklab.se/api/our-apis/resrobot-v21/timetables/
       begin
         response = Faraday.get("https://api.resrobot.se/v2.1/departureBoard", {
-          key: RESROBOT_API_KEY,
+          accessId: RESROBOT_API_KEY,
           id: STATION_ID,
           duration: TIME_WINDOW,
           format: 'json'
