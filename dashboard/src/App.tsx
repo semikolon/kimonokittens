@@ -43,8 +43,21 @@ function DashboardContent() {
   return (
     <>
       <ConnectionStatus />
+      {/* Simplified dashboard - only showing SL Train section for testing */}
+      <div className="flex flex-col items-center justify-center min-h-screen p-8">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-white mb-4 text-center">
+            SL Transport API Integration Test
+          </h1>
+          <p className="text-gray-400 text-center">
+            Focusing on train departure data verification
+          </p>
+        </div>
+        <TrainWidget />
+      </div>
+
+      {/* Temporarily disabled other widgets for SL testing focus
       <div className="dashboard-grid">
-        {/* Left Column - "At a Glance" */}
         <div className="flex flex-col space-y-8">
           <ClockWidget />
           <WeatherWidget />
@@ -52,18 +65,17 @@ function DashboardContent() {
           <TemperatureWidget />
         </div>
 
-        {/* Center Column - "The Vibe" */}
         <div className="flex flex-col items-center justify-center">
           <LogoWidget />
         </div>
 
-        {/* Right Column - "Our Life" */}
         <div className="flex flex-col space-y-8">
           <TodoWidget />
           <CalendarWidget />
           <StravaWidget />
         </div>
       </div>
+      */}
     </>
   )
 }
