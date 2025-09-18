@@ -1,110 +1,62 @@
-require 'rufus-scheduler'
 require 'httparty'
 require 'json'
 
 class DataBroadcaster
   def initialize(pubsub)
     @pubsub = pubsub
-    @scheduler = Rufus::Scheduler.new
     @running = false
+    @threads = []
   end
 
   def start
     return if @running
     @running = true
-    
-    # Schedule different data sources with their specified intervals
-    schedule_train_data     # Every 20 seconds
-    schedule_temperature_data # Every 30 seconds
-    schedule_weather_data   # Every 10 minutes
-    schedule_strava_data    # Every 5 minutes
-    
+
+    # Start thread-based schedulers for different data sources
+    @threads << periodic(20) { fetch_and_publish('train_data', 'http://localhost:3001/data/train_departures') }
+    @threads << periodic(30) { fetch_and_publish('temperature_data', 'http://localhost:3001/data/temperature') }
+    @threads << periodic(600) { fetch_and_publish('weather_data', 'http://localhost:3001/data/weather') }
+    @threads << periodic(300) { fetch_and_publish('strava_data', 'http://localhost:3001/data/strava_stats') }
+
     puts "DataBroadcaster: All scheduled tasks started"
   end
 
   def stop
-    @scheduler.shutdown
     @running = false
+    @threads.each { |t| t.join(1) }
+    @threads.clear
     puts "DataBroadcaster: All scheduled tasks stopped"
   end
 
   private
 
-  def schedule_train_data
-    @scheduler.every '20s' do
-      begin
-        response = HTTParty.get('http://localhost:3001/data/train_departures')
-        if response.success?
-          message = {
-            type: 'train_data',
-            payload: JSON.parse(response.body),
-            timestamp: Time.now.to_i
-          }.to_json
-          @pubsub.publish(message)
-          puts "DataBroadcaster: Train data broadcast"
+  def periodic(interval_sec, &block)
+    Thread.new do
+      next_tick = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      while @running
+        begin
+          block.call
+        rescue => e
+          puts "DataBroadcaster error: #{e.class}: #{e.message}"
+        ensure
+          next_tick += interval_sec
+          sleep_time = next_tick - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          sleep(sleep_time) if sleep_time.positive?
         end
-      rescue => e
-        puts "DataBroadcaster: Train data error - #{e.message}"
       end
     end
   end
 
-  def schedule_temperature_data
-    @scheduler.every '30s' do
-      begin
-        response = HTTParty.get('http://localhost:3001/data/temperature')
-        if response.success?
-          message = {
-            type: 'temperature_data',
-            payload: JSON.parse(response.body),
-            timestamp: Time.now.to_i
-          }.to_json
-          @pubsub.publish(message)
-          puts "DataBroadcaster: Temperature data broadcast"
-        end
-      rescue => e
-        puts "DataBroadcaster: Temperature data error - #{e.message}"
-      end
-    end
-  end
+  def fetch_and_publish(type, url)
+    response = HTTParty.get(url, timeout: 10)
+    return unless response.success?
 
-  def schedule_weather_data
-    @scheduler.every '10m' do
-      begin
-        # Note: Weather handler is currently commented out in json_server.rb
-        # This will need to be enabled for weather data to work
-        response = HTTParty.get('http://localhost:3001/data/weather')
-        if response.success?
-          message = {
-            type: 'weather_data',
-            payload: JSON.parse(response.body),
-            timestamp: Time.now.to_i
-          }.to_json
-          @pubsub.publish(message)
-          puts "DataBroadcaster: Weather data broadcast"
-        end
-      rescue => e
-        puts "DataBroadcaster: Weather data error - #{e.message}"
-      end
-    end
-  end
-
-  def schedule_strava_data
-    @scheduler.every '5m' do
-      begin
-        response = HTTParty.get('http://localhost:3001/data/strava_stats')
-        if response.success?
-          message = {
-            type: 'strava_data',
-            payload: JSON.parse(response.body),
-            timestamp: Time.now.to_i
-          }.to_json
-          @pubsub.publish(message)
-          puts "DataBroadcaster: Strava data broadcast"
-        end
-      rescue => e
-        puts "DataBroadcaster: Strava data error - #{e.message}"
-      end
-    end
+    message = {
+      type: type,
+      payload: JSON.parse(response.body),
+      timestamp: Time.now.to_i
+    }.to_json
+    @pubsub.publish(message)
+    puts "DataBroadcaster: #{type} broadcast"
   end
 end 
