@@ -71,6 +71,24 @@ export function WeatherWidget() {
     return 'text-red-400'
   }
 
+  const getAQIColor = (usEpaIndex: number) => {
+    if (usEpaIndex <= 1) return 'text-green-400'
+    if (usEpaIndex <= 2) return 'text-yellow-400'
+    if (usEpaIndex <= 3) return 'text-orange-400'
+    if (usEpaIndex <= 4) return 'text-red-400'
+    if (usEpaIndex <= 5) return 'text-purple-400'
+    return 'text-red-600'
+  }
+
+  const getAQIText = (usEpaIndex: number) => {
+    if (usEpaIndex <= 1) return 'Bra'
+    if (usEpaIndex <= 2) return 'OK'
+    if (usEpaIndex <= 3) return 'Måttlig'
+    if (usEpaIndex <= 4) return 'Dålig'
+    if (usEpaIndex <= 5) return 'Mycket dålig'
+    return 'Farlig'
+  }
+
   return (
     <div className="widget">
       <div className="widget-title">Väder - {weatherData.location.name}</div>
@@ -94,6 +112,11 @@ export function WeatherWidget() {
           <div className="text-xs text-gray-400 text-right">
             <div>💧 {weatherData.current.humidity}%</div>
             <div>💨 {weatherData.current.wind_kph} km/h {weatherData.current.wind_dir}</div>
+            {weatherData.current.air_quality && (
+              <div className={getAQIColor(weatherData.current.air_quality.us_epa_index)}>
+                🏭 AQI: {getAQIText(weatherData.current.air_quality.us_epa_index)}
+              </div>
+            )}
           </div>
         </div>
 

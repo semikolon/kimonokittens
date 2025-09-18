@@ -23,7 +23,7 @@ class WeatherHandler
 
     # Check cache
     if @data.nil? || Time.now - @fetched_at > CACHE_THRESHOLD
-      response = @conn.get("/v1/forecast.json?key=#{WEATHER_API_KEY}&q=#{LOCATION}&days=5&aqi=no&alerts=no")
+      response = @conn.get("/v1/forecast.json?key=#{WEATHER_API_KEY}&q=#{LOCATION}&days=5&aqi=yes&alerts=no")
 
       if response.success?
         raw_data = Oj.load(response.body)
@@ -74,7 +74,8 @@ class WeatherHandler
         },
         'humidity' => raw_data['current']['humidity'],
         'wind_kph' => raw_data['current']['wind_kph'],
-        'wind_dir' => raw_data['current']['wind_dir']
+        'wind_dir' => raw_data['current']['wind_dir'],
+        'air_quality' => raw_data.dig('current', 'air_quality')
       },
       'forecast' => {
         'forecastday' => raw_data['forecast']['forecastday'].map do |day|
