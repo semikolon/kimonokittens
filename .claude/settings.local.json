@@ -47,7 +47,12 @@
       "Bash(ruby:*)",
       "Bash(npm run serve:*)",
       "mcp__playwright-extension__browser_navigate",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "mcp__playwright-extension__browser_wait_for",
+      "Bash(bundle exec ruby:*)",
+      "Bash(killall:*)",
+      "Bash(ENABLE_BROADCASTER=1 ruby json_server.rb)",
+      "mcp__zen__consensus"
     ],
     "deny": []
   }
