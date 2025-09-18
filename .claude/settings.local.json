@@ -61,7 +61,9 @@
       "Bash(rbenv install:*)",
       "Bash(brew:*)",
       "Bash(brew upgrade:*)",
-      "Bash(bundle install:*)"
+      "Bash(bundle install:*)",
+      "Bash(source .env)",
+      "Bash(STRAVA_ACCESS_TOKEN='d85cbe654a3c8fef183454f652220e3b7a2e55d0' STRAVA_CLIENT_ID='110071' STRAVA_CLIENT_SECRET='0c0c2763ffef6a593db02109d9a5c9f4ec9fb0cd' STRAVA_REFRESH_TOKEN='8bc094344d01e30c8f8f850dcde07f285706006c' ENABLE_BROADCASTER=1 ruby json_server.rb)"
     ],
     "deny": []
   }
