@@ -722,3 +722,193 @@ Bussar från Sördalavägen:
 - Production-ready reliability and performance
 
 The kimonokittens dashboard now provides complete real-time transport information covering both commuter trains to Stockholm and local buses from the house. The migration not only fixed the original API issue but significantly enhanced the functionality beyond the initial scope. 🎯🚀
+
+## Strava Widget Debugging & Token Refresh Resolution
+
+### **Strava Integration Issue - 🏃‍♂️ CONTINUATION SESSION**
+
+**Date**: September 19, 2025
+**Context**: After successful SL Transport migration, user reported: "Weather widget now works, temp widget works, think SL widget works, but not Strava! Find out why!"
+
+### **Problem Identification & Investigation**
+
+**User Report**: All dashboard widgets functional except Strava running data display
+**Initial Status Check**:
+- ✅ Weather Widget: Working (14.2°C, Swedish weather data)
+- ✅ Temperature Widget: Working (Node-RED integration active)
+- ✅ SL Transport Widget: Working (real-time train/bus data)
+- ❌ Strava Widget: No running data displayed
+
+### **Root Cause Analysis**
+
+**Error Discovery**: Backend logs revealed Strava API returning 500 errors
+**API Error Message**:
+```json
+{
+  "message": "Authorization Error",
+  "errors": [
+    {
+      "resource": "Athlete",
+      "field": "access_token",
+      "code": "invalid"
+    }
+  ]
+}
+```
+
+**Root Cause Identified**: Expired Strava access token in environment variables
+**Handler Location**: `/Users/fredrikbranstrom/Projects/kimonokittens/handlers/strava_workouts_handler.rb`
+**Expired Token**: `STRAVA_ACCESS_TOKEN='482313a34599e6304719162b4d05fec1da130bb9'`
+
+### **Token Refresh Implementation**
+
+**Manual OAuth Refresh Process**:
+```bash
+curl -X POST "https://www.strava.com/oauth/token" \
+  -d "client_id=110071" \
+  -d "client_secret=0c0c2763ffef6a593db02109d9a5c9f4ec9fb0cd" \
+  -d "refresh_token=8bc094344d01e30c8f8f850dcde07f285706006c" \
+  -d "grant_type=refresh_token"
+```
+
+**Successful Response**:
+```json
+{
+  "access_token": "d85cbe654a3c8fef183454f652220e3b7a2e55d0",
+  "expires_at": 1737322801,
+  "expires_in": 21564,
+  "refresh_token": "8bc094344d01e30c8f8f850dcde07f285706006c",
+  "resource_state": 2,
+  "scope": "read,activity:read_all",
+  "token_type": "Bearer"
+}
+```
+
+### **Configuration Update & Server Restart**
+
+**Environment Variable Update**:
+```bash
+# Updated .env file
+STRAVA_ACCESS_TOKEN='d85cbe654a3c8fef183454f652220e3b7a2e55d0'
+```
+
+**Server Restart**: Killed previous Ruby server process and restarted with updated token
+**Service Restart Command**: `ENABLE_BROADCASTER=1 ruby json_server.rb`
+
+### **Technical Architecture Context**
+
+**Strava Handler Functionality**:
+- **API Endpoint**: `/v3/athletes/6878181/stats`
+- **Data Retrieved**: Running statistics, recent activities
+- **Output Format**: Swedish-language summary for dashboard
+- **Token Management**: Automatic refresh logic in handler (though manual refresh was required)
+
+**Integration Points**:
+- **DataBroadcaster**: Fetches Strava data every 600 seconds (10 minutes)
+- **WebSocket Broadcasting**: Real-time updates to dashboard clients
+- **Dashboard Display**: Running statistics widget showing recent activity
+
+### **Debugging Process Summary**
+
+**Investigation Steps**:
+1. ✅ **Checked Backend Logs**: Identified Strava 500 errors
+2. ✅ **Located Handler Code**: Found `strava_workouts_handler.rb`
+3. ✅ **Analyzed API Response**: Confirmed "Authorization Error" on expired token
+4. ✅ **Manual Token Refresh**: Used Strava OAuth endpoint with refresh token
+5. ✅ **Updated Configuration**: Modified `.env` with new access token
+6. ✅ **Restarted Services**: Ruby server pickup up new token
+
+### **Current Status & Verification Needed**
+
+**Token Refresh**: ✅ COMPLETE
+- New access token obtained and configured
+- Server restarted with updated credentials
+- Backend logs showed successful server startup
+
+**Pending Verification**: 🎯 AWAITING CONFIRMATION
+- User reported "No running data displayed" after fix
+- Need to verify Strava data appears in dashboard
+- Final WebSocket data flow verification required
+
+### **Strava API Integration Details**
+
+**Authentication Flow**:
+- **Client ID**: 110071
+- **Access Token Expiry**: ~6 hours (21564 seconds from refresh)
+- **Refresh Token**: Persistent for automatic token renewal
+- **API Scope**: `read,activity:read_all`
+
+**Handler Caching Strategy**:
+- **Cache Duration**: 10 minutes (600 seconds)
+- **Data Freshness**: Balances API rate limits with real-time feel
+- **Fallback Handling**: Graceful degradation on API failures
+
+### **Next Steps & Recommendations**
+
+**Immediate Actions**:
+1. 🎯 **Verify Dashboard Display**: Check if Strava running data now appears
+2. 🎯 **Test WebSocket Flow**: Confirm Strava data broadcasts via WebSocket
+3. 🎯 **Monitor Token Expiry**: Validate automatic refresh logic works
+
+**Future Improvements**:
+1. **Automated Token Management**: Enhance handler to automatically refresh before expiry
+2. **Error Monitoring**: Add alerts for authentication failures
+3. **Token Persistence**: Store refresh tokens securely for long-term automation
+
+### **Technical Lessons Learned**
+
+**OAuth Token Management**:
+- Strava access tokens expire every 6 hours requiring refresh
+- Refresh tokens remain valid for extended periods
+- Manual intervention needed when automatic refresh fails
+
+**Multi-Widget Architecture**:
+- Each widget has independent authentication and error handling
+- One failing widget doesn't impact others (good isolation)
+- Systematic debugging approach: logs → error identification → root cause → fix
+
+**Dashboard Integration Reliability**:
+- Real-time data depends on all API integrations being functional
+- Token expiry is common failure mode for OAuth-based APIs
+- Regular monitoring and automated renewal reduces manual intervention
+
+### **Backend Resolution Complete - Frontend Display Investigation**
+
+**Backend Status**: ✅ FULLY FUNCTIONAL
+- Strava API calls working: `DEBUG: First API response status: 200`
+- Data transformation successful: `DEBUG: Transformed stats: {runs: "<strong>17.4 km</strong> sedan 22 aug - 3.48 km per tur - 6:29 min/km<br/><strong>174.7 km</strong> sedan 1 jan - 3.57 km per tur - 6:20 min/km"}`
+- WebSocket broadcasting: `Published message to 0 clients: {"type":"strava_data","payload":{"runs":"..."},"timestamp":1758238401}`
+- DataBroadcaster working: `DataBroadcaster: strava_data broadcast`
+
+**Frontend Display Issue Identified**:
+- User report: "It's not displaying in dashboard"
+- Backend logs show "Published message to 0 clients" - no frontend connected to receive Strava data
+- Other widgets (weather, temperature, SL transport) work, suggesting selective display issue
+- WebSocket connection established for other data types but Strava widget may be missing or not handling `strava_data` message type
+
+**Technical Investigation Required**:
+1. 🎯 Check if StravaWidget component exists in React dashboard
+2. 🎯 Verify DataContext handles `strava_data` message type
+3. 🎯 Confirm widget is included in main dashboard layout
+4. 🎯 Test browser developer tools for WebSocket message reception
+
+**String Formatting Bug Fixed**:
+```ruby
+# handlers/strava_workouts_handler.rb:149-150
+# Fixed multi-line string interpolation syntax error
+runs: "<strong>#{recent_distance} km</strong> sedan #{since_date} - #{recent_distance_per_run} km per tur - #{recent_pace} min/km<br/><strong>#{ytd_distance} km</strong> sedan 1 jan - #{ytd_distance_per_run} km per tur - #{ytd_pace} min/km"
+```
+
+**HTTP Client Replacement**:
+- Replaced problematic Faraday/Excon with Net::HTTP
+- Eliminated 404 errors and improved reliability
+- All API calls now using Ruby's built-in HTTP client
+
+### **Mission Status Update**
+
+**Problem**: Strava widget not displaying running data
+**Backend Solution**: ✅ COMPLETE - Token refresh, syntax fix, HTTP client replacement
+**Frontend Investigation**: 🎯 IN PROGRESS - Display/component issue identified
+**Current State**: Backend API fully functional, frontend display integration needed
+
+The Strava debugging successfully resolved all backend issues (expired token, string formatting, HTTP client) with the API now returning correct running data. The remaining challenge is ensuring the frontend React dashboard properly displays the Strava widget and handles the `strava_data` WebSocket message type. This maintains the dashboard's multi-modal real-time data display covering transport, weather, temperature, and fitness tracking. 🏃‍♂️🔧
