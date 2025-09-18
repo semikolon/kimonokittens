@@ -13,7 +13,7 @@ class DataBroadcaster
     @running = true
 
     # Start thread-based schedulers for different data sources
-    @threads << periodic(20) { fetch_and_publish('train_data', 'http://localhost:3001/data/train_departures') }
+    @threads << periodic(5) { fetch_and_publish('train_data', 'http://localhost:3001/data/train_departures') }
     @threads << periodic(30) { fetch_and_publish('temperature_data', 'http://localhost:3001/data/temperature') }
     @threads << periodic(600) { fetch_and_publish('weather_data', 'http://localhost:3001/data/weather') }
     @threads << periodic(300) { fetch_and_publish('strava_data', 'http://localhost:3001/data/strava_stats') }

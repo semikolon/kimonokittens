@@ -138,7 +138,7 @@ class WsHandler
   def call(env)
     puts "WsHandler#call - rack.upgrade? = #{env['rack.upgrade?']}"
     if env['rack.upgrade?'] == :websocket
-      env['rack.upgrade'] = self.class   # hand the CLASS, not an instance
+      env['rack.upgrade'] = self   # hand the INSTANCE, not the class
       puts "WsHandler#call - Setting env['rack.upgrade'] to #{env['rack.upgrade']} (class: #{env['rack.upgrade'].class}, object_id: #{env['rack.upgrade'].object_id})"
       # DO NOT CHANGE THIS STATUS CODE! Agoo+Rack requires 101 (Switching Protocols) for WebSocket upgrades.
       # See: https://github.com/ohler55/agoo/issues/216
@@ -148,21 +148,27 @@ class WsHandler
   end
 
   def on_open(client)
-    con_id = client.con_id
-    client.vars[:con_id] = con_id        # store per-connection state
-    $pubsub.subscribe(con_id, client)
-    puts "HANDBOOK WS: open #{con_id}"
+    begin
+      puts "WS: on_open starting..."
+      con_id = client.object_id  # Use object_id as unique identifier
+      puts "WS: subscribing to pubsub..."
+      $pubsub.subscribe(con_id, client)
+      puts "HANDBOOK WS: open #{con_id}"
+    rescue => e
+      puts "ERROR in on_open: #{e.class}: #{e.message}"
+      puts e.backtrace.join("\n")
+    end
   end
 
   def on_message(client, msg)
-    con_id = client.vars[:con_id]
+    con_id = client.object_id
     puts "HANDBOOK WS: #{con_id} -> #{msg}"
     client.write("echo: #{msg}")
   end
 
   def on_close(client)
-    con_id = client.vars[:con_id]
-    $pubsub.unsubscribe(con_id) if con_id
+    con_id = client.object_id
+    $pubsub.unsubscribe(con_id)
     puts "HANDBOOK WS: close #{con_id}"
   end
 end
@@ -172,7 +178,7 @@ class DebugWsHandler
   def call(env)
     puts "DebugWsHandler#call - rack.upgrade? = #{env['rack.upgrade?']}"
     if env['rack.upgrade?'] == :websocket
-      env['rack.upgrade'] = self.class
+      env['rack.upgrade'] = self
       puts "DebugWsHandler#call - Setting env['rack.upgrade'] to #{env['rack.upgrade']} (class: #{env['rack.upgrade'].class}, object_id: #{env['rack.upgrade'].object_id})"
       return [101, {}, []]
     end
@@ -180,7 +186,7 @@ class DebugWsHandler
   end
 
   def on_open(client)
-    puts "*** DEBUG WS: on_open fired! Client con_id: #{client.con_id} ***"
+    puts "*** DEBUG WS: on_open fired! Client object_id: #{client.object_id} ***"
     client.write("DEBUG: Connection established at #{Time.now}")
   end
 
@@ -190,7 +196,7 @@ class DebugWsHandler
   end
 
   def on_close(client)
-    puts "*** DEBUG WS: on_close fired! Client con_id: #{client.con_id} ***"
+    puts "*** DEBUG WS: on_close fired! Client object_id: #{client.object_id} ***"
   end
 end
 
