@@ -16,7 +16,7 @@ function ConnectionStatus() {
   const getStatusColor = () => {
     switch (connectionStatus) {
       case 'open': return 'bg-green-500'
-      case 'connecting': return 'bg-yellow-500'
+      case 'connecting': return 'bg-yellow-500 animate-pulse'
       case 'closed': return 'bg-red-500'
       default: return 'bg-gray-500'
     }
@@ -25,8 +25,8 @@ function ConnectionStatus() {
   const getStatusText = () => {
     switch (connectionStatus) {
       case 'open': return 'Ansluten'
-      case 'connecting': return 'Ansluter...'
-      case 'closed': return 'Frånkopplad'
+      case 'connecting': return 'Återansluter...'
+      case 'closed': return 'Återansluter automatiskt...'
       default: return 'Okänd status'
     }
   }
@@ -43,20 +43,7 @@ function DashboardContent() {
   return (
     <>
       <ConnectionStatus />
-      {/* Simplified dashboard - only showing SL Train section for testing */}
-      <div className="flex flex-col items-center justify-center min-h-screen p-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white mb-4 text-center">
-            SL Transport API Integration Test
-          </h1>
-          <p className="text-gray-400 text-center">
-            Focusing on train departure data verification
-          </p>
-        </div>
-        <TrainWidget />
-      </div>
-
-      {/* Temporarily disabled other widgets for SL testing focus
+      {/* Progressive re-enablement of dashboard widgets */}
       <div className="dashboard-grid">
         <div className="flex flex-col space-y-8">
           <ClockWidget />
@@ -65,17 +52,18 @@ function DashboardContent() {
           <TemperatureWidget />
         </div>
 
+        {/* Center column */}
         <div className="flex flex-col items-center justify-center">
           <LogoWidget />
         </div>
 
+        {/* Right column */}
         <div className="flex flex-col space-y-8">
           <TodoWidget />
           <CalendarWidget />
           <StravaWidget />
         </div>
       </div>
-      */}
     </>
   )
 }
