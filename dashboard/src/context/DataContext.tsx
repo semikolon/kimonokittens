@@ -145,7 +145,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   
   const socketUrl = '/dashboard/ws'
 
-  const { lastMessage } = useWebSocket(socketUrl, {
+  const { lastMessage, connectionStatus, readyState } = useWebSocket(socketUrl, {
     onOpen: () => {
       console.log('Dashboard WebSocket connection established.')
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'open' })
@@ -159,6 +159,20 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'closed' })
     },
     shouldReconnect: () => true,
+    reconnectAttempts: 10,
+    reconnectInterval: (attemptNumber) => {
+      // Exponential backoff: 500ms, 1s, 2s, 4s, 8s, 16s, 30s (max)
+      const baseDelay = 500
+      const exponentialDelay = Math.min(baseDelay * Math.pow(2, attemptNumber), 30000)
+      // Add jitter to prevent thundering herd
+      const jitter = Math.random() * 1000
+      const delay = exponentialDelay + jitter
+      console.log(`WebSocket reconnection attempt ${attemptNumber + 1} in ${Math.round(delay)}ms`)
+      return delay
+    },
+    onReconnectStop: (numAttempts) => {
+      console.log(`WebSocket reconnection stopped after ${numAttempts} attempts`)
+    },
   })
 
   // Handle incoming WebSocket messages
