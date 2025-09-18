@@ -32,6 +32,16 @@ interface WeatherData {
     humidity: number | null
     wind_kph: number | null
     wind_dir: string | null
+    air_quality?: {
+      co: number
+      no2: number
+      o3: number
+      so2: number
+      pm2_5: number
+      pm10: number
+      us_epa_index: number
+      gb_defra_index: number
+    }
   }
   forecast: {
     forecastday: Array<{
