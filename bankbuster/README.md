@@ -16,7 +16,7 @@ _Current status_: core scraper (`bank_buster.rb`) works from CLI; WebSocket hand
 bankbuster/
   README.md              ← this file
   TODO.md                ← backlog / next steps
-  frontend/              ← Vue 3 Tailwind app (built → dist/)
+  bankbuster-frontend/   ← Vue 3 Tailwind app (built → dist/)
   handlers/
     bank_buster_handler.rb  ← Agoo WebSocket handler
   bank_buster.rb          ← main scraper class (uses Vessel + Ferrum)

@@ -27,7 +27,7 @@ file_list.txt
 
 *.rtf
 
-frontend/.env
+bankbuster-frontend/.env
 
 .env-backup
 

@@ -15,12 +15,12 @@ require 'active_support/time'
 # end
 
 class TrainDepartureHandler
-  # Updated to use ResRobot API instead of the deprecated SL API
-  RESROBOT_API_KEY = ENV['RESROBOT_API_KEY'] || ENV['SL_API_KEY'] # Fallback to SL key if ResRobot not set
-  
-  # Huddinge station ID for ResRobot API
-  # Found via: https://api.resrobot.se/v2.1/location.name?key=API_KEY&input=Huddinge
-  STATION_ID = "740000003" # ResRobot ID for Huddinge station
+  # Updated to use SL Transport API (keyless, direct from SL)
+  # No API key required - SL's new official API
+
+  # Huddinge station ID for SL Transport API
+  # Found via: https://transport.integration.sl.se/v1/sites (search for "Huddinge")
+  STATION_ID = "9527" # SL Transport API ID for Huddinge station
   
   DIRECTION_NORTH = 2
   TIME_WINDOW = 60 # time in minutes to fetch departures for, max 60
@@ -41,31 +41,26 @@ class TrainDepartureHandler
     #@fetched_at = Time.now
 
     if @data.nil? || Time.now - @fetched_at > CACHE_THRESHOLD
-      # Use ResRobot API instead of the deprecated SL API
-      # ResRobot Timetables API: https://www.trafiklab.se/api/our-apis/resrobot-v21/timetables/
+      # Use SL Transport API - no key required, direct from SL
+      # API documentation: https://www.trafiklab.se/api/our-apis/sl/transport/
       begin
-        response = Faraday.get("https://api.resrobot.se/v2.1/departureBoard", {
-          accessId: RESROBOT_API_KEY,
-          id: STATION_ID,
-          duration: TIME_WINDOW,
-          format: 'json'
-        }) do |faraday|
+        response = Faraday.get("https://transport.integration.sl.se/v1/sites/#{STATION_ID}/departures") do |faraday|
           faraday.options.open_timeout = 2  # TCP connection timeout
           faraday.options.timeout = 3       # Overall request timeout
         end
 
         if response.success?
           raw_data = Oj.load(response.body)
-          @data = transform_resrobot_data(raw_data)
+          @data = transform_sl_transport_data(raw_data)
           @fetched_at = Time.now
         else
-          puts "WARNING: ResRobot API failed (status: #{response.status}), using fallback data"
+          puts "WARNING: SL Transport API failed (status: #{response.status}), using fallback data"
           puts "Response body: #{response.body}" if response.body
           @data = get_fallback_data
           @fetched_at = Time.now
         end
       rescue => e
-        puts "ERROR: Exception calling ResRobot API: #{e.message}"
+        puts "ERROR: Exception calling SL Transport API: #{e.message}"
         puts "Using fallback data"
         @data = get_fallback_data
         @fetched_at = Time.now
@@ -146,48 +141,53 @@ class TrainDepartureHandler
 
   private
 
-  def transform_resrobot_data(raw_data)
-    # Transform ResRobot API response to our internal format
-    return [] unless raw_data['Departure']
+  def transform_sl_transport_data(raw_data)
+    # Transform SL Transport API response to our internal format
+    return [] unless raw_data['departures']
 
-    raw_data['Departure'].map do |departure|
-      # Determine direction based on destination
-      # Northbound destinations typically include: Stockholm, Södertälje, Märsta, etc.
-      destination = departure['direction'] || departure['name'] || ''
-      direction = determine_direction(destination)
-      
-      # Extract line information
-      line_number = departure['Product'] ? departure['Product']['line'] : departure['transportNumber']
-      
-      # Handle departure time
-      departure_time = departure['date'] + 'T' + departure['time']
-      
-      # Check for delays/cancellations
-      cancelled = departure['cancelled'] == true || departure['Product']&.dig('cancelled') == true
-      
-      # Extract deviation/delay information
-      deviation_note = ''
-      if departure['Messages']
-        deviation_note = departure['Messages'].map { |msg| msg['text'] }.join(', ')
-      elsif departure['rtDate'] && departure['rtTime']
-        # Real-time data indicates delay
-        scheduled = Time.parse(departure['date'] + 'T' + departure['time'])
-        actual = Time.parse(departure['rtDate'] + 'T' + departure['rtTime'])
-        delay_minutes = ((actual - scheduled) / 60).round
-        if delay_minutes > 0
-          deviation_note = "Försenad #{delay_minutes} min"
+    # Filter only trains and transform to internal format
+    raw_data['departures']
+      .select { |departure| departure['line']['transport_mode'] == 'TRAIN' }
+      .map do |departure|
+        # Extract destination and line information
+        destination = departure['destination']
+        line_number = departure['line']['designation']
+
+        # Use scheduled time as departure time (ISO format)
+        departure_time = departure['scheduled']
+
+        # Determine direction: SL Transport uses direction_code (1=south, 2=north)
+        direction = departure['direction_code'] == 2 ? 'north' : 'south'
+
+        # Check for cancellations in deviations
+        cancelled = departure['deviations'].any? { |dev|
+          dev['message']&.downcase&.include?('inställ') ||
+          dev['consequence'] == 'CANCELLED'
+        }
+
+        # Extract deviation/delay information
+        deviation_note = ''
+        if departure['deviations'].any?
+          deviation_note = departure['deviations'].map { |dev| dev['message'] }.compact.join(', ')
+        elsif departure['expected'] && departure['scheduled']
+          # Calculate delay from expected vs scheduled
+          scheduled = Time.parse(departure['scheduled'])
+          expected = Time.parse(departure['expected'])
+          delay_minutes = ((expected - scheduled) / 60).round
+          if delay_minutes > 0
+            deviation_note = "Försenad #{delay_minutes} min"
+          end
         end
-      end
 
-      {
-        'destination' => destination,
-        'line_number' => line_number,
-        'departure_time' => departure_time,
-        'direction' => direction,
-        'cancelled' => cancelled,
-        'deviation_note' => deviation_note
-      }
-    end
+        {
+          'destination' => destination,
+          'line_number' => line_number,
+          'departure_time' => departure_time,
+          'direction' => direction,
+          'cancelled' => cancelled,
+          'deviation_note' => deviation_note
+        }
+      end
   end
 
   def get_fallback_data
