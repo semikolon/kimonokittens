@@ -284,4 +284,284 @@ This migration represents a significant improvement in system reliability and ma
 
 The implementation followed best practices with comprehensive testing, thorough documentation, and careful verification. The result is a more robust, simpler, and more maintainable train departure system that will serve the kimonokittens dashboard reliably for years to come.
 
-**Mission Accomplished**: Real-time train departures are now working without any API key dependencies! 🚂✅
+## Dashboard Integration & WebSocket Issue Discovery
+
+### **API Migration Complete - Frontend Integration Pending**
+
+After completing the SL Transport API migration, testing revealed that while the backend is working perfectly, the dashboard frontend cannot display the real-time data due to a WebSocket proxy configuration issue.
+
+**Backend Status: ✅ FULLY FUNCTIONAL**
+- SL Transport API returning real-time data: `{"summary":"<strong>18:57 - om 11m</strong> - du hinner gå<br/><strong>19:12 - om 26m</strong>","deviation_summary":""}`
+- DataBroadcaster active: Broadcasting every 20 seconds with `ENABLE_BROADCASTER=1`
+- Ruby WebSocket handler working: Direct WebSocket upgrade tests successful with `HTTP/1.1 101 Switching Protocols`
+- Server logs show: `Published message to 0 clients` - broadcasting works but no clients connected
+
+**Frontend Status: ❌ WebSocket Connection Failing**
+- Dashboard shows: "Frånkopplad" (Disconnected) and "Fel: WebSocket-anslutning avbruten" (WebSocket connection interrupted)
+- Console errors: `WebSocket connection to 'ws://localhost:5175/dashboard/ws' failed`
+- React useWebSocket hitting max reconnection attempts (20 exceeded)
+
+### **Root Cause Analysis**
+
+The issue is in the Vite development server WebSocket proxy configuration. The React frontend tries to connect to `ws://localhost:5175/dashboard/ws` (proxied), but the proxy to `ws://localhost:3001/dashboard/ws` (Ruby backend) is failing.
+
+**Current vite.config.ts WebSocket proxy:**
+```typescript
+'/dashboard/ws': {
+  target: 'ws://localhost:3001',
+  ws: true,
+}
+```
+
+**Architectural Decision Validation**
+The WebSocket broadcasting approach is correct for this use case:
+- **Data frequency**: Train data updates every 20 seconds, temperature every 30 seconds
+- **Client efficiency**: Single broadcast to multiple dashboard clients vs individual polling
+- **Resource optimization**: One API call → many clients, not N clients → N API calls
+- **Real-time feel**: Instant updates when data changes vs polling delays
+- **Battery friendly**: No client-side JavaScript polling timers
+
+The polling alternative would be wasteful and against the established dashboard architecture that expects WebSocket `train_data` messages.
+
+### **WebSocket Integration Priority**
+
+Solving the WebSocket proxy issue is critical to complete the migration verification. The SL Transport API integration is technically complete and working, but cannot be verified as successful until the dashboard displays real-time train data.
+
+**Next Steps:**
+1. Debug and fix Vite WebSocket proxy configuration
+2. Verify dashboard displays real-time SL train data
+3. Confirm complete end-to-end data flow: SL API → Handler → Broadcaster → WebSocket → Dashboard UI
+
+**Mission Status**: API migration complete, dashboard integration pending WebSocket proxy resolution. 🚂⏳
+
+## WebSocket Proxy Resolution & Dashboard Simplification
+
+### **WebSocket Proxy Configuration Fixed - ✅ RESOLVED**
+
+After thorough investigation, the WebSocket connection issue was resolved by correcting the Vite proxy configuration:
+
+**Problem**: Vite WebSocket proxy using incorrect target protocol
+**Solution**: Updated `vite.config.ts` proxy configuration
+**Change**: `target: 'ws://localhost:3001'` → `target: 'http://localhost:3001'`
+
+```typescript
+'/dashboard/ws': {
+  target: 'http://localhost:3001',  // ✅ Correct: HTTP target for WebSocket proxy
+  ws: true,
+  changeOrigin: true,
+}
+```
+
+**Technical Notes**:
+- Vite requires HTTP protocol in target, then uses `ws: true` flag for WebSocket upgrade
+- Adding `changeOrigin: true` ensures proper proxy forwarding
+- WebSocket connection now establishes successfully (confirmed by "Ansluten" status)
+
+### **Dashboard Simplification Request - 🎯 IN PROGRESS**
+
+**User Request**: "Why don't we simplify things and disable all other dashboard sections than the SL one, that we're working on, for now"
+
+**Strategic Context**:
+- Focus development effort on completing SL Transport API integration verification
+- Eliminate potential interference from other dashboard widgets during testing
+- Simplify debugging by isolating the train departure functionality
+- Enable clear verification of end-to-end data flow: SL API → Handler → Broadcaster → WebSocket → Dashboard UI
+
+**Implementation Plan**:
+1. Analyze React dashboard component structure
+2. Identify all non-SL dashboard sections (temperature, calendar, other widgets)
+3. Temporarily disable/hide non-essential components
+4. Preserve SL train departure section for focused testing
+5. Verify real-time SL data displays correctly without distractions
+
+### **Current System Status**
+
+**Backend Services**: ✅ ALL OPERATIONAL
+- Ruby json_server.rb running with DataBroadcaster enabled (`ENABLE_BROADCASTER=1`)
+- SL Transport API integration working (returning real-time train data)
+- WebSocket endpoint `/dashboard/ws` accepting connections
+- Broadcasting cycle active (every 20 seconds)
+
+**Frontend Status**: 🔄 CONNECTED, AWAITING SIMPLIFICATION
+- React dashboard running on localhost:5175
+- WebSocket connection established ("Ansluten" - Connected)
+- Vite proxy configuration fixed and operational
+- All dashboard sections currently visible (need to isolate SL section)
+
+**Data Flow Verification**: 🎯 PENDING SIMPLIFICATION
+- Backend → Frontend WebSocket communication established
+- Train data broadcasting from server confirmed
+- Dashboard display of real-time SL data pending section isolation
+
+### **Next Immediate Steps**
+
+1. **Dashboard Simplification** - Hide all non-SL sections to focus testing
+2. **End-to-End Verification** - Confirm SL train data displays correctly on simplified dashboard
+3. **Final Integration Test** - Validate complete data flow from SL Transport API to dashboard UI
+4. **Documentation Update** - Mark migration as fully complete and operational
+
+### **Success Metrics for Completion**
+
+- ✅ SL Transport API migration complete and tested
+- ✅ WebSocket proxy configuration fixed
+- ✅ Backend broadcasting real-time train data
+- ✅ Frontend WebSocket connection established
+- 🎯 Dashboard simplified to show only SL train section
+- 🎯 Real-time SL train departures displaying correctly on dashboard
+- 🎯 Complete end-to-end data flow verified and documented
+
+**Updated Mission Status**: API migration complete, WebSocket proxy resolved, dashboard simplification in progress for final verification. 🚂🔧
+
+## Critical Discovery: Ruby Backend Stability Issue
+
+### **Root Cause Identified - 🚨 SEGMENTATION FAULT IN SCHEDULER**
+
+**Critical Finding**: The WebSocket connection failures are caused by Ruby backend crashes, NOT configuration issues.
+
+**Evidence**:
+```bash
+# Ruby crash log excerpt:
+[BUG] Segmentation fault at 0x6e6f727473630000
+ruby 3.3.8 (2025-04-09 revision b200bad6cd) [arm64-darwin24]
+
+-- Ruby level backtrace information ----------------------------------------
+/Users/fredrikbranstrom/.rbenv/versions/3.3.8/lib/ruby/gems/3.3.0/gems/rufus-scheduler-3.9.2/lib/rufus/scheduler.rb:640:in `block in start'
+/Users/fredrikbranstrom/.rbenv/versions/3.3.8/lib/ruby/gems/3.3.0/gems/rufus-scheduler-3.9.2/lib/rufus/scheduler.rb:670:in `trigger_jobs'
+/Users/fredrikbranstrom/.rbenv/versions/3.3.8/lib/ruby/gems/3.3.0/gems/rufus-scheduler-3.9.2/lib/rufus/scheduler/job_array.rb:28:in `each'
+/Users/fredrikbranstrom/.rbenv/versions/3.3.8/lib/ruby/gems/3.3.0/gems/rufus-scheduler-3.9.2/lib/rufus/scheduler/job_array.rb:28:in `sort_by'
+```
+
+**Timeline of Backend Crash**:
+1. **18:44:17** - Server starts successfully: "Agoo 2.15.13 with pid 19403 is listening on http://:3001"
+2. **18:44:37 - 18:45:47** - Server operates normally, handling HTTP requests and broadcasting data
+3. **18:45:47** - DataBroadcaster working: "Published message to 0 clients" (broadcasting, but no WebSocket clients connected)
+4. **~18:46** - **SEGFAULT**: Server crashes in rufus-scheduler gem during job scheduling operation
+
+### **Technical Analysis**
+
+**Crash Location**: `rufus-scheduler-3.9.2/lib/rufus/scheduler/job_array.rb:28`
+**Operation**: `sort_by` method on scheduled jobs array
+**Ruby Version**: 3.3.8 (2025-04-09 revision b200bad6cd) [arm64-darwin24]
+**Architecture**: Apple Silicon (ARM64) on macOS
+
+**Backend Services Before Crash**: ✅ ALL WORKING
+- SL Transport API integration: Real-time data successfully retrieved
+- DataBroadcaster: Broadcasting train_data and temperature_data every 20 seconds
+- HTTP endpoints: All responding correctly (`/data/train_departures`, `/data/temperature`)
+- WebSocket endpoint: Registered but crashed before clients could connect
+
+**Scheduler Configuration Context**:
+```ruby
+# json_server.rb lines 12-14
+# Set timezone to avoid segfaults in rufus-scheduler/et-orbi
+Time.zone = 'Europe/Stockholm'
+ENV['TZ'] = Time.zone.name
+```
+
+**Irony**: The timezone setting was specifically added to prevent rufus-scheduler segfaults, but the crash still occurred.
+
+### **DataBroadcaster Analysis**
+
+**lib/data_broadcaster.rb** usage pattern:
+- Uses rufus-scheduler to schedule periodic API calls
+- Likely scheduling multiple jobs (train data every 20s, temperature data every 30s)
+- Crash occurs during `sort_by` operation on job array - suggests scheduler managing multiple concurrent jobs
+
+**Evidence of Multiple Jobs**:
+```
+Published message to 0 clients: {"type":"train_data",...}
+DataBroadcaster: Train data broadcast
+Published message to 0 clients: {"type":"temperature_data",...}
+DataBroadcaster: Temperature data broadcast
+```
+
+### **Impact Assessment**
+
+**WebSocket Connection Mystery Solved**:
+- Frontend WebSocket connections fail because backend crashes shortly after startup
+- Vite proxy configuration is actually correct
+- "Published message to 0 clients" indicates WebSocket infrastructure works, but clients can't stay connected to crashed server
+
+**API Endpoints Still Working**:
+- Individual HTTP requests work because they're handled before scheduler crashes
+- Manual testing of train_departure_handler succeeds because it bypasses the scheduler
+- Real-time data flow broken due to broadcasting system crash
+
+### **Architecture Vulnerability**
+
+**Single Point of Failure**: The DataBroadcaster scheduler crash takes down the entire WebSocket broadcasting system, even though:
+- SL Transport API integration is stable
+- Individual HTTP handlers work correctly
+- Agoo server HTTP functionality remains intact
+
+**Scheduler Dependencies**:
+- Dashboard real-time updates depend on rufus-scheduler stability
+- Apple Silicon + Ruby 3.3.8 + rufus-scheduler 3.9.2 combination appears unstable
+- Timezone handling attempts failed to prevent the crash
+
+### **Next Priority Actions**
+
+1. **Immediate Workaround**: Investigate running server without DataBroadcaster to isolate WebSocket functionality
+2. **Scheduler Investigation**: Research rufus-scheduler stability on Apple Silicon Ruby 3.3.8
+3. **Alternative Approaches**: Consider simpler scheduling mechanisms or different gem versions
+4. **Isolation Testing**: Test WebSocket connections without background scheduler tasks
+
+**Mission Status Update**: SL Transport API migration complete and verified, but real-time dashboard integration blocked by Ruby scheduler stability issue, not configuration problems. 🚂💥
+
+## Expert Analysis & Solution Strategy
+
+### **GPT-5 Root Cause Analysis**
+
+**Key Finding**: This is likely a Ruby VM bug or interaction between Agoo's native threads and rufus-scheduler's threads that corrupts memory, manifesting during `sort_by` operations.
+
+**Expert Assessment**:
+- Pure Ruby methods like `Array#sort_by` should never segfault
+- Multiple C-extensions in stack: Agoo, Oj, Rugged, sqlite3, pg
+- Multithreading collision: Agoo native threads + rufus-scheduler threads
+- Ruby 3.3.8 + ARM64 macOS may have VM stability issues with native gems
+- Timezone fix ineffective (only affects "at" schedules, not "every" schedules)
+
+### **Recommended Solution Priority**
+
+**A. Immediate Fix**: Replace rufus-scheduler with simple thread-based scheduler
+- **Rationale**: Eliminates rufus/et-orbi code paths entirely
+- **Benefit**: Fewer threads, simpler code, removes problematic dependency
+- **Risk**: Low - if still segfaults, confirms Agoo/VM interaction issue
+
+**B. Production Strategy**: Move scheduling to separate process
+- **Rationale**: Isolates scheduler crashes from WebSocket server
+- **Architecture**: Scheduler process → HTTP POST → Agoo `/internal/publish` → WebSocket broadcast
+- **Benefit**: Even if scheduler dies, WebSocket server stays operational
+
+**C. Configuration Hardening** (if keeping rufus):
+- Limit concurrency: `Rufus::Scheduler.new(max_work_threads: 1)`
+- Replace `require 'active_support/all'` with specific requires
+- Force UTC timezone: `ENV['TZ'] = 'UTC'`
+- Set fixed Agoo thread count vs `thread_count: 0` (auto)
+
+### **Implementation Plan**
+
+**Phase 1**: Quick Fix (immediate)
+1. Replace `lib/data_broadcaster.rb` rufus implementation with simple threads
+2. Test stability for >10 minutes locally
+3. Verify WebSocket real-time functionality
+
+**Phase 2**: Production Hardening (next)
+1. Add `/internal/publish` endpoint to Agoo
+2. Create separate broadcaster process
+3. Implement process supervision (launchd/systemd)
+
+**Phase 3**: Verification
+1. Complete dashboard simplification
+2. End-to-end real-time data flow testing
+3. Document stable architecture
+
+### **Immediate Action Items**
+
+- ✅ Expert analysis completed
+- 🎯 Implement thread-based scheduler replacement
+- 🎯 Test backend stability without rufus-scheduler
+- 🎯 Verify dashboard real-time updates work
+- 🎯 Complete simplified dashboard verification
+
+**Updated Mission Status**: Expert root cause analysis complete. Implementing immediate rufus-scheduler replacement to restore WebSocket stability and complete SL Transport API integration verification. 🚂🔧💡
