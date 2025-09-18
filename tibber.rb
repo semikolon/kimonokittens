@@ -1,4 +1,5 @@
 require 'faraday'
+require 'faraday/excon'
 require 'oj'
 require 'dotenv/load'
 require 'awesome_print'
@@ -33,7 +34,7 @@ def fetch_tibber_data
   conn = Faraday.new(url: 'https://api.tibber.com/v1-beta/gql') do |f|
     f.headers['Authorization'] = "Bearer #{ENV['TIBBER_API_KEY']}"
     f.headers['Content-Type'] = 'application/json'
-    f.adapter Faraday.default_adapter
+    f.adapter :excon
   end
 
   number_of_days = 62 # 7 * 5

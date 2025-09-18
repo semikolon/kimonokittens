@@ -3,6 +3,7 @@ require 'httparty'
 require 'jwt'
 require 'json'
 require 'faraday'
+require 'faraday/excon'
 require_relative '../lib/rent_db' # Use our new DB module
 
 # AuthHandler now follows the Agoo pattern: a plain Ruby class with a `call` method.

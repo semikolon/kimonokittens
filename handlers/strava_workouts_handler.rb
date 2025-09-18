@@ -1,4 +1,5 @@
 require 'faraday'
+require 'faraday/excon'
 require 'oj'
 # require 'pry'  # Temporarily disabled due to gem conflict
 # require 'pry-nav'  # Temporarily disabled due to gem conflict
@@ -13,20 +14,24 @@ class StravaWorkoutsHandler
     @refresh_token = ENV['STRAVA_REFRESH_TOKEN']
     if File.exist?('.refresh_token')
       @refresh_token = File.read('.refresh_token').strip
-    end  
+    end
+
+    @conn = Faraday.new(STRAVA_API_URL) do |faraday|
+      faraday.adapter :excon
+      faraday.options.open_timeout = 2  # TCP connection timeout
+      faraday.options.timeout = 3       # Overall request timeout
+    end
   end
 
   def call(req)
-    response = Faraday.get("#{STRAVA_API_URL}/athletes/6878181/stats", {}, { 'Authorization' => "Bearer #{@access_token}" }) do |faraday|
-      faraday.options.open_timeout = 2  # TCP connection timeout
-      faraday.options.timeout = 3       # Overall request timeout
+    response = @conn.get("/athletes/6878181/stats") do |req|
+      req.headers['Authorization'] = "Bearer #{@access_token}"
     end
 
     if response.status == 401 # Unauthorized, possibly due to expired token
       refresh_access_token
-      response = Faraday.get("#{STRAVA_API_URL}/athletes/6878181/stats", {}, { 'Authorization' => "Bearer #{@access_token}" }) do |faraday|
-        faraday.options.open_timeout = 2  # TCP connection timeout
-        faraday.options.timeout = 3       # Overall request timeout
+      response = @conn.get("/athletes/6878181/stats") do |req|
+        req.headers['Authorization'] = "Bearer #{@access_token}"
       end
     end
 
