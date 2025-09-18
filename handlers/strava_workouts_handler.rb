@@ -1,5 +1,5 @@
-require 'faraday'
-require 'faraday/excon'
+require 'net/http'
+require 'uri'
 require 'oj'
 # require 'pry'  # Temporarily disabled due to gem conflict
 # require 'pry-nav'  # Temporarily disabled due to gem conflict
@@ -15,35 +15,39 @@ class StravaWorkoutsHandler
     if File.exist?('.refresh_token')
       @refresh_token = File.read('.refresh_token').strip
     end
-
-    @conn = Faraday.new(STRAVA_API_URL) do |faraday|
-      faraday.adapter :excon
-      faraday.options.open_timeout = 2  # TCP connection timeout
-      faraday.options.timeout = 3       # Overall request timeout
-    end
   end
 
   def call(req)
-    response = @conn.get("/athletes/6878181/stats") do |req|
-      req.headers['Authorization'] = "Bearer #{@access_token}"
-    end
+    puts "DEBUG: Strava handler called with access_token: #{@access_token[0..10]}..."
+    puts "DEBUG: Making request to /athletes/6878181/stats"
 
-    if response.status == 401 # Unauthorized, possibly due to expired token
+    response = make_api_request("/athletes/6878181/stats")
+
+    puts "DEBUG: First API response status: #{response.code}"
+    puts "DEBUG: First API response body: #{response.body[0..200]}..."
+
+    if response.code.to_i == 401 # Unauthorized, possibly due to expired token
+      puts "DEBUG: Token expired, refreshing..."
       refresh_access_token
-      response = @conn.get("/athletes/6878181/stats") do |req|
-        req.headers['Authorization'] = "Bearer #{@access_token}"
-      end
+      puts "DEBUG: Token refreshed, new token: #{@access_token[0..10]}..."
+      response = make_api_request("/athletes/6878181/stats")
+      puts "DEBUG: Second API response status: #{response.code}"
+      puts "DEBUG: Second API response body: #{response.body[0..200]}..."
     end
 
-    if response.success?
+    if response.code.to_i == 200
+      puts "DEBUG: API call successful, parsing response"
       data = Oj.load(response.body)
+      puts "DEBUG: Parsed data keys: #{data.keys.join(', ')}"
       stats = transform_stats(data)
+      puts "DEBUG: Transformed stats: #{stats}"
     else
-      return [500, { 'Content-Type' => 'application/json' }, [ Oj.dump({ 'error' => 'Failed to fetch stats from Strava' }, mode: :compat) ]]
+      puts "ERROR: API call failed with status #{response.code}: #{response.body}"
+      return [500, { 'Content-Type' => 'application/json' }, [ Oj.dump({ 'error' => "Failed to fetch stats from Strava (#{response.code}): #{response.body}" }, mode: :compat) ]]
     end
 
     [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(stats, mode: :compat) ]]
-  rescue Faraday::Error => e
+  rescue => e
     puts "ERROR: Strava API call failed: #{e.message}"
     [504, { 'Content-Type' => 'application/json' }, [ Oj.dump({ 'error' => "Strava API error: #{e.message}" }, mode: :compat) ]]
   end
@@ -146,25 +150,45 @@ class StravaWorkoutsHandler
 
     since_date = (Time.now - 4 * 7 * 24 * 60 * 60).strftime("%-d %b").downcase
     {
-      runs: "<strong>#{recent_distance} km</strong> sedan #{since_date} - #{recent_distance_per_run} km per tur - #{recent_pace} min/km<br/>
-        <strong>#{ytd_distance} km</strong> sedan 1 jan - #{ytd_distance_per_run} km per tur - #{ytd_pace} min/km"
+      runs: "<strong>#{recent_distance} km</strong> sedan #{since_date} - #{recent_distance_per_run} km per tur - #{recent_pace} min/km<br/><strong>#{ytd_distance} km</strong> sedan 1 jan - #{ytd_distance_per_run} km per tur - #{ytd_pace} min/km"
     }
 
   end
 
   private
 
-  def refresh_access_token
-    response = Faraday.post('https://www.strava.com/oauth/token') do |req|
-      req.params['client_id'] = CLIENT_ID
-      req.params['client_secret'] = CLIENT_SECRET
-      req.params['refresh_token'] = @refresh_token
-      req.params['grant_type'] = 'refresh_token'
-      req.options.open_timeout = 2  # TCP connection timeout
-      req.options.timeout = 5       # Longer timeout for token refresh
-    end
+  def make_api_request(path)
+    uri = URI("#{STRAVA_API_URL}#{path}")
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.open_timeout = 2
+    http.read_timeout = 3
 
-    if response.success?
+    request = Net::HTTP::Get.new(uri)
+    request['Authorization'] = "Bearer #{@access_token}"
+    request['User-Agent'] = 'KimonoKittens/1.0'
+
+    http.request(request)
+  end
+
+  def refresh_access_token
+    uri = URI('https://www.strava.com/oauth/token')
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.open_timeout = 2
+    http.read_timeout = 5
+
+    request = Net::HTTP::Post.new(uri)
+    request.set_form_data(
+      'client_id' => CLIENT_ID,
+      'client_secret' => CLIENT_SECRET,
+      'refresh_token' => @refresh_token,
+      'grant_type' => 'refresh_token'
+    )
+
+    response = http.request(request)
+
+    if response.code.to_i == 200
       data = Oj.load(response.body)
       @access_token = data['access_token']
       File.write('.refresh_token', data['refresh_token'])
