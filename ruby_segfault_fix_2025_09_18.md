@@ -179,6 +179,36 @@ bundle install
 ENABLE_BROADCASTER=1 ruby json_server.rb
 ```
 
+## WebSocket Auto-Reconnection Enhancement
+
+### Problem
+Dashboard displayed "WebSocket-anslutning avbruten" and did not automatically reconnect when backend processes were restarted.
+
+### Solution Implemented
+Enhanced `react-use-websocket` configuration with robust reconnection strategy:
+
+```typescript
+// Exponential backoff with jitter
+reconnectAttempts: 10,
+reconnectInterval: (attemptNumber) => {
+  const baseDelay = 500
+  const exponentialDelay = Math.min(baseDelay * Math.pow(2, attemptNumber), 30000)
+  const jitter = Math.random() * 1000
+  return exponentialDelay + jitter
+}
+```
+
+### Features
+- **Exponential Backoff**: 500ms → 1s → 2s → 4s → 8s → 16s → 30s (max)
+- **Jitter**: Random 0-1000ms delay prevents thundering herd
+- **Visual Feedback**: Swedish status messages with animated indicators
+- **Console Logging**: Tracks reconnection attempts for debugging
+
+### Result
+Dashboard now automatically reconnects without page refresh when backend restarts.
+
 ## Conclusion
 
 The segmentation fault issue was successfully resolved by upgrading Ruby to 3.4.6 and switching from faraday-net_http to faraday-excon. This combination eliminates the OpenSSL compatibility issues that were causing memory corruption and server crashes. The solution has been tested extensively with no segmentation faults observed, confirming the fix is effective and stable for production use.
+
+Additionally, WebSocket auto-reconnection with exponential backoff ensures reliable dashboard connectivity during backend restarts.
