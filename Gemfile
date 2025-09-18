@@ -19,6 +19,10 @@ gem 'httparty'
 gem 'jwt'
 gem 'mutex_m'
 
+# HTTP Client
+gem 'faraday', '~> 2.13'
+gem 'faraday-excon', '~> 2.2'
+
 # Database
 gem 'pg', '~> 1.5' # For PostgreSQL
 gem 'sqlite3', '~> 1.7'

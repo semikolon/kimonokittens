@@ -81,10 +81,15 @@ GEM
     et-orbi (1.2.11)
       tzinfo
     event_stream_parser (1.0.0)
+    excon (1.3.0)
+      logger
     faraday (2.13.2)
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
+    faraday-excon (2.3.0)
+      excon (>= 1.0.0)
+      faraday (>= 2.11.0, < 3)
     faraday-multipart (1.1.1)
       multipart-post (~> 2.0)
     faraday-net_http (3.4.1)
@@ -146,6 +151,7 @@ GEM
       nokogiri (>= 1.12.0)
     method_source (1.1.0)
     mini_mime (1.1.5)
+    mini_portile2 (2.8.9)
     minitest (5.25.5)
     multi_xml (0.7.2)
       bigdecimal (~> 3.1)
@@ -243,11 +249,8 @@ GEM
       google-protobuf (~> 4.31)
     sass-embedded (1.89.2-x86_64-linux-musl)
       google-protobuf (~> 4.31)
-    sqlite3 (1.7.3-aarch64-linux)
-    sqlite3 (1.7.3-arm-linux)
-    sqlite3 (1.7.3-arm64-darwin)
-    sqlite3 (1.7.3-x86_64-darwin)
-    sqlite3 (1.7.3-x86_64-linux)
+    sqlite3 (1.7.3)
+      mini_portile2 (~> 2.8.0)
     thor (1.3.2)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
@@ -275,6 +278,8 @@ DEPENDENCIES
   awesome_print
   cuid (~> 1.0)
   dotenv-rails
+  faraday (~> 2.13)
+  faraday-excon (~> 2.2)
   ferrum
   httparty
   json
