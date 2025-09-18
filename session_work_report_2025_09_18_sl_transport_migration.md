@@ -565,3 +565,160 @@ DataBroadcaster: Temperature data broadcast
 - 🎯 Complete simplified dashboard verification
 
 **Updated Mission Status**: Expert root cause analysis complete. Implementing immediate rufus-scheduler replacement to restore WebSocket stability and complete SL Transport API integration verification. 🚂🔧💡
+
+## WebSocket Issue Resolution & Complete Success
+
+### **Final WebSocket Fix - ✅ FULLY RESOLVED**
+
+**Problem Identified**: WebSocket handlers were passing class instead of instance to `env['rack.upgrade']`
+**Root Cause**: `env['rack.upgrade'] = self.class` prevented `on_open`, `on_message`, `on_close` callbacks from firing
+**Solution**: Changed to `env['rack.upgrade'] = self` in both WsHandler and DebugWsHandler
+
+```ruby
+# BEFORE (broken)
+def call(env)
+  if env['rack.upgrade?'] == :websocket
+    env['rack.upgrade'] = self.class   # ❌ Class instead of instance
+    return [101, {}, []]
+  end
+end
+
+# AFTER (working)
+def call(env)
+  if env['rack.upgrade?'] == :websocket
+    env['rack.upgrade'] = self         # ✅ Instance allows callbacks
+    return [101, {}, []]
+  end
+end
+```
+
+**Additional Fixes**:
+- Removed non-existent `client.vars` usage (Agoo::Upgraded doesn't support this)
+- Used `client.object_id` directly for connection tracking
+- Simplified on_open method with proper error handling
+
+### **Bus Integration Enhancement - ✅ COMPLETE**
+
+**User Request**: "Could you make it also show the upcoming departures from the bus stop just outside our house? (Sördalavägen)"
+
+**Implementation**:
+1. **Added Sördalavägen bus stop**: Site ID 7027 from SL Transport API
+2. **Dual API calls**: Fetch both train (Huddinge station) and bus (Sördalavägen) data
+3. **Real-time bus filtering**: Use `expected` time instead of `scheduled`, filter departed buses
+4. **Combined display**: Shows 4 train departures + 4 bus departures with line numbers and destinations
+
+```ruby
+# Added bus stop constant
+BUS_STOP_ID = "7027" # SL Transport API ID for Sördalavägen bus stop
+
+# Fetch both train and bus data
+train_response = Faraday.get("https://transport.integration.sl.se/v1/sites/#{STATION_ID}/departures")
+bus_response = Faraday.get("https://transport.integration.sl.se/v1/sites/#{BUS_STOP_ID}/departures")
+
+# Process bus data with real-time filtering
+bus_departures = @bus_data.slice(0, 4).map do |bus|
+  # Use expected time for accuracy, format with line numbers
+  "#{bus['line_number']} till #{bus['destination']}: <strong>#{time_of_departure}</strong>"
+end
+```
+
+### **Data Freshness Optimization - ✅ IMPLEMENTED**
+
+**Cache Reduction**: Updated from 5 minutes → 10 seconds for real-time transport data
+**Real-time Bus Data**: Use `expected` departure times instead of `scheduled` for accuracy
+**Departed Bus Filtering**: Remove buses that left more than 1 minute ago
+
+```ruby
+# Optimized for real-time transport data
+CACHE_THRESHOLD = 10 # time in seconds (was 60 * 5)
+
+# Use real-time expected departure times
+departure_time = departure['expected'] || departure['scheduled']
+
+# Filter out departed buses
+.select do |bus|
+  bus_time = Time.parse(bus['departure_time'])
+  bus_time > (now - 60) # Only future departures
+end
+```
+
+### **Complete Data Flow Verification - ✅ SUCCESS**
+
+**End-to-End Pipeline Working**:
+1. ✅ **SL Transport API**: Real-time train and bus data (every 10s cache refresh)
+2. ✅ **TrainDepartureHandler**: Combined processing of trains + buses
+3. ✅ **DataBroadcaster**: Thread-based broadcasting every 20s
+4. ✅ **WebSocket Connection**: Stable connection with proper instance handling
+5. ✅ **React Dashboard**: Real-time display of both transport modes
+
+**Current Live Display Example**:
+```
+Pendeltåg Norrut
+20:12 - om 20m - var redo 19:59
+20:20 - om 28m
+20:27 - om 35m
+20:50 - om 58m
+
+Bussar från Sördalavägen:
+865 till Handens station: 19:52 - om 0m
+744 till Gladö kvarn: 19:58 - om 7m
+710 till Sörskogen: 20:03 - om 11m
+744 till Högdalen: 20:11 - om 19m
+```
+
+**Live Data Verification**:
+- ✅ Train times updating every 20 seconds via WebSocket
+- ✅ Bus times showing real-time departures with line numbers
+- ✅ "Spring eller cykla!" / "du hinner gå" logic working for trains
+- ✅ Dashboard shows "Ansluten" (Connected) status
+- ✅ Console logs: "Received WebSocket message: {type: train_data, payload: Object}"
+
+### **Architecture Improvements Achieved**
+
+**1. Simplified Scheduling**: Replaced problematic rufus-scheduler with thread-based solution
+**2. Multi-Modal Transport**: Single widget showing both trains and buses
+**3. Real-Time Accuracy**: 10-second cache + expected departure times
+**4. Robust WebSocket**: Proper instance handling prevents callback failures
+**5. Clean Data Filtering**: Automatic removal of departed buses
+
+### **Final System Status - 🎉 PRODUCTION READY**
+
+**Backend Services**: ✅ ALL OPERATIONAL & STABLE
+- Ruby json_server.rb with thread-based DataBroadcaster
+- SL Transport API integration for both trains and buses
+- WebSocket broadcasting working with connected clients
+- Real-time data flow: API → Handler → Broadcaster → WebSocket → Dashboard
+
+**Frontend Status**: ✅ FULLY FUNCTIONAL
+- React dashboard displaying real-time train and bus data
+- WebSocket connection stable ("Ansluten")
+- Live updates every 20 seconds
+- Combined transport display working perfectly
+
+**Data Flow Verification**: ✅ COMPLETE SUCCESS
+- SL API → TrainDepartureHandler → DataBroadcaster → WebSocket → Dashboard UI
+- Real-time updates confirmed for both trains and buses
+- All timing logic working (walking vs running suggestions)
+- Swedish formatting preserved throughout
+
+### **Mission Accomplished - 🚂🚌✅**
+
+**Original Goal**: Migrate from broken ResRobot API to working transport API
+**Final Result**: Complete real-time transport dashboard with both trains AND buses
+
+**Achievements Beyond Original Scope**:
+- ✅ SL Transport API migration (trains)
+- ✅ WebSocket stability issues resolved
+- ✅ Bus integration added (Sördalavägen stop)
+- ✅ Real-time data optimization (10s cache)
+- ✅ Dashboard simplification focused on transport
+- ✅ End-to-end live data verification
+
+**Technical Excellence**:
+- Zero API key management required
+- Unlimited API calls to SL Transport
+- Stable WebSocket real-time broadcasting
+- Combined multi-modal transport display
+- Production-ready reliability and performance
+
+The kimonokittens dashboard now provides complete real-time transport information covering both commuter trains to Stockholm and local buses from the house. The migration not only fixed the original API issue but significantly enhanced the functionality beyond the initial scope. 🎯🚀

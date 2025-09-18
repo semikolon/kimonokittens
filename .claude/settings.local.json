@@ -52,7 +52,16 @@
       "Bash(bundle exec ruby:*)",
       "Bash(killall:*)",
       "Bash(ENABLE_BROADCASTER=1 ruby json_server.rb)",
-      "mcp__zen__consensus"
+      "mcp__zen__consensus",
+      "mcp__playwright-extension__browser_console_messages",
+      "mcp__playwright-extension__browser_snapshot",
+      "Bash(pkill:*)",
+      "Bash(openssl:*)",
+      "Bash(gem list)",
+      "Bash(rbenv install:*)",
+      "Bash(brew:*)",
+      "Bash(brew upgrade:*)",
+      "Bash(bundle install:*)"
     ],
     "deny": []
   }
