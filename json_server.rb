@@ -87,6 +87,7 @@ require_relative 'handlers/rent_calculator_handler'
 require_relative 'handlers/handbook_handler'
 # require_relative 'handlers/auth_handler'
 require_relative 'handlers/weather_handler'
+require_relative 'handlers/temperature_handler'
 
 home_page_handler = HomePageHandler.new
 # electricity_stats_handler = ElectricityStatsHandler.new
@@ -100,6 +101,7 @@ rent_calculator_handler = RentCalculatorHandler.new
 handbook_handler = HandbookHandler.new
 # auth_handler = AuthHandler.new
 weather_handler = WeatherHandler.new
+temperature_handler = TemperatureHandler.new
 
 # --- WebSocket Pub/Sub Manager ---
 # A simple in-memory manager for WebSocket connections.
@@ -154,6 +156,10 @@ class WsHandler
       puts "WS: subscribing to pubsub..."
       $pubsub.subscribe(con_id, client)
       puts "HANDBOOK WS: open #{con_id}"
+
+      # Trigger immediate broadcasts for 1-2 second loading requirement
+      puts "WS: Triggering immediate broadcasts for new client #{con_id}..."
+      $data_broadcaster.send_immediate_data_to_new_client
     rescue => e
       puts "ERROR in on_open: #{e.class}: #{e.message}"
       puts e.backtrace.join("\n")
@@ -230,6 +236,7 @@ Agoo::Server.handle(:GET, "/*", static_handler)
 Agoo::Server.handle(:GET, "/data/train_departures", train_departure_handler)
 Agoo::Server.handle(:GET, "/data/strava_stats", strava_workouts_handler)
 Agoo::Server.handle(:GET, "/data/weather", weather_handler)
+Agoo::Server.handle(:GET, "/data/temperature", temperature_handler)
 
 # Add rent calculator endpoints
 Agoo::Server.handle(:GET, "/api/rent", rent_calculator_handler)

@@ -12,6 +12,9 @@ class DataBroadcaster
     return if @running
     @running = true
 
+    # Send immediate broadcasts for 1-2 second loading requirement
+    initial_broadcast
+
     # Start thread-based schedulers for different data sources
     @threads << periodic(30) { fetch_and_publish('train_data', 'http://localhost:3001/data/train_departures') }
     @threads << periodic(60) { fetch_and_publish('temperature_data', 'http://localhost:3001/data/temperature') }
@@ -19,6 +22,30 @@ class DataBroadcaster
     @threads << periodic(600) { fetch_and_publish('strava_data', 'http://localhost:3001/data/strava_stats') }
 
     puts "DataBroadcaster: All scheduled tasks started"
+  end
+
+  def initial_broadcast
+    # Send all data immediately on startup for fast loading
+    Thread.new do
+      puts "DataBroadcaster: Sending initial broadcasts..."
+      fetch_and_publish('weather_data', 'http://localhost:3001/data/weather')
+      fetch_and_publish('strava_data', 'http://localhost:3001/data/strava_stats')
+      fetch_and_publish('train_data', 'http://localhost:3001/data/train_departures')
+      fetch_and_publish('temperature_data', 'http://localhost:3001/data/temperature')
+      puts "DataBroadcaster: Initial broadcasts complete"
+    end
+  end
+
+  def send_immediate_data_to_new_client
+    # Send all data immediately when a new WebSocket client connects
+    Thread.new do
+      puts "DataBroadcaster: Sending immediate data to new client..."
+      fetch_and_publish('weather_data', 'http://localhost:3001/data/weather')
+      fetch_and_publish('strava_data', 'http://localhost:3001/data/strava_stats')
+      fetch_and_publish('train_data', 'http://localhost:3001/data/train_departures')
+      fetch_and_publish('temperature_data', 'http://localhost:3001/data/temperature')
+      puts "DataBroadcaster: Immediate data sent to new client"
+    end
   end
 
   def stop

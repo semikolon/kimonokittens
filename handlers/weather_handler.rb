@@ -1,5 +1,4 @@
-require 'faraday'
-require 'faraday/excon'
+require 'httparty'
 require 'oj'
 
 class WeatherHandler
@@ -10,9 +9,6 @@ class WeatherHandler
   def initialize
     @data = nil
     @fetched_at = nil
-    @conn = Faraday.new("https://api.weatherapi.com") do |faraday|
-      faraday.adapter :excon
-    end
   end
 
   def call(req)
@@ -23,10 +19,18 @@ class WeatherHandler
 
     # Check cache
     if @data.nil? || Time.now - @fetched_at > CACHE_THRESHOLD
-      response = @conn.get("/v1/forecast.json?key=#{WEATHER_API_KEY}&q=#{LOCATION}&days=5&aqi=yes&alerts=no")
+      response = HTTParty.get("https://api.weatherapi.com/v1/forecast.json",
+        query: {
+          key: WEATHER_API_KEY,
+          q: LOCATION,
+          days: 5,
+          aqi: 'yes',
+          alerts: 'no'
+        }
+      )
 
       if response.success?
-        raw_data = Oj.load(response.body)
+        raw_data = response.parsed_response
         @data = transform_weather_data(raw_data)
         @fetched_at = Time.now
       else
