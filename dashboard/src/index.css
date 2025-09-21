@@ -3,24 +3,29 @@
 @tailwind utilities;
 
 :root {
-  /* Enhanced cyberpunk background layers */
-  --bg-primary: linear-gradient(180deg, #0a0715 0%, #070510 100%);
-  --bg-accent-1: radial-gradient(1200px 600px at 10% -10%, rgba(139, 92, 246, 0.18), transparent 60%);
-  --bg-accent-2: radial-gradient(1000px 500px at 90% 110%, rgba(236, 72, 153, 0.12), transparent 55%);
+  /* Elegant background system */
+  --bg-primary: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  --bg-accent: radial-gradient(600px circle at 50% 20%, rgba(168, 85, 247, 0.03), transparent 50%);
 
-  /* Enhanced glass panel system */
-  --panel-bg: rgba(255, 255, 255, 0.08);
-  --panel-border: rgba(217, 70, 239, 0.15);         /* fuchsia-300/15 */
-  --panel-border-hover: rgba(217, 70, 239, 0.35);   /* fuchsia-300/35 */
-  --panel-shadow: 0 15px 50px -15px rgba(168, 85, 247, 0.25);
-  --panel-shadow-hover: 0 20px 60px -10px rgba(168, 85, 247, 0.4);
+  /* Refined glass panel system */
+  --panel-bg: rgba(255, 255, 255, 0.8);
+  --panel-border: rgba(148, 163, 184, 0.1);
+  --panel-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.08);
+  --panel-shadow-hover: 0 8px 32px -8px rgba(0, 0, 0, 0.12);
 
-  /* Enhanced typography hierarchy */
-  --text-primary: #F3E8FF;                          /* purple-50 */
-  --text-secondary: rgba(196, 181, 253, 0.85);      /* purple-300/85 */
-  --text-content: rgba(243, 232, 255, 0.95);        /* purple-100/95 */
-  --text-accent: #F0ABFC;                           /* fuchsia-300 */
-  --text-muted: rgba(196, 181, 253, 0.65);          /* purple-300/65 */
+  /* Sophisticated typography */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-content: #334155;
+  --text-accent: #7c3aed;
+  --text-muted: #94a3b8;
+
+  /* Dark mode variants */
+  --dark-bg-primary: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  --dark-panel-bg: rgba(15, 23, 42, 0.8);
+  --dark-text-primary: #f1f5f9;
+  --dark-text-secondary: #94a3b8;
+  --dark-text-content: #cbd5e1;
 }
 
 @layer base {
@@ -29,132 +34,34 @@
   }
 
   body {
-    color: var(--text-primary);
     font-family: theme('fontFamily.sans');
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color: rgb(221 214 254); /* text-purple-200 - default text color */
+  }
+}
 
-    /* Portrait-first background optimized for vertical displays */
-    background:
-      var(--bg-accent-1),
-      var(--bg-accent-2),
-      var(--bg-primary);
+@layer utilities {
+  .bg-gradient-radial {
+    background: radial-gradient(var(--tw-gradient-stops));
   }
 }
 
 @layer components {
-  /* NATURAL FLOW LAYOUT - Organic Widget Arrangement */
-  .dashboard-grid {
-    @apply relative h-screen w-screen grid gap-4 p-6;
-    /* Modern 2025 approach: auto-fit with dense packing */
-    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-    grid-auto-rows: minmax(150px, auto);
-    grid-auto-flow: dense;
-    align-content: start;
+  /* Refined widget system for elegant design */
+  .elegant-widget {
+    @apply backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 rounded-2xl shadow-sm;
+    @apply transition-all duration-300 hover:shadow-md;
+    @apply overflow-hidden;
   }
 
-  /* Enhanced background decorations - vertical flow with subtle animation */
-  .cyber-bg {
-    @apply absolute inset-0 -z-10 w-full h-full;
-    background:
-      radial-gradient(400px 800px at 50% 10%, rgba(139,92,246,0.15), transparent 60%),
-      radial-gradient(350px 700px at 50% 90%, rgba(236,72,153,0.10), transparent 60%);
-    animation: cyber-pulse 8s ease-in-out infinite;
+  .elegant-widget-content {
+    @apply p-6;
   }
 
-  @keyframes cyber-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
+  .elegant-widget-title {
+    @apply text-sm font-medium text-slate-600 dark:text-slate-400;
+    @apply mb-4 tracking-wide uppercase;
   }
 
-  .grid-overlay {
-    @apply absolute inset-0 -z-10 pointer-events-none;
-    background-image:
-      linear-gradient(rgba(167, 139, 250, 0.12) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(167, 139, 250, 0.12) 1px, transparent 1px);
-    background-size: 25px 25px;
-    mask-image: radial-gradient(ellipse 50% 85% at center, rgba(0,0,0,0.9), transparent);
-  }
-
-  /* Enhanced glass panel system with stronger effects */
-  .widget {
-    background: var(--panel-bg);
-    backdrop-filter: blur(16px) saturate(180%);
-    border: 1px solid var(--panel-border);
-    box-shadow: var(--panel-shadow);
-    border-radius: 1.25rem;
-    padding: 1.25rem 1.5rem;
-    transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
-
-    @apply relative flex flex-col space-y-4;
-  }
-
-  .widget:hover {
-    border-color: var(--panel-border-hover);
-    box-shadow: var(--panel-shadow-hover);
-    transform: translateY(-1px);
-  }
-
-  .widget-hero {
-    padding: 1.75rem 2rem 2.75rem;
-    border-color: rgba(139, 92, 246, 0.25);  /* violet-400/25 */
-    background: rgba(255, 255, 255, 0.12);
-    box-shadow:
-      0 0 0 1px rgba(139, 92, 246, 0.12),
-      0 35px 90px -30px rgba(139, 92, 246, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
-
-  .widget-title {
-    @apply text-sm sm:text-base font-semibold tracking-widest uppercase;
-    color: var(--text-secondary);
-  }
-
-  .widget-content {
-    color: var(--text-content);
-  }
-
-  /* NATURAL FLOW WIDGET SIZING - Organic Arrangement */
-  .widget-hero-size {
-    grid-column: span 2;
-    grid-row: span 2;
-  }
-
-  .widget-wide-size {
-    grid-column: span 2;
-    grid-row: span 2;
-  }
-
-  .widget-standard-size {
-    grid-column: span 1;
-    grid-row: span 1;
-  }
-
-  .widget-compact-size {
-    grid-column: span 1;
-    grid-row: span 1;
-  }
-
-  .widget-small-size {
-    grid-column: span 1;
-    grid-row: span 1;
-  }
-
-  /* RESPONSIVE BREAKPOINTS for Natural Flow */
-  @media (max-width: 768px) {
-    .dashboard-grid {
-      grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
-    }
-
-    .widget-hero-size,
-    .widget-wide-size {
-      grid-column: span 1;
-    }
-  }
-
-  @media (min-width: 1280px) {
-    .dashboard-grid {
-      grid-template-columns: repeat(auto-fit, minmax(min(350px, 100%), 1fr));
-    }
-  }
 }

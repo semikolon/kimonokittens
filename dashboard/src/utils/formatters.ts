@@ -1,5 +1,5 @@
 export const formatSwedishTime = (date: Date): string =>
-  date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })
 
 export const formatSwedishDate = (date: Date): string =>
   date.toLocaleDateString('sv-SE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
