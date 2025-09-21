@@ -32,9 +32,9 @@ function ConnectionStatus() {
   }
 
   return (
-    <div className="fixed top-4 right-4 flex items-center space-x-2 text-xs z-50">
-      <div className={`w-2 h-2 rounded-full ${getStatusColor()}`}></div>
-      <span className="text-gray-400">{getStatusText()}</span>
+    <div className="fixed top-5 right-5 flex items-center space-x-3 text-sm z-50 backdrop-blur-sm bg-black/20 px-3 py-2 rounded-full border border-fuchsia-300/20">
+      <div className={`w-3 h-3 rounded-full ${getStatusColor()}`}></div>
+      <span className="text-purple-200 font-medium">{getStatusText()}</span>
     </div>
   )
 }
@@ -43,25 +43,42 @@ function DashboardContent() {
   return (
     <>
       <ConnectionStatus />
-      {/* Progressive re-enablement of dashboard widgets */}
+
+      {/* Background decorations */}
+      <div className="cyber-bg"></div>
+      <div className="grid-overlay"></div>
+
+      {/* Natural Flow Dashboard Grid */}
       <div className="dashboard-grid">
-        <div className="flex flex-col space-y-8">
+        {/* Hero clock - will auto-size */}
+        <div className="widget-hero-size">
           <ClockWidget />
+        </div>
+
+        {/* Weather widget */}
+        <div className="widget-standard-size">
           <WeatherWidget />
+        </div>
+
+        {/* Transport widget */}
+        <div className="widget-wide-size">
           <TrainWidget />
+        </div>
+
+        {/* Strava widget */}
+        <div className="widget-standard-size">
+          <StravaWidget />
+        </div>
+
+        {/* Temperature widget */}
+        <div className="widget-standard-size">
           <TemperatureWidget />
         </div>
 
-        {/* Center column */}
-        <div className="flex flex-col items-center justify-center">
-          <LogoWidget />
-        </div>
 
-        {/* Right column */}
-        <div className="flex flex-col space-y-8">
-          <TodoWidget />
-          <CalendarWidget />
-          <StravaWidget />
+        {/* Logo widget */}
+        <div className="widget-small-size">
+          <LogoWidget />
         </div>
       </div>
     </>
