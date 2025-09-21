@@ -1,5 +1,4 @@
-require 'faraday'
-require 'faraday/excon'
+require 'httparty'
 require 'oj'
 require 'awesome_print'
 # require 'pry'  # Temporarily disabled due to gem conflict
@@ -50,20 +49,20 @@ class TrainDepartureHandler
       # Use SL Transport API - no key required, direct from SL
       # API documentation: https://www.trafiklab.se/api/our-apis/sl/transport/
       begin
-        # SEGFAULT PREVENTION: Sequential SSL requests to avoid OpenSSL concurrency issues
-        # Fetch train departures first
-        conn = Faraday.new("https://transport.integration.sl.se") do |faraday|
-          faraday.adapter :excon
-          faraday.options.open_timeout = 5  # Increased timeout for stability
-          faraday.options.timeout = 10      # Increased timeout for stability
-        end
-        train_response = conn.get("/v1/sites/#{STATION_ID}/departures")
+        # Use HTTParty instead of faraday-excon to prevent SSL segfaults
+        options = {
+          timeout: 10,
+          open_timeout: 5
+        }
 
-        # Wait briefly between SSL requests to avoid buffer conflicts
+        # Fetch train departures first
+        train_response = HTTParty.get("https://transport.integration.sl.se/v1/sites/#{STATION_ID}/departures", options)
+
+        # Wait briefly between SSL requests to avoid potential conflicts
         sleep(0.1)
 
         # Fetch bus departures second (sequential, not concurrent)
-        bus_response = conn.get("/v1/sites/#{BUS_STOP_ID}/departures")
+        bus_response = HTTParty.get("https://transport.integration.sl.se/v1/sites/#{BUS_STOP_ID}/departures", options)
 
         if train_response.success? && bus_response.success?
           train_raw_data = Oj.load(train_response.body)
@@ -73,8 +72,8 @@ class TrainDepartureHandler
           @fetched_at = Time.now
         else
           puts "WARNING: SL Transport API failed, using fallback data"
-          puts "Train response: #{train_response.status}" if !train_response.success?
-          puts "Bus response: #{bus_response.status}" if !bus_response.success?
+          puts "Train response: #{train_response.code}" if !train_response.success?
+          puts "Bus response: #{bus_response.code}" if !bus_response.success?
           @train_data = get_fallback_train_data
           @bus_data = get_fallback_bus_data
           @fetched_at = Time.now
@@ -205,12 +204,17 @@ class TrainDepartureHandler
         if departure['deviations'].any?
           deviation_note = departure['deviations'].map { |dev| dev['message'] }.compact.join(', ')
         elsif departure['expected'] && departure['scheduled']
-          # Calculate delay from expected vs scheduled
-          scheduled = Time.parse(departure['scheduled'])
-          expected = Time.parse(departure['expected'])
-          delay_minutes = ((expected - scheduled) / 60).round
-          if delay_minutes > 0
-            deviation_note = "Försenad #{delay_minutes} min"
+          # Calculate delay from expected vs scheduled with safe parsing
+          begin
+            scheduled = Time.parse(departure['scheduled'])
+            expected = Time.parse(departure['expected'])
+            delay_minutes = ((expected - scheduled) / 60).round
+            if delay_minutes > 0
+              deviation_note = "Försenad #{delay_minutes} min"
+            end
+          rescue ArgumentError, TypeError => e
+            # If date parsing fails, just skip the delay calculation
+            puts "WARNING: Failed to parse train times - scheduled: #{departure['scheduled'].inspect}, expected: #{departure['expected'].inspect}, error: #{e.message}"
           end
         end
 

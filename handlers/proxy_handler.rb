@@ -1,5 +1,4 @@
-require 'faraday'
-require 'faraday/excon'
+require 'httparty'
 
 class ProxyHandler
   def call(req)
@@ -12,19 +11,27 @@ class ProxyHandler
     last_error = nil
     endpoints.each do |base_url|
       begin
-        conn = Faraday.new(base_url) do |faraday|
-          faraday.adapter :excon
-          faraday.options.open_timeout = 2  # TCP connection timeout
-          faraday.options.timeout = 5       # Overall request timeout
-          # Skip SSL verification for kimonokittens.com
-          if base_url.include?('kimonokittens.com')
-            faraday.ssl.verify = false
-          end
+        url = "#{base_url}/data/#{req['PATH_INFO'].split('/data/').last}"
+        options = {
+          timeout: 5,
+          open_timeout: 2
+        }
+
+        # Skip SSL verification for kimonokittens.com
+        if base_url.include?('kimonokittens.com')
+          options[:verify] = false
         end
-        response = conn.get("/data/#{req['PATH_INFO'].split('/data/').last}")
+
+        response = HTTParty.get(url, options)
         puts "SUCCESS: Retrieved data from #{base_url}"
-        return [response.status, response.headers, [response.body]]
-      rescue Faraday::Error => e
+
+        # Simple, safe response processing
+        status_code = response.code.to_i
+        headers = { 'Content-Type' => 'application/json' }
+        body = response.body.to_s
+
+        return [status_code, headers, [body]]
+      rescue => e
         puts "ERROR: Failed to connect to #{base_url}: #{e.message}"
         last_error = e
         next  # Try next endpoint
@@ -43,6 +50,6 @@ class ProxyHandler
       "Node-RED-tjänst inte tillgänglig: #{last_error.message}"
     end
 
-    [504, { 'Content-Type' => 'application/json' }, ["{\"error\": \"#{error_msg}\"}"]]
+    [504, { 'Content-Type' => 'application/json' }, ["{\"error\": \"#{error_msg}\"}".to_s]]
   end
 end
