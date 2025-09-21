@@ -99,7 +99,7 @@ export function CalendarWidget() {
       <div className="widget-title">Kalendar</div>
       <div className="widget-content">
         {upcomingEvents.length === 0 ? (
-          <div className="text-center text-gray-500 py-4">
+          <div className="text-center text-purple-300 py-4">
             <div className="text-2xl mb-2">🗓️</div>
             <div className="text-sm">Inga kommande händelser</div>
           </div>
@@ -111,14 +111,14 @@ export function CalendarWidget() {
                   <span className="text-lg mt-0.5">{getEventIcon(event.title)}</span>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{event.title}</div>
-                    <div className="text-xs text-gray-400 mt-1">
+                    <div className="text-xs text-purple-200 mt-1">
                       {formatEventDate(event.start)}
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-purple-200">
                       {formatEventTime(event.start, event.end, event.allDay)}
                     </div>
                     {event.location && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-purple-300 mt-1">
                         📍 {event.location}
                       </div>
                     )}
@@ -129,7 +129,7 @@ export function CalendarWidget() {
           </div>
         )}
 
-        <div className="mt-4 text-xs text-gray-400 text-center">
+        <div className="mt-4 text-xs text-purple-200 text-center">
           <div className="bg-yellow-400/10 text-yellow-400 px-2 py-1 rounded">
             📅 Google Calendar API kommer snart
           </div>

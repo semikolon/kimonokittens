@@ -13,7 +13,7 @@ export function StravaWidget() {
       <div className="widget">
         <div className="widget-title">Fredriks Löpning</div>
         <div className="widget-content">
-          <div className="text-gray-400">Laddar...</div>
+          <div className="text-purple-200">Laddar...</div>
         </div>
       </div>
     )
@@ -35,7 +35,7 @@ export function StravaWidget() {
       <div className="widget">
         <div className="widget-title">Fredriks Löpning</div>
         <div className="widget-content">
-          <div className="text-gray-400">Ingen data tillgänglig</div>
+          <div className="text-purple-200">Ingen data tillgänglig</div>
         </div>
       </div>
     )

@@ -44,12 +44,12 @@ export function TodoWidget() {
       <div className="widget-title">Visa vårt hem kärlek</div>
       <div className="widget-content">
         <div className="mb-4">
-          <div className="text-sm text-gray-400 mb-2">
+          <div className="text-sm text-purple-200 mb-2">
             Att göra ({incompleteTodos.length})
           </div>
           
           {incompleteTodos.length === 0 ? (
-            <div className="text-center text-gray-500 py-4">
+            <div className="text-center text-purple-300 py-4">
               <div className="text-2xl mb-2">✨</div>
               <div className="text-sm">Allt är klart!</div>
             </div>
@@ -62,7 +62,7 @@ export function TodoWidget() {
                 </div>
               ))}
               {incompleteTodos.length > 4 && (
-                <div className="text-xs text-gray-400 text-center">
+                <div className="text-xs text-purple-200 text-center">
                   +{incompleteTodos.length - 4} fler...
                 </div>
               )}
@@ -72,12 +72,12 @@ export function TodoWidget() {
 
         {completedTodos.length > 0 && (
           <div>
-            <div className="text-sm text-gray-400 mb-2">
+            <div className="text-sm text-purple-200 mb-2">
               Klart idag ({completedTodos.length})
             </div>
             <div className="space-y-1">
               {completedTodos.slice(0, 2).map((todo) => (
-                <div key={todo.id} className="flex items-center space-x-2 p-1 text-gray-500">
+                <div key={todo.id} className="flex items-center space-x-2 p-1 text-purple-300">
                   <span className="text-sm">✅</span>
                   <span className="text-xs line-through">{todo.content}</span>
                 </div>
@@ -86,7 +86,7 @@ export function TodoWidget() {
           </div>
         )}
 
-        <div className="mt-4 text-xs text-gray-400 text-center">
+        <div className="mt-4 text-xs text-purple-200 text-center">
           <div className="bg-yellow-400/10 text-yellow-400 px-2 py-1 rounded">
             📝 Todoist API kommer snart
           </div>
