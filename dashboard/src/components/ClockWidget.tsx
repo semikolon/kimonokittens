@@ -15,16 +15,22 @@ export function ClockWidget() {
   }, [])
 
   return (
-    <WidgetContainer title="Tid" variant="hero">
-      <div className="text-7xl font-bold mb-3 font-sans tracking-tight text-center">
-        {formatSwedishTime(time)}
+    <div className="flex items-center justify-between">
+      <div className="flex-1">
+        <div className="text-7xl font-bold mb-3 font-sans tracking-tight text-center text-purple-100">
+          {formatSwedishTime(time)}
+        </div>
+        <div className={`text-xl ${neonTheme.text.secondary} mb-2 capitalize text-center`}>
+          {formatSwedishDate(time)}
+        </div>
       </div>
-      <div className={`text-xl ${neonTheme.text.secondary} mb-2 capitalize text-center`}>
-        {formatSwedishDate(time)}
+      <div className="flex-shrink-0 ml-8">
+        <img
+          src="/logo.png"
+          alt="Kimonokittens"
+          className="w-32 h-32 object-contain"
+        />
       </div>
-      <div className={`text-base ${neonTheme.text.accent} italic text-center`}>
-        {getGreeting(time.getHours())} 🌸
-      </div>
-    </WidgetContainer>
+    </div>
   )
 } 
