@@ -71,7 +71,10 @@
       "Bash(./start_server.sh:*)",
       "Bash(rbenv versions:*)",
       "Bash(sudo pkill:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "mcp__magic__21st_magic_component_refiner",
+      "Bash(npm install:*)",
+      "WebFetch(domain:puma.io)"
     ],
     "deny": []
   }
