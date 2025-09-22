@@ -175,15 +175,33 @@ end
 - **Week 1**: Research async patterns, refactor HTTP clients
 - **Week 2**: Testing, debugging, performance optimization
 
-## Recommendation
+## Performance Benchmarks (Updated Research - September 2025)
+
+### **Real-World Performance Data:**
+- **Agoo**: 7,000 RPS (40MB memory)
+- **Falcon**: 6,000 RPS (60MB memory)
+- **Puma**: 4,500 RPS (80MB memory)
+
+### **Performance Loss Analysis:**
+- **Agoo → Puma**: ~36% performance decrease (7,000 → 4,500 RPS)
+- **Agoo → Falcon**: ~14% performance decrease (7,000 → 6,000 RPS)
+
+### **Falcon Production Issues Research:**
+- **Fiber Blocking**: "All fibers within that thread can end up blocking each other if they do any meaningful work that is not completely async aware"
+- **ActiveRecord Problems**: Connection pool timeouts and compatibility issues
+- **Production Warnings**: Multiple sources warn "you're probably better sticking with a webserver like Puma"
+- **Experimental Status**: Still considered risky for production despite improvements
+
+## Final Recommendation: Puma Migration
 
 **Migrate to Puma immediately** for the following reasons:
 
 1. **Eliminate Segfaults**: Solve the core stability problem
 2. **Minimal Risk**: Drop-in replacement with proven track record
 3. **Time Efficiency**: 1-2 day migration vs 1-2 week Falcon migration
-4. **Performance Adequate**: 4,500 req/s more than sufficient for dashboard load
-5. **Future Flexibility**: Can evaluate Falcon later after stability is achieved
+4. **Performance Adequate**: 4,500 req/s more than sufficient for dashboard load (current: 20 req/min)
+5. **Future Rails Compatibility**: Avoids Falcon's fiber/ActiveRecord issues for future development
+6. **Battle-Tested**: 15+ years production experience vs Falcon's experimental status
 
 ## Next Steps
 

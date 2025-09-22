@@ -22,7 +22,6 @@ GEM
       zeitwerk (~> 2.3)
     addressable (2.8.7)
       public_suffix (>= 2.0.2, < 7.0)
-    agoo (2.15.13)
     awesome_print (1.9.2)
     base64 (0.3.0)
     bigdecimal (3.2.2)
@@ -151,7 +150,6 @@ GEM
       nokogiri (>= 1.12.0)
     method_source (1.1.0)
     mini_mime (1.1.5)
-    mini_portile2 (2.8.9)
     minitest (5.25.5)
     multi_xml (0.7.2)
       bigdecimal (~> 3.1)
@@ -249,8 +247,11 @@ GEM
       google-protobuf (~> 4.31)
     sass-embedded (1.89.2-x86_64-linux-musl)
       google-protobuf (~> 4.31)
-    sqlite3 (1.7.3)
-      mini_portile2 (~> 2.8.0)
+    sqlite3 (1.7.3-aarch64-linux)
+    sqlite3 (1.7.3-arm-linux)
+    sqlite3 (1.7.3-arm64-darwin)
+    sqlite3 (1.7.3-x86_64-darwin)
+    sqlite3 (1.7.3-x86_64-linux)
     thor (1.3.2)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
@@ -274,7 +275,6 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport
-  agoo (~> 2.15.3)
   awesome_print
   cuid (~> 1.0)
   dotenv-rails
@@ -290,7 +290,7 @@ DEPENDENCIES
   pg (~> 1.5)
   pinecone (~> 1.2)
   pry
-  puma
+  puma (~> 6.4)
   rack
   rack-test (~> 2.1)
   rspec (~> 3.13)

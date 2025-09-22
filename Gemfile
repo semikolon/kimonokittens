@@ -1,8 +1,7 @@
 source 'https://rubygems.org'
 
 # Web Server
-gem 'agoo', '~> 2.15.3'
-gem 'puma' # Often used in production environments
+gem 'puma', '~> 6.4' # Primary web server with native WebSocket support
 gem 'webrick' # Required for some dependencies
 
 # Scheduling
