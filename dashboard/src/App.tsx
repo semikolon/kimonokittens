@@ -18,7 +18,8 @@ const Widget = ({
   accent = false,
   large = false,
   horsemenFont = false,
-  allowOverflow = false
+  allowOverflow = false,
+  innerClassName
 }: {
   children: React.ReactNode,
   title?: string,
@@ -26,14 +27,15 @@ const Widget = ({
   accent?: boolean,
   large?: boolean,
   horsemenFont?: boolean,
-  allowOverflow?: boolean
+  allowOverflow?: boolean,
+  innerClassName?: string
 }) => {
   return (
     <div
       className={`${allowOverflow ? 'overflow-visible' : 'overflow-hidden'} backdrop-blur-sm ${accent ? 'bg-purple-900/30' : 'bg-slate-900/40'}
       rounded-2xl shadow-md border border-purple-900/10 ${className}`}
     >
-      <div className={`p-8 ${large ? 'p-8' : ''}`}>
+      <div className={innerClassName ?? 'p-8'}>
         {title && (
           <h3 className={`text-xl font-medium ${accent ? 'text-purple-200' : 'text-purple-100'}
           mb-4 tracking-wide uppercase ${horsemenFont ? 'font-[Horsemen]' : ''}`}>
@@ -94,7 +96,7 @@ function DashboardContent() {
 
         {/* Featured section - Full width Clock with integrated logo */}
         <div className="mb-12">
-          <Widget large={true} accent={true} allowOverflow={true} className="min-h-[260px] w-full">
+          <Widget large={true} accent={true} allowOverflow={true} className="min-h-[260px] w-full" innerClassName="px-6 pt-4 pb-2 md:px-8">
             <ClockWidget />
           </Widget>
         </div>

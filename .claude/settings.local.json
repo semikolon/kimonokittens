@@ -83,7 +83,9 @@
       "WebFetch(domain:unicode-explorer.com)",
       "mcp__REF__ref_search_documentation",
       "mcp__REF__ref_read_url",
-      "mcp__magic__21st_magic_component_builder"
+      "mcp__magic__21st_magic_component_builder",
+      "WebFetch(domain:css-tricks.com)",
+      "WebFetch(domain:frontendmasters.com)"
     ],
     "deny": []
   }

@@ -25,7 +25,8 @@ class WeatherHandler
           q: LOCATION,
           days: 5,
           aqi: 'yes',
-          alerts: 'no'
+          alerts: 'no',
+          lang: 'sv'
         }
       )
 
