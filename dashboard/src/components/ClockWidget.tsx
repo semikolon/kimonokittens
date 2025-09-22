@@ -41,13 +41,13 @@ export function ClockWidget() {
         </div>
 
         {/* Date text with proper spacing below time */}
-        <div className={`text-2xl ${neonTheme.text.secondary} capitalize text-center`} style={{ marginTop: '280px', marginLeft: '-50px' }}>
+        <div className={`text-2xl ${neonTheme.text.secondary} capitalize text-center`} style={{ marginTop: '280px', marginLeft: '-80px' }}>
           {formatSwedishDate(time)}
         </div>
       </div>
 
       {/* Logo positioned within widget boundaries */}
-      <div className="flex-shrink-0 w-1/2 max-w-full flex items-end justify-end relative" style={{ zIndex: 10, marginTop: '260px' }}>
+      <div className="flex-shrink-0 w-1/2 max-w-full flex items-end justify-end relative" style={{ zIndex: 10, marginTop: '300px' }}>
         <img
           src="/logo.png"
           alt="Kimonokittens"
