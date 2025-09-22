@@ -68,7 +68,6 @@ export function ClockWidget() {
               style={{ fontSize: '14rem', lineHeight: '1.1' }}
             >
               <tspan fill="url(#hoursGradient)">{displayTime.getHours().toString().padStart(2, '0')}</tspan>
-              <tspan fill="url(#colonGradient)">:</tspan>
               <tspan fill="url(#minutesGradient)">{displayTime.getMinutes().toString().padStart(2, '0')}</tspan>
             </text>
           </svg>
