@@ -163,7 +163,7 @@ class TrainDepartureHandler
     bus_summary = bus_departures.join("<br/>")
     bus_summary = "Inga bussar tillgängliga" if bus_departures.empty?
 
-    summary = "#{train_summary}<br/><br/><strong>Bussar från Sördalavägen:</strong><br/>#{bus_summary}"
+    summary = "Pendeltåg Norrut:<br/>#{train_summary}Bussar från Sördalavägen:<br/>#{bus_summary}"
 
     response = {
       "summary" => summary,

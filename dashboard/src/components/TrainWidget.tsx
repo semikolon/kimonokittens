@@ -37,13 +37,13 @@ export function TrainWidget() {
         // Train section
         return (
           <div key="train">
-            <h4 className="text-xl font-medium text-purple-100 mb-2 tracking-wide uppercase font-[Horsemen]">
+            <h4 className="text-xl font-medium text-purple-100 mb-6 tracking-wide uppercase font-[Horsemen]">
               Pendel
             </h4>
             <div className="mb-3">
               <div
                 className="leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: section.replace(/Pendeltåg Norrut[:\s]*/g, '') }}
+                dangerouslySetInnerHTML={{ __html: section.replace(/Pendeltåg Norrut[:\s]*/g, '').replace(/^(<br\s*\/?>)+/gi, '').replace(/<br\s*\/?>\s*<br\s*\/?>\s*<strong>\s*<\/strong>\s*$/gi, '').replace(/(<br\s*\/?>)+$/gi, '') }}
               />
             </div>
             {trainData.deviation_summary && (
@@ -66,13 +66,13 @@ export function TrainWidget() {
         // Bus section
         return (
           <div key="bus">
-            <h4 className="text-xl font-medium text-purple-100 mb-2 tracking-wide uppercase font-[Horsemen]">
+            <h4 className="text-xl font-medium text-purple-100 mb-6 tracking-wide uppercase font-[Horsemen]">
               Bussar
             </h4>
             <div className="mb-3">
               <div
                 className="leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: section.replace(/Bussar från Sördalavägen[:\s]*/g, '').replace(/^\s+/g, '').replace(/^[\n\r]+/g, '').replace(/^(<br\s*\/?>)+/gi, '') }}
+                dangerouslySetInnerHTML={{ __html: section.replace(/Bussar från Sördalavägen[:\s]*/g, '').replace(/^(<br\s*\/?>)+/gi, '').replace(/(<br\s*\/?>)+$/gi, '') }}
               />
             </div>
           </div>
