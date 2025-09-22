@@ -85,7 +85,11 @@
       "mcp__REF__ref_read_url",
       "mcp__magic__21st_magic_component_builder",
       "WebFetch(domain:css-tricks.com)",
-      "WebFetch(domain:frontendmasters.com)"
+      "WebFetch(domain:frontendmasters.com)",
+      "mcp__playwright-extension__browser_click",
+      "Bash(sort:*)",
+      "Bash(npx:*)",
+      "Bash(printf \"\\n\\n\\n\\n\\n\")"
     ],
     "deny": []
   }
