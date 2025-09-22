@@ -17,7 +17,7 @@ export function ClockWidget() {
   return (
     <div className="flex items-center gap-4 overflow-visible max-w-full relative">
       <div className="flex-1 min-w-0">
-        <div className="text-[14.4rem] mb-24 font-[Horsemen] tracking-wide text-center text-purple-600 leading-[1.1] overflow-visible py-4">
+        <div className="text-[13.7rem] mb-24 font-[Horsemen] tracking-wide text-center text-purple-600 leading-[1.1] overflow-visible py-4 transform -translate-x-8">
           {formatSwedishTime(time)}
         </div>
         <div className={`text-2xl ${neonTheme.text.secondary} mb-2 capitalize text-center`}>
@@ -28,7 +28,7 @@ export function ClockWidget() {
         <img
           src="/logo.png"
           alt="Kimonokittens"
-          className="w-full h-auto object-contain transform translate-x-6 translate-y-6"
+          className="w-full h-auto object-contain transform translate-x-16 translate-y-36"
         />
       </div>
     </div>

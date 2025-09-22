@@ -37,12 +37,15 @@ export function TrainWidget() {
         // Train section
         return (
           <div key="train">
-            <h4 className="text-lg font-medium text-purple-100 mb-3 tracking-wide uppercase font-[Horsemen]">
+            <h4 className="text-xl font-medium text-purple-100 mb-2 tracking-wide uppercase font-[Horsemen]">
               Pendel
             </h4>
-            {/* Show delays right after Pendel title if they exist */}
+            <div
+              className="leading-relaxed mb-3"
+              dangerouslySetInnerHTML={{ __html: section.replace(/Pendeltåg Norrut[:\s]*/g, '') }}
+            />
             {trainData.deviation_summary && (
-              <div className="mb-3 text-yellow-400 bg-yellow-400/10 p-2 rounded inline-block max-w-full">
+              <div className="text-yellow-400 bg-yellow-400/10 p-2 rounded inline-block max-w-full">
                 <div className="font-bold mb-1">Störningar:</div>
                 <div className="space-y-1">
                   {trainData.deviation_summary.split(/(?=\d{2}:\d{2}\s+till)/g)
@@ -55,23 +58,21 @@ export function TrainWidget() {
                 </div>
               </div>
             )}
-            <div
-              className={`leading-relaxed ${!trainData.deviation_summary ? 'mt-0' : ''}`}
-              dangerouslySetInnerHTML={{ __html: section.replace(/Pendeltåg Norrut[:\s]*/g, '') }}
-            />
           </div>
         )
       } else if (section.includes('Bussar från')) {
         // Bus section
         return (
           <div key="bus">
-            <h4 className="text-lg font-medium text-purple-100 mb-3 tracking-wide uppercase font-[Horsemen]">
+            <h4 className="text-xl font-medium text-purple-100 mb-2 tracking-wide uppercase font-[Horsemen]">
               Bussar
             </h4>
-            <div
-              className="leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: section.replace(/Bussar från Sördalavägen[:\s]*/g, '').replace(/^\s+/g, '') }}
-            />
+            <div className="mb-3">
+              <div
+                className="leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: section.replace(/Bussar från Sördalavägen[:\s]*/g, '').replace(/^\s+/g, '').replace(/^[\n\r]+/g, '') }}
+              />
+            </div>
           </div>
         )
       }
