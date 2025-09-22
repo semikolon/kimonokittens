@@ -24,11 +24,11 @@ export function ClockWidget() {
           {formatSwedishDate(time)}
         </div>
       </div>
-      <div className="flex-shrink-0 w-1/2 max-w-full relative">
+      <div className="flex-shrink-0 w-1/2 max-w-full flex items-end justify-end">
         <img
           src="/logo.png"
           alt="Kimonokittens"
-          className="w-full h-auto object-contain block max-w-full transform translate-x-20"
+          className="w-full h-auto object-contain transform translate-x-6 translate-y-6"
         />
       </div>
     </div>
