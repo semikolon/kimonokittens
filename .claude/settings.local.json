@@ -74,7 +74,16 @@
       "Bash(xargs kill:*)",
       "mcp__magic__21st_magic_component_refiner",
       "Bash(npm install:*)",
-      "WebFetch(domain:puma.io)"
+      "WebFetch(domain:puma.io)",
+      "Bash(bundle show:*)",
+      "Bash(ENABLE_BROADCASTER=1 ruby puma_server.rb)",
+      "mcp__playwright-extension__browser_evaluate",
+      "WebFetch(domain:lucide.dev)",
+      "WebFetch(domain:feathericons.com)",
+      "WebFetch(domain:unicode-explorer.com)",
+      "mcp__REF__ref_search_documentation",
+      "mcp__REF__ref_read_url",
+      "mcp__magic__21st_magic_component_builder"
     ],
     "deny": []
   }
