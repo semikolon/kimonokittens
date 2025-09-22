@@ -15,7 +15,7 @@ export function ClockWidget() {
   }, [])
 
   return (
-    <div className="flex items-start gap-4 overflow-visible max-w-full relative" style={{ minHeight: '200px' }}>
+    <div className="flex items-start gap-4 overflow-visible max-w-full relative" style={{ minHeight: '110px' }}>
       <div className="flex-1 min-w-0 relative">
         {/* Time text positioned at very top of page */}
         <div className="relative overflow-visible" style={{ marginTop: '-65px', marginLeft: '-30px', height: '180px' }}>
@@ -47,7 +47,7 @@ export function ClockWidget() {
       </div>
 
       {/* Logo positioned within widget boundaries */}
-      <div className="flex-shrink-0 w-1/2 max-w-full flex items-end justify-end relative" style={{ zIndex: 10, marginTop: '280px' }}>
+      <div className="flex-shrink-0 w-1/2 max-w-full flex items-end justify-end relative" style={{ zIndex: 10, marginTop: '260px' }}>
         <img
           src="/logo.png"
           alt="Kimonokittens"
