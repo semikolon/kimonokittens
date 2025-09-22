@@ -38,7 +38,7 @@ const Widget = ({
       <div className={innerClassName ?? 'p-8'}>
         {title && (
           <h3 className={`text-xl font-medium ${accent ? 'text-purple-200' : 'text-purple-100'}
-          mb-4 tracking-wide uppercase ${horsemenFont ? 'font-[Horsemen]' : ''}`}>
+          mb-6 tracking-wide uppercase ${horsemenFont ? 'font-[Horsemen]' : ''}`}>
             {title}
           </h3>
         )}
@@ -80,7 +80,7 @@ function ConnectionStatus() {
 
 function DashboardContent() {
   return (
-    <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(20,15,25)_0%,_rgb(0,0,0)_100%)] overflow-x-clip relative">
+    <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(25,20,30)_0%,_rgb(25,18,32)_100%)] overflow-x-clip relative">
       {/* Magic animated background */}
       <div className="gradients-container fixed inset-0 h-full w-full opacity-20 blur-[60px]">
         <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(48,12,80,0.18)_0%,_rgba(48,12,80,0)_65%)] mix-blend-multiply animate-dashboard-first" />
@@ -124,7 +124,7 @@ function DashboardContent() {
 
         {/* Full-width Strava section */}
         <div className="mb-12">
-          <Widget title="Fredriks spring" horsemenFont={true} className="w-full">
+          <Widget title="Fredriks spring" horsemenFont={true} className="w-full bg-purple-900/20">
             <StravaWidget />
           </Widget>
         </div>
