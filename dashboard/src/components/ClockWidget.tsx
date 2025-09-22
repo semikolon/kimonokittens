@@ -15,20 +15,44 @@ export function ClockWidget() {
   }, [])
 
   return (
-    <div className="flex items-center gap-4 overflow-visible max-w-full relative">
-      <div className="flex-1 min-w-0">
-        <div className="text-[13.7rem] mb-24 font-[Horsemen] tracking-wide text-center text-purple-600 leading-[1.1] overflow-visible py-4 transform -translate-x-8">
-          {formatSwedishTime(time)}
+    <div className="flex items-start gap-4 overflow-visible max-w-full relative" style={{ minHeight: '320px' }}>
+      <div className="flex-1 min-w-0 relative">
+        {/* Time text positioned at very top of page */}
+        <div className="relative overflow-visible" style={{ marginTop: '-40px', marginLeft: '-48px', height: '180px' }}>
+          <svg className="absolute inset-0 overflow-visible" style={{ width: '600px', height: '180px', zIndex: 1 }}>
+            <defs>
+              <linearGradient id="timeGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stopColor="#8b5cf6" />
+                <stop offset="100%" stopColor="#a855f7" />
+              </linearGradient>
+            </defs>
+            <text
+              x="0"
+              y="90"
+              textAnchor="start"
+              dominantBaseline="middle"
+              fill="url(#timeGradient)"
+              className="font-[Horsemen] tracking-wide"
+              style={{ fontSize: '13.7rem', lineHeight: '1.1' }}
+            >
+              {formatSwedishTime(time)}
+            </text>
+          </svg>
         </div>
-        <div className={`text-2xl ${neonTheme.text.secondary} mb-2 capitalize text-center`}>
+
+        {/* Date text with proper spacing below time */}
+        <div className={`text-2xl ${neonTheme.text.secondary} capitalize text-center`} style={{ marginTop: '120px', marginLeft: '-20px' }}>
           {formatSwedishDate(time)}
         </div>
       </div>
-      <div className="flex-shrink-0 w-1/2 max-w-full flex items-end justify-end">
+
+      {/* Logo positioned within widget boundaries */}
+      <div className="flex-shrink-0 w-1/2 max-w-full flex items-end justify-end relative" style={{ zIndex: 10, marginTop: '60px' }}>
         <img
           src="/logo.png"
           alt="Kimonokittens"
-          className="w-full h-auto object-contain transform translate-x-16 translate-y-36"
+          className="w-full h-auto object-contain transform translate-x-4 translate-y-8"
+          style={{ zIndex: 10 }}
         />
       </div>
     </div>
