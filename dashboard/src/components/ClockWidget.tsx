@@ -15,7 +15,7 @@ export function ClockWidget() {
   }, [])
 
   return (
-    <div className="flex items-start gap-4 overflow-visible max-w-full relative" style={{ minHeight: '110px' }}>
+    <div className="flex items-start gap-4 overflow-visible max-w-full relative" style={{ minHeight: '80px' }}>
       <div className="flex-1 min-w-0 relative">
         {/* Time text positioned at very top of page */}
         <div className="relative overflow-visible" style={{ marginTop: '-65px', marginLeft: '-30px', height: '180px' }}>
