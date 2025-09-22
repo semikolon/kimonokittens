@@ -9,6 +9,7 @@ import { StravaWidget } from './components/StravaWidget'
 import { TodoWidget } from './components/TodoWidget'
 import { CalendarWidget } from './components/CalendarWidget'
 import { Wifi, WifiOff } from 'lucide-react'
+import AnoAI from './components/ui/animated-shader-background'
 
 // Refined widget component with organic, magazine-style design
 const Widget = ({
@@ -81,8 +82,13 @@ function ConnectionStatus() {
 function DashboardContent() {
   return (
     <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(25,20,30)_0%,_rgb(25,18,32)_100%)] overflow-x-clip relative">
+      {/* Animated shader background */}
+      <div className="fixed inset-0 w-full h-full opacity-30 mix-blend-screen" style={{ zIndex: 1 }}>
+        <AnoAI />
+      </div>
+
       {/* Magic animated background */}
-      <div className="gradients-container fixed inset-0 h-full w-full opacity-20 blur-[60px]">
+      <div className="gradients-container fixed inset-0 h-full w-full opacity-20 blur-[60px]" style={{ zIndex: 2 }}>
         <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(48,12,80,0.18)_0%,_rgba(48,12,80,0)_65%)] mix-blend-multiply animate-dashboard-first" />
         <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(68,25,150,0.15)_0%,_rgba(68,25,150,0)_65%)] mix-blend-multiply animate-dashboard-second transform-origin-[calc(50%-300px)]" />
         <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(89,45,170,0.13)_0%,_rgba(89,45,170,0)_65%)] mix-blend-multiply animate-dashboard-third transform-origin-[calc(50%+300px)]" />
@@ -124,7 +130,7 @@ function DashboardContent() {
 
         {/* Full-width Strava section */}
         <div className="mb-12">
-          <Widget title="Fredriks spring" horsemenFont={true} className="w-full bg-purple-900/20">
+          <Widget title="Fredriks spring" horsemenFont={true} className="w-full bg-purple-900/15">
             <StravaWidget />
           </Widget>
         </div>
