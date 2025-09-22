@@ -35,7 +35,7 @@ const Widget = ({
     >
       <div className={`p-8 ${large ? 'p-8' : ''}`}>
         {title && (
-          <h3 className={`text-base font-medium ${accent ? 'text-purple-200' : 'text-purple-100'}
+          <h3 className={`text-lg font-medium ${accent ? 'text-purple-200' : 'text-purple-100'}
           mb-4 tracking-wide uppercase ${horsemenFont ? 'font-[Horsemen]' : ''}`}>
             {title}
           </h3>

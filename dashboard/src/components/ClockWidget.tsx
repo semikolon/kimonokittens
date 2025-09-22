@@ -15,7 +15,7 @@ export function ClockWidget() {
   }, [])
 
   return (
-    <div className="flex items-center gap-4 overflow-hidden max-w-full">
+    <div className="flex items-center gap-4 overflow-visible max-w-full relative">
       <div className="flex-1 min-w-0">
         <div className="text-[14.4rem] mb-24 font-[Horsemen] tracking-wide text-center text-purple-600 leading-[1.1] overflow-visible py-4">
           {formatSwedishTime(time)}
@@ -24,11 +24,11 @@ export function ClockWidget() {
           {formatSwedishDate(time)}
         </div>
       </div>
-      <div className="flex-shrink-0 w-1/3 max-w-full">
+      <div className="flex-shrink-0 w-1/2 max-w-full relative">
         <img
           src="/logo.png"
           alt="Kimonokittens"
-          className="w-full h-auto object-contain block max-w-full"
+          className="w-full h-auto object-contain block max-w-full transform translate-x-20"
         />
       </div>
     </div>
