@@ -40,10 +40,12 @@ export function TrainWidget() {
             <h4 className="text-xl font-medium text-purple-100 mb-2 tracking-wide uppercase font-[Horsemen]">
               Pendel
             </h4>
-            <div
-              className="leading-relaxed mb-3"
-              dangerouslySetInnerHTML={{ __html: section.replace(/Pendeltåg Norrut[:\s]*/g, '') }}
-            />
+            <div className="mb-3">
+              <div
+                className="leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: section.replace(/Pendeltåg Norrut[:\s]*/g, '') }}
+              />
+            </div>
             {trainData.deviation_summary && (
               <div className="text-yellow-400 bg-yellow-400/10 p-2 rounded inline-block max-w-full">
                 <div className="font-bold mb-1">Störningar:</div>
