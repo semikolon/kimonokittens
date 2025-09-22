@@ -80,14 +80,14 @@ function ConnectionStatus() {
 
 function DashboardContent() {
   return (
-    <div className="min-h-screen w-full bg-black overflow-x-clip relative">
+    <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(20,15,25)_0%,_rgb(0,0,0)_100%)] overflow-x-clip relative">
       {/* Magic animated background */}
       <div className="gradients-container fixed inset-0 h-full w-full opacity-20 blur-[60px]">
-        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(68,20,100,0.15)_0%,_rgba(68,20,100,0)_70%)] mix-blend-multiply animate-dashboard-first" />
-        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(88,40,180,0.12)_0%,_rgba(88,40,180,0)_70%)] mix-blend-multiply animate-dashboard-second transform-origin-[calc(50%-300px)]" />
-        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(109,70,200,0.1)_0%,_rgba(109,70,200,0)_70%)] mix-blend-multiply animate-dashboard-third transform-origin-[calc(50%+300px)]" />
-        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(130,60,190,0.08)_0%,_rgba(130,60,190,0)_70%)] mix-blend-multiply animate-dashboard-fourth transform-origin-[calc(50%-150px)]" />
-        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(150,120,220,0.06)_0%,_rgba(150,120,220,0)_70%)] mix-blend-multiply animate-dashboard-fifth transform-origin-[calc(50%-600px)_calc(50%+600px)]" />
+        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(48,12,80,0.18)_0%,_rgba(48,12,80,0)_65%)] mix-blend-multiply animate-dashboard-first" />
+        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(68,25,150,0.15)_0%,_rgba(68,25,150,0)_65%)] mix-blend-multiply animate-dashboard-second transform-origin-[calc(50%-300px)]" />
+        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(89,45,170,0.13)_0%,_rgba(89,45,170,0)_65%)] mix-blend-multiply animate-dashboard-third transform-origin-[calc(50%+300px)]" />
+        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(110,35,160,0.11)_0%,_rgba(110,35,160,0)_65%)] mix-blend-multiply animate-dashboard-fourth transform-origin-[calc(50%-150px)]" />
+        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(130,90,200,0.09)_0%,_rgba(130,90,200,0)_65%)] mix-blend-multiply animate-dashboard-fifth transform-origin-[calc(50%-600px)_calc(50%+600px)]" />
       </div>
 
 

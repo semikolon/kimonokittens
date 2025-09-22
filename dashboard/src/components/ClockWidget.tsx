@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { WidgetContainer } from './shared/WidgetContainer'
 import { formatSwedishTime, formatSwedishDate, getGreeting } from '../utils/formatters'
 import { neonTheme } from '../utils/theme'
@@ -7,6 +7,10 @@ export function ClockWidget() {
   const [time, setTime] = useState(new Date())
   const [isSimulating, setIsSimulating] = useState(false)
   const [simulationTime, setSimulationTime] = useState(new Date())
+  const [hoursChanging, setHoursChanging] = useState(false)
+  const [minutesChanging, setMinutesChanging] = useState(false)
+  const prevHoursRef = useRef('')
+  const prevMinutesRef = useRef('')
 
   useEffect(() => {
     if (isSimulating) {
@@ -31,6 +35,31 @@ export function ClockWidget() {
   }, [isSimulating])
 
   const displayTime = isSimulating ? simulationTime : time
+
+  // Track individual digit changes for organic morphing
+  useEffect(() => {
+    const currentHours = displayTime.getHours().toString().padStart(2, '0')
+    const currentMinutes = displayTime.getMinutes().toString().padStart(2, '0')
+    const prevHours = prevHoursRef.current
+    const prevMinutes = prevMinutesRef.current
+
+    // Animate hours if they changed
+    if (prevHours && currentHours !== prevHours) {
+      setHoursChanging(true)
+      const timer = setTimeout(() => setHoursChanging(false), 5000)
+      setTimeout(() => clearTimeout(timer), 5000)
+    }
+
+    // Animate minutes if they changed
+    if (prevMinutes && currentMinutes !== prevMinutes) {
+      setMinutesChanging(true)
+      const timer = setTimeout(() => setMinutesChanging(false), 5000)
+      setTimeout(() => clearTimeout(timer), 5000)
+    }
+
+    prevHoursRef.current = currentHours
+    prevMinutesRef.current = currentMinutes
+  }, [displayTime])
 
   const toggleSimulation = () => {
     if (!isSimulating) {
@@ -64,11 +93,23 @@ export function ClockWidget() {
               y="90"
               textAnchor="start"
               dominantBaseline="middle"
-              className="font-[Horsemen] tracking-wide"
+              className={`font-[Horsemen] tracking-wide ${
+                hoursChanging ? 'digit-morph-hours' : ''
+              } ${
+                minutesChanging ? 'digit-morph-minutes' : ''
+              }`}
               style={{ fontSize: '14rem', lineHeight: '1.1' }}
             >
-              <tspan fill="url(#hoursGradient)">{displayTime.getHours().toString().padStart(2, '0')}</tspan>
-              <tspan fill="url(#minutesGradient)">{displayTime.getMinutes().toString().padStart(2, '0')}</tspan>
+              <tspan
+                fill="url(#hoursGradient)"
+              >
+                {displayTime.getHours().toString().padStart(2, '0')}
+              </tspan>
+              <tspan
+                fill="url(#minutesGradient)"
+              >
+                {displayTime.getMinutes().toString().padStart(2, '0')}
+              </tspan>
             </text>
           </svg>
         </div>

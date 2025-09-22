@@ -72,7 +72,7 @@ export function TrainWidget() {
             <div className="mb-3">
               <div
                 className="leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: section.replace(/Bussar från Sördalavägen[:\s]*/g, '').replace(/^\s+/g, '').replace(/^[\n\r]+/g, '') }}
+                dangerouslySetInnerHTML={{ __html: section.replace(/Bussar från Sördalavägen[:\s]*/g, '').replace(/^\s+/g, '').replace(/^[\n\r]+/g, '').replace(/^(<br\s*\/?>)+/gi, '') }}
               />
             </div>
           </div>
