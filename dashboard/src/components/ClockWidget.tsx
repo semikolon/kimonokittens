@@ -21,9 +21,17 @@ export function ClockWidget() {
         <div className="relative overflow-visible" style={{ marginTop: '-60px', marginLeft: '-2px', height: '200px' }}>
           <svg className="absolute inset-0 overflow-visible" style={{ width: '600px', height: '200px', zIndex: 1 }}>
             <defs>
-              <linearGradient id="timeGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
+              <linearGradient id="hoursGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
                 <stop offset="0%" stopColor="#8b5cf6" />
                 <stop offset="100%" stopColor="#8824c7" />
+              </linearGradient>
+              <linearGradient id="minutesGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stopColor="#6d28d9" />
+                <stop offset="100%" stopColor="#451a8b" />
+              </linearGradient>
+              <linearGradient id="colonGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#5b21b6" stopOpacity="0.4" />
               </linearGradient>
             </defs>
             <text
@@ -31,30 +39,12 @@ export function ClockWidget() {
               y="90"
               textAnchor="start"
               dominantBaseline="middle"
-              fill="url(#timeGradient)"
               className="font-[Horsemen] tracking-wide"
               style={{ fontSize: '14rem', lineHeight: '1.1' }}
             >
-              {time.getHours().toString().padStart(2, '0')}
-            </text>
-          </svg>
-          <svg className="absolute inset-0 overflow-visible" style={{ width: '600px', height: '200px', zIndex: 1 }}>
-            <defs>
-              <linearGradient id="minutesGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stopColor="#6d28d9" />
-                <stop offset="100%" stopColor="#451a8b" />
-              </linearGradient>
-            </defs>
-            <text
-              x="460"
-              y="90"
-              textAnchor="start"
-              dominantBaseline="middle"
-              fill="url(#minutesGradient)"
-              className="font-[Horsemen] tracking-wide"
-              style={{ fontSize: '14rem', lineHeight: '1.1' }}
-            >
-              {time.getMinutes().toString().padStart(2, '0')}
+              <tspan fill="url(#hoursGradient)">{time.getHours().toString().padStart(2, '0')}</tspan>
+              <tspan fill="url(#colonGradient)">:</tspan>
+              <tspan fill="url(#minutesGradient)">{time.getMinutes().toString().padStart(2, '0')}</tspan>
             </text>
           </svg>
         </div>
