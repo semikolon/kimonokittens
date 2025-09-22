@@ -17,23 +17,25 @@ const Widget = ({
   className = "",
   accent = false,
   large = false,
-  horsemenFont = false
+  horsemenFont = false,
+  allowOverflow = false
 }: {
   children: React.ReactNode,
   title?: string,
   className?: string,
   accent?: boolean,
   large?: boolean,
-  horsemenFont?: boolean
+  horsemenFont?: boolean,
+  allowOverflow?: boolean
 }) => {
   return (
     <div
-      className={`overflow-hidden backdrop-blur-sm ${accent ? 'bg-purple-900/30' : 'bg-slate-900/40'}
+      className={`${allowOverflow ? 'overflow-visible' : 'overflow-hidden'} backdrop-blur-sm ${accent ? 'bg-purple-900/30' : 'bg-slate-900/40'}
       rounded-2xl shadow-md border border-purple-900/10 ${className}`}
     >
-      <div className={`p-6 ${large ? 'p-8' : ''}`}>
+      <div className={`p-8 ${large ? 'p-8' : ''}`}>
         {title && (
-          <h3 className={`text-sm font-medium ${accent ? 'text-purple-200' : 'text-purple-100'}
+          <h3 className={`text-base font-medium ${accent ? 'text-purple-200' : 'text-purple-100'}
           mb-4 tracking-wide uppercase ${horsemenFont ? 'font-[Horsemen]' : ''}`}>
             {title}
           </h3>
@@ -76,37 +78,36 @@ function ConnectionStatus() {
 
 function DashboardContent() {
   return (
-    <div className="min-h-screen bg-black">
-      <ConnectionStatus />
-
-      {/* Dark purple overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-950/[0.04] via-purple-950/[0.06] to-purple-950/[0.08] pointer-events-none" />
+    <div className="min-h-screen w-full bg-black overflow-x-clip relative">
+      {/* Magic animated background */}
+      <div className="gradients-container fixed inset-0 h-full w-full opacity-20 blur-[60px]">
+        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(88,28,135,0.15)_0%,_rgba(88,28,135,0)_70%)] mix-blend-multiply animate-dashboard-first" />
+        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(124,58,237,0.12)_0%,_rgba(124,58,237,0)_70%)] mix-blend-multiply animate-dashboard-second transform-origin-[calc(50%-300px)]" />
+        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(139,92,246,0.1)_0%,_rgba(139,92,246,0)_70%)] mix-blend-multiply animate-dashboard-third transform-origin-[calc(50%+300px)]" />
+        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(168,85,247,0.08)_0%,_rgba(168,85,247,0)_70%)] mix-blend-multiply animate-dashboard-fourth transform-origin-[calc(50%-150px)]" />
+        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(196,181,253,0.06)_0%,_rgba(196,181,253,0)_70%)] mix-blend-multiply animate-dashboard-fifth transform-origin-[calc(50%-600px)_calc(50%+600px)]" />
+      </div>
 
 
       {/* Main content */}
-      <div className="container mx-auto px-6 py-12">
+      <div className="w-full px-4 py-12 min-w-0">
 
         {/* Featured section - Full width Clock with integrated logo */}
         <div className="mb-12">
-          <Widget large={true} accent={true} className="min-h-[220px] w-full">
+          <Widget large={true} accent={true} allowOverflow={true} className="min-h-[260px] w-full">
             <ClockWidget />
           </Widget>
         </div>
 
         {/* Secondary content in organic layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="md:col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+          <div className="md:col-span-2">
             <Widget title="Hem" accent={true} horsemenFont={true}>
               <TemperatureWidget />
             </Widget>
           </div>
-          <div className="md:col-span-1">
-            <Widget title="Fredriks spring" horsemenFont={true}>
-              <StravaWidget />
-            </Widget>
-          </div>
-          <div className="md:col-span-1">
-            <Widget title="Klimat" horsemenFont={true}>
+          <div className="md:col-span-2">
+            <Widget title="Klimat" accent={true} horsemenFont={true}>
               <WeatherWidget />
             </Widget>
           </div>
@@ -114,8 +115,15 @@ function DashboardContent() {
 
         {/* Full-width transport section */}
         <div className="mb-12">
-          <Widget title="Resor" horsemenFont={true} accent={true} className="w-full">
+          <Widget accent={true} className="w-full">
             <TrainWidget />
+          </Widget>
+        </div>
+
+        {/* Full-width Strava section */}
+        <div className="mb-12">
+          <Widget title="Fredriks spring" horsemenFont={true} className="w-full">
+            <StravaWidget />
           </Widget>
         </div>
 

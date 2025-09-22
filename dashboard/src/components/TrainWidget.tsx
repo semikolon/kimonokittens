@@ -36,12 +36,27 @@ export function TrainWidget() {
       if (section.includes('Pendeltåg Norrut') || (!section.includes('Bussar från') && index === 0)) {
         // Train section
         return (
-          <div key="train" className="mb-4">
-            <h4 className="text-sm font-medium text-purple-100 mb-2 tracking-wide uppercase font-[Horsemen]">
-              Pendeltåg Norrut
+          <div key="train">
+            <h4 className="text-base font-medium text-purple-100 mb-2 tracking-wide uppercase font-[Horsemen]">
+              Pendel
             </h4>
+            {/* Show delays right after Pendel title if they exist */}
+            {trainData.deviation_summary && (
+              <div className="mb-2 text-yellow-400 bg-yellow-400/10 p-2 rounded inline-block max-w-full">
+                <div className="font-bold mb-1">Störningar:</div>
+                <div className="space-y-1">
+                  {trainData.deviation_summary.split(/(?=\d{2}:\d{2}\s+till)/g)
+                    .filter(line => line.trim())
+                    .map((line, index) => (
+                      <div key={index} className="leading-tight">
+                        {line.trim()}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
             <div
-              className="text-sm leading-relaxed"
+              className="leading-relaxed"
               dangerouslySetInnerHTML={{ __html: section.replace(/Pendeltåg Norrut[:\s]*/g, '') }}
             />
           </div>
@@ -50,12 +65,12 @@ export function TrainWidget() {
         // Bus section
         return (
           <div key="bus">
-            <h4 className="text-sm font-medium text-purple-100 mb-2 tracking-wide uppercase font-[Horsemen]">
-              Bussar från Sördalavägen
+            <h4 className="text-base font-medium text-purple-100 mb-2 tracking-wide uppercase font-[Horsemen]">
+              Bussar
             </h4>
             <div
-              className="text-sm leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: section.replace(/Bussar från Sördalavägen[:\s]*/g, '') }}
+              className="leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: section.replace(/Bussar från Sördalavägen[:\s]*/g, '').replace(/^\s+/g, '') }}
             />
           </div>
         )
@@ -64,14 +79,13 @@ export function TrainWidget() {
     }).filter(Boolean)
   }
 
+  const sections = parseTrainData(trainData.summary)
+
   return (
     <div>
-      {parseTrainData(trainData.summary)}
-      {trainData.deviation_summary && (
-        <div className="mt-3 text-xs text-yellow-400 bg-yellow-400/10 p-2 rounded">
-          <strong>Störningar:</strong> {trainData.deviation_summary}
-        </div>
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {sections}
+      </div>
     </div>
   )
 } 

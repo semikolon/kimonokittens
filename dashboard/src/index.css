@@ -30,7 +30,7 @@
 
 @layer base {
   html, body, #root {
-    @apply h-full overflow-hidden;
+    @apply h-full w-full;
   }
 
   body {
@@ -38,6 +38,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color: rgb(221 214 254); /* text-purple-200 - default text color */
+    font-size: 1.5rem; /* 20% larger than 1.25rem - increased base text size */
   }
 }
 
@@ -45,6 +46,38 @@
   .bg-gradient-radial {
     background: radial-gradient(var(--tw-gradient-stops));
   }
+}
+
+/* Subtle purple background animation */
+@keyframes subtle-purple-shift {
+  0% {
+    background: radial-gradient(ellipse at 20% 50%, rgba(139, 92, 246, 0.02) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.015) 0%, transparent 50%),
+                radial-gradient(ellipse at 40% 80%, rgba(124, 58, 237, 0.01) 0%, transparent 60%),
+                black;
+  }
+  33% {
+    background: radial-gradient(ellipse at 60% 30%, rgba(168, 85, 247, 0.025) 0%, transparent 60%),
+                radial-gradient(ellipse at 30% 70%, rgba(139, 92, 246, 0.02) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 40%, rgba(196, 181, 253, 0.008) 0%, transparent 60%),
+                black;
+  }
+  66% {
+    background: radial-gradient(ellipse at 40% 80%, rgba(124, 58, 237, 0.018) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 20%, rgba(168, 85, 247, 0.012) 0%, transparent 50%),
+                radial-gradient(ellipse at 20% 60%, rgba(139, 92, 246, 0.015) 0%, transparent 60%),
+                black;
+  }
+  100% {
+    background: radial-gradient(ellipse at 20% 50%, rgba(139, 92, 246, 0.02) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.015) 0%, transparent 50%),
+                radial-gradient(ellipse at 40% 80%, rgba(124, 58, 237, 0.01) 0%, transparent 60%),
+                black;
+  }
+}
+
+.animate-subtle-purple {
+  animation: subtle-purple-shift 180s ease-in-out infinite;
 }
 
 @layer components {

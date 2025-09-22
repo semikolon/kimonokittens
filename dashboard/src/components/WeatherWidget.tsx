@@ -1,5 +1,6 @@
 import React from 'react'
 import { useData } from '../context/DataContext'
+import { Sun, Cloud, CloudRain, CloudSnow, Zap, CloudDrizzle, Droplets, Wind, Hexagon } from 'lucide-react'
 
 export function WeatherWidget() {
   const { state } = useData()
@@ -25,31 +26,15 @@ export function WeatherWidget() {
   }
 
   const getWeatherIcon = (iconUrl: string) => {
-    // Convert weather API icon to emoji
-    if (iconUrl.includes('sun') || iconUrl.includes('clear')) return '☀️'
-    if (iconUrl.includes('cloud')) return '☁️'
-    if (iconUrl.includes('rain')) return '🌧️'
-    if (iconUrl.includes('snow')) return '❄️'
-    if (iconUrl.includes('thunder')) return '⛈️'
-    return '🌤️'
-  }
-
-  const getTemperatureColor = (temp: number | null) => {
-    if (!temp) return 'text-purple-200'
-    if (temp < 0) return 'text-blue-400'
-    if (temp < 10) return 'text-blue-300'
-    if (temp < 20) return 'text-green-400'
-    if (temp < 30) return 'text-yellow-400'
-    return 'text-red-400'
-  }
-
-  const getAQIColor = (usEpaIndex: number) => {
-    if (usEpaIndex <= 1) return 'text-green-400'
-    if (usEpaIndex <= 2) return 'text-yellow-400'
-    if (usEpaIndex <= 3) return 'text-orange-400'
-    if (usEpaIndex <= 4) return 'text-red-400'
-    if (usEpaIndex <= 5) return 'text-purple-400'
-    return 'text-red-600'
+    // Convert weather API icon to monochrome Lucide icons
+    if (iconUrl.includes('sun') || iconUrl.includes('clear')) return <Sun className="w-6 h-6 text-purple-200" />
+    if (iconUrl.includes('cloud') && iconUrl.includes('rain')) return <CloudRain className="w-6 h-6 text-purple-200" />
+    if (iconUrl.includes('cloud') && iconUrl.includes('snow')) return <CloudSnow className="w-6 h-6 text-purple-200" />
+    if (iconUrl.includes('cloud')) return <Cloud className="w-6 h-6 text-purple-200" />
+    if (iconUrl.includes('rain')) return <CloudDrizzle className="w-6 h-6 text-purple-200" />
+    if (iconUrl.includes('snow')) return <CloudSnow className="w-6 h-6 text-purple-200" />
+    if (iconUrl.includes('thunder')) return <Zap className="w-6 h-6 text-purple-200" />
+    return <CloudDrizzle className="w-6 h-6 text-purple-200" />
   }
 
   const getAQIText = (usEpaIndex: number) => {
@@ -66,25 +51,32 @@ export function WeatherWidget() {
       {/* Current Weather */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <span className="text-4xl mr-3">
+          <div className="text-4xl mr-3">
             {getWeatherIcon(weatherData.current.condition.icon)}
-          </span>
+          </div>
           <div>
-            <div className={`text-3xl font-bold ${getTemperatureColor(weatherData.current.temp_c)}`}>
+            <div className="text-4xl font-bold text-purple-100">
               {weatherData.current.temp_c}°
             </div>
-            <div className="text-xs text-purple-200">
+            <div className="text-purple-200">
               {weatherData.current.condition.text}
             </div>
           </div>
         </div>
 
-        <div className="text-xs text-purple-200 text-right">
-          <div>💧 {weatherData.current.humidity}%</div>
-          <div>💨 {weatherData.current.wind_kph} km/h {weatherData.current.wind_dir}</div>
+        <div className="text-purple-200 text-right">
+          <div className="flex items-center justify-end space-x-1">
+            <Droplets className="w-4 h-4" />
+            <span>{weatherData.current.humidity}%</span>
+          </div>
+          <div className="flex items-center justify-end space-x-1">
+            <Wind className="w-4 h-4" />
+            <span>{weatherData.current.wind_kph} km/h {weatherData.current.wind_dir}</span>
+          </div>
           {weatherData.current.air_quality && (
-            <div className={getAQIColor(weatherData.current.air_quality.us_epa_index)}>
-              🏭 AQI: {getAQIText(weatherData.current.air_quality.us_epa_index)}
+            <div className="flex items-center justify-end space-x-1 text-purple-200">
+              <Hexagon className="w-4 h-4" />
+              <span>AQI: {getAQIText(weatherData.current.air_quality.us_epa_index)}</span>
             </div>
           )}
         </div>
@@ -92,13 +84,13 @@ export function WeatherWidget() {
 
       {/* 3-Day Forecast */}
       <div className="space-y-2">
-        <div className="text-xs text-purple-200 mb-2">3-dagars prognos</div>
+        <div className="text-purple-200 mb-2">3-dagars prognos</div>
         {weatherData.forecast.forecastday.slice(0, 3).map((day, index) => (
-          <div key={day.date} className="flex items-center justify-between text-xs">
+          <div key={day.date} className="flex items-center justify-between">
             <div className="flex items-center">
-              <span className="text-lg mr-2">
+              <div className="mr-2">
                 {getWeatherIcon(day.day.condition.icon)}
-              </span>
+              </div>
               <span className="text-purple-100">
                 {index === 0 ? 'Idag' :
                  index === 1 ? 'Imorgon' :
@@ -107,21 +99,16 @@ export function WeatherWidget() {
             </div>
 
             <div className="flex items-center space-x-2">
-              <span className={`font-bold ${getTemperatureColor(day.day.maxtemp_c)}`}>
+              <span className="font-bold text-purple-100">
                 {Math.round(day.day.maxtemp_c)}°
               </span>
               <span className="text-purple-200">
                 {Math.round(day.day.mintemp_c)}°
               </span>
-              {day.day.chance_of_rain > 30 && (
-                <span className="text-blue-400">
-                  💧{day.day.chance_of_rain}%
-                </span>
-              )}
             </div>
           </div>
         ))}
       </div>
     </div>
   )
-} 
+}

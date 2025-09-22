@@ -15,20 +15,20 @@ export function ClockWidget() {
   }, [])
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex-1">
-        <div className="text-7xl font-bold mb-3 font-sans tracking-tight text-center text-purple-100">
+    <div className="flex items-center gap-4 overflow-hidden max-w-full">
+      <div className="flex-1 min-w-0">
+        <div className="text-[14.4rem] mb-24 font-[Horsemen] tracking-wide text-center text-purple-600 leading-[1.1] overflow-visible py-4">
           {formatSwedishTime(time)}
         </div>
-        <div className={`text-xl ${neonTheme.text.secondary} mb-2 capitalize text-center`}>
+        <div className={`text-2xl ${neonTheme.text.secondary} mb-2 capitalize text-center`}>
           {formatSwedishDate(time)}
         </div>
       </div>
-      <div className="flex-shrink-0 ml-8">
+      <div className="flex-shrink-0 w-1/3 max-w-full">
         <img
           src="/logo.png"
           alt="Kimonokittens"
-          className="w-32 h-32 object-contain"
+          className="w-full h-auto object-contain block max-w-full"
         />
       </div>
     </div>
