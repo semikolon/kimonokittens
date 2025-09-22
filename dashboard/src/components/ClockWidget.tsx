@@ -35,14 +35,14 @@ export function ClockWidget() {
               className="font-[Horsemen] tracking-wide"
               style={{ fontSize: '14rem', lineHeight: '1.1' }}
             >
-              {formatSwedishTime(time)}
+              {time.getHours().toString().padStart(2, '0')}
             </text>
           </svg>
           <svg className="absolute inset-0 overflow-visible" style={{ width: '600px', height: '200px', zIndex: 1 }}>
             <defs>
-              <linearGradient id="timeGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stopColor="#8b5c96" />
-                <stop offset="100%" stopColor="#8824a7" />
+              <linearGradient id="minutesGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stopColor="#7c3aed" />
+                <stop offset="100%" stopColor="#5b21b6" />
               </linearGradient>
             </defs>
             <text
@@ -50,11 +50,11 @@ export function ClockWidget() {
               y="90"
               textAnchor="start"
               dominantBaseline="middle"
-              fill="url(#timeGradient)"
+              fill="url(#minutesGradient)"
               className="font-[Horsemen] tracking-wide"
               style={{ fontSize: '14rem', lineHeight: '1.1' }}
             >
-              34
+              {time.getMinutes().toString().padStart(2, '0')}
             </text>
           </svg>
         </div>
