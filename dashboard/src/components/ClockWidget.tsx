@@ -51,7 +51,7 @@ export function ClockWidget() {
                 <stop offset="100%" stopColor="#8824c7" />
               </linearGradient>
               <linearGradient id="minutesGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stopColor="#7c3aed" />
+                <stop offset="0%" stopColor="#8b5cf6" />
                 <stop offset="100%" stopColor="#451a8b" />
               </linearGradient>
               <linearGradient id="colonGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
