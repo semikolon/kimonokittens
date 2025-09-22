@@ -41,8 +41,8 @@ export function ClockWidget() {
           <svg className="absolute inset-0 overflow-visible" style={{ width: '600px', height: '200px', zIndex: 1 }}>
             <defs>
               <linearGradient id="minutesGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stopColor="#7c3aed" />
-                <stop offset="100%" stopColor="#5b21b6" />
+                <stop offset="0%" stopColor="#6d28d9" />
+                <stop offset="100%" stopColor="#4c1d95" />
               </linearGradient>
             </defs>
             <text
