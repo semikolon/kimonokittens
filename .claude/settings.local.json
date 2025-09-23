@@ -90,7 +90,9 @@
       "Bash(sort:*)",
       "Bash(npx:*)",
       "Bash(printf \"\\n\\n\\n\\n\\n\")",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(awk:*)",
+      "mcp__playwright-extension__browser_press_key"
     ],
     "deny": []
   }
