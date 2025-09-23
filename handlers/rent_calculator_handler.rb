@@ -332,8 +332,33 @@ class RentCalculatorHandler
     # Fetches the active configuration for a specific month.
     # If a quarterly invoice (drift_rakning) is present for the month,
     # it takes precedence over regular monthly fees.
-    config = RentDb.instance.get_rent_config(year: year, month: month)
-    config_hash = config ? Hash[config.map { |row| [row['key'].to_sym, row['value'].to_f] }] : {}
+    begin
+      config = RentDb.instance.get_rent_config(year: year, month: month)
+
+      # Defensive processing to prevent segfaults
+      config_hash = if config && !config.to_a.empty?
+        config.to_a.map do |row|
+          # Safely access columns, checking they exist first
+          next unless row.respond_to?(:[]) && row.respond_to?(:has_key?)
+
+          key = row.has_key?('key') ? row['key'] : nil
+          value = row.has_key?('value') ? row['value'] : nil
+
+          next unless key && value
+          [key.to_sym, value.to_f]
+        end.compact.to_h
+      else
+        {}
+      end
+    rescue PG::Error => e
+      puts "PostgreSQL error in extract_config: #{e.message}"
+      puts "Backtrace: #{e.backtrace&.first(3)&.join(', ')}"
+      config_hash = {}
+    rescue => e
+      puts "Unexpected error in extract_config: #{e.class} - #{e.message}"
+      puts "Backtrace: #{e.backtrace&.first(3)&.join(', ')}"
+      config_hash = {}
+    end
 
     # If drift_rakning is present and non-zero, it replaces monthly fees
     if config_hash[:drift_rakning] && config_hash[:drift_rakning] > 0

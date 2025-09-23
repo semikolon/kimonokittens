@@ -84,6 +84,9 @@ const parseAndStyleDepartureTimes = (htmlContent: string) => {
             // Add space after "om Xm" before "- du hinner gå" for train lines
             text = text.replace(/(om \d+m)(-\s)/, '$1 $2')
 
+            // Add space before "(försenad)" and similar parenthetical content
+            text = text.replace(/(\d+m)(\([^)]+\))/, '$1 $2')
+
             // Handle 0m case - replace "om 0m" with "spring!" to avoid double dash
             text = text.replace(/om 0m/, 'spring!')
 
@@ -100,6 +103,7 @@ const parseAndStyleDepartureTimes = (htmlContent: string) => {
               // Fix spacing issues in strong text
               strongText = strongText.replace(/([^:\s]):(\d{2}:\d{2})/, '$1: $2')
               strongText = strongText.replace(/(om \d+m)(-\s)/, '$1 $2')
+              strongText = strongText.replace(/(\d+m)(\([^)]+\))/, '$1 $2')
               strongText = strongText.replace(/om 0m/, 'spring!')
               content = [strongText]
             }
@@ -171,50 +175,52 @@ export function TrainWidget() {
             <h4 className="text-xl font-medium text-purple-100 mb-6 tracking-wide uppercase font-[Horsemen]">
               Pendel norrut
             </h4>
-            {trainData.deviation_summary && (
-              <div className="text-yellow-400 bg-yellow-400/10 p-2 rounded inline-block max-w-full mb-3 -ml-2">
-                <div className="space-y-1">
-                  {(() => {
-                    // Parse and group disruptions by reason
-                    const disruptions = trainData.deviation_summary.split(/(?=\d{2}:\d{2}\s+till)/g)
-                      .filter(line => line.trim())
-                      .map(line => {
-                        const timeMatch = line.match(/(\d{2}:\d{2})\s+till\s+([^:]+):\s*(.+)/);
-                        if (timeMatch) {
-                          return {
-                            time: timeMatch[1],
-                            destination: timeMatch[2],
-                            reason: timeMatch[3]
-                          };
-                        }
-                        return null;
-                      })
-                      .filter(Boolean);
+{trainData.deviation_summary && (() => {
+              // Parse and group disruptions by reason
+              const disruptions = trainData.deviation_summary.split(/(?=\d{2}:\d{2}\s+till)/g)
+                .filter(line => line.trim())
+                .map(line => {
+                  const timeMatch = line.match(/(\d{2}:\d{2})\s+till\s+([^:]+):\s*(.+)/);
+                  if (timeMatch) {
+                    return {
+                      time: timeMatch[1],
+                      destination: timeMatch[2],
+                      reason: timeMatch[3]
+                    };
+                  }
+                  return null;
+                })
+                .filter(Boolean);
 
-                    // Group by reason
-                    const grouped = disruptions.reduce((acc, item) => {
-                      const key = item.reason.trim();
-                      if (!acc[key]) acc[key] = [];
-                      acc[key].push(item);
-                      return acc;
-                    }, {});
+              // Group by reason
+              const grouped = disruptions.reduce((acc, item) => {
+                const key = item.reason.trim();
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(item);
+                return acc;
+              }, {});
 
-                    // Filter out non-feasible departures and render grouped disruptions
-                    return Object.entries(grouped)
-                      .map(([reason, items]) => ({
-                        reason,
-                        items: items.filter(item => isFeasibleDeparture(item.time))
-                      }))
-                      .filter(({ items }) => items.length > 0) // Only show groups with feasible departures
-                      .map(({ reason, items }, index) => (
-                        <div key={index} className="leading-tight">
-                          <strong>{items.map(item => item.time).join(', ')}:</strong> {reason.replace(/\.\s*läs mer på trafikläget\.?/gi, '.')}
-                        </div>
-                      ));
-                  })()}
+              // Filter out non-feasible departures and render grouped disruptions
+              const feasibleItems = Object.entries(grouped)
+                .map(([reason, items]) => ({
+                  reason,
+                  items: items.filter(item => isFeasibleDeparture(item.time))
+                }))
+                .filter(({ items }) => items.length > 0); // Only show groups with feasible departures
+
+              // Only render if we have feasible disruptions (minimal fix)
+              return feasibleItems.length > 0 ? (
+                <div className="text-yellow-400 bg-yellow-400/10 p-2 rounded inline-block max-w-full mb-3 -ml-2">
+                  <div className="space-y-1">
+                    {feasibleItems.map(({ reason, items }, index) => (
+                      <div key={index} className="leading-tight">
+                        <strong>{items.map(item => item.time).join(', ')}:</strong> {reason.replace(/\.\s*läs mer på trafikläget\.?/gi, '.')}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              ) : null;
+            })()}
             <div className="mb-3">
               <div className="leading-relaxed">
                 {parseAndStyleDepartureTimes(section.replace(/Pendeltåg Norrut[:\s]*/g, '').replace(/^(<br\s*\/?>)+/gi, '').replace(/<br\s*\/?>\s*<br\s*\/?>\s*<strong>\s*<\/strong>\s*$/gi, ' ').replace(/(<br\s*\/?>)+$/gi, ''))}
