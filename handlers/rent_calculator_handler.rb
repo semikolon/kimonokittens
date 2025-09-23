@@ -53,6 +53,7 @@ require 'date'
 
 class RentCalculatorHandler
   def call(req)
+    puts "DEBUG: PATH_INFO = #{req['PATH_INFO'].inspect}"
     case req['REQUEST_METHOD']
     when 'POST'
       if req['PATH_INFO'].include?('/roommates')
@@ -67,6 +68,8 @@ class RentCalculatorHandler
         handle_forecast_request(req)
       elsif req['PATH_INFO'].include?('/history')
         handle_history_request(req)
+      elsif req['PATH_INFO'].include?('/friendly_message')
+        handle_friendly_message(req)
       elsif req['PATH_INFO'].include?('/roommates')
         handle_roommate_list(req)
       else
@@ -489,5 +492,41 @@ class RentCalculatorHandler
       final_results: final_results, # Use the correctly structured hash
       createdAt: Time.now.utc.iso8601
     }
+  end
+
+  def handle_friendly_message(req)
+    # Parse query parameters for year/month (optional)
+    query_string = req['QUERY_STRING'] || ''
+    params = CGI.parse(query_string)
+
+    # Use current date if not specified
+    now = Time.now
+    year = params['year']&.first&.to_i || now.year
+    month = params['month']&.first&.to_i || now.month
+
+    begin
+      config = extract_config(year: year, month: month)
+      roommates = extract_roommates(year: year, month: month)
+
+      # Generate friendly message using RentCalculator
+      friendly_text = RentCalculator.friendly_message(
+        roommates: roommates,
+        config: config
+      )
+
+      result = {
+        message: friendly_text,
+        year: year,
+        month: month,
+        generated_at: Time.now.utc.iso8601
+      }
+
+      [200, { 'Content-Type' => 'application/json' }, [result.to_json]]
+
+    rescue => e
+      puts "Error generating friendly message: #{e.message}"
+      puts e.backtrace
+      [500, { 'Content-Type' => 'application/json' }, [{ error: e.message }.to_json]]
+    end
   end
 end 

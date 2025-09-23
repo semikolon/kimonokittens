@@ -1,6 +1,117 @@
 import React from 'react'
 import { useData } from '../context/DataContext'
 
+// Helper functions for time-based filtering and styling
+const parseTime = (timeStr: string): Date | null => {
+  const match = timeStr.match(/(\d{2}):(\d{2})/)
+  if (!match) return null
+
+  const now = new Date()
+  const [, hours, minutes] = match
+  const time = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(hours), parseInt(minutes))
+
+  // If time is earlier than current time, assume it's tomorrow
+  if (time <= now) {
+    time.setDate(time.getDate() + 1)
+  }
+
+  return time
+}
+
+const getMinutesUntil = (timeStr: string): number => {
+  const time = parseTime(timeStr)
+  if (!time) return -1
+
+  const now = new Date()
+  return Math.round((time.getTime() - now.getTime()) / (1000 * 60))
+}
+
+const isFeasibleDeparture = (timeStr: string): boolean => {
+  const minutesUntil = getMinutesUntil(timeStr)
+  return minutesUntil >= 6 // Need at least 6 minutes to reach station
+}
+
+const getTimeOpacity = (timeStr: string): number => {
+  const minutesUntil = getMinutesUntil(timeStr)
+  if (minutesUntil < 0) return 0.3 // Past times very faded
+  if (minutesUntil <= 20) return 1.0 // Next 20m fully visible
+  if (minutesUntil >= 50) return 0.15 // 50m+ very faded
+
+  // Smooth gradual fade from 20m (1.0) to 50m (0.15)
+  const progress = (minutesUntil - 20) / (50 - 20)
+  return 1.0 - (progress * 0.85)
+}
+
+// Parse and style departure times HTML with time-based opacity
+const parseAndStyleDepartureTimes = (htmlContent: string) => {
+  const timePattern = /(\d{2}:\d{2})/g
+
+  // Split content into lines and process each line separately
+  const lines = htmlContent.split(/(<br\s*\/?>)/gi)
+
+  return lines.map((line, lineIndex) => {
+    if (line.match(/<br\s*\/?>/i)) {
+      return null // Skip <br> elements entirely
+    }
+
+    if (line.trim() === '') return null
+
+    // Find the first time in this line to determine opacity for the entire line
+    const timeMatch = line.match(timePattern)
+    if (!timeMatch) return null // Skip lines without times
+
+    const minutesUntil = getMinutesUntil(timeMatch[0])
+    if (minutesUntil <= 2) return null // Skip departures with 2m or less (can't make it)
+
+    const lineOpacity = getTimeOpacity(timeMatch[0])
+
+    // Parse HTML in this line while preserving structure
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = line
+
+    const processElement = (element: Node): React.ReactNode[] => {
+      const result: React.ReactNode[] = []
+
+      element.childNodes.forEach((child, index) => {
+        if (child.nodeType === Node.TEXT_NODE) {
+          const text = child.textContent || ''
+          if (text.trim()) {
+            result.push(text)
+          }
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+          const elem = child as Element
+          const content = processElement(child)
+
+          if (elem.tagName === 'STRONG') {
+            result.push(<strong key={index}>{content}</strong>)
+          } else {
+            result.push(<span key={index}>{content}</span>)
+          }
+        }
+      })
+
+      return result
+    }
+
+    const lineContent = processElement(tempDiv)
+
+    return (
+      <div
+        key={`line-${lineIndex}`}
+        style={{
+          opacity: lineOpacity,
+          mixBlendMode: 'hard-light' as const,
+          marginBottom: '2px',
+          display: 'flex',
+          alignItems: 'flex-start'
+        }}
+      >
+        {lineContent}
+      </div>
+    )
+  }).filter(Boolean)
+}
+
 export function TrainWidget() {
   const { state } = useData()
   const { trainData, connectionStatus } = state
@@ -38,28 +149,57 @@ export function TrainWidget() {
         return (
           <div key="train">
             <h4 className="text-xl font-medium text-purple-100 mb-6 tracking-wide uppercase font-[Horsemen]">
-              Pendel
+              Pendel norrut
             </h4>
-            <div className="mb-3">
-              <div
-                className="leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: section.replace(/Pendeltåg Norrut[:\s]*/g, '').replace(/^(<br\s*\/?>)+/gi, '').replace(/<br\s*\/?>\s*<br\s*\/?>\s*<strong>\s*<\/strong>\s*$/gi, '').replace(/(<br\s*\/?>)+$/gi, '') }}
-              />
-            </div>
             {trainData.deviation_summary && (
-              <div className="text-yellow-400 bg-yellow-400/10 p-2 rounded inline-block max-w-full">
-                <div className="font-bold mb-1">Störningar:</div>
+              <div className="text-yellow-400 bg-yellow-400/10 p-2 rounded inline-block max-w-full mb-3 -ml-2">
                 <div className="space-y-1">
-                  {trainData.deviation_summary.split(/(?=\d{2}:\d{2}\s+till)/g)
-                    .filter(line => line.trim())
-                    .map((line, index) => (
-                      <div key={index} className="leading-tight">
-                        {line.trim()}
-                      </div>
-                    ))}
+                  {(() => {
+                    // Parse and group disruptions by reason
+                    const disruptions = trainData.deviation_summary.split(/(?=\d{2}:\d{2}\s+till)/g)
+                      .filter(line => line.trim())
+                      .map(line => {
+                        const timeMatch = line.match(/(\d{2}:\d{2})\s+till\s+([^:]+):\s*(.+)/);
+                        if (timeMatch) {
+                          return {
+                            time: timeMatch[1],
+                            destination: timeMatch[2],
+                            reason: timeMatch[3]
+                          };
+                        }
+                        return null;
+                      })
+                      .filter(Boolean);
+
+                    // Group by reason
+                    const grouped = disruptions.reduce((acc, item) => {
+                      const key = item.reason.trim();
+                      if (!acc[key]) acc[key] = [];
+                      acc[key].push(item);
+                      return acc;
+                    }, {});
+
+                    // Filter out non-feasible departures and render grouped disruptions
+                    return Object.entries(grouped)
+                      .map(([reason, items]) => ({
+                        reason,
+                        items: items.filter(item => isFeasibleDeparture(item.time))
+                      }))
+                      .filter(({ items }) => items.length > 0) // Only show groups with feasible departures
+                      .map(({ reason, items }, index) => (
+                        <div key={index} className="leading-tight">
+                          <strong>{items.map(item => item.time).join(', ')}:</strong> {reason.replace(/\.\s*läs mer på trafikläget\.?/gi, '.')}
+                        </div>
+                      ));
+                  })()}
                 </div>
               </div>
             )}
+            <div className="mb-3">
+              <div className="leading-relaxed">
+                {parseAndStyleDepartureTimes(section.replace(/Pendeltåg Norrut[:\s]*/g, '').replace(/^(<br\s*\/?>)+/gi, '').replace(/<br\s*\/?>\s*<br\s*\/?>\s*<strong>\s*<\/strong>\s*$/gi, ' ').replace(/(<br\s*\/?>)+$/gi, ''))}
+              </div>
+            </div>
           </div>
         )
       } else if (section.includes('Bussar från')) {
@@ -70,10 +210,9 @@ export function TrainWidget() {
               Bussar
             </h4>
             <div className="mb-3">
-              <div
-                className="leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: section.replace(/Bussar från Sördalavägen[:\s]*/g, '').replace(/^(<br\s*\/?>)+/gi, '').replace(/(<br\s*\/?>)+$/gi, '') }}
-              />
+              <div className="leading-relaxed">
+                {parseAndStyleDepartureTimes(section.replace(/Bussar från Sördalavägen[:\s]*/g, '').replace(/^(<br\s*\/?>)+/gi, '').replace(/(<br\s*\/?>)+$/gi, ''))}
+              </div>
             </div>
           </div>
         )

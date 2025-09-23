@@ -37,6 +37,7 @@ require_relative 'handlers/rent_calculator_handler'
 require_relative 'handlers/handbook_handler'
 require_relative 'handlers/weather_handler'
 require_relative 'handlers/temperature_handler'
+require_relative 'handlers/todos_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
@@ -49,6 +50,7 @@ rent_calculator_handler = RentCalculatorHandler.new
 handbook_handler = HandbookHandler.new
 weather_handler = WeatherHandler.new
 temperature_handler = TemperatureHandler.new
+todos_handler = TodosHandler.new
 
 # --- WebSocket Pub/Sub Manager ---
 class PubSub
@@ -261,6 +263,10 @@ app = Rack::Builder.new do
 
   map "/api/rent" do
     run rent_calculator_handler
+  end
+
+  map "/api/todos" do
+    run todos_handler
   end
 
   # Data routes

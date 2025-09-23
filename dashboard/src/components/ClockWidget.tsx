@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { WidgetContainer } from './shared/WidgetContainer'
 import { formatSwedishTime, formatSwedishDate, getGreeting } from '../utils/formatters'
 import { neonTheme } from '../utils/theme'
+import { TodoWidget } from './TodoWidget'
 
 export function ClockWidget() {
   const [time, setTime] = useState(new Date())
@@ -120,16 +121,12 @@ export function ClockWidget() {
           {formatSwedishDate(displayTime)}
         </div>
 
-        <p style={{ fontWeight: 'bold', marginTop: '14px' }}>Lägga upp annons är prio!</p>
+        <TodoWidget />
 
-        {/* Time simulation toggle button */}
+        {/* Time simulation toggle button - hidden but functional */}
         <button
           onClick={toggleSimulation}
-          className={`mt-4 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
-            isSimulating
-              ? 'bg-purple-600 text-white hover:bg-purple-700'
-              : 'bg-purple-200 text-purple-800 hover:bg-purple-300'
-          }`}
+          className="hidden"
         >
           {isSimulating ? 'Stop Time Simulation' : 'Start Time Simulation'}
         </button>

@@ -8,6 +8,7 @@ import { TrainWidget } from './components/TrainWidget'
 import { StravaWidget } from './components/StravaWidget'
 import { TodoWidget } from './components/TodoWidget'
 import { CalendarWidget } from './components/CalendarWidget'
+import { RentWidget } from './components/RentWidget'
 import { Wifi, WifiOff } from 'lucide-react'
 import AnoAI from './components/ui/animated-shader-background'
 
@@ -38,7 +39,7 @@ const Widget = ({
     >
       <div className={innerClassName ?? 'p-8'}>
         {title && (
-          <h3 className={`text-xl font-medium ${accent ? 'text-purple-200' : 'text-purple-100'}
+          <h3 className={`text-2xl font-medium ${accent ? 'text-purple-200' : 'text-purple-100'}
           mb-6 tracking-wide uppercase ${horsemenFont ? 'font-[Horsemen]' : ''}`}>
             {title}
           </h3>
@@ -128,9 +129,16 @@ function DashboardContent() {
           </Widget>
         </div>
 
+        {/* Full-width rent section */}
+        <div className="mb-12">
+          <Widget title="Hyran" horsemenFont={true} accent={true} className="w-full">
+            <RentWidget />
+          </Widget>
+        </div>
+
         {/* Full-width Strava section */}
         <div className="mb-12">
-          <Widget title="Fredriks spring" horsemenFont={true} className="w-full bg-purple-900/15">
+          <Widget title="Fredriks spring" horsemenFont={true} className="w-full bg-purple-900/10">
             <StravaWidget />
           </Widget>
         </div>

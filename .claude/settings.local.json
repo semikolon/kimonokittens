@@ -89,7 +89,8 @@
       "mcp__playwright-extension__browser_click",
       "Bash(sort:*)",
       "Bash(npx:*)",
-      "Bash(printf \"\\n\\n\\n\\n\\n\")"
+      "Bash(printf \"\\n\\n\\n\\n\\n\")",
+      "Bash(kill:*)"
     ],
     "deny": []
   }
