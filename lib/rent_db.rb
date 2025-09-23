@@ -1,148 +1,162 @@
-require 'pg'
-require 'singleton'
+require 'sequel'
 require 'cuid'
 require 'date'
 
 # RentDb provides a unified interface to the PostgreSQL database for the
 # Kimonokittens handbook and rent calculation system.
-# It replaces the legacy SQLite and file-based persistence mechanisms.
+# Now uses Sequel for thread-safe connection pooling, perfect for WebSocket broadcasting.
 class RentDb
-  include Singleton
-  attr_reader :conn
-
-  def initialize
-    @conn = PG.connect(ENV.fetch('DATABASE_URL'))
-  rescue PG::Error => e
-    puts "Error connecting to PostgreSQL: #{e.message}"
-    # In a real app, you'd want more robust error handling, logging,
-    # or a retry mechanism.
-    raise
+  # Thread-safe connection with automatic pooling
+  def self.db
+    @db ||= begin
+      # Configure connection pool for multi-threaded Puma/WebSocket environment
+      Sequel.connect(
+        ENV.fetch('DATABASE_URL'),
+        max_connections: 10,    # Allow multiple concurrent WebSocket connections
+        pool_timeout: 5,        # Quick timeout for responsive WebSocket data
+        test: true,            # Test connections before use
+        validate: true         # Validate connections automatically
+      )
+    end
   end
 
-  # Example method to fetch tenants.
-  # We will build this out with more specific methods to get rent configs,
-  # roommates for a specific month, etc.
+  # Ensure we have table references for Sequel
+  def self.tenants
+    db[:Tenant]
+  end
+
+  def self.rent_configs
+    db[:RentConfig]
+  end
+
+  def self.rent_ledger
+    db[:RentLedger]
+  end
+
+  # Instance methods for backward compatibility with existing code
   def get_tenants
-    tenants = []
-    @conn.exec("SELECT id, name, email, \"startDate\", \"departureDate\", \"roomAdjustment\" FROM \"Tenant\" ORDER BY name") do |result|
-      result.each do |row|
-        tenants << row
-      end
-    end
-    tenants
+    self.class.tenants
+      .select(:id, :name, :email, :startDate, :departureDate, :roomAdjustment)
+      .order(:name)
+      .all
   end
 
   def get_rent_history(year:, month:)
-    history = []
     # Note: Prisma stores dates in UTC. We construct the date range carefully.
-    start_date = Time.new(year, month, 1).utc.iso8601
-    end_date = (Time.new(year, month, 1) + (31 * 24 * 60 * 60)).utc.iso8601 # A safe way to get to the next month
+    start_date = Time.new(year, month, 1).utc
+    end_date = start_date + (31 * 24 * 60 * 60) # A safe way to get to the next month
 
-    query = <<-SQL
-      SELECT * FROM "RentLedger"
-      WHERE period >= $1::timestamp AND period < $2::timestamp
-      ORDER BY "createdAt" ASC
-    SQL
-
-    @conn.exec_params(query, [start_date, end_date]) do |result|
-      result.each do |row|
-        history << row
-      end
-    end
-    history
+    self.class.rent_ledger
+      .where(period: start_date...end_date)
+      .order(:createdAt)
+      .all
   end
 
   def get_rent_config(year:, month:)
     # This query finds the most recent value for each configuration key
-    # that is effective for a given month. It uses a window function to
-    # partition by key and order by the effective period, taking only
-    # the latest one (rank = 1) at or before the specified month.
-    # Correctly determine the last moment of the given month.
+    # that is effective for a given month. Uses Sequel's advanced querying.
     end_of_month = (Date.new(year, month, 1).next_month - 1).to_time.utc
-    query = <<-SQL
-      WITH ranked_configs AS (
-        SELECT
-          key,
-          value,
-          period,
-          ROW_NUMBER() OVER(PARTITION BY key ORDER BY period DESC) as rn
-        FROM "RentConfig"
-        WHERE period <= $1
+
+    # Use Sequel's window functions for the ranked query
+    ranked_configs = self.class.rent_configs
+      .where { period <= end_of_month }
+      .select(
+        :key,
+        :value,
+        :period,
+        Sequel.function(:row_number).over(partition: :key, order: Sequel.desc(:period)).as(:rn)
       )
-      SELECT key, value FROM ranked_configs WHERE rn = 1;
-    SQL
-    @conn.exec_params(query, [end_of_month.strftime('%Y-%m-%dT%H:%M:%S.%3NZ')])
+      .from_self
+      .where(rn: 1)
+      .select(:key, :value)
+
+    # Return result in format compatible with existing code
+    result = []
+    ranked_configs.each { |row| result << row }
+
+    # Create a mock PG::Result-like object for compatibility
+    MockPGResult.new(result)
   end
 
   def set_config(key, value, period = Time.now)
-    # This method now saves configuration values with a specific period.
-    query = <<-SQL
-      INSERT INTO "RentConfig" (id, key, value, period, "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, NOW(), NOW())
-    SQL
-    id = Cuid.generate
-    @conn.exec_params(query, [id, key, value, period.utc.strftime('%Y-%m-%dT%H:%M:%S.%3NZ')])
+    self.class.rent_configs.insert(
+      id: Cuid.generate,
+      key: key,
+      value: value,
+      period: period.utc,
+      createdAt: Time.now.utc,
+      updatedAt: Time.now.utc
+    )
     $pubsub&.publish("rent_data_updated")
   end
 
   def find_tenant_by_facebook_id(facebook_id)
-    query = 'SELECT * FROM "Tenant" WHERE "facebookId" = $1'
-    result = @conn.exec_params(query, [facebook_id])
-    result.ntuples.zero? ? nil : result.first
+    self.class.tenants.where(facebookId: facebook_id).first
   end
 
   def find_tenant_by_email(email)
-    query = 'SELECT * FROM "Tenant" WHERE email = $1'
-    result = @conn.exec_params(query, [email])
-    result.ntuples.zero? ? nil : result.first
+    self.class.tenants.where(email: email).first
   end
 
   def add_tenant(name:, email: nil, facebookId: nil, avatarUrl: nil, start_date: nil, departure_date: nil)
-    id = Cuid.generate
-    # Generate a placeholder email if none is provided, preserving old behavior
-    # for test setups and other non-OAuth tenant creation.
+    # Generate a placeholder email if none is provided
     email ||= "#{name.downcase.gsub(/\s+/, '.')}@kimonokittens.com"
-    query = <<-SQL
-      INSERT INTO "Tenant" (id, name, email, "facebookId", "avatarUrl", "startDate", "departureDate", "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-    SQL
-    @conn.exec_params(query, [id, name, email, facebookId, avatarUrl, start_date, departure_date])
+
+    self.class.tenants.insert(
+      id: Cuid.generate,
+      name: name,
+      email: email,
+      facebookId: facebookId,
+      avatarUrl: avatarUrl,
+      startDate: start_date,
+      departureDate: departure_date,
+      createdAt: Time.now.utc,
+      updatedAt: Time.now.utc
+    )
   end
 
   def set_start_date(name:, date:)
-    query = <<-SQL
-      UPDATE "Tenant"
-      SET "startDate" = $1
-      WHERE name = $2
-    SQL
-    @conn.exec_params(query, [date, name])
+    self.class.tenants.where(name: name).update(startDate: date)
     $pubsub&.publish("rent_data_updated")
   end
 
   def set_departure_date(name:, date:)
-    query = <<-SQL
-      UPDATE "Tenant"
-      SET "departureDate" = $1
-      WHERE name = $2
-    SQL
-    @conn.exec_params(query, [date, name])
+    self.class.tenants.where(name: name).update(departureDate: date)
     $pubsub&.publish("rent_data_updated")
   end
 
   def set_room_adjustment(name:, adjustment:)
-    query = <<-SQL
-      UPDATE "Tenant"
-      SET "roomAdjustment" = $1
-      WHERE name = $2
-    SQL
-    @conn.exec_params(query, [adjustment, name])
+    self.class.tenants.where(name: name).update(roomAdjustment: adjustment)
     $pubsub&.publish("rent_data_updated")
   end
 
-  private
-
-  # Method to gracefully close the connection when the application shuts down.
-  def close_connection
-    @conn&.close
+  # Singleton compatibility for existing code
+  def self.instance
+    @instance ||= new
   end
-end 
+end
+
+# Mock PG::Result for backward compatibility with rent calculator handler
+class MockPGResult
+  include Enumerable
+
+  def initialize(rows)
+    @rows = rows
+  end
+
+  def each(&block)
+    @rows.each(&block)
+  end
+
+  def ntuples
+    @rows.length
+  end
+
+  def [](index)
+    @rows[index]
+  end
+
+  def first
+    @rows.first
+  end
+end

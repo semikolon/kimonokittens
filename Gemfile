@@ -23,7 +23,8 @@ gem 'faraday', '~> 2.13'
 gem 'faraday-excon', '~> 2.2'
 
 # Database
-gem 'pg', '~> 1.5' # For PostgreSQL
+gem 'pg', '~> 1.6' # For PostgreSQL - upgraded for PostgreSQL 17 compatibility
+gem 'sequel', '~> 5.84' # Database toolkit with connection pooling for thread safety
 gem 'sqlite3', '~> 1.7'
 gem 'cuid', '~> 1.0' # For Prisma-compatible IDs
 
