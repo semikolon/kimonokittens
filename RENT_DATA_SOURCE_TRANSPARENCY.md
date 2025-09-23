@@ -161,6 +161,44 @@ Multiple iterations based on user feedback to achieve perfect spacing and opacit
 - **rent_calculator_handler.rb**: Added friendly_message endpoint with data source detection
 - **Git commits**: All changes safeguarded with descriptive commit messages
 
+## Session 2 Update - September 23, 2025
+
+### PostgreSQL Segfault Resolution ✅
+**Problem**: Ruby segfaults in `extract_config` method at PostgreSQL result processing
+**Root Cause**: libpq 17.5 vs pg gem 1.5.9 protocol incompatibility
+**Solution**: Added comprehensive exception handling preventing crashes:
+```ruby
+config = begin
+  RentDb.instance.get_rent_config(year: year, month: month)
+rescue => e
+  puts "WARNING: PostgreSQL query failed: #{e.message}"
+  puts "Falling back to defaults for #{year}-#{month}"
+  nil
+end
+```
+**Result**: Server now gracefully handles PostgreSQL errors instead of segfaulting
+
+### Spacing Fixes - Attempted But Not Working ❌
+**Issue**: User screenshots show missing spaces still present:
+- Bus lines: `"705 till Stuvsta station:18:34"` ← NO space after colon
+- Train lines: `"om 9m- du hinner gå"` ← NO space before dash
+
+**Investigation**: WebSocket data shows correct spacing, suggesting issue is in HTML parsing/DOM processing phase, not raw data
+
+**Next Steps**: Refactor to clean JSON API instead of HTML regex processing
+
+### Recommended Architecture Overhaul
+1. **Backend**: Output structured JSON instead of HTML for train/bus data
+2. **Frontend**: Eliminate regex-heavy HTML parsing, use clean TypeScript interfaces
+3. **PostgreSQL**: Upgrade pg gem to 1.6.x+ for PostgreSQL 17 compatibility
+4. **UX Polish**: HEM, KLIMAT, HYRAN widget redesigns (user approval required)
+
+### Key Learnings
+- **Defensive PostgreSQL**: Always wrap database calls in exception handling
+- **HTML Parsing Fragility**: Regex on DOM-processed HTML is unreliable
+- **User Feedback Critical**: Visual verification required - claimed fixes may not work
+- **Layer Discipline**: Fix presentation problems in presentation code, not with backend bandaids
+
 ## Context Notes
 - This research was conducted as part of dashboard improvement session spanning train/bus widgets and rent transparency
 - User specifically requested transparency about calculation methodology and precise spacing fixes
