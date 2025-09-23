@@ -70,9 +70,12 @@ class RentDb
       .where(rn: 1)
       .select(:key, :value)
 
-    # Return result in format compatible with existing code
+    # Return result in format compatible with existing code (string keys, not symbols)
     result = []
-    ranked_configs.each { |row| result << row }
+    ranked_configs.each { |row|
+      # Convert symbol keys to string keys to match original PG::Result behavior
+      result << row.transform_keys(&:to_s)
+    }
 
     # Create a mock PG::Result-like object for compatibility
     MockPGResult.new(result)
