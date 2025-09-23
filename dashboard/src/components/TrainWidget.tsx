@@ -78,8 +78,8 @@ const parseAndStyleDepartureTimes = (htmlContent: string) => {
           let text = child.textContent || ''
           if (text.trim()) {
             // Fix spacing issues in the text content
-            // Add space after colon for bus lines (e.g., "station:16:03" -> "station: 16:03")
-            text = text.replace(/([^:\s]):(\d{2}:\d{2})/, '$1: $2')
+            // Add space after colon for bus lines (e.g., "till Sörskogen:16:42" -> "till Sörskogen: 16:42")
+            text = text.replace(/(\w):(\d{2}:\d{2})/, '$1: $2')
 
             // Add space after "om Xm" before "- du hinner gå" for train lines
             text = text.replace(/(om \d+m)(-\s)/, '$1 $2')
@@ -101,7 +101,7 @@ const parseAndStyleDepartureTimes = (htmlContent: string) => {
             if (content.length === 1 && typeof content[0] === 'string') {
               let strongText = content[0] as string
               // Fix spacing issues in strong text
-              strongText = strongText.replace(/([^:\s]):(\d{2}:\d{2})/, '$1: $2')
+              strongText = strongText.replace(/([a-zA-ZåäöÅÄÖ]):(\d{2}:\d{2})/, '$1: $2')
               strongText = strongText.replace(/(om \d+m)(-\s)/, '$1 $2')
               strongText = strongText.replace(/(\d+m)(\([^)]+\))/, '$1 $2')
               strongText = strongText.replace(/om 0m/, 'spring!')
