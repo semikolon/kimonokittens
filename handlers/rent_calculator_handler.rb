@@ -333,7 +333,7 @@ class RentCalculatorHandler
     # If a quarterly invoice (drift_rakning) is present for the month,
     # it takes precedence over regular monthly fees.
     config = RentDb.instance.get_rent_config(year: year, month: month)
-    config_hash = Hash[config.map { |row| [row['key'].to_sym, row['value'].to_f] }]
+    config_hash = config ? Hash[config.map { |row| [row['key'].to_sym, row['value'].to_f] }] : {}
 
     # If drift_rakning is present and non-zero, it replaces monthly fees
     if config_hash[:drift_rakning] && config_hash[:drift_rakning] > 0
@@ -508,6 +508,9 @@ class RentCalculatorHandler
       config = extract_config(year: year, month: month)
       roommates = extract_roommates(year: year, month: month)
 
+      # Determine electricity data source for transparency
+      data_source = determine_electricity_data_source(config, year, month)
+
       # Generate friendly message using RentCalculator
       friendly_text = RentCalculator.friendly_message(
         roommates: roommates,
@@ -518,7 +521,8 @@ class RentCalculatorHandler
         message: friendly_text,
         year: year,
         month: month,
-        generated_at: Time.now.utc.iso8601
+        generated_at: Time.now.utc.iso8601,
+        data_source: data_source
       }
 
       [200, { 'Content-Type' => 'application/json' }, [result.to_json]]
@@ -528,5 +532,38 @@ class RentCalculatorHandler
       puts e.backtrace
       [500, { 'Content-Type' => 'application/json' }, [{ error: e.message }.to_json]]
     end
+  end
+
+  private
+
+  def determine_electricity_data_source(config, year, month)
+    el_cost = config[:el]
+    default_el_cost = RentCalculator::Config::DEFAULTS[:el]
+
+    # Check if using defaults (fallback)
+    if el_cost == default_el_cost
+      return {
+        type: 'defaults',
+        electricity_source: 'fallback_defaults',
+        description_sv: 'Baserad på uppskattade elkostnader'
+      }
+    end
+
+    # Check if using historical data (would come from get_historical_electricity_cost method)
+    historical_cost = get_historical_electricity_cost(year: year, month: month)
+    if historical_cost > 0 && el_cost.to_i == historical_cost.to_i
+      return {
+        type: 'historical',
+        electricity_source: 'historical_lookup',
+        description_sv: 'Baserad på prognos från förra årets elräkningar'
+      }
+    end
+
+    # Otherwise, assume it's from manually entered current bills
+    return {
+      type: 'actual',
+      electricity_source: 'current_bills',
+      description_sv: 'Baserad på aktuella elräkningar'
+    }
   end
 end 

@@ -61,9 +61,10 @@ const parseAndStyleDepartureTimes = (htmlContent: string) => {
     if (!timeMatch) return null // Skip lines without times
 
     const minutesUntil = getMinutesUntil(timeMatch[0])
-    if (minutesUntil <= 2) return null // Skip departures with 2m or less (can't make it)
+    if (minutesUntil < 0) return null // Skip past times
 
-    const lineOpacity = getTimeOpacity(timeMatch[0])
+    // For 0m departures, show normal opacity since they display "- spring!"
+    const lineOpacity = minutesUntil === 0 ? 1.0 : getTimeOpacity(timeMatch[0])
 
     // Parse HTML in this line while preserving structure
     const tempDiv = document.createElement('div')
@@ -74,15 +75,34 @@ const parseAndStyleDepartureTimes = (htmlContent: string) => {
 
       element.childNodes.forEach((child, index) => {
         if (child.nodeType === Node.TEXT_NODE) {
-          const text = child.textContent || ''
+          let text = child.textContent || ''
           if (text.trim()) {
+            // Fix spacing issues in the text content
+            // Add space after colon for bus lines (e.g., "station:16:03" -> "station: 16:03")
+            text = text.replace(/([^:\s]):(\d{2}:\d{2})/, '$1: $2')
+
+            // Add space after "om Xm" before "- du hinner gå" for train lines
+            text = text.replace(/(om \d+m)(-\s)/, '$1 $2')
+
+            // Handle 0m case - replace "om 0m" with "spring!" to avoid double dash
+            text = text.replace(/om 0m/, 'spring!')
+
             result.push(text)
           }
         } else if (child.nodeType === Node.ELEMENT_NODE) {
           const elem = child as Element
-          const content = processElement(child)
+          let content = processElement(child)
 
           if (elem.tagName === 'STRONG') {
+            // Handle 0m case in strong elements too
+            if (content.length === 1 && typeof content[0] === 'string') {
+              let strongText = content[0] as string
+              // Fix spacing issues in strong text
+              strongText = strongText.replace(/([^:\s]):(\d{2}:\d{2})/, '$1: $2')
+              strongText = strongText.replace(/(om \d+m)(-\s)/, '$1 $2')
+              strongText = strongText.replace(/om 0m/, 'spring!')
+              content = [strongText]
+            }
             result.push(<strong key={index}>{content}</strong>)
           } else {
             result.push(<span key={index}>{content}</span>)

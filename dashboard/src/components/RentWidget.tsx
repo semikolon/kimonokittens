@@ -5,6 +5,11 @@ interface RentMessageData {
   year: number
   month: number
   generated_at: string
+  data_source?: {
+    type: 'actual' | 'historical' | 'defaults'
+    electricity_source: 'current_bills' | 'historical_lookup' | 'fallback_defaults'
+    description_sv: string
+  }
 }
 
 export function RentWidget() {
@@ -124,6 +129,13 @@ export function RentWidget() {
           }
         })}
       </div>
+
+      {/* Data source transparency indicator */}
+      {rentData.data_source && (
+        <div className="text-purple-300 text-xs mt-3" style={{ opacity: 0.5 }}>
+          {rentData.data_source.description_sv}
+        </div>
+      )}
     </div>
   )
 }
