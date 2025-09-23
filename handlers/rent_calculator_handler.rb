@@ -333,7 +333,14 @@ class RentCalculatorHandler
     # If a quarterly invoice (drift_rakning) is present for the month,
     # it takes precedence over regular monthly fees.
     begin
-      config = RentDb.instance.get_rent_config(year: year, month: month)
+      # Wrap PG query in additional safety to prevent segfaults
+      config = begin
+        RentDb.instance.get_rent_config(year: year, month: month)
+      rescue => e
+        puts "WARNING: PostgreSQL query failed: #{e.message}"
+        puts "Falling back to defaults for #{year}-#{month}"
+        nil
+      end
 
       # Defensive processing to prevent segfaults
       config_hash = if config && !config.to_a.empty?
