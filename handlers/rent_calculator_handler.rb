@@ -445,8 +445,19 @@ class RentCalculatorHandler
   end
 
   def extract_roommates(year:, month:)
-    db = RentDb.instance
-    tenants = db.get_tenants
+    begin
+      db = RentDb.instance
+      tenants = db.get_tenants
+    rescue => e
+      puts "ERROR: Failed to fetch tenants from database: #{e.message}"
+      raise "Cannot calculate rent - database connection failed: #{e.message}"
+    end
+
+    if tenants.empty?
+      raise "Cannot calculate rent - no tenants found in database"
+    end
+
+    puts "DEBUG: Found #{tenants.size} tenants in database"
     
     # The calculator expects a hash like:
     # { 'Fredrik' => { days: 30, room_adjustment: 0 } }
@@ -457,10 +468,24 @@ class RentCalculatorHandler
     period_end   = Date.new(year, month, RentCalculator::Helpers.days_in_month(year, month))
 
     tenants.each_with_object({}) do |tenant, hash|
-      # Parse dates; assume ISO strings like "2025-03-01"
+      # Parse dates; handle both ISO strings like "2025-03-01" and Time objects
       start_date_raw = tenant['startDate']
-      start_date = start_date_raw ? Date.parse(start_date_raw) : nil
-      departure_date = tenant['departureDate'] ? Date.parse(tenant['departureDate']) : nil
+      start_date = if start_date_raw.is_a?(String)
+        Date.parse(start_date_raw)
+      elsif start_date_raw.respond_to?(:to_date)
+        start_date_raw.to_date
+      else
+        start_date_raw
+      end
+
+      departure_date_raw = tenant['departureDate']
+      departure_date = if departure_date_raw.is_a?(String)
+        Date.parse(departure_date_raw)
+      elsif departure_date_raw&.respond_to?(:to_date)
+        departure_date_raw.to_date
+      else
+        departure_date_raw
+      end
 
       # Exclude if departed before the period starts or not yet arrived
       next if departure_date && departure_date < period_start

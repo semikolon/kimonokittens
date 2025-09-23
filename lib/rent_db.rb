@@ -35,10 +35,13 @@ class RentDb
 
   # Instance methods for backward compatibility with existing code
   def get_tenants
-    self.class.tenants
+    results = self.class.tenants
       .select(:id, :name, :email, :startDate, :departureDate, :roomAdjustment)
       .order(:name)
       .all
+
+    # Convert symbol keys to string keys to match expected format
+    results.map { |row| row.transform_keys(&:to_s) }
   end
 
   def get_rent_history(year:, month:)
