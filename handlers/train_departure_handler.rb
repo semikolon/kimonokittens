@@ -136,7 +136,7 @@ class TrainDepartureHandler
 
     # Convert departures to structured format with timestamps
     structured_trains = departures.map do |d|
-      departure_timestamp = d[:departure_time].to_i
+      departure_timestamp = d[:departure_time].to_i  # Time object to Unix timestamp
 
       # Determine action suffix
       late = d[:minutes_until_departure] < WALK_TIME
