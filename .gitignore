@@ -16,6 +16,7 @@ tibber_price_data.json
 *.tsv
 
 screenshots/
+.playwright-mcp/
 
 .aider*
 memory/
