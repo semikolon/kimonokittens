@@ -1,38 +1,42 @@
 import React from 'react'
 import { useData } from '../context/DataContext'
 
-// Helper functions for time-based filtering and styling
-const parseTime = (timeStr: string): Date | null => {
-  const match = timeStr.match(/(\d{2}):(\d{2})/)
-  if (!match) return null
-
-  const now = new Date()
-  const [, hours, minutes] = match
-  const time = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(hours), parseInt(minutes))
-
-  // If time is earlier than current time, assume it's tomorrow
-  if (time <= now) {
-    time.setDate(time.getDate() + 1)
-  }
-
-  return time
+// Types for structured transport data
+interface TrainDeparture {
+  departure_time: string
+  departure_timestamp: number
+  minutes_until: number
+  can_walk: boolean
+  line_number: string
+  destination: string
+  deviation_note: string
+  summary_deviation_note: string
+  suffix: string
 }
 
-const getMinutesUntil = (timeStr: string): number => {
-  const time = parseTime(timeStr)
-  if (!time) return -1
-
-  const now = new Date()
-  return Math.round((time.getTime() - now.getTime()) / (1000 * 60))
+interface BusDeparture {
+  departure_time: string
+  departure_timestamp: number
+  minutes_until: number
+  line_number: string
+  destination: string
 }
 
-const isFeasibleDeparture = (timeStr: string): boolean => {
-  const minutesUntil = getMinutesUntil(timeStr)
-  return minutesUntil >= 6 // Need at least 6 minutes to reach station
+interface Deviation {
+  time: string
+  destination: string
+  reason: string
 }
 
-const getTimeOpacity = (timeStr: string): number => {
-  const minutesUntil = getMinutesUntil(timeStr)
+interface StructuredTransportData {
+  trains: TrainDeparture[]
+  buses: BusDeparture[]
+  deviations: Deviation[]
+  generated_at: string
+}
+
+// Helper functions for time-based styling
+const getTimeOpacity = (minutesUntil: number): number => {
   if (minutesUntil < 0) return 0.3 // Past times very faded
   if (minutesUntil <= 20) return 1.0 // Next 20m fully visible
   if (minutesUntil >= 50) return 0.15 // 50m+ very faded
@@ -42,98 +46,91 @@ const getTimeOpacity = (timeStr: string): number => {
   return 1.0 - (progress * 0.85)
 }
 
-// Parse and style departure times HTML with time-based opacity
-const parseAndStyleDepartureTimes = (htmlContent: string) => {
-  const timePattern = /(\d{2}:\d{2})/g
+const isFeasibleDeparture = (minutesUntil: number): boolean => {
+  return minutesUntil >= 6 // Need at least 6 minutes to reach station
+}
 
-  // Split content into lines and process each line separately
-  const lines = htmlContent.split(/(<br\s*\/?>)/gi)
+// Format time display with action suffix
+const formatTimeDisplay = (departure: TrainDeparture | BusDeparture): string => {
+  const { departure_time, minutes_until } = departure
 
-  return lines.map((line, lineIndex) => {
-    if (line.match(/<br\s*\/?>/i)) {
-      return null // Skip <br> elements entirely
-    }
+  if (minutes_until === 0) {
+    return `${departure_time} - spring!`
+  } else if (minutes_until > 59) {
+    return departure_time
+  } else {
+    return `${departure_time} - om ${minutes_until}m`
+  }
+}
 
-    if (line.trim() === '') return null
+// Render train departure line
+const TrainDepartureLine: React.FC<{ departure: TrainDeparture }> = ({ departure }) => {
+  const { departure_time, minutes_until, summary_deviation_note, suffix } = departure
+  const opacity = minutes_until === 0 ? 1.0 : getTimeOpacity(minutes_until)
+  const timeDisplay = formatTimeDisplay(departure)
 
-    // Find the first time in this line to determine opacity for the entire line
-    const timeMatch = line.match(timePattern)
-    if (!timeMatch) return null // Skip lines without times
+  return (
+    <div
+      style={{
+        opacity,
+        mixBlendMode: 'hard-light' as const,
+        marginBottom: '2px',
+        display: 'flex',
+        alignItems: 'flex-start'
+      }}
+    >
+      <strong>{timeDisplay}</strong>
+      {summary_deviation_note}
+      {suffix && ` ${suffix}`}
+    </div>
+  )
+}
 
-    const minutesUntil = getMinutesUntil(timeMatch[0])
-    if (minutesUntil < 0) return null // Skip past times
+// Render bus departure line
+const BusDepartureLine: React.FC<{ departure: BusDeparture }> = ({ departure }) => {
+  const { line_number, destination, minutes_until } = departure
+  const opacity = minutes_until === 0 ? 1.0 : getTimeOpacity(minutes_until)
+  const timeDisplay = formatTimeDisplay(departure)
 
-    // For 0m departures, show normal opacity since they display "- spring!"
-    const lineOpacity = minutesUntil === 0 ? 1.0 : getTimeOpacity(timeMatch[0])
+  return (
+    <div
+      style={{
+        opacity,
+        mixBlendMode: 'hard-light' as const,
+        marginBottom: '2px',
+        display: 'flex',
+        alignItems: 'flex-start'
+      }}
+    >
+      {line_number} till {destination}: <strong>{timeDisplay}</strong>
+    </div>
+  )
+}
 
-    // Parse HTML in this line while preserving structure
-    const tempDiv = document.createElement('div')
-    tempDiv.innerHTML = line
+// Render deviation alerts
+const DeviationAlerts: React.FC<{ deviations: Deviation[] }> = ({ deviations }) => {
+  if (!deviations.length) return null
 
-    const processElement = (element: Node): React.ReactNode[] => {
-      const result: React.ReactNode[] = []
+  // Group deviations by reason for cleaner display
+  const grouped = deviations.reduce((acc, deviation) => {
+    const key = deviation.reason.trim()
+    if (!acc[key]) acc[key] = []
+    acc[key].push(deviation)
+    return acc
+  }, {} as Record<string, Deviation[]>)
 
-      element.childNodes.forEach((child, index) => {
-        if (child.nodeType === Node.TEXT_NODE) {
-          let text = child.textContent || ''
-          if (text.trim()) {
-            // Fix spacing issues in the text content
-            // Add space after colon for bus lines (e.g., "till Sörskogen:16:42" -> "till Sörskogen: 16:42")
-            text = text.replace(/(\w):(\d{2}:\d{2})/, '$1: $2')
-
-            // Add space after "om Xm" before "- du hinner gå" for train lines
-            text = text.replace(/(om \d+m)(-\s)/, '$1 $2')
-
-            // Add space before "(försenad)" and similar parenthetical content
-            text = text.replace(/(\d+m)(\([^)]+\))/, '$1 $2')
-
-            // Handle 0m case - replace "om 0m" with "spring!" to avoid double dash
-            text = text.replace(/om 0m/, 'spring!')
-
-            result.push(text)
-          }
-        } else if (child.nodeType === Node.ELEMENT_NODE) {
-          const elem = child as Element
-          let content = processElement(child)
-
-          if (elem.tagName === 'STRONG') {
-            // Handle 0m case in strong elements too
-            if (content.length === 1 && typeof content[0] === 'string') {
-              let strongText = content[0] as string
-              // Fix spacing issues in strong text
-              strongText = strongText.replace(/([a-zA-ZåäöÅÄÖ]):(\d{2}:\d{2})/, '$1: $2')
-              strongText = strongText.replace(/(om \d+m)(-\s)/, '$1 $2')
-              strongText = strongText.replace(/(\d+m)(\([^)]+\))/, '$1 $2')
-              strongText = strongText.replace(/om 0m/, 'spring!')
-              content = [strongText]
-            }
-            result.push(<strong key={index}>{content}</strong>)
-          } else {
-            result.push(<span key={index}>{content}</span>)
-          }
-        }
-      })
-
-      return result
-    }
-
-    const lineContent = processElement(tempDiv)
-
-    return (
-      <div
-        key={`line-${lineIndex}`}
-        style={{
-          opacity: lineOpacity,
-          mixBlendMode: 'hard-light' as const,
-          marginBottom: '2px',
-          display: 'flex',
-          alignItems: 'flex-start'
-        }}
-      >
-        {lineContent}
+  return (
+    <div className="text-yellow-400 bg-yellow-400/10 p-2 rounded inline-block max-w-full mb-3 -ml-2">
+      <div className="space-y-1">
+        {Object.entries(grouped).map(([reason, items], index) => (
+          <div key={index} className="leading-tight">
+            <strong>{items.map(item => item.time).join(', ')}:</strong>{' '}
+            {reason.replace(/\.\s*läs mer på trafikläget\.?/gi, '.')}
+          </div>
+        ))}
       </div>
-    )
-  }).filter(Boolean)
+    </div>
+  )
 }
 
 export function TrainWidget() {
@@ -162,98 +159,95 @@ export function TrainWidget() {
     return <div className="text-purple-200">Ingen data tillgänglig</div>
   }
 
-  // Parse the HTML content to extract and style the sections properly
-  const parseTrainData = (htmlContent: string) => {
-    // Split by common patterns to separate train and bus sections
-    const sections = htmlContent.split(/(?=Bussar från)/g)
+  // Handle both old HTML format (backwards compatibility) and new structured format
+  const isStructuredData = trainData.trains !== undefined
 
-    return sections.map((section, index) => {
-      if (section.includes('Pendeltåg Norrut') || (!section.includes('Bussar från') && index === 0)) {
-        // Train section
-        return (
-          <div key="train">
-            <h4 className="text-xl font-medium text-purple-100 mb-6 tracking-wide uppercase font-[Horsemen]">
-              Pendel norrut
-            </h4>
-{trainData.deviation_summary && (() => {
-              // Parse and group disruptions by reason
-              const disruptions = trainData.deviation_summary.split(/(?=\d{2}:\d{2}\s+till)/g)
-                .filter(line => line.trim())
-                .map(line => {
-                  const timeMatch = line.match(/(\d{2}:\d{2})\s+till\s+([^:]+):\s*(.+)/);
-                  if (timeMatch) {
-                    return {
-                      time: timeMatch[1],
-                      destination: timeMatch[2],
-                      reason: timeMatch[3]
-                    };
-                  }
-                  return null;
-                })
-                .filter(Boolean);
-
-              // Group by reason
-              const grouped = disruptions.reduce((acc, item) => {
-                const key = item.reason.trim();
-                if (!acc[key]) acc[key] = [];
-                acc[key].push(item);
-                return acc;
-              }, {});
-
-              // Filter out non-feasible departures and render grouped disruptions
-              const feasibleItems = Object.entries(grouped)
-                .map(([reason, items]) => ({
-                  reason,
-                  items: items.filter(item => isFeasibleDeparture(item.time))
-                }))
-                .filter(({ items }) => items.length > 0); // Only show groups with feasible departures
-
-              // Only render if we have feasible disruptions (minimal fix)
-              return feasibleItems.length > 0 ? (
-                <div className="text-yellow-400 bg-yellow-400/10 p-2 rounded inline-block max-w-full mb-3 -ml-2">
-                  <div className="space-y-1">
-                    {feasibleItems.map(({ reason, items }, index) => (
-                      <div key={index} className="leading-tight">
-                        <strong>{items.map(item => item.time).join(', ')}:</strong> {reason.replace(/\.\s*läs mer på trafikläget\.?/gi, '.')}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null;
-            })()}
-            <div className="mb-3">
-              <div className="leading-relaxed">
-                {parseAndStyleDepartureTimes(section.replace(/Pendeltåg Norrut[:\s]*/g, '').replace(/^(<br\s*\/?>)+/gi, '').replace(/<br\s*\/?>\s*<br\s*\/?>\s*<strong>\s*<\/strong>\s*$/gi, ' ').replace(/(<br\s*\/?>)+$/gi, ''))}
-              </div>
-            </div>
-          </div>
-        )
-      } else if (section.includes('Bussar från')) {
-        // Bus section
-        return (
-          <div key="bus">
-            <h4 className="text-xl font-medium text-purple-100 mb-6 tracking-wide uppercase font-[Horsemen]">
-              Bussar
-            </h4>
-            <div className="mb-3">
-              <div className="leading-relaxed">
-                {parseAndStyleDepartureTimes(section.replace(/Bussar från Sördalavägen[:\s]*/g, '').replace(/^(<br\s*\/?>)+/gi, '').replace(/(<br\s*\/?>)+$/gi, ''))}
-              </div>
-            </div>
-          </div>
-        )
-      }
-      return null
-    }).filter(Boolean)
+  if (!isStructuredData) {
+    // Legacy fallback - show message about format upgrade
+    return (
+      <div className="text-orange-400">
+        <div>Uppgraderar dataformat...</div>
+        <div className="text-xs text-purple-200 mt-1">
+          (Startar om server för strukturerad data)
+        </div>
+      </div>
+    )
   }
 
-  const sections = parseTrainData(trainData.summary)
+  const structuredData = trainData as StructuredTransportData
+  const { trains, buses, deviations } = structuredData
+
+  // Filter for feasible departures (past and too-soon departures are hidden)
+  const feasibleTrains = trains.filter(train =>
+    train.minutes_until >= 0 && isFeasibleDeparture(train.minutes_until)
+  )
+
+  const feasibleBuses = buses.filter(bus =>
+    bus.minutes_until >= 0 && isFeasibleDeparture(bus.minutes_until)
+  )
+
+  // Only show deviations for feasible departures
+  const feasibleDeviations = deviations.filter(deviation =>
+    isFeasibleDeparture(getMinutesUntilFromTime(deviation.time))
+  )
 
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {sections}
+        {/* Train Section */}
+        <div>
+          <h4 className="text-xl font-medium text-purple-100 mb-6 tracking-wide uppercase font-[Horsemen]">
+            Pendel norrut
+          </h4>
+
+          <DeviationAlerts deviations={feasibleDeviations} />
+
+          <div className="mb-3">
+            <div className="leading-relaxed">
+              {feasibleTrains.length > 0 ? (
+                feasibleTrains.map((train, index) => (
+                  <TrainDepartureLine key={index} departure={train} />
+                ))
+              ) : (
+                <div style={{ opacity: 0.6 }}>Inga pendeltåg inom en timme</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Bus Section */}
+        <div>
+          <h4 className="text-xl font-medium text-purple-100 mb-6 tracking-wide uppercase font-[Horsemen]">
+            Bussar
+          </h4>
+
+          <div className="mb-3">
+            <div className="leading-relaxed">
+              {feasibleBuses.length > 0 ? (
+                feasibleBuses.map((bus, index) => (
+                  <BusDepartureLine key={index} departure={bus} />
+                ))
+              ) : (
+                <div style={{ opacity: 0.6 }}>Inga bussar tillgängliga</div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
+}
+
+// Helper function to calculate minutes until departure from time string
+function getMinutesUntilFromTime(timeStr: string): number {
+  const now = new Date()
+  const [hours, minutes] = timeStr.split(':').map(Number)
+  const departureTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes)
+
+  // If time is earlier than current time, assume it's tomorrow
+  if (departureTime <= now) {
+    departureTime.setDate(departureTime.getDate() + 1)
+  }
+
+  return Math.round((departureTime.getTime() - now.getTime()) / (1000 * 60))
 }

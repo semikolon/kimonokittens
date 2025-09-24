@@ -117,12 +117,16 @@ class TrainDepartureHandler
       }
     end
 
-    # Construct deviation summary string
-    deviation_summary = departures.map do |d|
+    # Process deviations into structured format
+    deviations = departures.map do |d|
       unless d[:deviation_note].empty?
-        "#{d[:departure_time].strftime('%H:%M')} till #{d[:destination]}: #{d[:deviation_note].downcase}"
+        {
+          'time' => d[:departure_time].strftime('%H:%M'),
+          'destination' => d[:destination],
+          'reason' => d[:deviation_note].downcase
+        }
       end
-    end.compact.join(" ")
+    end.compact
 
     # Filter for trains that aren't cancelled and aren't past rushing to the station
     departures = departures.select do |d|
@@ -130,44 +134,55 @@ class TrainDepartureHandler
       d[:minutes_until_departure] > RUN_TIME
     end
 
-    if departures.any?
-      first_train_you_can_catch = departures.first
-      late = first_train_you_can_catch[:minutes_until_departure] < WALK_TIME
-      first_train_you_can_catch[:suffix] = if late
-        " - spring eller cykla!"
-      elsif first_train_you_can_catch[:minutes_until_departure] > (WALK_TIME + MARGIN_TIME + 5) # E.g. 8 + 5 + 5 = 18 mins
-        alarm_time = first_train_you_can_catch[:departure_time] - (WALK_TIME + MARGIN_TIME)*60
-        " - var redo #{alarm_time.strftime("%H:%M")}"
-      else
-        " - du hinner gå"
-      end
-    end
-    
-    departures.each { |d| d[:departure_time] = d[:departure_time].strftime('%H:%M') }
+    # Convert departures to structured format with timestamps
+    structured_trains = departures.map do |d|
+      departure_timestamp = d[:departure_time].to_i
 
-    # Process bus departures from Sördalavägen
-    bus_departures = @bus_data.slice(0, 4).map do |bus|
+      # Determine action suffix
+      late = d[:minutes_until_departure] < WALK_TIME
+      suffix = if late
+        "spring eller cykla!"
+      elsif d[:minutes_until_departure] > (WALK_TIME + MARGIN_TIME + 5)
+        alarm_time = d[:departure_time] - (WALK_TIME + MARGIN_TIME)*60
+        "var redo #{alarm_time.strftime('%H:%M')}"
+      else
+        "du hinner gå"
+      end
+
+      {
+        'departure_time' => d[:departure_time].strftime('%H:%M'),
+        'departure_timestamp' => departure_timestamp,
+        'minutes_until' => d[:minutes_until_departure],
+        'can_walk' => !late,
+        'line_number' => d[:line_number],
+        'destination' => d[:destination],
+        'deviation_note' => d[:deviation_note],
+        'summary_deviation_note' => d[:summary_deviation_note],
+        'suffix' => suffix
+      }
+    end
+
+    # Process bus departures from Sördalavägen into structured format
+    structured_buses = @bus_data.slice(0, 4).map do |bus|
       departure_time = Time.parse(bus['departure_time']).in_time_zone('Stockholm')
       minutes_until_departure = ((departure_time - now) / 60).round
-      display_time = departure_time.strftime('%H:%M')
-      time_of_departure = minutes_until_departure > 59 ? display_time : "#{display_time} - om #{minutes_until_departure}m"
+      departure_timestamp = departure_time.to_i
 
-      "#{bus['line_number']} till #{bus['destination']}: <strong>#{time_of_departure}</strong>"
+      {
+        'departure_time' => departure_time.strftime('%H:%M'),
+        'departure_timestamp' => departure_timestamp,
+        'minutes_until' => minutes_until_departure,
+        'line_number' => bus['line_number'],
+        'destination' => bus['destination']
+      }
     end
 
-    # Construct summary string - trains first, then buses
-    train_times = departures.map { |d| "<strong>#{d[:time_of_departure]}</strong>#{d[:summary_deviation_note]}#{d[:suffix]}" }
-    train_summary = train_times.join("<br/>")
-    train_summary = "Inga pendeltåg inom en timme" if train_times.empty? || train_times.all? { |t| t.include?('inställt') }
-
-    bus_summary = bus_departures.join("<br/>")
-    bus_summary = "Inga bussar tillgängliga" if bus_departures.empty?
-
-    summary = "Pendeltåg Norrut:<br/>#{train_summary}Bussar från Sördalavägen:<br/>#{bus_summary}"
-
+    # Return structured JSON response
     response = {
-      "summary" => summary,
-      "deviation_summary" => deviation_summary
+      "trains" => structured_trains,
+      "buses" => structured_buses,
+      "deviations" => deviations,
+      "generated_at" => Time.now.utc.iso8601
     }
 
     [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(response, mode: :compat) ]]
