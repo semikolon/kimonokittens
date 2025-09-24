@@ -199,9 +199,36 @@ end
 - **User Feedback Critical**: Visual verification required - claimed fixes may not work
 - **Layer Discipline**: Fix presentation problems in presentation code, not with backend bandaids
 
+## Session 3 Update - September 23, 2025 - CRITICAL RENT BUG DISCOVERED ⚠️
+
+### The 29,142 kr Problem - Database Connection Missing
+**User reported**: Rent showing 29,142 kr "för alla" instead of individual shares (~7,300 kr each)
+**Root cause discovered**: extract_roommates() method failing silently due to missing DATABASE_URL in web server environment
+
+**Investigation Results**:
+- **9 tenants found** when DATABASE_URL properly set
+- **Current tenants for Sept 2025**: Fredrik, Adam, Amanda, Rasmus (4 active tenants)
+- **Expected individual rent**: ~7,285 kr each (29,142 ÷ 4 current tenants)
+- **Problem**: Calculation defaulting to 1 person when no roommates extracted
+
+### Critical Fixes Applied
+1. **Added error handling**: Database connection failures now throw explicit errors instead of silent failures
+2. **Empty tenant validation**: System now fails fast when no tenants found
+3. **Sequel migration success**: PostgreSQL segfaults resolved, WebSocket reliability improved
+
+### Next Critical Steps
+1. **URGENT**: Fix DATABASE_URL access in web server environment
+2. **Verify**: Test that rent calculation divides properly among active tenants
+3. **Validate**: Ensure proper individual rent amounts displayed
+
+### Weather Icons Status
+- **Investigation complete**: WeatherWidget using proper condition-based icons
+- **No bug found**: Icons correctly mapped based on actual weather conditions
+
 ## Context Notes
 - This research was conducted as part of dashboard improvement session spanning train/bus widgets and rent transparency
 - User specifically requested transparency about calculation methodology and precise spacing fixes
 - Solution designed to be minimally invasive while maximally informative
 - Multiple user feedback cycles refined spacing, opacity, and text processing to pixel-perfect standards
 - Critical UX insight: 0m departures need normal opacity since "spring!" text is immediately actionable
+- **CRITICAL SESSION LEARNING**: Always fail fast when dependencies missing - silent failures create user-facing bugs
