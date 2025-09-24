@@ -79,9 +79,9 @@ const TrainDepartureLine: React.FC<{ departure: TrainDeparture }> = ({ departure
         alignItems: 'flex-start'
       }}
     >
-      <strong>{timeDisplay}</strong>
+<strong>{timeDisplay}</strong>
       {summary_deviation_note}
-      {suffix && ` ${suffix}`}
+{suffix && `\u00A0- ${suffix}`}
     </div>
   )
 }
@@ -102,7 +102,7 @@ const BusDepartureLine: React.FC<{ departure: BusDeparture }> = ({ departure }) 
         alignItems: 'flex-start'
       }}
     >
-      {line_number} till {destination}: <strong>{timeDisplay}</strong>
+{line_number} till {destination}:{'\u00A0'}<strong>{timeDisplay}</strong>
     </div>
   )
 }
