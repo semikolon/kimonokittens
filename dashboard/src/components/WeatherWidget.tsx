@@ -26,15 +26,59 @@ export function WeatherWidget() {
   }
 
   const getWeatherIcon = (iconUrl: string) => {
-    // Convert weather API icon to monochrome Lucide icons
-    if (iconUrl.includes('sun') || iconUrl.includes('clear')) return <Sun className="w-6 h-6 text-purple-200" />
-    if (iconUrl.includes('cloud') && iconUrl.includes('rain')) return <CloudRain className="w-6 h-6 text-purple-200" />
-    if (iconUrl.includes('cloud') && iconUrl.includes('snow')) return <CloudSnow className="w-6 h-6 text-purple-200" />
-    if (iconUrl.includes('cloud')) return <Cloud className="w-6 h-6 text-purple-200" />
-    if (iconUrl.includes('rain')) return <CloudDrizzle className="w-6 h-6 text-purple-200" />
-    if (iconUrl.includes('snow')) return <CloudSnow className="w-6 h-6 text-purple-200" />
-    if (iconUrl.includes('thunder')) return <Zap className="w-6 h-6 text-purple-200" />
-    return <CloudDrizzle className="w-6 h-6 text-purple-200" />
+    // Extract numeric code from WeatherAPI icon URL (e.g., "113.png" from "//cdn.weatherapi.com/weather/64x64/day/113.png")
+    const codeMatch = iconUrl.match(/\/(\d+)\.png$/)
+    const code = codeMatch ? codeMatch[1] : null
+
+    // Map WeatherAPI codes to Lucide icons
+    switch (code) {
+      case '113': // Sunny/Clear
+        return <Sun className="w-6 h-6 text-purple-200" />
+      case '116': // Partly cloudy
+      case '119': // Cloudy
+      case '122': // Overcast
+        return <Cloud className="w-6 h-6 text-purple-200" />
+      case '143': // Mist
+      case '248': // Fog
+      case '260': // Freezing fog
+        return <Cloud className="w-6 h-6 text-purple-200" />
+      case '176': // Patchy rain possible
+      case '263': // Patchy light drizzle
+      case '266': // Light drizzle
+      case '281': // Freezing drizzle
+      case '284': // Heavy freezing drizzle
+        return <CloudDrizzle className="w-6 h-6 text-purple-200" />
+      case '296': // Light rain
+      case '299': // Moderate rain at times
+      case '302': // Moderate rain
+      case '305': // Heavy rain at times
+      case '308': // Heavy rain
+      case '353': // Light rain shower
+      case '356': // Moderate or heavy rain shower
+      case '359': // Torrential rain shower
+        return <CloudRain className="w-6 h-6 text-purple-200" />
+      case '179': // Patchy snow possible
+      case '227': // Blowing snow
+      case '230': // Blizzard
+      case '323': // Patchy light snow
+      case '326': // Light snow
+      case '329': // Patchy moderate snow
+      case '332': // Moderate snow
+      case '335': // Patchy heavy snow
+      case '338': // Heavy snow
+      case '368': // Light snow showers
+      case '371': // Moderate or heavy snow showers
+        return <CloudSnow className="w-6 h-6 text-purple-200" />
+      case '200': // Thundery outbreaks possible
+      case '386': // Patchy light rain with thunder
+      case '389': // Moderate or heavy rain with thunder
+      case '392': // Patchy light snow with thunder
+      case '395': // Moderate or heavy snow with thunder
+        return <Zap className="w-6 h-6 text-purple-200" />
+      default:
+        // Fallback for unknown codes
+        return <Cloud className="w-6 h-6 text-purple-200" />
+    }
   }
 
   const getAQIText = (usEpaIndex: number) => {
