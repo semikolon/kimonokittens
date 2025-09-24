@@ -199,6 +199,90 @@ end
 - **User Feedback Critical**: Visual verification required - claimed fixes may not work
 - **Layer Discipline**: Fix presentation problems in presentation code, not with backend bandaids
 
+## Session 4 Update - September 24, 2025 - CRITICAL RENT BUG RESOLVED ✅
+
+### **SUCCESS: 29,142 kr → 7,286 kr Individual Rent Shares**
+
+**FINAL RESOLUTION**: Critical rent calculation bug completely fixed through systematic debugging:
+
+### Root Causes Identified & Fixed:
+1. **Symbol vs String Keys Incompatibility**:
+   - **Problem**: Sequel ORM returns symbol keys (`:name`) but existing `extract_roommates()` expected string keys (`'name'`)
+   - **Fix**: Added `transform_keys(&:to_s)` to `RentDb.get_tenants()` method
+   - **Impact**: Enabled proper tenant extraction from database
+
+2. **Date Type Conversion Error**:
+   - **Problem**: Database returns Time objects but `Date.parse()` expected strings
+   - **Fix**: Added robust date handling for both String and Time objects using `.to_date` method
+   - **Impact**: Prevented "no implicit conversion of Time into String" errors
+
+3. **Data Quality Issue**:
+   - **Problem**: Invalid tenant "Camila" in database (never lived in house)
+   - **Fix**: Removed from database per user request
+   - **Impact**: Cleaner tenant list for calculations
+
+### **Technical Implementation**:
+```ruby
+# Fixed RentDb.get_tenants() - Symbol to String Key Conversion
+results.map { |row| row.transform_keys(&:to_s) }
+
+# Fixed extract_roommates() - Robust Date Handling
+start_date = if start_date_raw.is_a?(String)
+  Date.parse(start_date_raw)
+elsif start_date_raw.respond_to?(:to_date)
+  start_date_raw.to_date
+else
+  start_date_raw
+end
+```
+
+### **Verification Results**:
+- **Before**: `29,142 kr för alla` (total apartment rent)
+- **After**: `7,286 kr för alla` (correct individual share)
+- **Math Check**: 29,142 ÷ 4 current tenants = ~7,285 kr ✅
+- **Active Tenants**: Fredrik, Adam, Amanda, Rasmus (4 people)
+- **Server Status**: Running successfully with live data
+
+### **Date/Time Format Modernization Initiative**
+**User Request**: "Make it as easy as possible for the frontend to understand and decode the date, time format sent from the backend"
+
+**Current Issues**:
+- Train/bus data sent as HTML strings: `"23:35 - om 10m - du hinner gå"`
+- Frontend requires complex regex parsing to extract structured data
+- No standardized date/time format across APIs
+
+**Proposed Solution**:
+```json
+// Instead of HTML string, send structured JSON:
+{
+  "departure_time": "23:35",
+  "departure_timestamp": 1758662100,
+  "minutes_until": 10,
+  "can_walk": true,
+  "line": "Pendeltåg Norrut",
+  "destination": "Norrut"
+}
+```
+
+**Best Practices for Date/Time Transmission**:
+1. **ISO 8601 strings** for human-readable dates: `"2025-09-24T21:26:10Z"`
+2. **Unix timestamps** for calculations: `1758662770`
+3. **Structured objects** for complex time data (departure times, durations)
+4. **Explicit timezone info** to prevent confusion
+5. **Separate formatting** from data - let frontend decide presentation
+
+### **Next Steps**:
+1. **PRIORITY**: Convert train/bus data from HTML to structured JSON
+2. Standardize all backend APIs to use consistent date/time formats
+3. Update frontend to consume structured data instead of parsing HTML
+4. Fix weather icons to show different conditions (currently shows rain for everything)
+
+### **Session Impact**:
+- **Critical Production Bug**: RESOLVED ✅
+- **User Experience**: Rent widget now shows correct individual amounts
+- **Technical Debt**: Reduced through better date handling patterns
+- **Architecture**: Foundation laid for consistent date/time APIs
+
 ## Session 3 Update - September 23, 2025 - CRITICAL RENT BUG DISCOVERED ⚠️
 
 ### The 29,142 kr Problem - Database Connection Missing
