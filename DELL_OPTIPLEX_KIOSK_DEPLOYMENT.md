@@ -986,6 +986,147 @@ sudo systemctl start kimonokittens-*
 
 ---
 
+## 🤖 Claude Code Automation Analysis
+
+### **Automation Feasibility Breakdown**
+
+This deployment guide can be **85-90% automated** with Claude Code, but requires understanding of manual intervention points:
+
+#### **✅ Fully Automatable (No Manual Intervention)**
+- File creation (systemd services, nginx configs, scripts)
+- Ruby/Node.js dependency installation via package managers
+- Git repository cloning and setup
+- Application builds (`npm run build`)
+- Basic directory structure creation
+
+#### **🔐 Requires Sudo/Root Access (But Scriptable)**
+Most sudo operations can be automated if Claude Code has sudo access:
+
+```bash
+# These need sudo but are scriptable:
+sudo apt install nginx chromium-browser ruby nodejs npm
+sudo systemctl enable/start services
+sudo ufw firewall configuration
+sudo mkdir /var/www/kimonokittens
+sudo chown operations
+sudo cp service files to /etc/systemd/system/
+```
+
+#### **👤 Manual Operations Required**
+
+**1. User Account Setup:**
+```bash
+# These need manual setup or careful scripting:
+sudo useradd kimonokittens
+sudo useradd kiosk
+sudo usermod -a -G video kiosk
+```
+
+**2. LightDM Configuration** (The Big Manual Step):
+```bash
+# Requires editing system files:
+sudo nano /etc/lightdm/lightdm.conf
+# OR can be scripted with:
+sudo sed -i 's/#autologin-user=/autologin-user=kiosk/' /etc/lightdm/lightdm.conf
+```
+
+**3. GitHub Webhook Configuration:**
+- Go to GitHub repo settings → Webhooks
+- Add webhook URL manually: `http://your-optiplex-ip:9001/webhook`
+- Set secret token
+
+#### **🔄 Physical Operations Required**
+- **At least 1 reboot** after LightDM configuration
+- **Keyboard/mouse removal** (after testing)
+- **Monitor connection verification**
+
+### **💡 What is LightDM?**
+
+**LightDM** = **"Light Display Manager"** - Think of it as the **login screen controller** for Linux:
+
+- **Normal desktop**: Shows login screen → user logs in → desktop loads
+- **Kiosk mode**: **Automatically logs in** → **skips to browser fullscreen**
+
+```
+Boot → LightDM → Auto-login 'kiosk' user → Launch browser kiosk
+```
+
+**Alternative approaches** (more automation-friendly):
+
+#### **Option A: Docker Kiosk** (95% Automated)
+```bash
+# Could run everything in containers
+docker-compose up -d  # Fully scriptable
+```
+
+#### **Option B: Systemd User Services** (90% Automated)
+```bash
+# Skip LightDM, use systemd --user services instead
+systemctl --user enable kiosk-browser
+```
+
+#### **Option C: X11 Auto-start** (Simpler)
+```bash
+# Add to .xinitrc instead of LightDM
+echo "chromium --kiosk http://localhost" >> ~/.xinitrc
+```
+
+### **🚀 Recommended Automation Strategy**
+
+**Phase 1: Claude Code Automated** (90% of setup)
+- Install all packages with `sudo apt install`
+- Create all config files and scripts
+- Setup systemd services and nginx configuration
+- Build and deploy applications
+- Configure firewall and security settings
+
+**Phase 2: Manual Finish** (10% remaining)
+- Run one command to enable autologin: `sudo sed -i 's/#autologin-user=/autologin-user=kiosk/' /etc/lightdm/lightdm.conf`
+- Set GitHub webhook in browser (5 minutes)
+- Reboot once: `sudo reboot`
+- Remove keyboard/mouse physically
+
+**Phase 3: Test & Verify**
+- System should boot to kiosk automatically
+- Dashboard should auto-update from GitHub pushes
+
+### **📋 Manual Checklist for Human**
+
+After Claude Code completes automated setup:
+
+```bash
+# 1. Enable kiosk autologin (can be scripted)
+sudo sed -i 's/#autologin-user=/autologin-user=kiosk/' /etc/lightdm/lightdm.conf
+
+# 2. Set webhook secret in service
+sudo systemctl edit kimonokittens-webhook
+# Add: Environment="WEBHOOK_SECRET=your-github-webhook-secret"
+
+# 3. Reboot to activate kiosk mode
+sudo reboot
+
+# 4. Add GitHub webhook in browser
+# Settings → Webhooks → Add webhook
+# URL: http://your-optiplex-ip:9001/webhook
+# Secret: match the one from step 2
+
+# 5. Test deployment
+git push origin master
+# Should trigger auto-update on kiosk
+```
+
+### **💭 Automation Verdict**
+
+**Claude Code can handle 85-90% automatically** with sudo access. The remaining manual steps are:
+1. **One LightDM configuration line** (scriptable)
+2. **GitHub webhook setup** (5 minutes in browser)
+3. **One reboot** to activate kiosk mode
+4. **Physical hardware** (unplug keyboard/mouse)
+
+**Total manual time after Claude Code**: ~15 minutes + 1 reboot
+
+---
+
 ## 📚 TODO Integration
 
 Add this deployment as the top priority in TODO.md:
