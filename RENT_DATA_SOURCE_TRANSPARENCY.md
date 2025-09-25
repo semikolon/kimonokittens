@@ -365,12 +365,159 @@ interface StructuredTransportData {
 - **📋 PENDING**: Weather icons investigation
 - **📋 PENDING**: Date/time standardization across all APIs
 
-### **Next Session Priorities**:
-1. **IMMEDIATE**: Clean server restart and frontend visual verification
-2. **CRITICAL**: Screenshot testing of new JSON format display
-3. **ITERATE**: Fix any display issues found in visual testing
-4. **COMPLETE**: Weather icons investigation and fixes
-5. **FINAL**: Comprehensive date/time format standardization
+### **Detailed Implementation Plan for Session Completion**:
+
+#### 🎯 **PHASE 1: Process Management & Server Setup** (CRITICAL Priority)
+**Objective**: Systematically eliminate Ruby process conflicts and start clean server
+
+**Task 1.1: Clean Process Environment**
+- Action: `ps aux | grep ruby` → identify ALL PIDs → `kill [PID1] [PID2] [PID3]` by specific PID
+- Verification: `lsof -i :3001,:9999` should show no processes
+- Success Criteria: Ports 3001/9999 completely free
+
+**Task 1.2: Launch Clean Server**
+- Action: `PORT=3001 ENABLE_BROADCASTER=1 ruby puma_server.rb`
+- Test: `curl -s http://localhost:3001/data/train_departures | head -20`
+- Expected: Structured JSON `{"trains": [...], "buses": [...], "deviations": [...]}`
+
+#### 🖼️ **PHASE 2: Visual Verification & Frontend Testing** (HIGH Priority)
+**Objective**: Screenshot verification and debug any display issues with new JSON format
+
+**Task 2.1: Dashboard Screenshot**
+- Browser: Navigate to `http://localhost:3000`
+- Wait: 10 seconds for WebSocket data load
+- Capture: Full page screenshot for analysis
+- Look for: Proper spacing, time-based opacity, no "Uppgraderar dataformat" message
+
+**Task 2.2: Debug Display Issues**
+Potential issues to investigate:
+- "Uppgraderar dataformat" → Backend still using old HTML format
+- Empty/error states → WebSocket connection problems
+- Malformed displays → Frontend parsing issues
+- Missing spacing → Text processing logic errors
+- TypeScript errors → Interface mismatches
+
+#### 🌤️ **PHASE 3: Weather Icons Investigation & Fix** (MEDIUM Priority)
+**Objective**: Fix weather widget showing same rain icon for all conditions
+
+**Task 3.1: Analyze Weather Widget**
+- Read: `dashboard/src/components/WeatherWidget.tsx`
+- API Test: `curl http://localhost:3001/data/weather | jq .`
+- Identify: Backend vs frontend vs asset issue
+
+**Task 3.2: Implement Weather Icon Mapping**
+Backend fix (if needed):
+```ruby
+condition = case weather_data['weather'][0]['main']
+when 'Clear' then 'sunny'
+when 'Clouds' then 'cloudy'
+when 'Rain' then 'rainy'
+when 'Snow' then 'snowy'
+when 'Thunderstorm' then 'thunderstorm'
+when 'Drizzle' then 'rainy'
+when 'Mist', 'Fog' then 'cloudy'
+end
+```
+
+**Task 3.2b: Install White/Monochrome Icon Set**
+- **Research**: Find suitable monochrome weather icon set (Lucide, Feather Icons, or Heroicons)
+- **Install**: `npm install lucide-react` or similar icon package
+- **Import**: Add weather icon imports to WeatherWidget component
+- **Style**: Apply white/gray coloring with proper sizing (w-6 h-6 or similar)
+- **Consistency**: Ensure icon style matches overall dashboard design
+
+Frontend fix (if needed):
+```tsx
+// Use white-shaded/monochrome icon set instead of colorful emojis
+const getWeatherIcon = (condition: string) => {
+  // Option 1: Lucide React icons (recommended)
+  switch(condition.toLowerCase()) {
+    case 'sunny': return <Sun className="w-6 h-6 text-white" />
+    case 'cloudy': return <Cloud className="w-6 h-6 text-white" />
+    case 'rainy': return <CloudRain className="w-6 h-6 text-white" />
+    case 'snowy': return <CloudSnow className="w-6 h-6 text-white" />
+    case 'thunderstorm': return <Zap className="w-6 h-6 text-white" />
+    default: return <CloudSun className="w-6 h-6 text-white" />
+  }
+
+  // Option 2: If using SVG or CSS icons
+  // return <i className={`weather-icon weather-${condition.toLowerCase()}`} />
+}
+```
+
+**Task 3.3: Simulate Different Weather Conditions**
+- **Approach**: Temporarily modify weather handler to return different `weather_data['weather'][0]['main']` values
+- **Test Conditions**: 'Clear', 'Clouds', 'Rain', 'Snow', 'Thunderstorm', 'Drizzle', 'Mist'
+- **Method**: Edit weather handler, restart server, screenshot dashboard for each condition
+- **Documentation**: Screenshot each weather state to prove monochrome icons work correctly
+- **Verification**: Icons should change from current (likely rain) to appropriate white/monochrome condition icon
+- **Icon Style**: Verify consistent white-shaded aesthetic matching dashboard design
+
+#### 📅 **PHASE 4: Date/Time Standardization** (MEDIUM Priority)
+**Objective**: Standardize all APIs to consistent date/time formats
+
+**Task 4.1: API Audit**
+Check current formats in:
+- Weather API: `curl -s http://localhost:3001/data/weather | jq . | grep -E "(time|date)"`
+- Strava API: `curl -s http://localhost:3001/data/strava_stats | jq . | grep -E "(time|date)"`
+- Temperature API: `curl -s http://localhost:3001/data/temperature | jq . | grep -E "(time|date)"`
+
+**Task 4.2: Implement Standardization**
+Target format for all APIs:
+```json
+{
+  "timestamp": 1758662770,           // Unix timestamp for calculations
+  "iso_time": "2025-09-24T21:26:10Z", // ISO 8601 for display
+  "generated_at": "2025-09-24T21:26:10Z", // When data was fetched
+  "expires_at": "2025-09-24T21:31:10Z"    // When data becomes stale
+}
+```
+
+#### 🧪 **PHASE 5: Testing & Documentation** (HIGH Priority)
+**Objective**: Screenshot verification for hallway dashboard display
+
+**Task 5.1: Widget Verification**
+- **TrainWidget**: JSON format displays properly, spacing fixed, time-based opacity working
+- **WeatherWidget**: Different icons for different conditions, proper formatting
+- **StravaWidget**: Compatible with any new time format changes
+- **TemperatureWidget**: Compatible with any new time format changes
+- **RentWidget**: Transparency indicator still functioning correctly
+
+**Task 5.2: Screenshot Documentation** (Focused on portrait/vertical hallway screen)
+- **Primary**: Full dashboard screenshot in production orientation
+- **Verification**: Individual widget screenshots to prove each works correctly
+- **Weather Proof**: Multiple screenshots showing different simulated weather conditions
+- **Time Proof**: Screenshots at different times showing various train/bus schedules
+- **Note**: Only targeting the actual hallway dashboard orientation, no responsive testing needed
+
+**Success Criteria Summary:**
+✅ Dashboard loads <2s with no errors
+✅ Train/bus data shows proper spacing and time-based opacity
+✅ Weather shows different icons for different conditions
+✅ All widgets use consistent date/time formats
+✅ WebSocket connections stable
+✅ Screenshots prove professional interface
+
+**Implementation Notes:**
+- **Commit Strategy**: Commit often throughout phases, no need for specific commit planning
+- **Weather Testing**: Use temporary API modifications to simulate different conditions
+- **Screenshot Purpose**: Prove functionality to yourself and document working state
+- **Target Display**: Only portrait/vertical hallway dashboard orientation matters
+- **Process Management**: Use systematic PID identification rather than batch killing
+
+**Risk Mitigation:**
+- Server conflicts → PID-based process killing (`ps aux | grep ruby` → `kill [specific PIDs]`)
+- WebSocket issues → Clear cache, restart browser, verify connection
+- Time zones → UTC everywhere with frontend conversion
+- Cache/stale data → Proper cache headers and expiration
+- Weather simulation → Temporary handler modifications for testing different conditions
+
+**Previous Session Priorities** (for reference):
+1. ✅ Clean server restart and frontend visual verification
+2. ✅ Screenshot testing of new JSON format display
+3. 📋 Fix any display issues found in visual testing
+4. 📋 Weather icons investigation and fixes
+5. 📋 Comprehensive date/time format standardization
 
 ### **Key Files Modified This Session**:
 - `handlers/train_departure_handler.rb` - Complete JSON API conversion
