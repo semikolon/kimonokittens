@@ -148,9 +148,28 @@ class StravaWorkoutsHandler
     recent_pace = "#{(recent_pace / 60).floor}:#{(recent_pace % 60).to_s.rjust(2, '0')}"
     ytd_pace = "#{(ytd_pace / 60).floor}:#{(ytd_pace % 60).to_s.rjust(2, '0')}"
 
-    since_date = (Time.now - 4 * 7 * 24 * 60 * 60).strftime("%-d %b").downcase
+    since_date_obj = Time.now - 4 * 7 * 24 * 60 * 60
+    since_date = since_date_obj.strftime("%-d %b").downcase
+    year_start = Time.new(Time.now.year, 1, 1)
+
     {
-      runs: "<strong>#{recent_distance} km</strong> sedan #{since_date} - #{recent_distance_per_run} km per tur - #{recent_pace} min/km<br/><strong>#{ytd_distance} km</strong> sedan 1 jan - #{ytd_distance_per_run} km per tur - #{ytd_pace} min/km"
+      runs: "<strong>#{recent_distance} km</strong> sedan #{since_date} - #{recent_distance_per_run} km per tur - #{recent_pace} min/km<br/><strong>#{ytd_distance} km</strong> sedan 1 jan - #{ytd_distance_per_run} km per tur - #{ytd_pace} min/km",
+      recent_period: {
+        start_date: since_date_obj.utc.iso8601,
+        start_timestamp: since_date_obj.to_i,
+        distance_km: recent_distance,
+        count: recent_count.to_i,
+        pace: recent_pace
+      },
+      ytd_period: {
+        start_date: year_start.utc.iso8601,
+        start_timestamp: year_start.to_i,
+        distance_km: ytd_distance,
+        count: ytd_count.to_i,
+        pace: ytd_pace
+      },
+      generated_at: Time.now.utc.iso8601,
+      generated_timestamp: Time.now.to_i
     }
 
   end

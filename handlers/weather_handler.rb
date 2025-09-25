@@ -70,6 +70,8 @@ class WeatherHandler
   end
 
   def transform_weather_data(raw_data)
+    now = Time.now
+
     {
       'current' => {
         'temp_c' => raw_data['current']['temp_c'],
@@ -80,12 +82,17 @@ class WeatherHandler
         'humidity' => raw_data['current']['humidity'],
         'wind_kph' => raw_data['current']['wind_kph'],
         'wind_dir' => raw_data['current']['wind_dir'],
-        'air_quality' => raw_data.dig('current', 'air_quality')
+        'air_quality' => raw_data.dig('current', 'air_quality'),
+        'last_updated' => raw_data['current']['last_updated'],
+        'last_updated_timestamp' => Time.parse(raw_data['current']['last_updated']).to_i
       },
       'forecast' => {
         'forecastday' => raw_data['forecast']['forecastday'].map do |day|
+          date = Date.parse(day['date'])
           {
-            'date' => day['date'],
+            'date' => day['date'], # Keep original YYYY-MM-DD format
+            'date_iso8601' => date.iso8601, # Add ISO 8601 format
+            'date_timestamp' => date.to_time.to_i, # Add Unix timestamp for beginning of day
             'day' => {
               'maxtemp_c' => day['day']['maxtemp_c'],
               'mintemp_c' => day['day']['mintemp_c'],
@@ -101,7 +108,9 @@ class WeatherHandler
       'location' => {
         'name' => raw_data['location']['name'],
         'country' => raw_data['location']['country']
-      }
+      },
+      'generated_at' => now.utc.iso8601,
+      'generated_timestamp' => now.to_i
     }
   end
 end 

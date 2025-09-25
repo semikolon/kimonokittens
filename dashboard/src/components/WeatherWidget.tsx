@@ -120,7 +120,7 @@ export function WeatherWidget() {
           {weatherData.current.air_quality && (
             <div className="flex items-center justify-end space-x-1 text-purple-200">
               <Hexagon className="w-4 h-4" />
-              <span>AQI: {getAQIText(weatherData.current.air_quality.us_epa_index)}</span>
+              <span>Luftkvalitet: {getAQIText(weatherData.current.air_quality['us-epa-index'])}</span>
             </div>
           )}
         </div>
