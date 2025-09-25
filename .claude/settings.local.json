@@ -96,7 +96,10 @@
       "Bash(PORT=3001 ENABLE_BROADCASTER=1 ruby puma_server.rb)",
       "Bash(sudo lsof:*)",
       "Bash(netstat:*)",
-      "WebFetch(domain:www.weatherapi.com)"
+      "WebFetch(domain:www.weatherapi.com)",
+      "Bash(git push:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git pull:*)"
     ],
     "deny": []
   }
