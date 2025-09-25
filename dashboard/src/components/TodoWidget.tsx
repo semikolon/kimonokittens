@@ -58,10 +58,10 @@ export function TodoWidget() {
             {/* Glowing orange bullet point */}
             <div className="relative mr-3">
               <div
-                className="w-2 h-2 bg-orange-500 rounded-full"
+                className="w-3 h-3 bg-orange-500 rounded-full"
                 style={{
-                  boxShadow: '0 0 8px #f97316, 0 0 16px #f97316, 0 0 24px #f97316',
-                  filter: 'brightness(1.2)'
+                  boxShadow: '0 0 10px #f97316, 0 0 12px #f97316, 0 0 26px #f97316',
+                  filter: 'brightness(1.1)'
                 }}
               />
               {/* Additional glow layer for more intensity */}
@@ -73,7 +73,6 @@ export function TodoWidget() {
                 }}
               />
             </div>
-            {/* Text with same typography as existing */}
             <span style={{ fontWeight: 'bold' }}>{todo.text}</span>
           </li>
         ))}

@@ -108,7 +108,7 @@ export function ClockWidget() {
               </tspan>
               <tspan
                 fill="url(#minutesGradient)"
-                dx="15"
+                dx="18"
               >
                 {displayTime.getMinutes().toString().padStart(2, '0')}
               </tspan>
