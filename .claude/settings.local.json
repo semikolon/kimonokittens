@@ -99,7 +99,8 @@
       "WebFetch(domain:www.weatherapi.com)",
       "Bash(git push:*)",
       "Bash(git rev-parse:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(git rev-list:*)"
     ],
     "deny": []
   }
