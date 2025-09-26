@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { useData } from '../context/DataContext'
 import { Thermometer, Target, Droplets, Zap } from 'lucide-react'
 
 export function TemperatureWidget() {
   const { state } = useData()
   const { temperatureData, connectionStatus } = state
+  const [isStatusChanging, setIsStatusChanging] = useState(false)
+  const [prevSmartStatus, setPrevSmartStatus] = useState('')
 
   const loading = connectionStatus === 'connecting' && !temperatureData
   const error = connectionStatus === 'closed' ? 'WebSocket-anslutning avbruten' : null
@@ -29,6 +31,36 @@ export function TemperatureWidget() {
   const getTargetIcon = () => <Target className="w-6 h-6 text-purple-200" />
   const getHumidityIcon = () => <Droplets className="w-6 h-6 text-purple-200" />
   const getHotWaterIcon = () => <Zap className="w-6 h-6 text-purple-200" />
+
+  // Smart status function for animation tracking
+  const getSmartStatus = () => {
+    if (!temperatureData) return ''
+
+    const supplyTemp = parseFloat(temperatureData.supplyline_temperature?.replace('°', '') || '0')
+    const isOn = !temperatureData.heatpump_disabled
+    const hasDemand = temperatureData.heating_demand === 'JA'
+
+    if (isOn && hasDemand && supplyTemp > 35) {
+      return 'värmer aktivt'
+    } else if (isOn && !hasDemand) {
+      return 'lagom varmt'
+    } else if (!isOn && hasDemand) {
+      return 'ineffektiv drift'
+    } else {
+      return 'värmer ej'
+    }
+  }
+
+  // Track status changes for animation
+  const currentSmartStatus = getSmartStatus()
+  useEffect(() => {
+    if (currentSmartStatus && prevSmartStatus && currentSmartStatus !== prevSmartStatus) {
+      setIsStatusChanging(true)
+      const timer = setTimeout(() => setIsStatusChanging(false), 800) // Match animation duration
+      return () => clearTimeout(timer)
+    }
+    setPrevSmartStatus(currentSmartStatus)
+  }, [currentSmartStatus, prevSmartStatus])
 
   // Heatpump schedule progress bar logic
   const heatpumpSchedule = useMemo(() => {
@@ -100,7 +132,7 @@ export function TemperatureWidget() {
     }
 
     // Check if data is stale (>2h old) - compare browser time vs device timestamp
-    const hoursOld = (browserTime.getTime() - deviceTime.getTime()) / (1000 * 60 * 60)
+    const hoursOld = (now.getTime() - deviceTime.getTime()) / (1000 * 60 * 60)
     const isStale = Math.abs(hoursOld) > 2 // Use absolute value to handle timezone issues
 
     // Check heating states based on supply line temperature
@@ -111,10 +143,10 @@ export function TemperatureWidget() {
 
     const isActivelyHeating = forceActiveHeating || (!temperatureData.heatpump_disabled &&
                               temperatureData.heating_demand === 'JA' &&
-                              supplyTemp > 35)
+                              supplyTemp > 40)
     const hasHotSupplyLine = !forceActiveHeating && (!temperatureData.heatpump_disabled &&
                              temperatureData.heating_demand === 'NEJ' &&
-                             supplyTemp > 35)
+                             supplyTemp > 40)
 
     return {
       hours,
@@ -131,27 +163,15 @@ export function TemperatureWidget() {
     const { hours, isStale, isActivelyHeating, hasHotSupplyLine } = heatpumpSchedule
     const barOpacity = isStale ? '40%' : '100%'
 
-    // Smart status consolidation
-    const getSmartStatus = () => {
-      const supplyTemp = parseFloat(temperatureData.supplyline_temperature?.replace('°', '') || '0')
-      const isOn = !temperatureData.heatpump_disabled
-      const hasDemand = temperatureData.heating_demand === 'JA'
-
-      if (isOn && hasDemand && supplyTemp > 35) {
-        return 'värmer aktivt'
-      } else if (isOn && !hasDemand) {
-        return 'lagom varmt'
-      } else if (!isOn && hasDemand) {
-        return 'ineffektiv drift'
-      } else {
-        return 'värmer ej'
-      }
-    }
+    // Use the smart status from parent component
 
     return (
       <div className="mt-10 mb-6">
-        <div className="text-purple-200 mb-2" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>
-          {getSmartStatus()}
+        <div
+          className={`text-purple-200 mb-2 heatpump-status ${isStatusChanging ? 'changing' : ''}`}
+          style={{ textTransform: 'uppercase', fontSize: '0.8em' }}
+        >
+          {currentSmartStatus}
         </div>
         <div
           className="relative h-5 rounded-lg overflow-visible"
@@ -188,7 +208,7 @@ export function TemperatureWidget() {
                   {/* Time cursor - only for current hour */}
                   {isCurrentHour && (
                     <div
-                      className="absolute top-0 h-full z-10 rounded-sm"
+                      className={`absolute top-0 h-full z-10 rounded-sm schedule-cursor ${isActivelyHeating ? 'heating-active' : ''}`}
                       style={{
                         width: '12px',
                         left: `${hourData.minuteProgress * 100}%`,
