@@ -102,6 +102,7 @@ export function TemperatureWidget() {
     }
   }, [temperatureData])
 
+
   const HeatpumpScheduleBar = () => {
     if (!heatpumpSchedule) return null
 
@@ -148,18 +149,21 @@ export function TemperatureWidget() {
                   }}
                 >
                   <div
-                    className={`h-full bg-white ${isCurrentHour && isActivelyHeating ? 'shadow-orange-400' : ''}`}
+                    className="h-full"
                     style={{
+                      backgroundColor: isCurrentHour && isActivelyHeating ? '#ff7800' : '#ffffff',
                       opacity: chunkOpacity,
                       mixBlendMode: 'overlay',
-                      boxShadow: isCurrentHour && isActivelyHeating ? '0 0 8px orange' : 'none'
+                      boxShadow: isCurrentHour && isActivelyHeating
+                        ? '0 0 24px rgba(255, 120, 0, 1), 0 0 48px rgba(255, 120, 0, 0.8), 0 0 72px rgba(255, 120, 0, 0.6), 0 0 96px rgba(255, 120, 0, 0.4)'
+                        : 'none'
                     }}
                   />
                   {isCurrentHour && (
                     <div
-                      className="absolute top-0 h-full bg-white z-10"
+                      className="absolute top-0 h-full z-10 rounded-sm bg-white"
                       style={{
-                        width: '5px',
+                        width: '7px',
                         left: `${hourData.minuteProgress * 100}%`,
                         transform: 'translateX(-50%)',
                         opacity: '90%'
