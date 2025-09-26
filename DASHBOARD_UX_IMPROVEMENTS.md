@@ -95,13 +95,37 @@ const hoursOld = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60)
 2. **`dashboard/src/components/WeatherWidget.tsx`** - Typography and information cleanup
 3. **`dashboard/src/App.tsx`** - Widget title semantic improvement
 
-## Next Phase: Supply Line Heat Flow Indicator
-**Planned features:**
-- Visual flow indicator showing heat transfer activity
-- Orange glow effects synchronized with active heating periods
-- Integration with existing schedule bar visual system
+## Phase 2: Time Synchronization & Auto-Detection
+**Location:** `dashboard/src/components/TemperatureWidget.tsx`
+
+### Problem Solved
+Device clock misconfiguration caused schedule bar to show incorrect current position:
+- Device timestamp: `15.49` (3:49 PM)
+- Schedule window: `16-21` (4-9 PM)
+- Browser time: Different timezone/clock setting
+- Result: Schedule visualization misaligned with actual device state
+
+### Auto-Detection Algorithm
+```typescript
+// Calculate time offset: device timestamp vs browser time
+const timeOffset = deviceTime.getTime() - browserTime.getTime()
+
+// Use browser time adjusted by detected offset
+const now = new Date(browserTime.getTime() + timeOffset)
+```
+
+### Benefits
+- **Self-correcting:** Automatically adapts when device clock gets fixed
+- **Universal:** Works with any time difference (not hardcoded 1-hour fix)
+- **Explicit compensation:** Offset calculation visible in code for debugging
+- **Maintains accuracy:** Schedule bar reflects device's time perspective
+
+### Additional Refinements
+- Consistent 35°C temperature threshold across status logic and glow effects
+- Strava widget background opacity reduced to `/10` for personal content distinction
+- Improved staleness detection using absolute time difference
 
 ---
 
-*Implementation completed: 2025-01-26*
-*Pattern: High-frequency UX iteration with real-time feedback optimization*
+*Implementation completed: 2025-09-26*
+*Pattern: Sustainable auto-detection over hardcoded fixes*
