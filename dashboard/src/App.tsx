@@ -111,7 +111,7 @@ function DashboardContent() {
         {/* Secondary content in organic layout */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
           <div className="md:col-span-2">
-            <Widget title="Hem" accent={true} horsemenFont={true}>
+            <Widget title="Huset" accent={true} horsemenFont={true}>
               <TemperatureWidget />
             </Widget>
           </div>
