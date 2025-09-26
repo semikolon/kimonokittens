@@ -117,18 +117,12 @@ export function WeatherWidget() {
             <Wind className="w-4 h-4" />
             <span>{weatherData.current.wind_kph} km/h {weatherData.current.wind_dir}</span>
           </div>
-          {weatherData.current.air_quality && (
-            <div className="flex items-center justify-end space-x-1 text-purple-200">
-              <Hexagon className="w-4 h-4" />
-              <span>Luftkvalitet: {getAQIText(weatherData.current.air_quality['us-epa-index'])}</span>
-            </div>
-          )}
         </div>
       </div>
 
       {/* 3-Day Forecast */}
       <div className="space-y-2">
-        <div className="text-purple-200 mb-2">3-dagars prognos</div>
+        <div className="text-purple-200 mb-2" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>3-dagars prognos</div>
         {weatherData.forecast.forecastday.slice(0, 3).map((day, index) => (
           <div key={day.date} className="flex items-center justify-between">
             <div className="flex items-center">
