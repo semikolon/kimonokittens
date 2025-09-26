@@ -36,7 +36,36 @@ export function TemperatureWidget() {
       return null
     }
 
-    const now = new Date()
+    // Auto-detect time offset between device and browser
+    const browserTime = new Date()
+    let deviceTime = new Date()
+    let timeOffset = 0 // in milliseconds
+
+    try {
+      const [time, date] = [temperatureData.last_updated_time, temperatureData.last_updated_date]
+      if (time && date) {
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAJ', 'JUN', 'JUL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEC']
+        const [day, monthStr] = date.split(' ')
+        const monthIndex = months.indexOf(monthStr.toUpperCase())
+        const [hourStr, minuteStr] = time.split('.')
+
+        if (monthIndex !== -1) {
+          deviceTime = new Date()
+          deviceTime.setMonth(monthIndex)
+          deviceTime.setDate(parseInt(day))
+          deviceTime.setHours(parseInt(hourStr))
+          deviceTime.setMinutes(parseInt(minuteStr))
+
+          // Calculate offset: device time - browser time
+          timeOffset = deviceTime.getTime() - browserTime.getTime()
+        }
+      }
+    } catch (e) {
+      console.warn('Could not parse device timestamp, using browser time:', e)
+    }
+
+    // Use browser time adjusted by detected offset for schedule calculations
+    const now = new Date(browserTime.getTime() + timeOffset)
     const currentHour = now.getHours()
 
     // Parse schedule (e.g., "11-17" means 11:00 to 17:00)
@@ -63,31 +92,9 @@ export function TemperatureWidget() {
       })
     }
 
-    // Check if data is stale (>2h old)
-    let isStale = false
-    try {
-      const [time, date] = [temperatureData.last_updated_time, temperatureData.last_updated_date]
-      if (time && date) {
-        // Parse Swedish date format "9 JUL" and time "14.12"
-        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAJ', 'JUN', 'JUL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEC']
-        const [day, monthStr] = date.split(' ')
-        const monthIndex = months.indexOf(monthStr.toUpperCase())
-        const [hourStr, minuteStr] = time.split('.')
-
-        if (monthIndex !== -1) {
-          const lastUpdate = new Date()
-          lastUpdate.setMonth(monthIndex)
-          lastUpdate.setDate(parseInt(day))
-          lastUpdate.setHours(parseInt(hourStr))
-          lastUpdate.setMinutes(parseInt(minuteStr))
-
-          const hoursOld = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60)
-          isStale = hoursOld > 2
-        }
-      }
-    } catch (e) {
-      console.warn('Could not parse last_updated timestamp:', e)
-    }
+    // Check if data is stale (>2h old) - compare browser time vs device timestamp
+    const hoursOld = (browserTime.getTime() - deviceTime.getTime()) / (1000 * 60 * 60)
+    const isStale = Math.abs(hoursOld) > 2 // Use absolute value to handle timezone issues
 
     // Check heating states based on supply line temperature
     const supplyTemp = parseFloat(temperatureData.supplyline_temperature?.replace('°', '') || '0')
@@ -119,7 +126,7 @@ export function TemperatureWidget() {
       const isOn = !temperatureData.heatpump_disabled
       const hasDemand = temperatureData.heating_demand === 'JA'
 
-      if (isOn && hasDemand && supplyTemp > 40) {
+      if (isOn && hasDemand && supplyTemp > 35) {
         return 'värmer aktivt'
       } else if (isOn && !hasDemand) {
         return 'standby'
@@ -131,7 +138,7 @@ export function TemperatureWidget() {
     }
 
     return (
-      <div className="mb-6">
+      <div className="my-8">
         <div className="text-purple-200 mb-1" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>
           {getSmartStatus()}
         </div>
