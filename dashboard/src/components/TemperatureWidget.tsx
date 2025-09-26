@@ -89,16 +89,20 @@ export function TemperatureWidget() {
       console.warn('Could not parse last_updated timestamp:', e)
     }
 
-    // Check if actively heating (on + demand + supply temp > 40°C)
+    // Check heating states based on supply line temperature
     const supplyTemp = parseFloat(temperatureData.supplyline_temperature?.replace('°', '') || '0')
     const isActivelyHeating = !temperatureData.heatpump_disabled &&
                               temperatureData.heating_demand === 'JA' &&
                               supplyTemp > 40
+    const hasHotSupplyLine = !temperatureData.heatpump_disabled &&
+                             temperatureData.heating_demand === 'NEJ' &&
+                             supplyTemp > 40
 
     return {
       hours,
       isStale,
-      isActivelyHeating
+      isActivelyHeating,
+      hasHotSupplyLine
     }
   }, [temperatureData])
 
@@ -106,7 +110,7 @@ export function TemperatureWidget() {
   const HeatpumpScheduleBar = () => {
     if (!heatpumpSchedule) return null
 
-    const { hours, isStale, isActivelyHeating } = heatpumpSchedule
+    const { hours, isStale, isActivelyHeating, hasHotSupplyLine } = heatpumpSchedule
     const barOpacity = isStale ? '40%' : '100%'
 
     // Smart status consolidation
@@ -151,11 +155,14 @@ export function TemperatureWidget() {
                   <div
                     className="h-full"
                     style={{
-                      backgroundColor: isCurrentHour && isActivelyHeating ? '#ff7800' : '#ffffff',
+                      backgroundColor: isCurrentHour && isActivelyHeating ? '#ff7800' :
+                                     isCurrentHour && hasHotSupplyLine ? '#00bcd4' : '#ffffff',
                       opacity: chunkOpacity,
                       mixBlendMode: 'overlay',
                       boxShadow: isCurrentHour && isActivelyHeating
                         ? '0 0 24px rgba(255, 120, 0, 1), 0 0 48px rgba(255, 120, 0, 0.8), 0 0 72px rgba(255, 120, 0, 0.6), 0 0 96px rgba(255, 120, 0, 0.4)'
+                        : isCurrentHour && hasHotSupplyLine
+                        ? '0 0 24px rgba(0, 188, 212, 1), 0 0 48px rgba(0, 188, 212, 0.8), 0 0 72px rgba(0, 188, 212, 0.6), 0 0 96px rgba(0, 188, 212, 0.4)'
                         : 'none'
                     }}
                   />
