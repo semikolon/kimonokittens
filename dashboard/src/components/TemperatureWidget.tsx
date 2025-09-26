@@ -93,10 +93,10 @@ export function TemperatureWidget() {
     const supplyTemp = parseFloat(temperatureData.supplyline_temperature?.replace('°', '') || '0')
     const isActivelyHeating = !temperatureData.heatpump_disabled &&
                               temperatureData.heating_demand === 'JA' &&
-                              supplyTemp > 40
+                              supplyTemp > 35
     const hasHotSupplyLine = !temperatureData.heatpump_disabled &&
                              temperatureData.heating_demand === 'NEJ' &&
-                             supplyTemp > 40
+                             supplyTemp > 35
 
     return {
       hours,
@@ -136,44 +136,60 @@ export function TemperatureWidget() {
           {getSmartStatus()}
         </div>
         <div
-          className="relative h-4 rounded-sm overflow-hidden"
-          style={{ opacity: barOpacity }}
+          className="relative h-4 rounded-lg overflow-visible"
+          style={{
+            opacity: barOpacity,
+            background: 'rgba(255, 255, 255, 0.2)',
+            mixBlendMode: 'overlay'
+          }}
         >
-          <div className="flex h-full">
+          {/* Single loop for all hour elements */}
+          <div className="absolute inset-0 flex">
             {hours.map((hourData, index) => {
-              const chunkOpacity = hourData.isScheduledOn ? '90%' : '30%'
+              const chunkOpacity = hourData.isScheduledOn ? '60%' : '10%'
               const isCurrentHour = hourData.isCurrentHour
 
               return (
                 <div
                   key={`${hourData.hour}-${index}`}
-                  className="flex-1 relative"
+                  className="flex-1 relative h-full"
                   style={{
                     marginRight: index < hours.length - 1 ? '2px' : '0'
                   }}
                 >
+                  {/* Background chunk */}
                   <div
                     className="h-full"
                     style={{
                       backgroundColor: isCurrentHour && isActivelyHeating ? '#ff7800' :
                                      isCurrentHour && hasHotSupplyLine ? '#00bcd4' : '#ffffff',
                       opacity: chunkOpacity,
-                      mixBlendMode: 'overlay',
-                      boxShadow: isCurrentHour && isActivelyHeating
-                        ? '0 0 24px rgba(255, 120, 0, 1), 0 0 48px rgba(255, 120, 0, 0.8), 0 0 72px rgba(255, 120, 0, 0.6), 0 0 96px rgba(255, 120, 0, 0.4)'
-                        : isCurrentHour && hasHotSupplyLine
-                        ? '0 0 24px rgba(0, 188, 212, 1), 0 0 48px rgba(0, 188, 212, 0.8), 0 0 72px rgba(0, 188, 212, 0.6), 0 0 96px rgba(0, 188, 212, 0.4)'
-                        : 'none'
+                      mixBlendMode: 'overlay'
                     }}
                   />
+
+                  {/* Glow effect - only for current hour with heating */}
+                  {isCurrentHour && (isActivelyHeating || hasHotSupplyLine) && (
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        boxShadow: isActivelyHeating
+                          ? '0 0 24px rgba(255, 120, 0, 1), 0 0 48px rgba(255, 120, 0, 0.8), 0 0 72px rgba(255, 120, 0, 0.6), 0 0 96px rgba(255, 120, 0, 0.4)'
+                          : '0 0 24px rgba(0, 188, 212, 1), 0 0 48px rgba(0, 188, 212, 0.8), 0 0 72px rgba(0, 188, 212, 0.6), 0 0 96px rgba(0, 188, 212, 0.4)'
+                      }}
+                    />
+                  )}
+
+                  {/* Time cursor - only for current hour */}
                   {isCurrentHour && (
                     <div
-                      className="absolute top-0 h-full z-10 rounded-sm bg-white"
+                      className="absolute top-0 h-full z-10 bg-white rounded-sm"
                       style={{
                         width: '7px',
                         left: `${hourData.minuteProgress * 100}%`,
                         transform: 'translateX(-50%)',
-                        opacity: '90%'
+                        opacity: '90%',
+                        boxShadow: '0 0 12px rgba(255, 255, 255, 0.8), 0 0 24px rgba(255, 255, 255, 0.5), 0 0 36px rgba(255, 255, 255, 0.3)'
                       }}
                     />
                   )}
