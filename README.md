@@ -29,6 +29,22 @@ The scripts for the rent calculation system also live at the repo root and `hand
 
 ---
 
+## Dashboard System
+
+The dashboard (`dashboard/`) is a React frontend that displays real-time home automation data including temperature, weather, transit, and Strava activity information.
+
+### Known Issues & Workarounds
+
+**Thermiq Heatpump Time Offset**: The Thermiq smart heatpump device clock is currently misconfigured by exactly -1 hour. The dashboard automatically compensates for this in `TemperatureWidget.tsx` with a fixed offset:
+
+```typescript
+const THERMIQ_TIME_OFFSET_HOURS = -1
+```
+
+This ensures the heatpump schedule visualization displays correctly relative to the device's actual operational state. Remove this offset when the device clock is corrected.
+
+---
+
 ## Rent Calculator System
 
 A Ruby system for calculating rent distribution among roommates and maintaining historical records of rent payments.
