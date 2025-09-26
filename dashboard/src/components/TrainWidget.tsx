@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useData } from '../context/DataContext'
 
 // Types for structured transport data
@@ -35,6 +35,51 @@ interface StructuredTransportData {
   generated_at: string
 }
 
+// Train identity tracking for animations
+const generateTrainId = (train: TrainDeparture): string =>
+  `${train.departure_time}-${train.line_number}-${train.destination}`
+
+const generateBusId = (bus: BusDeparture): string =>
+  `${bus.departure_time}-${bus.line_number}-${bus.destination}`
+
+// Hook for detecting list changes (not just data updates)
+const useTrainListChanges = (currentTrains: TrainDeparture[]) => {
+  const [prevTrainIds, setPrevTrainIds] = useState<Set<string>>(new Set())
+
+  return useMemo(() => {
+    const currentIds = new Set(currentTrains.map(generateTrainId))
+    const added = [...currentIds].filter(id => !prevTrainIds.has(id))
+    const removed = [...prevTrainIds].filter(id => !currentIds.has(id))
+
+    const hasStructuralChange = added.length > 0 || removed.length > 0
+
+    // Update state for next comparison (but don't trigger re-render)
+    setTimeout(() => {
+      setPrevTrainIds(currentIds)
+    }, 0)
+
+    return { hasStructuralChange, added, removed }
+  }, [currentTrains, prevTrainIds])
+}
+
+const useBusListChanges = (currentBuses: BusDeparture[]) => {
+  const [prevBusIds, setPrevBusIds] = useState<Set<string>>(new Set())
+
+  return useMemo(() => {
+    const currentIds = new Set(currentBuses.map(generateBusId))
+    const added = [...currentIds].filter(id => !prevBusIds.has(id))
+    const removed = [...prevBusIds].filter(id => !currentIds.has(id))
+
+    const hasStructuralChange = added.length > 0 || removed.length > 0
+
+    setTimeout(() => {
+      setPrevBusIds(currentIds)
+    }, 0)
+
+    return { hasStructuralChange, added, removed }
+  }, [currentBuses, prevBusIds])
+}
+
 // Helper functions for time-based styling
 const getTimeOpacity = (minutesUntil: number): number => {
   if (minutesUntil < 0) return 0.3 // Past times very faded
@@ -48,6 +93,88 @@ const getTimeOpacity = (minutesUntil: number): number => {
 
 const isFeasibleDeparture = (minutesUntil: number): boolean => {
   return minutesUntil >= 6 // Need at least 6 minutes to reach station
+}
+
+// Animated Train List Wrapper
+const AnimatedTrainList: React.FC<{
+  trains: TrainDeparture[];
+  renderItem: (train: TrainDeparture, index: number) => React.ReactNode;
+}> = ({ trains, renderItem }) => {
+  const { hasStructuralChange, removed } = useTrainListChanges(trains)
+  const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set())
+
+  // Handle train removal animation
+  useEffect(() => {
+    if (removed.length > 0) {
+      setAnimatingItems(new Set(removed))
+
+      // Clear animation state after animation completes
+      const timer = setTimeout(() => {
+        setAnimatingItems(new Set())
+      }, 400) // Match CSS transition duration
+
+      return () => clearTimeout(timer)
+    }
+  }, [removed])
+
+  return (
+    <div className="train-list-container">
+      {trains.map((train, index) => {
+        const trainId = generateTrainId(train)
+        const isAnimating = animatingItems.has(trainId)
+
+        return (
+          <div
+            key={trainId}
+            className={`train-departure-item ${isAnimating ? 'departing' : ''}`}
+            style={{ '--item-index': index } as React.CSSProperties}
+          >
+            {renderItem(train, index)}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// Animated Bus List Wrapper
+const AnimatedBusList: React.FC<{
+  buses: BusDeparture[];
+  renderItem: (bus: BusDeparture, index: number) => React.ReactNode;
+}> = ({ buses, renderItem }) => {
+  const { hasStructuralChange, removed } = useBusListChanges(buses)
+  const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (removed.length > 0) {
+      setAnimatingItems(new Set(removed))
+
+      const timer = setTimeout(() => {
+        setAnimatingItems(new Set())
+      }, 400)
+
+      return () => clearTimeout(timer)
+    }
+  }, [removed])
+
+  return (
+    <div className="train-list-container">
+      {buses.map((bus, index) => {
+        const busId = generateBusId(bus)
+        const isAnimating = animatingItems.has(busId)
+
+        return (
+          <div
+            key={busId}
+            className={`train-departure-item ${isAnimating ? 'departing' : ''}`}
+            style={{ '--item-index': index } as React.CSSProperties}
+          >
+            {renderItem(bus, index)}
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 // Format time display with action suffix
@@ -205,9 +332,12 @@ export function TrainWidget() {
           <div className="mb-3">
             <div className="leading-relaxed">
               {feasibleTrains.length > 0 ? (
-                feasibleTrains.map((train, index) => (
-                  <TrainDepartureLine key={index} departure={train} />
-                ))
+                <AnimatedTrainList
+                  trains={feasibleTrains}
+                  renderItem={(train, index) => (
+                    <TrainDepartureLine departure={train} />
+                  )}
+                />
               ) : (
                 <div style={{ opacity: 0.6 }}>Inga pendeltåg inom en timme</div>
               )}
@@ -224,9 +354,12 @@ export function TrainWidget() {
           <div className="mb-3">
             <div className="leading-relaxed">
               {feasibleBuses.length > 0 ? (
-                feasibleBuses.map((bus, index) => (
-                  <BusDepartureLine key={index} departure={bus} />
-                ))
+                <AnimatedBusList
+                  buses={feasibleBuses}
+                  renderItem={(bus, index) => (
+                    <BusDepartureLine departure={bus} />
+                  )}
+                />
               ) : (
                 <div style={{ opacity: 0.6 }}>Inga bussar tillgängliga</div>
               )}
