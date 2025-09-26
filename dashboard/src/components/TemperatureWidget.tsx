@@ -8,30 +8,6 @@ export function TemperatureWidget() {
   const [isStatusChanging, setIsStatusChanging] = useState(false)
   const [prevSmartStatus, setPrevSmartStatus] = useState('')
 
-  const loading = connectionStatus === 'connecting' && !temperatureData
-  const error = connectionStatus === 'closed' ? 'WebSocket-anslutning avbruten' : null
-
-  if (loading) {
-    return <div className="text-purple-200">Laddar...</div>
-  }
-
-  if (error) {
-    return (
-      <div>
-        <div className="text-red-400">Fel: {error}</div>
-      </div>
-    )
-  }
-
-  if (!temperatureData) {
-    return <div className="text-purple-200">Ingen data tillgänglig</div>
-  }
-
-  const getTemperatureIcon = () => <Thermometer className="w-6 h-6 text-purple-200" />
-  const getTargetIcon = () => <Target className="w-6 h-6 text-purple-200" />
-  const getHumidityIcon = () => <Droplets className="w-6 h-6 text-purple-200" />
-  const getHotWaterIcon = () => <Zap className="w-6 h-6 text-purple-200" />
-
   // Smart status function for animation tracking
   const getSmartStatus = () => {
     if (!temperatureData) return ''
@@ -156,6 +132,31 @@ export function TemperatureWidget() {
     }
   }, [temperatureData])
 
+  // Early returns after all hooks are called
+  const loading = connectionStatus === 'connecting' && !temperatureData
+  const error = connectionStatus === 'closed' ? 'WebSocket-anslutning avbruten' : null
+
+  if (loading) {
+    return <div className="text-purple-200">Laddar...</div>
+  }
+
+  if (error) {
+    return (
+      <div>
+        <div className="text-red-400">Fel: {error}</div>
+      </div>
+    )
+  }
+
+  if (!temperatureData) {
+    return <div className="text-purple-200">Ingen data tillgänglig</div>
+  }
+
+  // Helper functions
+  const getTemperatureIcon = () => <Thermometer className="w-6 h-6 text-purple-200" />
+  const getTargetIcon = () => <Target className="w-6 h-6 text-purple-200" />
+  const getHumidityIcon = () => <Droplets className="w-6 h-6 text-purple-200" />
+  const getHotWaterIcon = () => <Zap className="w-6 h-6 text-purple-200" />
 
   const HeatpumpScheduleBar = () => {
     if (!heatpumpSchedule) return null
