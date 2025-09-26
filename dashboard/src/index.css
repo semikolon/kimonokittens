@@ -228,11 +228,52 @@
   animation: statusMorph 0.8s ease-in-out;
 }
 
+/* Train List Sliding Animations */
+.train-list-container {
+  position: relative;
+}
+
+.train-departure-item {
+  transform: translateY(0);
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  opacity: 1;
+  will-change: transform, opacity;
+}
+
+/* Slide up animation for trains moving up */
+.train-departure-item.slide-up {
+  transform: translateY(-100%);
+}
+
+/* Fade out animation for departing trains */
+.train-departure-item.departing {
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+/* Slide in animation for new trains */
+.train-departure-item.arriving {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.train-departure-item.arrived {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Staggered animation support */
+.train-departure-item {
+  transition-delay: calc(var(--item-index) * 0.05s);
+}
+
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .train-time-update,
   .schedule-cursor,
-  .heatpump-status {
+  .heatpump-status,
+  .train-departure-item {
     animation: none !important;
     transition: none !important;
   }
