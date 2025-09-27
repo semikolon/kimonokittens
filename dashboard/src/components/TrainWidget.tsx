@@ -207,7 +207,7 @@ const TrainDepartureLine: React.FC<{ departure: TrainDeparture }> = ({ departure
       }}
     >
 <strong>{timeDisplay}</strong>
-      {summary_deviation_note}
+      {summary_deviation_note && `\u00A0${summary_deviation_note}`}
 {suffix && `\u00A0- ${suffix}`}
     </div>
   )
