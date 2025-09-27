@@ -20,6 +20,8 @@ class DataBroadcaster
     @threads << periodic(60) { fetch_and_publish('temperature_data', 'http://localhost:3001/data/temperature') }
     @threads << periodic(300) { fetch_and_publish('weather_data', 'http://localhost:3001/data/weather') }
     @threads << periodic(600) { fetch_and_publish('strava_data', 'http://localhost:3001/data/strava_stats') }
+    @threads << periodic(3600) { fetch_and_publish('rent_data', 'http://localhost:3001/api/rent/friendly_message') }
+    @threads << periodic(300) { fetch_and_publish_todos }
 
     puts "DataBroadcaster: All scheduled tasks started"
   end
@@ -32,6 +34,8 @@ class DataBroadcaster
       fetch_and_publish('strava_data', 'http://localhost:3001/data/strava_stats')
       fetch_and_publish('train_data', 'http://localhost:3001/data/train_departures')
       fetch_and_publish('temperature_data', 'http://localhost:3001/data/temperature')
+      fetch_and_publish('rent_data', 'http://localhost:3001/api/rent/friendly_message')
+      fetch_and_publish_todos
       puts "DataBroadcaster: Initial broadcasts complete"
     end
   end
@@ -44,6 +48,8 @@ class DataBroadcaster
       fetch_and_publish('strava_data', 'http://localhost:3001/data/strava_stats')
       fetch_and_publish('train_data', 'http://localhost:3001/data/train_departures')
       fetch_and_publish('temperature_data', 'http://localhost:3001/data/temperature')
+      fetch_and_publish('rent_data', 'http://localhost:3001/api/rent/friendly_message')
+      fetch_and_publish_todos
       puts "DataBroadcaster: Immediate data sent to new client"
     end
   end
@@ -85,5 +91,32 @@ class DataBroadcaster
     }.to_json
     @pubsub.publish(message)
     puts "DataBroadcaster: #{type} broadcast"
+  end
+
+  def fetch_and_publish_todos
+    response = HTTParty.get('http://localhost:3001/api/todos', timeout: 10)
+    return unless response.success?
+
+    # Parse markdown list items into structured JSON
+    lines = response.body.split('\n')
+    todo_items = []
+
+    lines.each_with_index do |line, index|
+      trimmed = line.strip
+      if trimmed.start_with?('- ')
+        todo_items << {
+          text: trimmed[2..-1], # Remove '- ' prefix
+          id: "todo-#{index}"
+        }
+      end
+    end
+
+    message = {
+      type: 'todo_data',
+      payload: todo_items,
+      timestamp: Time.now.to_i
+    }.to_json
+    @pubsub.publish(message)
+    puts "DataBroadcaster: todo_data broadcast"
   end
 end 

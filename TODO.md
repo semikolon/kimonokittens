@@ -21,6 +21,12 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 # SL API Note
 - SL train departures currently use fallback data due to missing accessId. See DEVELOPMENT.md and TODO.md for next steps.
 
+# WebSocket Integration Technical Debt
+- **CRITICAL**: DataBroadcaster has hardcoded localhost:3001 URLs that won't work in production
+- Need to make URLs configurable via environment variables or relative paths
+- Affects: rent_data, todo_data, and all other data endpoints in lib/data_broadcaster.rb
+- **Impact**: Production deployment will fail without URL configuration
+
 ---
 
 ## Phase 1: Foundational Data Structures
