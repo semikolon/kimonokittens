@@ -138,7 +138,7 @@ function DashboardContent() {
 
         {/* Full-width Strava section */}
         <div className="mb-12">
-          <Widget title="Fredriks skogsturer" horsemenFont={true} className="w-full bg-purple-900/10">
+          <Widget title="Fredriks skogsturer" horsemenFont={true} accent={true} className="w-full">
             <StravaWidget />
           </Widget>
         </div>

@@ -81,10 +81,10 @@ export function TemperatureWidget() {
     const scheduleStart = parseInt(scheduleMatch[1])
     const scheduleEnd = parseInt(scheduleMatch[2])
 
-    // Create 12-hour timeline: prev 3 + current/next 9 hours
+    // Create 16-hour timeline: prev 3 + current/next 12 hours
     const currentMinutes = now.getMinutes()
     const hours = []
-    for (let i = -3; i <= 8; i++) {
+    for (let i = -3; i <= 12; i++) {
       const hour = (currentHour + i + 24) % 24
       const isCurrentHour = i === 0
 
