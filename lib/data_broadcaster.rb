@@ -98,7 +98,8 @@ class DataBroadcaster
     return unless response.success?
 
     # Parse markdown list items into structured JSON
-    lines = response.body.split('\n')
+    # Use split(/\r?\n/) to handle different line endings
+    lines = response.body.split(/\r?\n/)
     todo_items = []
 
     lines.each_with_index do |line, index|
@@ -117,6 +118,6 @@ class DataBroadcaster
       timestamp: Time.now.to_i
     }.to_json
     @pubsub.publish(message)
-    puts "DataBroadcaster: todo_data broadcast"
+    puts "DataBroadcaster: todo_data broadcast (#{todo_items.length} items)"
   end
 end 
