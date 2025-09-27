@@ -35,6 +35,96 @@ interface StructuredTransportData {
   generated_at: string
 }
 
+// Delay parsing types and functions
+interface DelayInfo {
+  isDelayed: boolean
+  delayMinutes: number
+  originalNote: string
+}
+
+interface AdjustedDeparture {
+  originalTime: string
+  adjustedTime: string
+  adjustedMinutesUntil: number
+  delayMinutes: number
+  isDelayed: boolean
+}
+
+const parseDelayInfo = (note: string): DelayInfo => {
+  // Handle both "försenad X min" and just "försenad"
+  const delayWithMinutes = note.match(/försenad (\d+) min/)
+  if (delayWithMinutes) {
+    return {
+      isDelayed: true,
+      delayMinutes: parseInt(delayWithMinutes[1]),
+      originalNote: note
+    }
+  }
+
+  // Check for just "försenad" without specific minutes
+  if (note.includes('försenad')) {
+    return {
+      isDelayed: true,
+      delayMinutes: 0, // We'll estimate from time difference
+      originalNote: note
+    }
+  }
+
+  return { isDelayed: false, delayMinutes: 0, originalNote: note }
+}
+
+const calculateAdjustedDeparture = (departure: TrainDeparture): AdjustedDeparture => {
+  const delayInfo = parseDelayInfo(departure.summary_deviation_note)
+
+  if (!delayInfo.isDelayed) {
+    return {
+      originalTime: departure.departure_time,
+      adjustedTime: departure.departure_time,
+      adjustedMinutesUntil: departure.minutes_until,
+      delayMinutes: 0,
+      isDelayed: false
+    }
+  }
+
+  // Parse original time
+  const [hours, minutes] = departure.departure_time.split(':').map(Number)
+  const originalTime = new Date()
+  originalTime.setHours(hours, minutes, 0, 0)
+
+  // Add delay
+  const adjustedTime = new Date(originalTime.getTime() + (delayInfo.delayMinutes * 60 * 1000))
+
+  // Calculate new minutes until
+  const now = new Date()
+  const adjustedMinutesUntil = Math.max(0, Math.round((adjustedTime.getTime() - now.getTime()) / (1000 * 60)))
+
+  return {
+    originalTime: departure.departure_time,
+    adjustedTime: `${adjustedTime.getHours().toString().padStart(2, '0')}:${adjustedTime.getMinutes().toString().padStart(2, '0')}`,
+    adjustedMinutesUntil,
+    delayMinutes: delayInfo.delayMinutes,
+    isDelayed: true
+  }
+}
+
+const formatDelayAwareTimeDisplay = (departure: TrainDeparture): string => {
+  const adjusted = calculateAdjustedDeparture(departure)
+
+  if (adjusted.adjustedMinutesUntil === 0) {
+    return `${adjusted.adjustedTime} - spring!`
+  }
+
+  if (adjusted.adjustedMinutesUntil > 59) {
+    return adjusted.adjustedTime
+  }
+
+  if (adjusted.isDelayed) {
+    return `${adjusted.adjustedTime} - om ${adjusted.adjustedMinutesUntil}m (${adjusted.delayMinutes}m sen)`
+  } else {
+    return `${adjusted.adjustedTime} - om ${adjusted.adjustedMinutesUntil}m`
+  }
+}
+
 // Train identity tracking for animations
 const generateTrainId = (train: TrainDeparture): string =>
   `${train.departure_time}-${train.line_number}-${train.destination}`
@@ -192,9 +282,12 @@ const formatTimeDisplay = (departure: TrainDeparture | BusDeparture): string => 
 
 // Render train departure line
 const TrainDepartureLine: React.FC<{ departure: TrainDeparture }> = ({ departure }) => {
-  const { departure_time, minutes_until, summary_deviation_note, suffix } = departure
-  const opacity = minutes_until === 0 ? 1.0 : getTimeOpacity(minutes_until)
-  const timeDisplay = formatTimeDisplay(departure)
+  const adjusted = calculateAdjustedDeparture(departure)
+  const opacity = adjusted.adjustedMinutesUntil === 0 ? 1.0 : getTimeOpacity(adjusted.adjustedMinutesUntil)
+  const timeDisplay = formatDelayAwareTimeDisplay(departure)
+
+  // Filter out delay info from summary_deviation_note since it's now inline
+  const nonDelayNote = adjusted.isDelayed ? '' : departure.summary_deviation_note
 
   return (
     <div
@@ -207,8 +300,8 @@ const TrainDepartureLine: React.FC<{ departure: TrainDeparture }> = ({ departure
       }}
     >
 <strong>{timeDisplay}</strong>
-      {summary_deviation_note && `\u00A0${summary_deviation_note}`}
-{suffix && `\u00A0- ${suffix}`}
+      {nonDelayNote && `\u00A0${nonDelayNote}`}
+{departure.suffix && `\u00A0- ${departure.suffix}`}
     </div>
   )
 }
@@ -234,12 +327,33 @@ const BusDepartureLine: React.FC<{ departure: BusDeparture }> = ({ departure }) 
   )
 }
 
+// Smart filtering for DeviationAlerts to avoid duplicate delay info
+const filterNonDelayDeviations = (deviations: Deviation[], trains: TrainDeparture[]): Deviation[] => {
+  // Get all delay times that are now shown inline
+  const inlineDelayTimes = trains
+    .filter(train => parseDelayInfo(train.summary_deviation_note).isDelayed)
+    .map(train => train.departure_time)
+
+  // Filter out deviations that are just delay notices for times we show inline
+  return deviations.filter(deviation => {
+    const isDelayNotice = /försenad \d+ min/.test(deviation.reason)
+    const timeMatchesInlineDelay = inlineDelayTimes.includes(deviation.time)
+
+    // Keep if it's not a delay notice, or if it's a delay notice for a time not shown inline
+    return !isDelayNotice || !timeMatchesInlineDelay
+  })
+}
+
 // Render deviation alerts
-const DeviationAlerts: React.FC<{ deviations: Deviation[] }> = ({ deviations }) => {
-  if (!deviations.length) return null
+const DeviationAlerts: React.FC<{
+  deviations: Deviation[]
+  trains: TrainDeparture[]
+}> = ({ deviations, trains }) => {
+  const filteredDeviations = filterNonDelayDeviations(deviations, trains)
+  if (!filteredDeviations.length) return null
 
   // Group deviations by reason for cleaner display
-  const grouped = deviations.reduce((acc, deviation) => {
+  const grouped = filteredDeviations.reduce((acc, deviation) => {
     const key = deviation.reason.trim()
     if (!acc[key]) acc[key] = []
     acc[key].push(deviation)
@@ -304,10 +418,11 @@ export function TrainWidget() {
   const structuredData = trainData as StructuredTransportData
   const { trains, buses, deviations } = structuredData
 
-  // Filter for feasible departures (past and too-soon departures are hidden)
-  const feasibleTrains = trains.filter(train =>
-    train.minutes_until >= 0 && isFeasibleDeparture(train.minutes_until)
-  )
+  // Filter for feasible departures using adjusted departure times
+  const feasibleTrains = trains.filter(train => {
+    const adjusted = calculateAdjustedDeparture(train)
+    return adjusted.adjustedMinutesUntil >= 0 && isFeasibleDeparture(adjusted.adjustedMinutesUntil)
+  })
 
   const feasibleBuses = buses.filter(bus =>
     bus.minutes_until >= 0 && isFeasibleDeparture(bus.minutes_until)
@@ -327,7 +442,7 @@ export function TrainWidget() {
             Pendel norrut
           </h4>
 
-          <DeviationAlerts deviations={feasibleDeviations} />
+          <DeviationAlerts deviations={feasibleDeviations} trains={feasibleTrains} />
 
           <div className="mb-3">
             <div className="leading-relaxed">

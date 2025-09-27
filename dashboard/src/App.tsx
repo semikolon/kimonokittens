@@ -80,6 +80,80 @@ function ConnectionStatus() {
   )
 }
 
+function BackendErrorMessage() {
+  const { state } = useData()
+  const { connectionStatus, trainData, temperatureData, weatherData, stravaData } = state
+
+  const hasAnyData = trainData || temperatureData || weatherData || stravaData
+  const isConnected = connectionStatus === 'open'
+
+  if (isConnected && hasAnyData) {
+    return null
+  }
+
+  return (
+    <div className="mb-8 flex justify-center">
+      <div className="bg-rose-900/20 border border-rose-500/30 rounded-lg px-6 py-3 text-center">
+        <p className="text-rose-200 text-sm font-medium">
+          {!isConnected ? 'Ingen anslutning till servern' : 'Ingen data tillgänglig'}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function BackendDataWidgets() {
+  const { state } = useData()
+  const { connectionStatus, trainData, temperatureData, weatherData, stravaData } = state
+
+  const isConnected = connectionStatus === 'open'
+  const hasAnyData = trainData || temperatureData || weatherData || stravaData
+
+  // Only show widgets when connected and have data
+  if (!isConnected || !hasAnyData) {
+    return null
+  }
+
+  return (
+    <>
+      {/* Secondary content in organic layout */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <div className="md:col-span-2">
+          <Widget title="Huset" accent={true} horsemenFont={true}>
+            <TemperatureWidget />
+          </Widget>
+        </div>
+        <div className="md:col-span-2">
+          <Widget title="Klimat" accent={true} horsemenFont={true}>
+            <WeatherWidget />
+          </Widget>
+        </div>
+      </div>
+
+      {/* Full-width transport section */}
+      <div className="mb-12">
+        <Widget accent={true} className="w-full">
+          <TrainWidget />
+        </Widget>
+      </div>
+
+      {/* Full-width rent section */}
+      <div className="mb-12">
+        <Widget title="Hyran" horsemenFont={true} accent={true} className="w-full">
+          <RentWidget />
+        </Widget>
+      </div>
+
+      {/* Full-width Strava section */}
+      <div className="mb-12">
+        <Widget title="Fredriks skogsturer" horsemenFont={true} className="w-full bg-purple-900/10">
+          <StravaWidget />
+        </Widget>
+      </div>
+    </>
+  )
+}
+
 function DashboardContent() {
   return (
     <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(25,20,30)_0%,_rgb(25,18,32)_100%)] overflow-x-clip relative">
@@ -108,40 +182,10 @@ function DashboardContent() {
           </Widget>
         </div>
 
-        {/* Secondary content in organic layout */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-          <div className="md:col-span-2">
-            <Widget title="Huset" accent={true} horsemenFont={true}>
-              <TemperatureWidget />
-            </Widget>
-          </div>
-          <div className="md:col-span-2">
-            <Widget title="Klimat" accent={true} horsemenFont={true}>
-              <WeatherWidget />
-            </Widget>
-          </div>
-        </div>
+        {/* Backend error message */}
+        <BackendErrorMessage />
 
-        {/* Full-width transport section */}
-        <div className="mb-12">
-          <Widget accent={true} className="w-full">
-            <TrainWidget />
-          </Widget>
-        </div>
-
-        {/* Full-width rent section */}
-        <div className="mb-12">
-          <Widget title="Hyran" horsemenFont={true} accent={true} className="w-full">
-            <RentWidget />
-          </Widget>
-        </div>
-
-        {/* Full-width Strava section */}
-        <div className="mb-12">
-          <Widget title="Fredriks skogsturer" horsemenFont={true} className="w-full bg-purple-900/10">
-            <StravaWidget />
-          </Widget>
-        </div>
+        <BackendDataWidgets />
 
       </div>
     </div>
