@@ -1,55 +1,14 @@
-import React, { useState, useEffect } from 'react'
-
-interface RentMessageData {
-  message: string
-  year: number
-  month: number
-  generated_at: string
-  data_source?: {
-    type: 'actual' | 'historical' | 'defaults'
-    electricity_source: 'current_bills' | 'historical_lookup' | 'fallback_defaults'
-    description_sv: string
-  }
-}
+import React from 'react'
+import { useData } from '../context/DataContext'
 
 export function RentWidget() {
-  const [rentData, setRentData] = useState<RentMessageData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { state } = useData()
+  const { rentData, connectionStatus } = state
 
-  useEffect(() => {
-    const fetchRentMessage = async () => {
-      try {
-        const response = await fetch('/api/rent/friendly_message')
-        if (response.ok) {
-          const data = await response.json()
-          setRentData(data)
-        } else {
-          throw new Error(`HTTP ${response.status}`)
-        }
-      } catch (err) {
-        console.error('Failed to fetch rent message:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load rent data')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchRentMessage()
-  }, [])
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-6">
-        <div className="text-purple-300">Loading rent info...</div>
-      </div>
-    )
-  }
-
-  if (error) {
+  if (connectionStatus !== 'open') {
     return (
       <div className="p-6 flex justify-center">
-        <div className="w-4 h-4 text-red-400/30" title="Error loading rent data">
+        <div className="w-4 h-4 text-red-400/30" title="No connection to server">
           <svg viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
           </svg>

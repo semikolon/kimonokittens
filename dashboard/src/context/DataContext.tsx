@@ -68,18 +68,39 @@ interface StravaData {
   runs: string
 }
 
+interface RentData {
+  message: string
+  year: number
+  month: number
+  generated_at: string
+  data_source?: {
+    type: 'actual' | 'historical' | 'defaults'
+    electricity_source: 'current_bills' | 'historical_lookup' | 'fallback_defaults'
+    description_sv: string
+  }
+}
+
+interface TodoData {
+  text: string
+  id: string
+}
+
 // Define the state shape
 interface DashboardState {
   trainData: TrainData | null
   temperatureData: TemperatureData | null
   weatherData: WeatherData | null
   stravaData: StravaData | null
+  rentData: RentData | null
+  todoData: TodoData[] | null
   connectionStatus: 'connecting' | 'open' | 'closed'
   lastUpdated: {
     train: number | null
     temperature: number | null
     weather: number | null
     strava: number | null
+    rent: number | null
+    todo: number | null
   }
 }
 
@@ -89,6 +110,8 @@ type DashboardAction =
   | { type: 'SET_TEMPERATURE_DATA'; payload: TemperatureData }
   | { type: 'SET_WEATHER_DATA'; payload: WeatherData }
   | { type: 'SET_STRAVA_DATA'; payload: StravaData }
+  | { type: 'SET_RENT_DATA'; payload: RentData }
+  | { type: 'SET_TODO_DATA'; payload: TodoData[] }
   | { type: 'SET_CONNECTION_STATUS'; payload: 'connecting' | 'open' | 'closed' }
 
 // Initial state
@@ -97,12 +120,16 @@ const initialState: DashboardState = {
   temperatureData: null,
   weatherData: null,
   stravaData: null,
+  rentData: null,
+  todoData: null,
   connectionStatus: 'connecting',
   lastUpdated: {
     train: null,
     temperature: null,
     weather: null,
-    strava: null
+    strava: null,
+    rent: null,
+    todo: null
   }
 }
 
@@ -132,6 +159,18 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         ...state,
         stravaData: action.payload,
         lastUpdated: { ...state.lastUpdated, strava: Date.now() }
+      }
+    case 'SET_RENT_DATA':
+      return {
+        ...state,
+        rentData: action.payload,
+        lastUpdated: { ...state.lastUpdated, rent: Date.now() }
+      }
+    case 'SET_TODO_DATA':
+      return {
+        ...state,
+        todoData: action.payload,
+        lastUpdated: { ...state.lastUpdated, todo: Date.now() }
       }
     case 'SET_CONNECTION_STATUS':
       return {
@@ -204,6 +243,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             break
           case 'strava_data':
             dispatch({ type: 'SET_STRAVA_DATA', payload: message.payload })
+            break
+          case 'rent_data':
+            dispatch({ type: 'SET_RENT_DATA', payload: message.payload })
+            break
+          case 'todo_data':
+            dispatch({ type: 'SET_TODO_DATA', payload: message.payload })
             break
           default:
             console.log('Unknown message type:', message.type)

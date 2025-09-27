@@ -82,9 +82,9 @@ function ConnectionStatus() {
 
 function BackendErrorMessage() {
   const { state } = useData()
-  const { connectionStatus, trainData, temperatureData, weatherData, stravaData } = state
+  const { connectionStatus, trainData, temperatureData, weatherData, stravaData, rentData, todoData } = state
 
-  const hasAnyData = trainData || temperatureData || weatherData || stravaData
+  const hasAnyData = trainData || temperatureData || weatherData || stravaData || rentData || todoData
   const isConnected = connectionStatus === 'open'
 
   if (isConnected && hasAnyData) {
@@ -104,10 +104,10 @@ function BackendErrorMessage() {
 
 function BackendDataWidgets() {
   const { state } = useData()
-  const { connectionStatus, trainData, temperatureData, weatherData, stravaData } = state
+  const { connectionStatus, trainData, temperatureData, weatherData, stravaData, rentData, todoData } = state
 
   const isConnected = connectionStatus === 'open'
-  const hasAnyData = trainData || temperatureData || weatherData || stravaData
+  const hasAnyData = trainData || temperatureData || weatherData || stravaData || rentData || todoData
 
   // Only show widgets when connected and have data
   if (!isConnected || !hasAnyData) {
@@ -150,6 +150,7 @@ function BackendDataWidgets() {
           <StravaWidget />
         </Widget>
       </div>
+
     </>
   )
 }

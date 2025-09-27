@@ -1,59 +1,18 @@
-import React, { useState, useEffect } from 'react'
-
-interface TodoItem {
-  text: string
-  id: string
-}
+import React from 'react'
+import { useData } from '../context/DataContext'
 
 export function TodoWidget() {
-  const [todos, setTodos] = useState<TodoItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { state } = useData()
+  const { todoData, connectionStatus } = state
 
-  useEffect(() => {
-    const fetchTodos = async () => {
-      try {
-        const response = await fetch('/api/todos')
-        if (response.ok) {
-          const text = await response.text()
-          // Parse markdown list items
-          const lines = text.split('\n')
-          const todoItems: TodoItem[] = []
-
-          lines.forEach((line, index) => {
-            const trimmed = line.trim()
-            if (trimmed.startsWith('- ')) {
-              todoItems.push({
-                text: trimmed.substring(2),
-                id: `todo-${index}`
-              })
-            }
-          })
-
-          setTodos(todoItems)
-        }
-      } catch (error) {
-        console.error('Failed to fetch todos:', error)
-        // Fallback to hardcoded todos
-        setTodos([
-          { text: 'Lägga upp annons', id: 'todo-1' },
-          { text: 'Klipp gräsmattan', id: 'todo-2' }
-        ])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchTodos()
-  }, [])
-
-  if (isLoading) {
-    return <div className="text-purple-300 text-sm">Loading todos...</div>
+  if (connectionStatus !== 'open' || !todoData) {
+    return null
   }
 
   return (
     <div className="mt-4">
       <ul className="space-y-2">
-        {todos.map((todo) => (
+        {todoData.map((todo) => (
           <li key={todo.id} className="flex items-center">
             {/* Glowing orange bullet point */}
             <div className="relative mr-3">
