@@ -470,8 +470,11 @@ const TrainDepartureLine: React.FC<{
   // Filter out delay info from summary_deviation_note since it's now inline
   const nonDelayNote = adjusted.isDelayed ? '' : departure.summary_deviation_note
 
+  const glowClass = isUrgentFlashing ? 'urgent-text-glow' : isCriticalFlashing ? 'critical-text-glow' : ''
+
   return (
     <div
+      className={glowClass}
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
@@ -480,13 +483,9 @@ const TrainDepartureLine: React.FC<{
         alignItems: 'flex-start'
       }}
     >
-      {isUrgentFlashing && <span className="urgent-arrow">→</span>}
-      {isCriticalFlashing && <span className="critical-arrow">→</span>}
-      <div>
-        <strong>{timeDisplay}</strong>
-        {nonDelayNote && `\u00A0${nonDelayNote}`}
-        {departure.suffix && `\u00A0- ${departure.suffix}`}
-      </div>
+      <strong>{timeDisplay}</strong>
+      {nonDelayNote && `\u00A0${nonDelayNote}`}
+      {departure.suffix && `\u00A0- ${departure.suffix}`}
     </div>
   )
 }
@@ -501,8 +500,11 @@ const BusDepartureLine: React.FC<{
   const opacity = minutes_until === 0 ? 1.0 : getTimeOpacity(minutes_until)
   const timeDisplay = formatTimeDisplay(departure)
 
+  const glowClass = isUrgentFlashing ? 'urgent-text-glow' : isCriticalFlashing ? 'critical-text-glow' : ''
+
   return (
     <div
+      className={glowClass}
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
@@ -511,11 +513,7 @@ const BusDepartureLine: React.FC<{
         alignItems: 'flex-start'
       }}
     >
-      {isUrgentFlashing && <span className="urgent-arrow">→</span>}
-      {isCriticalFlashing && <span className="critical-arrow">→</span>}
-      <div>
-        {line_number} till {destination}:{'\u00A0'}<strong>{timeDisplay}</strong>
-      </div>
+      {line_number} till {destination}:{'\u00A0'}<strong>{timeDisplay}</strong>
     </div>
   )
 }

@@ -268,37 +268,35 @@
   transition-delay: calc(var(--item-index) * 0.1s);
 }
 
-/* Urgent departure arrow animations */
-@keyframes urgentArrowGlow {
-  0%, 80% {
+/* Urgent departure text glow animations */
+@keyframes urgentTextGlow {
+  0%, 90% {
     filter: drop-shadow(0 0 0 rgba(255, 140, 0, 0));
-    color: rgba(255, 140, 0, 0.8);
+    color: white;
   }
-  40% {
+  50% {
     filter: drop-shadow(0 0 8px rgba(255, 140, 0, 0.8));
-    color: rgba(255, 140, 0, 1);
+    color: white;
   }
 }
 
-@keyframes criticalArrowGlow {
-  0%, 80% {
+@keyframes criticalTextGlow {
+  0%, 90% {
     filter: drop-shadow(0 0 0 rgba(255, 69, 0, 0));
-    color: rgba(255, 69, 0, 0.8);
+    color: white;
   }
-  40% {
+  50% {
     filter: drop-shadow(0 0 10px rgba(255, 69, 0, 0.9));
-    color: rgba(255, 69, 0, 1);
+    color: white;
   }
 }
 
-.urgent-arrow {
-  animation: urgentArrowGlow 2.5s ease-in-out 4;
-  margin-right: 8px;
+.urgent-text-glow {
+  animation: urgentTextGlow 10s ease-in-out 1;
 }
 
-.critical-arrow {
-  animation: criticalArrowGlow 2s ease-in-out 2;
-  margin-right: 8px;
+.critical-text-glow {
+  animation: criticalTextGlow 10s ease-in-out 1;
 }
 
 /* Respect user motion preferences */
