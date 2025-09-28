@@ -103,7 +103,8 @@
       "Bash(git rev-list:*)",
       "Bash(PORT=3002 ENABLE_BROADCASTER=1 ruby puma_server.rb)",
       "Bash(xargs -r kill -9)",
-      "Bash(xxd:*)"
+      "Bash(xxd:*)",
+      "Bash(git check-ignore:*)"
     ],
     "deny": []
   }
