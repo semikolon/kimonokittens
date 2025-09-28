@@ -1,0 +1,32 @@
+[Unit]
+Description=Kimonokittens Dashboard Backend
+After=network.target postgresql.service
+Requires=network.target
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=kimonokittens
+Group=kimonokittens
+WorkingDirectory=/home/kimonokittens/Projects/kimonokittens
+Environment="PORT=3001"
+Environment="ENABLE_BROADCASTER=1"
+Environment="NODE_ENV=production"
+Environment="API_BASE_URL=http://localhost:3001"
+EnvironmentFile=-/home/kimonokittens/.env
+ExecStart=/usr/bin/ruby puma_server.rb
+ExecReload=/bin/kill -USR1 $MAINPID
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/home/kimonokittens
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target

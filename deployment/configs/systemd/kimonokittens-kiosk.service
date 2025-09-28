@@ -1,0 +1,20 @@
+[Unit]
+Description=Kimonokittens Kiosk Browser
+After=graphical.target kimonokittens-dashboard.service
+Wants=kimonokittens-dashboard.service
+
+[Service]
+Type=simple
+User=kiosk
+Group=kiosk
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/kiosk/.Xauthority"
+ExecStartPre=/bin/sleep 15
+ExecStart=/usr/bin/chromium-browser --kiosk --disable-infobars --disable-session-crashed-bubble --noerrdialogs --incognito --no-first-run --enable-gpu --app=http://localhost
+Restart=always
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target

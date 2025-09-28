@@ -1,0 +1,28 @@
+[Unit]
+Description=Kimonokittens Webhook Receiver
+After=network.target
+Requires=network.target
+
+[Service]
+Type=simple
+User=kimonokittens
+Group=kimonokittens
+WorkingDirectory=/home/kimonokittens/Projects/kimonokittens
+Environment="PORT=9001"
+Environment="WEBHOOK_SECRET=CHANGE_ME_TO_SECURE_SECRET"
+EnvironmentFile=-/home/kimonokittens/.env
+ExecStart=/usr/bin/ruby deployment/scripts/webhook_receiver.rb
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/home/kimonokittens
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target
