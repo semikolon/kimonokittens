@@ -96,6 +96,9 @@ export function RentWidget() {
       {rentData.data_source && (
         <div className="text-purple-300 text-xs mt-3" style={{ opacity: 0.5 }}>
           {rentData.data_source.description_sv}
+          {rentData.electricity_amount && rentData.electricity_month &&
+            ` - ${rentData.electricity_amount} kr för ${rentData.electricity_month} månads förbrukning`
+          }
         </div>
       )}
     </div>

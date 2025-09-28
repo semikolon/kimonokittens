@@ -620,12 +620,30 @@ class RentCalculatorHandler
         config: config
       )
 
+      # Get electricity amount and target month for the suffix
+      electricity_amount = config[:el].to_i
+      target_month = month - 1
+      target_year = year
+      if target_month < 1
+        target_month = 12
+        target_year -= 1
+      end
+
+      # Swedish month names
+      swedish_months = [
+        nil, 'januari', 'februari', 'mars', 'april', 'maj', 'juni',
+        'juli', 'augusti', 'september', 'oktober', 'november', 'december'
+      ]
+      target_month_name = swedish_months[target_month]
+
       result = {
         message: friendly_text,
         year: year,
         month: month,
         generated_at: Time.now.utc.iso8601,
-        data_source: data_source
+        data_source: data_source,
+        electricity_amount: electricity_amount,
+        electricity_month: target_month_name
       }
 
       [200, { 'Content-Type' => 'application/json' }, [result.to_json]]

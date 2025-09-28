@@ -406,10 +406,10 @@ const AnimatedBusList: React.FC<{
     if (added.length > 0) {
       setArrivingItems(new Set(added))
 
-      // Trigger arrival animation after a brief delay
+      // Trigger arrival animation - duration matches CSS animation (10s)
       const timer = setTimeout(() => {
         setArrivingItems(new Set())
-      }, 100)
+      }, 10000)
 
       return () => clearTimeout(timer)
     }
@@ -478,7 +478,6 @@ const TrainDepartureLine: React.FC<{
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
-        marginBottom: '2px',
         display: 'flex',
         alignItems: 'flex-start'
       }}
@@ -508,7 +507,6 @@ const BusDepartureLine: React.FC<{
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
-        marginBottom: '2px',
         display: 'flex',
         alignItems: 'flex-start'
       }}
