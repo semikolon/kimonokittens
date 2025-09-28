@@ -625,6 +625,14 @@ export function TrainWidget() {
     bus.minutes_until >= 0 && isFeasibleBusDeparture(bus.minutes_until)
   )
 
+  // Debug logging
+  console.log('Bus data debug:', {
+    totalBuses: buses.length,
+    buses: buses.map(b => `${b.line_number} to ${b.destination} at ${b.departure_time} (${b.minutes_until}m)`),
+    feasibleBuses: feasibleBuses.length,
+    generatedAt: structuredData.generated_at
+  })
+
   // Add urgent bus flashing
   const { urgentFlashingBuses, criticalFlashingBuses } = useUrgentBusFlashing(feasibleBuses)
 
