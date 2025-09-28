@@ -1,4 +1,5 @@
 # Household Todos
 
-- Lägga upp annons
+- Videoannons?
+- Annons i fler grupper
 - Klipp gräsmattan
