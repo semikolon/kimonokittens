@@ -20,14 +20,26 @@ db.set_config('el', 2424, Time.new(2025, 9, 1))  # September period
 # NOT: Time.new(2025, 10, 1)  # This would be wrong!
 ```
 
-### Payment Structure
-- **Base rent (kallhyra)**: Paid in advance for upcoming month
-- **Electricity & operational costs**: Paid in arrears for previous month
-- **Due date**: 27th of current month (before the rent month)
+### Payment Structure & Quarterly Savings Mechanism
+
+**Regular Monthly Payments (Advance)**:
+- **Base rent** (`kallhyra`): October housing
+- **Internet** (`bredband`): October service
+- **Utilities** (`vattenavgift`, `va`, `larm`): Building up savings for quarterly bills
+
+**Arrears Payments**:
+- **Electricity** (`el`): September consumption bills
+
+**Quarterly Bill Savings System**:
+- **Monthly utilities**: 375 + 300 + 150 = **825 kr/month**
+- **Purpose**: Internal "savings account" for quarterly building costs
+- **Quarterly invoice**: ~2,600 kr (property tax, maintenance, building utilities)
+- **Logic**: 825 kr × 3 months = 2,475 kr ≈ quarterly invoice amount
+- **When quarterly arrives**: Replaces monthly utilities for that month
 
 **Example:** September 27 payment covers:
-- October base rent (advance)
-- August electricity bills (arrears, just received)
+- October base rent (advance) + October utilities (savings) + September electricity (arrears)
+- OR October base rent (advance) + Q4 quarterly invoice (if it arrives) + September electricity (arrears)
 
 ## Database Safety Rules ⚠️
 
