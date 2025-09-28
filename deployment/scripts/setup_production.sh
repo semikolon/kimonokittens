@@ -95,7 +95,8 @@ log "Backup directory: $BACKUP_DIR"
 validate_network
 validate_disk_space
 validate_command "systemctl"
-validate_command "nginx"
+validate_command "curl"
+validate_command "wget"
 
 # Check critical paths exist
 if [ ! -d "$REAL_HOME/Projects/kimonokittens" ]; then
