@@ -29,6 +29,7 @@ sudo bash deployment/scripts/setup_production.sh
 - ✅ **PostgreSQL database** with production data migration
 - ✅ **Nginx web server** serving dashboard
 - ✅ **Ruby backend** (3.3.8 via rbenv) with real-time data
+- ✅ **Node.js frontend** (dual nvm: secure user isolation)
 - ✅ **Google Chrome kiosk** with GPU acceleration (official .deb)
 - ✅ **SystemD services** for reliability
 - ✅ **GDM3 auto-login** with native GNOME integration

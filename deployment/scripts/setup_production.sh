@@ -528,6 +528,91 @@ fi
 
 log "✅ Ruby environment configured and verified"
 
+# Step 7.5: Setup nvm for service user (secure dual installation)
+log "💻 Step 7.5: Setting up nvm for service user (separate installation)..."
+
+SERVICE_USER_NVM_DIR="/home/$SERVICE_USER/.nvm"
+SERVICE_USER_BASHRC="/home/$SERVICE_USER/.bashrc"
+
+# Check if nvm already installed for service user
+if [ -d "$SERVICE_USER_NVM_DIR" ] && [ -x "$SERVICE_USER_NVM_DIR/nvm.sh" ]; then
+    log "✅ nvm already installed for $SERVICE_USER"
+
+    # Verify nvm works for service user
+    if sudo -u "$SERVICE_USER" bash -c "source $SERVICE_USER_NVM_DIR/nvm.sh && nvm --version" >/dev/null 2>&1; then
+        log "✅ nvm functional for $SERVICE_USER"
+    else
+        log "⚠️ nvm exists but not functional, reinstalling..."
+        rm -rf "$SERVICE_USER_NVM_DIR"
+    fi
+fi
+
+# Install nvm for service user if needed
+if [ ! -d "$SERVICE_USER_NVM_DIR" ]; then
+    log "Installing nvm for $SERVICE_USER (secure separate installation)..."
+
+    # Create nvm installation script for service user
+    NVM_INSTALL_SCRIPT="/tmp/install_nvm_${SERVICE_USER}.sh"
+    cat > "$NVM_INSTALL_SCRIPT" <<EOF
+#!/bin/bash
+set -e
+
+echo "Installing nvm for service user..."
+export HOME="/home/$SERVICE_USER"
+cd "\$HOME"
+
+# Download and install nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+# Source nvm
+export NVM_DIR="\$HOME/.nvm"
+[ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
+
+# Install Node.js LTS
+echo "Installing Node.js LTS..."
+nvm install --lts
+nvm use --lts
+
+echo "nvm installation complete for service user"
+echo "Node.js version: \$(node --version)"
+echo "npm version: \$(npm --version)"
+EOF
+
+    chmod +x "$NVM_INSTALL_SCRIPT"
+
+    # Execute as service user
+    if ! sudo -u "$SERVICE_USER" bash "$NVM_INSTALL_SCRIPT"; then
+        rm -f "$NVM_INSTALL_SCRIPT"
+        error_exit "nvm installation failed for $SERVICE_USER"
+    fi
+
+    rm -f "$NVM_INSTALL_SCRIPT"
+    log "✅ nvm installed successfully for $SERVICE_USER"
+fi
+
+# Verify service user's Node.js installation
+log "Verifying service user's Node.js setup..."
+SERVICE_USER_NODE_VERSION=$(sudo -u "$SERVICE_USER" bash -c "
+    source $SERVICE_USER_NVM_DIR/nvm.sh 2>/dev/null || exit 1
+    node --version 2>/dev/null || exit 1
+" || echo "failed")
+
+if [[ "$SERVICE_USER_NODE_VERSION" == "failed" ]]; then
+    error_exit "Service user Node.js verification failed"
+fi
+
+SERVICE_USER_NPM_VERSION=$(sudo -u "$SERVICE_USER" bash -c "
+    source $SERVICE_USER_NVM_DIR/nvm.sh 2>/dev/null || exit 1
+    npm --version 2>/dev/null || exit 1
+" || echo "failed")
+
+if [[ "$SERVICE_USER_NPM_VERSION" == "failed" ]]; then
+    error_exit "Service user npm verification failed"
+fi
+
+log "✅ Service user Node.js verified: $SERVICE_USER_NODE_VERSION"
+log "✅ Service user npm verified: $SERVICE_USER_NPM_VERSION"
+
 # Step 8: Build and deploy frontend
 log "🏗️ Step 8: Building and deploying frontend..."
 
@@ -554,22 +639,35 @@ if [ -d "node_modules" ]; then
     fi
 fi
 
-# Install npm dependencies
-log "Installing npm dependencies..."
-if ! sudo -u "$SERVICE_USER" npm install; then
+# Install npm dependencies using service user's nvm
+log "Installing npm dependencies with service user's Node.js..."
+if ! sudo -u "$SERVICE_USER" bash -c "
+    source $SERVICE_USER_NVM_DIR/nvm.sh
+    npm install
+"; then
     error_exit "npm install failed - check network connectivity and package.json"
 fi
 
 # Verify build tools are available
-if ! sudo -u "$SERVICE_USER" npx vite --version >/dev/null 2>&1; then
+log "Verifying build tools..."
+if ! sudo -u "$SERVICE_USER" bash -c "
+    source $SERVICE_USER_NVM_DIR/nvm.sh
+    npx vite --version
+" >/dev/null 2>&1; then
     error_exit "Vite build tool not available after npm install"
 fi
 
-# Build frontend
-log "Building frontend..."
-if ! sudo -u "$SERVICE_USER" npm run build; then
+# Build frontend using service user's nvm
+log "Building frontend with service user's Node.js..."
+if ! sudo -u "$SERVICE_USER" bash -c "
+    source $SERVICE_USER_NVM_DIR/nvm.sh
+    npm run build
+"; then
     log "npm run build failed, trying npx vite build..."
-    if ! sudo -u "$SERVICE_USER" npx vite build; then
+    if ! sudo -u "$SERVICE_USER" bash -c "
+        source $SERVICE_USER_NVM_DIR/nvm.sh
+        npx vite build
+    "; then
         error_exit "Frontend build failed with both npm run build and npx vite build"
     fi
 fi
@@ -970,7 +1068,9 @@ log ""
 log "📊 ARCHITECTURE SUMMARY (Pop!_OS 22.04 Native):"
 log "✅ User '$SERVICE_USER' handles both backend and kiosk display"
 log "✅ Ruby $(sudo -u "$SERVICE_USER" "/home/$SERVICE_USER/.rbenv/shims/ruby" --version 2>/dev/null | cut -d' ' -f2 || echo '3.3.x') via rbenv"
-log "✅ Node.js $(node --version 2>/dev/null || echo 'v24.x') via nvm (user managed)"
+log "✅ Node.js Dev: $(node --version 2>/dev/null || echo 'v24.x') (fredrik user nvm)"
+log "✅ Node.js Prod: $(sudo -u "$SERVICE_USER" bash -c "source /home/$SERVICE_USER/.nvm/nvm.sh 2>/dev/null && node --version" || echo 'LTS') (service user nvm)"
+log "✅ Dual nvm installation - secure isolation between users"
 log "✅ Dashboard deployed to /var/www/kimonokittens/dashboard"
 log "✅ All services configured and running"
 log "✅ Google Chrome kiosk mode configured with GDM3 auto-login"

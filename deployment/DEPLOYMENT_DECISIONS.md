@@ -33,14 +33,26 @@
 - ✅ **Automatic updates** directly from Google
 - ✅ **Official signing** and security patches
 
-### **3. rbenv Ruby** ✅
-**Decision**: Use rbenv Ruby 3.3.8 instead of system Ruby
+### **3. rbenv Ruby + Dual nvm Node.js** ✅
+**Decision**: Use rbenv Ruby 3.3.8 + separate nvm installations for each user
 
-**Rationale**:
+**Ruby Strategy**:
 - ✅ Matches development environment (Ruby 3.3.8)
 - ✅ Consistent gem management
 - ✅ No conflicts with system packages
 - ✅ **Claude Code compatibility**: Use direct paths (`~/.rbenv/bin/rbenv exec`)
+
+**Node.js Strategy - Separate nvm Installations**:
+- ✅ **Security isolation**: No cross-user file access vulnerabilities
+- ✅ **Permission safety**: Each user owns their Node.js installation
+- ✅ **Standard nvm behavior**: Works as designed (per-user)
+- ✅ **Independent versions**: Dev vs prod can differ if needed
+- ✅ **No symlink security risks**: Completely separate binaries
+
+**Why Not Shared Node.js**:
+- ❌ **nvm symlink vulnerabilities**: "One user's `nvm use` affects entire system"
+- ❌ **Permission conflicts**: "EACCES: permission denied" when switching users
+- ❌ **Architecture mismatch**: "nvm designed for per-user, not shared scenarios"
 
 ### **4. Bulletproof Script with Fault Tolerance** ✅
 **Decision**: Enhanced `setup_production.sh` with comprehensive error handling
