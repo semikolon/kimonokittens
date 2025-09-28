@@ -254,7 +254,6 @@
 
 /* Slide in animation for new trains */
 .train-departure-item.arriving {
-  transform: translateY(20px);
   opacity: 0;
 }
 
