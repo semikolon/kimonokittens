@@ -38,12 +38,11 @@ export function TemperatureWidget() {
     setPrevSmartStatus(currentSmartStatus)
   }, [currentSmartStatus, prevSmartStatus])
 
-  // Heatpump schedule progress bar logic
+  // Heatpump schedule progress bar logic using schedule_data
   const heatpumpSchedule = useMemo(() => {
-    if (!temperatureData || !temperatureData.current_schedule) {
+    if (!temperatureData || !temperatureData.schedule_data) {
       return null
     }
-
 
     // Fixed time offset for Thermiq device (1 hour behind browser)
     // TODO: Remove when device clock is corrected
@@ -74,29 +73,36 @@ export function TemperatureWidget() {
     }
     const currentHour = now.getHours()
 
-    // Parse schedule (e.g., "11-17" means 11:00 to 17:00)
-    const scheduleMatch = temperatureData.current_schedule.match(/(\d+)-(\d+)/)
-    if (!scheduleMatch) return null
+    // Build hour-by-hour schedule from schedule_data
+    const scheduleMap = new Map()
 
-    const scheduleStart = parseInt(scheduleMatch[1])
-    const scheduleEnd = parseInt(scheduleMatch[2])
+    temperatureData.schedule_data.forEach(period => {
+      const startTime = new Date(period.time)
+      const countHours = period.countHours
+      const isOn = period.value
+
+      // Apply the same time offset to schedule data
+      const adjustedStartTime = new Date(startTime.getTime() + (THERMIQ_TIME_OFFSET_HOURS * 60 * 60 * 1000))
+
+      for (let i = 0; i < countHours; i++) {
+        const hour = new Date(adjustedStartTime.getTime() + (i * 60 * 60 * 1000))
+        // Use both date and hour for unique key to handle multi-day schedules
+        const hourKey = `${hour.getFullYear()}-${hour.getMonth()}-${hour.getDate()}-${hour.getHours()}`
+        scheduleMap.set(hourKey, isOn)
+      }
+    })
 
     // Create 16-hour timeline: prev 3 + current/next 12 hours
     const currentMinutes = now.getMinutes()
     const hours = []
     for (let i = -3; i <= 12; i++) {
-      const hour = (currentHour + i + 24) % 24
+      const timelineHour = new Date(now.getTime() + (i * 60 * 60 * 1000))
+      const hour = timelineHour.getHours()
       const isCurrentHour = i === 0
 
-      // Handle midnight-spanning schedules (e.g., 21-2 means 21:00-02:00)
-      let isScheduledOn
-      if (scheduleStart <= scheduleEnd) {
-        // Normal range (e.g., 6-18)
-        isScheduledOn = hour >= scheduleStart && hour <= scheduleEnd
-      } else {
-        // Midnight-spanning range (e.g., 21-2)
-        isScheduledOn = hour >= scheduleStart || hour <= scheduleEnd
-      }
+      // Create key with date info for proper lookup
+      const hourKey = `${timelineHour.getFullYear()}-${timelineHour.getMonth()}-${timelineHour.getDate()}-${hour}`
+      const isScheduledOn = scheduleMap.get(hourKey) || false
 
       hours.push({
         hour,

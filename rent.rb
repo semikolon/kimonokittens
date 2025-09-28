@@ -402,7 +402,27 @@ module RentCalculator
       breakdown
     end
 
-    # Generates a user-friendly string summarizing the rent calculation.
+    # Generates a user-friendly string summarizing the rent calculation
+    #
+    # @param roommates [Hash] Roommate configuration hash
+    # @param config [Hash, Config] Configuration for the CONFIGURATION PERIOD
+    #
+    # CRITICAL TIMING CONCEPT:
+    #   The config represents the CONFIG PERIOD (e.g., September) but the message
+    #   displays rent for the FOLLOWING month (e.g., October).
+    #
+    # @example Swedish Rent Payment Timing
+    #   # September 27: Generate message for October rent
+    #   config = { year: 2025, month: 9 }  # September configuration period
+    #   message = friendly_message(roommates: roommates, config: config)
+    #   # Returns: "Hyran för oktober 2025 ska betalas innan 27 sep"
+    #
+    #   This message uses:
+    #   - September electricity bills (arrears)
+    #   - October base rent (advance)
+    #   - Result: Total due for October housing
+    #
+    # @return [String] Swedish-language rent summary message
     def friendly_message(roommates:, config: {})
       config = Config.new(config) unless config.is_a?(Config)
       breakdown = rent_breakdown(roommates: roommates, config: config)

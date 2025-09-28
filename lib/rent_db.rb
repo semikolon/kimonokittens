@@ -44,6 +44,14 @@ class RentDb
     results.map { |row| row.transform_keys(&:to_s) }
   end
 
+  # Retrieves rent ledger records for a specific period
+  #
+  # @param year [Integer] The rent period year
+  # @param month [Integer] The rent period month (1-12)
+  #   NOTE: This represents the RENT PERIOD, not the config period.
+  #   Example: month=10 retrieves October rent records
+  #
+  # @return [Array<Hash>] Array of rent ledger records for the period
   def get_rent_history(year:, month:)
     # Note: Prisma stores dates in UTC. We construct the date range carefully.
     start_date = Time.new(year, month, 1).utc
@@ -68,6 +76,39 @@ class RentDb
     larm: 150
   }.freeze
 
+  # Retrieves rent configuration for a specific CONFIGURATION PERIOD
+  #
+  # @param year [Integer] The configuration period year
+  # @param month [Integer] The configuration period month (1-12)
+  #
+  # CRITICAL TIMING CONCEPT:
+  #   The month parameter represents the CONFIG PERIOD MONTH, not the rent month.
+  #   This configuration is used to calculate rent for the FOLLOWING month.
+  #
+  # @example Swedish Rent Payment Timing
+  #   # September 27: Time to pay October rent
+  #   config = get_rent_config(year: 2025, month: 9)  # September config
+  #   # This config contains:
+  #   # - September electricity bills (arrears payment)
+  #   # - October base rent (advance payment)
+  #   # Result: "Hyran för oktober 2025 ska betalas innan 27 sep"
+  #
+  # @example Key Classification
+  #   Period-specific keys (exact match only):
+  #   - el: September electricity consumption bills
+  #   - drift_rakning: Q4 quarterly invoice (if applicable)
+  #   - saldo_innan: Balance from previous month
+  #   - extra_in: One-time income/adjustments
+  #
+  #   Persistent keys (carry-forward from most recent):
+  #   - kallhyra: Base rent (advance for October)
+  #   - bredband: Internet (advance for October)
+  #   - vattenavgift: Water fee (building up savings)
+  #   - va: Sewage fee (building up savings)
+  #   - larm: Alarm fee (building up savings)
+  #
+  # @return [MockPGResult] Enumerable object containing config key-value pairs
+  #   Each item has 'key' and 'value' string fields for compatibility
   def get_rent_config(year:, month:)
     target_date = Date.new(year, month, 1)
     # Use Time.utc for consistent timezone handling
@@ -102,6 +143,27 @@ class RentDb
     MockPGResult.new(result)
   end
 
+  # Sets a configuration value for a specific period
+  #
+  # @param key [String] Configuration key (see PERIOD_SPECIFIC_KEYS/PERSISTENT_KEYS)
+  # @param value [Numeric, String] Configuration value
+  # @param period [Time] The configuration period (defaults to current month)
+  #
+  # TIMING RULES:
+  #   - Period is normalized to month start (UTC)
+  #   - For September electricity: set_config('el', 2424, Time.new(2025, 9, 1))
+  #   - This September config will be used for October rent calculations
+  #
+  # @example Setting October 2025 Rent Configuration
+  #   # September electricity bill arrives, set for September period
+  #   db.set_config('el', 2424, Time.new(2025, 9, 15))  # Normalized to Sep 1
+  #
+  #   # When October rent is calculated:
+  #   config = db.get_rent_config(year: 2025, month: 9)  # Gets September config
+  #   # Returns electricity: 2424 kr (exact period match)
+  #   # Returns base rent: 24530 kr (persistent carry-forward)
+  #
+  # @return [void]
   def set_config(key, value, period = Time.now)
     # Normalize period to month start for exact matching and uniqueness
     normalized_period = Time.utc(period.year, period.month, 1)

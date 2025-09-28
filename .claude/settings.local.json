@@ -104,7 +104,19 @@
       "Bash(PORT=3002 ENABLE_BROADCASTER=1 ruby puma_server.rb)",
       "Bash(xargs -r kill -9)",
       "Bash(xxd:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(bundle exec foreman start:*)",
+      "Bash(gem install:*)",
+      "Bash(foreman start:*)",
+      "Bash(bin/dev:*)",
+      "Bash(overmind status:*)",
+      "Bash(npm run dev:stop:*)",
+      "Bash(npm run dev:status:*)",
+      "Bash(npm run dev:restart:*)",
+      "Bash(npm run dev:logs:*)",
+      "Bash(xargs ls:*)",
+      "Bash(json_pp:*)",
+      "Bash(psql:*)"
     ],
     "deny": []
   }

@@ -1,5 +1,37 @@
 # Kimonokittens Project Instructions
 
+## ⚠️ CRITICAL: PROCESS MANAGEMENT PROTOCOL
+
+**🔥 MANDATORY RULES FOR ALL CLAUDE CODE SESSIONS - NEVER DEVIATE! 🔥**
+
+### ✅ ALWAYS DO:
+- **ONLY** use these exact commands for ALL process management:
+  ```bash
+  npm run dev          # Start all processes (calls bin/dev start)
+  npm run dev:stop     # Stop all processes (calls bin/dev stop)
+  npm run dev:restart  # Clean restart (calls bin/dev restart)
+  npm run dev:status   # Check status (calls bin/dev status)
+  ```
+- **ALWAYS** use `run_in_background=true` - commands are designed for background execution
+- **ALWAYS** check status before starting to verify clean state
+
+### ❌ NEVER DO:
+- **NEVER** use direct commands like `ruby puma_server.rb` or `PORT=3001 ENABLE_BROADCASTER=1 ruby puma_server.rb`
+- **NEVER** use `cd dashboard && npm run dev` directly
+- **NEVER** spawn processes outside bin/dev control
+- **NEVER** mix Claude Code background calls with direct process spawning
+
+### 🚨 WHY THIS MATTERS:
+**Orphaned processes cause:**
+- Port conflicts ("Address already in use" errors)
+- Stale data caching (7,492 kr rent bug was caused by old server running since Saturday)
+- Development workflow chaos
+- Hours of debugging pain
+
+**The bin/dev commands include aggressive cleanup that handles orphaned processes from ANY source.**
+
+---
+
 **CRITICAL: Read this file completely before working on rent calculations or database operations.**
 
 ## Rent Calculation Timing Quirks ⚠️
@@ -104,40 +136,44 @@ curl -s http://localhost:3001/api/rent/friendly_message | jq .message
 
 ## Development Workflow
 
-### Daily Process Management 🔧
-**Problem**: Multiple backend processes lead to stale code caching (7,492 kr bug was caused by old server running since Saturday).
+### Process Management Protocol 🔧
+**The bin/dev system provides foolproof process lifecycle management with aggressive cleanup.**
 
-**Solution**: Use Procfile.dev + bin/dev for single-instance process management.
+**Core Features**:
+- **Aggressive port cleanup**: Kills ALL processes on ports 3001/5175 before starting
+- **Background-friendly**: Designed to work perfectly with Claude Code's `run_in_background=true`
+- **Idempotent operations**: Safe to run multiple times, always works
+- **Comprehensive status**: Shows ports, processes, and Overmind state
 
-**Commands** (all equivalent):
+**Commands**:
 ```bash
 # Start all dev processes (backend + frontend)
-npm run dev          # OR
-bin/dev start        # OR
-bin/dev              # (default)
+npm run dev          # PREFERRED: Always use this
 
-# Check status
-npm run dev:status   # Shows running processes and ports
+# Check comprehensive status
+npm run dev:status   # Shows ports, processes, Overmind state
 
-# Restart all
-npm run dev:restart  # Clean restart prevents stale cache
+# Clean restart (most important for preventing bugs)
+npm run dev:restart  # Kills everything, then starts fresh
 
-# Stop all
-npm run dev:stop     # Clean shutdown
+# Stop all processes thoroughly
+npm run dev:stop     # Aggressive cleanup of all processes
 
-# View logs
-npm run dev:logs     # Attach to process logs
+# View process logs
+npm run dev:logs     # Attach to live process logs
 ```
 
-**Ports**:
+**Architecture**:
 - **Backend**: 3001 (Ruby Puma + WebSocket broadcaster)
 - **Frontend**: 5175 (Vite dev server)
+- **Process manager**: Overmind (preferred) or Foreman (fallback)
+- **Definition**: `Procfile.dev` defines all development processes
 
-**Best Practice**: Always use `npm run dev:restart` instead of manual commands to ensure clean process state.
-
-**Process Files**:
-- `Procfile.dev`: Defines all dev processes
-- `bin/dev`: Single-instance orchestration script with Overmind/Foreman support
+**Critical Features for Claude Code**:
+- Commands work perfectly with background execution
+- Aggressive cleanup handles orphaned processes from ANY source
+- Comprehensive error reporting guides correct usage
+- All operations are idempotent and safe
 
 ### Code Change Workflow
 

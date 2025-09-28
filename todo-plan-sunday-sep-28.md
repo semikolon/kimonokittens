@@ -14,24 +14,23 @@
 
 ## Pending Tasks 🚧
 
-### 1. Temperature Schedule Bar Enhancement
-**Priority**: Medium
+### 1. Temperature Schedule Bar Enhancement ✅
+**Priority**: Medium → **COMPLETED**
 **Description**: Upgrade temperature schedule visualization to use complete 24-hour schedule data
 
-**Current State**:
-- Schedule bar only uses `current_schedule` field ("15-21")
-- Full schedule data available in `schedule_data` field with hourly on/off periods
+**Implementation Summary**:
+- ✅ **Upgraded from simple string parsing** ("15-21") to **full schedule_data array parsing**
+- ✅ **Added multi-day support** - each schedule entry has full ISO timestamp with date
+- ✅ **Enhanced precision** - hour-by-hour on/off periods instead of simple ranges
+- ✅ **Preserved timezone handling** - applies same -1 hour Thermiq offset to schedule data
+- ✅ **Date-aware mapping** - uses `YYYY-M-D-H` keys for precise lookups across multiple days
+- ✅ **No midnight-spanning quirks** - each time period explicitly dated in ISO format
+- ✅ **Maintained existing visualization** - same 16-hour timeline and heating state logic
 
-**Requirements**:
-- Parse `schedule_data` array with time periods and on/off values
-- Build elegant, legible schedule bar visualization
-- Maintain timezone alignment with Thermiq device
-- Preserve existing time offset handling code
-- Account for all edge cases and considerations from existing implementation
-
-**Technical Notes**:
-- Check existing timezone offset code documentation
-- Ensure proper time format alignment with device settings
+**Technical Achievement**:
+- Enhanced accuracy from simplified range display to hour-by-hour schedule precision
+- Preserved all existing staleness detection, heating states, and visual animations
+- Schedule bar now displays actual heating schedule with granular on/off periods
 
 ### 2. Bus Departure Visibility Investigation
 **Priority**: High

@@ -154,20 +154,26 @@ class RentCalculatorHandler
       description: 'API for calculating rent shares among roommates',
       endpoints: {
         'GET /api/rent': 'Get this documentation',
-        'GET /api/rent/forecast?year=YYYY&month=MM': 'Generate a rent forecast for a future month',
+        'GET /api/rent/forecast?year=YYYY&month=MM': 'Generate a rent forecast (month = config period)',
         'GET /api/rent/history': 'List available versions for a month',
-        'GET /api/rent/history?year=YYYY&month=MM&version=V': 'Get specific calculation version',
+        'GET /api/rent/history?year=YYYY&month=MM&version=V': 'Get specific calculation version (month = rent period)',
         'GET /api/rent/roommates': 'List current roommates',
-        'GET /api/rent/roommates?year=YYYY&month=MM': 'List roommates for specific month',
+        'GET /api/rent/roommates?year=YYYY&month=MM': 'List roommates for specific period (month = config period)',
         'GET /api/rent/roommates?history=true': 'Include history of changes',
         'POST /api/rent': 'Calculate rent shares',
         'POST /api/rent/roommates': 'Update roommate information',
         'PUT /api/rent/config': 'Update configuration values'
       },
+      parameter_timing_explanation: {
+        critical_concept: 'The month parameter represents CONFIG PERIOD MONTH, not rent month',
+        example: 'month=9 (September config) calculates October rent due September 27',
+        config_period: 'Contains electricity bills for consumption + advance payments for next month',
+        rent_period: 'The month being paid for (always config_month + 1 in normal cases)'
+      },
       post_request_format: {
         config: {
-          year: 'Year for calculation (optional, defaults to current)',
-          month: 'Month for calculation (optional, defaults to current)',
+          year: 'Config period year (optional, defaults to current)',
+          month: 'Config period month (optional, defaults to current)',
           kallhyra: 'Base rent (required)',
           el: 'Electricity cost',
           bredband: 'Internet cost',
@@ -328,9 +334,23 @@ class RentCalculatorHandler
     [200, { 'Content-Type' => 'application/json' }, [tenants.to_json]]
   end
 
+  # Extracts rent configuration for a specific CONFIGURATION PERIOD
+  #
+  # @param year [Integer] Configuration period year
+  # @param month [Integer] Configuration period month (1-12)
+  #
+  # CRITICAL: This month parameter represents the CONFIG PERIOD MONTH, not the rent month!
+  # The configuration retrieved is used to calculate rent for the FOLLOWING month.
+  #
+  # @example September Config → October Rent
+  #   extract_config(year: 2025, month: 9)  # Gets September period config
+  #   # Uses September electricity bills + October advance payments
+  #   # Calculates rent for October 2025 (due September 27)
+  #
+  # @return [Hash] Configuration hash with symbolized keys for RentCalculator
   def extract_config(year:, month:)
-    # Fetches the active configuration for a specific month.
-    # If a quarterly invoice (drift_rakning) is present for the month,
+    # Fetches the active configuration for a specific configuration period.
+    # If a quarterly invoice (drift_rakning) is present for the period,
     # it takes precedence over regular monthly fees.
     begin
       # Wrap PG query in additional safety to prevent segfaults
@@ -444,6 +464,19 @@ class RentCalculatorHandler
     (vattenfall_cost + fortum_cost).round
   end
 
+  # Extracts roommate information for a specific CONFIGURATION PERIOD
+  #
+  # @param year [Integer] Configuration period year
+  # @param month [Integer] Configuration period month (1-12)
+  #
+  # TIMING NOTE: Like extract_config, this uses the configuration period month.
+  # The roommate data extracted is used to calculate rent for the following month.
+  #
+  # @example September Config → October Rent
+  #   extract_roommates(year: 2025, month: 9)  # Gets tenants for September period
+  #   # Determines who should pay October rent based on September tenant status
+  #
+  # @return [Hash] Roommate hash with days stayed and room adjustments
   def extract_roommates(year:, month:)
     begin
       db = RentDb.instance
@@ -551,12 +584,25 @@ class RentCalculatorHandler
     }
   end
 
+  # Generates a friendly rent message for the current or specified period
+  #
+  # @example API Usage
+  #   GET /api/rent/friendly_message
+  #   GET /api/rent/friendly_message?year=2025&month=9
+  #
+  # CRITICAL TIMING: The month parameter is the CONFIGURATION PERIOD MONTH
+  # - month=9 retrieves September config to calculate October rent
+  # - Returns message: "Hyran för oktober 2025 ska betalas innan 27 sep"
+  #
+  # @param req [Hash] HTTP request object with optional query parameters
+  # @return [Array] HTTP response array [status, headers, body]
   def handle_friendly_message(req)
     # Parse query parameters for year/month (optional)
     query_string = req['QUERY_STRING'] || ''
     params = CGI.parse(query_string)
 
     # Use current date if not specified
+    # IMPORTANT: Current month = current config period (not rent period)
     now = Time.now
     year = params['year']&.first&.to_i || now.year
     month = params['month']&.first&.to_i || now.month

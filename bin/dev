@@ -15,6 +15,12 @@ cmd="${1:-start}"
 case "$cmd" in
   start)
     ensure_tmp
+
+    # Aggressive port cleanup to handle straggling processes from any source
+    echo "Cleaning up any straggling processes on ports 3001, 5175..."
+    lsof -ti :3001,:5175 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+    sleep 1
+
     if have_overmind; then
       if running_overmind; then
         echo "dev already running – attaching"
@@ -30,20 +36,65 @@ case "$cmd" in
     ;;
   stop)
     if have_overmind && running_overmind; then
-      exec overmind quit
-    else
-      echo "No running Overmind session detected."
-      echo "If you used Foreman, stop with Ctrl-C in that terminal or:"
-      echo "  pkill -f 'ruby.*puma_server.rb'"
-      echo "  pkill -f 'vite.*--port 5175'"
+      overmind quit
     fi
+
+    # Always perform aggressive cleanup regardless of overmind status
+    echo "Ensuring all development processes are stopped..."
+    lsof -ti :3001,:5175 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+    pkill -f 'ruby.*puma_server.rb' 2>/dev/null || true
+    pkill -f 'vite.*--port 5175' 2>/dev/null || true
+    sleep 1
+    echo "All processes stopped."
     ;;
   status)
+    echo "🔍 Development Environment Status"
+    echo "================================="
+
+    # Check Overmind status
     if have_overmind && running_overmind; then
-      exec overmind status
+      echo "✅ Overmind: RUNNING"
+      overmind status 2>/dev/null || echo "   (Status details unavailable)"
     else
-      echo "Overmind not running. Checking for manual processes:"
-      lsof -i :3001 :5175 2>/dev/null || echo "No processes found on ports 3001, 5175"
+      echo "❌ Overmind: NOT RUNNING"
+    fi
+
+    echo ""
+    echo "📊 Port Analysis:"
+
+    # Check port 3001 (backend)
+    backend_proc=$(lsof -ti :3001 2>/dev/null)
+    if [ -n "$backend_proc" ]; then
+      backend_cmd=$(ps -p "$backend_proc" -o comm= 2>/dev/null || echo "unknown")
+      echo "✅ Port 3001 (Backend): OCCUPIED by PID $backend_proc ($backend_cmd)"
+    else
+      echo "❌ Port 3001 (Backend): FREE"
+    fi
+
+    # Check port 5175 (frontend)
+    frontend_proc=$(lsof -ti :5175 2>/dev/null)
+    if [ -n "$frontend_proc" ]; then
+      frontend_cmd=$(ps -p "$frontend_proc" -o comm= 2>/dev/null || echo "unknown")
+      echo "✅ Port 5175 (Frontend): OCCUPIED by PID $frontend_proc ($frontend_cmd)"
+    else
+      echo "❌ Port 5175 (Frontend): FREE"
+    fi
+
+    echo ""
+    echo "🔧 Process Summary:"
+    ruby_procs=$(pgrep -f 'ruby.*puma_server.rb' 2>/dev/null | wc -l | tr -d ' ')
+    vite_procs=$(pgrep -f 'vite.*--port 5175' 2>/dev/null | wc -l | tr -d ' ')
+    echo "   Ruby processes: $ruby_procs"
+    echo "   Vite processes: $vite_procs"
+
+    # Overall health check
+    echo ""
+    if [ -n "$backend_proc" ] && [ -n "$frontend_proc" ]; then
+      echo "🟢 Status: HEALTHY - Both services running"
+    elif [ -n "$backend_proc" ] || [ -n "$frontend_proc" ]; then
+      echo "🟡 Status: PARTIAL - Some services running"
+    else
+      echo "🔴 Status: STOPPED - No services running"
     fi
     ;;
   restart)

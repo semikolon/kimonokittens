@@ -8,23 +8,33 @@ Active sub-projects:
 
 | Path | Purpose |
 |------|---------|
-| `handbook/` | Live wiki & handbook for the kollektiv (React + Ruby Agoo) |
+| `dashboard/` | Real-time home automation dashboard (React + TypeScript) |
+| `handbook/` | Live wiki & handbook for the kollektiv (React + Ruby) |
 | `bankbuster/`| Automated downloader & parser for Bankgirot camt.054 reports (Ruby + Vue dashboard) |
-| `rent.rb`   | Core logic for the rent calculation system, integrated with the `handbook` backend. |
+| `rent.rb`   | Core logic for the rent calculation system, integrated with the backend. |
 
 
-When working in Cursor:
+## Development Workflow
 
-* Open the sub-folder you're focused on (`handbook/` or `bankbuster/`) as a **separate workspace** so the AI context stays tight.
-* Each sub-project has its own README, TODO backlog and `.cursor/rules` directory.
-
-The scripts for the rent calculation system also live at the repo root and `handlers/`. They share gems and the same Agoo server.
+**IMPORTANT**: Use the foolproof process management protocol documented in `CLAUDE.md`:
 
 ```bash
-├── json_server.rb         # Boots Agoo, mounts sub-apps
-├── handlers/              # Misc JSON endpoints (electricity, trains, rent, etc.)
-├── bankbuster/            # Bank scraper
-└── handbook/              # Wiki SPA & API
+npm run dev          # Start all development processes (frontend + backend)
+npm run dev:stop     # Stop all processes
+npm run dev:restart  # Clean restart (prevents cache/stale process issues)
+npm run dev:status   # Check what's running
+```
+
+Architecture:
+
+```bash
+├── bin/dev               # Development orchestration script (Overmind/Foreman)
+├── puma_server.rb        # Ruby backend server (WebSocket + REST APIs)
+├── dashboard/            # React frontend (Vite dev server)
+├── handlers/             # API endpoints (weather, transit, temperature, etc.)
+├── bankbuster/           # Bank scraper
+├── handbook/             # Wiki SPA & API
+└── legacy/               # Deprecated Agoo server files
 ```
 
 ---
