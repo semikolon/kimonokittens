@@ -268,45 +268,37 @@
   transition-delay: calc(var(--item-index) * 0.1s);
 }
 
-/* Urgent departure flashing animations */
-@keyframes urgentDepartureFlash {
+/* Urgent departure arrow animations */
+@keyframes urgentArrowGlow {
   0%, 80% {
-    box-shadow: 0 0 0 rgba(255, 140, 0, 0);
-    background-color: transparent;
-    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 140, 0, 0));
+    color: rgba(255, 140, 0, 0.8);
   }
   40% {
-    box-shadow: 0 0 30px 15px rgba(255, 140, 0, 0.9);
-    background-color: rgba(255, 140, 0, 0.15);
-    transform: scale(1.02);
+    filter: drop-shadow(0 0 8px rgba(255, 140, 0, 0.8));
+    color: rgba(255, 140, 0, 1);
   }
 }
 
-@keyframes criticalDepartureFlash {
+@keyframes criticalArrowGlow {
   0%, 80% {
-    box-shadow: 0 0 0 rgba(255, 69, 0, 0);
-    background-color: transparent;
-    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 69, 0, 0));
+    color: rgba(255, 69, 0, 0.8);
   }
   40% {
-    box-shadow: 0 0 35px 20px rgba(255, 69, 0, 0.95);
-    background-color: rgba(255, 69, 0, 0.2);
-    transform: scale(1.03);
+    filter: drop-shadow(0 0 10px rgba(255, 69, 0, 0.9));
+    color: rgba(255, 69, 0, 1);
   }
 }
 
-.urgent-departure-flash {
-  animation: urgentDepartureFlash 2.5s ease-in-out 4;
-  border-radius: 8px;
-  z-index: 10;
-  position: relative;
+.urgent-arrow {
+  animation: urgentArrowGlow 2.5s ease-in-out 4;
+  margin-right: 8px;
 }
 
-.critical-departure-flash {
-  animation: criticalDepartureFlash 2s ease-in-out 2;
-  border-radius: 8px;
-  z-index: 15;
-  position: relative;
+.critical-arrow {
+  animation: criticalArrowGlow 2s ease-in-out 2;
+  margin-right: 8px;
 }
 
 /* Respect user motion preferences */
