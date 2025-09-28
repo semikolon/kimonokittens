@@ -53,3 +53,6 @@ tink-accounts.json
 /node_modules/
 
 tmp/
+
+# Process manager runtime files
+.process_manager.pid
