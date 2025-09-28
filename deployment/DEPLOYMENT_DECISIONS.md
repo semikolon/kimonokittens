@@ -14,16 +14,24 @@
 **Before**: `kimonokittens` (backend) + `kiosk` (display)
 **After**: `kimonokittens` (backend + display)
 
-### **2. Chromium Browser** ✅
-**Decision**: Switch from Firefox to Chromium for kiosk display
+### **2. Google Chrome Browser (Official .deb)** ✅
+**Decision**: Use Google Chrome official .deb package instead of Chromium snap or Firefox
 
-**Rationale**:
-- ✅ **2-3x faster WebGL rendering** (0.27ms vs 34ms per render)
-- ✅ **Better GPU acceleration** on Linux
-- ✅ **WebGPU support** for future 3x performance gains
-- ✅ **Optimized kiosk flags** for production displays
+**Research-Driven Choice**:
+- ❌ **Chromium Snap Issues (2024)**: "chromium freeze computer", "kiosk mode breaks after updates"
+- ❌ **Firefox Limitations**: "lacks kiosk mode features that Chromium surprisingly doesn't provide"
+- ✅ **Google Chrome .deb**: Official support, automatic updates, proven enterprise kiosk deployments
 
-**Performance Critical**: Dashboard uses WebGL shader backgrounds and animations
+**Performance Benefits**:
+- ✅ **Superior WebGL rendering** for dashboard animations
+- ✅ **No snap sandbox overhead** - direct hardware access
+- ✅ **GPU acceleration** optimized
+- ✅ **Excellent kiosk mode** with `--kiosk --app=URL` flags
+
+**Security & Updates**:
+- ✅ **Modern GPG keyring** method (no deprecated apt-key)
+- ✅ **Automatic updates** directly from Google
+- ✅ **Official signing** and security patches
 
 ### **3. rbenv Ruby** ✅
 **Decision**: Use rbenv Ruby 3.3.8 instead of system Ruby
@@ -34,13 +42,27 @@
 - ✅ No conflicts with system packages
 - ✅ **Claude Code compatibility**: Use direct paths (`~/.rbenv/bin/rbenv exec`)
 
-### **4. Script Consolidation** ✅
-**Decision**: Single `setup_production.sh` script instead of multiple versions
+### **4. Bulletproof Script with Fault Tolerance** ✅
+**Decision**: Enhanced `setup_production.sh` with comprehensive error handling
 
 **What was removed**:
 - `setup_production.sh` (original system Ruby)
 - `setup_production_rbenv.sh` (rbenv dual-user)
-- **Kept**: `setup_production.sh` (rbenv single-user + Chromium)
+
+**What was added**:
+- ✅ **Comprehensive pre-flight checks** (network, disk space, file validation)
+- ✅ **Smart idempotency** - every operation safely repeatable
+- ✅ **Automatic system config backups** before modifications
+- ✅ **Detailed timestamped logging** with error recovery paths
+- ✅ **Password validation** and secure environment handling
+- ✅ **Real-time verification** at each step
+
+**Fault Tolerance Features**:
+- Script can be re-run safely if it fails anywhere
+- All system configs backed up to timestamped directory
+- Clear error messages with recovery instructions
+- Database password validation before proceeding
+- Service startup verification with retries
 
 ## 🚨 **Critical Blocker: Dotfiles Setup**
 
@@ -97,16 +119,36 @@ RBENV_ROOT=~/.rbenv ~/.rbenv/bin/rbenv exec ruby --version
 3. **Network binding**: Localhost-only
 4. **Database permissions**: Limited user access
 
-## 🎯 **Final Architecture**
+### **5. Pop!_OS 22.04 Native Integration** ✅
+**Decision**: Use Pop!_OS defaults instead of custom configurations
+
+**What Changed**:
+- ❌ **Removed**: LightDM, XFCE4 (conflicts with Pop!_OS defaults)
+- ❌ **Removed**: Chromium snap (2024 compatibility issues)
+- ✅ **Added**: GDM3 auto-login (Pop!_OS native display manager)
+- ✅ **Added**: GNOME autostart (.desktop files)
+- ✅ **Added**: Google Chrome official repository
+
+**Why This Works Better**:
+- ✅ **No display manager conflicts** - uses existing GDM3
+- ✅ **No desktop environment issues** - uses existing GNOME/COSMIC
+- ✅ **Modern security practices** - GPG keyring instead of apt-key
+- ✅ **Better compatibility** - works with Pop!_OS as-designed
+
+## 🎯 **Final Architecture (Pop!_OS 22.04 Native)**
 
 ```
-Boot → LightDM → kimonokittens auto-login → SystemD services
-                                              ├─ Ruby backend (3001)
-                                              └─ Chromium kiosk
-                                                      ↓
-                                              Dashboard (localhost)
+Boot → GDM3 auto-login → kimonokittens user → GNOME session
+                                 ↓                ↓
+                         SystemD services    Autostart
+                         ├─ Ruby backend    └─ Google Chrome kiosk
+                         │  (port 3001)            ↓
+                         └─ Nginx                Dashboard
+                            (port 80)          (localhost)
 ```
 
-**Security**: Isolated service user with hardened systemd
-**Performance**: Chromium GPU acceleration + rbenv Ruby 3.3.8
-**Simplicity**: Single user, single script, clear documentation
+**Integration**: Native Pop!_OS GDM3 + GNOME + Chrome
+**Security**: Isolated service user with hardened SystemD + modern GPG
+**Performance**: Official Chrome .deb + rbenv Ruby 3.3.8 + Node.js v24
+**Compatibility**: Works WITH Pop!_OS defaults, not against them
+**Simplicity**: Single user, single script, bulletproof fault tolerance
