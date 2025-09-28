@@ -153,12 +153,14 @@ This section summarizes non-obvious architectural choices and important lessons 
 
 1.  **Prisma ORM & PostgreSQL for All Financial Data**
     * **System:** All financial data, including configuration (`RentConfig`) and historical calculations (`RentLedger`), is stored in PostgreSQL and managed via Prisma.
-    * **Replaces:** This unified system replaces a legacy file-based approach that used SQLite for configuration and versioned JSON files (`data/rent_history/`) for calculation history.
+    * **Migration Status:** Production deployment includes complete historical data migration from JSON files to RentLedger (58 historical records from `data/rent_history/`).
+    * **JSON Files:** The `data/rent_history/` directory is preserved for migration purposes and as backup reference, but the database is now the single source of truth.
     * **Rationale:**
         *   **Single Source of Truth:** Consolidates all data into one database, making it easier to manage and backup.
         *   **Queryability:** Allows for complex queries and data analysis that were impossible with the old system (e.g., historical trends).
         *   **Frontend Integration:** Auto-generated TypeScript types from Prisma provide type safety for frontend components like `<RentPanel/>` that consume financial data. The API for this is still Ruby.
         *   **Transactional Integrity:** Ensures that updates to rent data are atomic, reducing risks of corruption.
+        *   **Historical Integrity:** All historical calculations are migrated with corrected CONFIG PERIOD MONTH semantics.
 
 2.  **API Route Registration**: A critical bug was caused by a missing route definition in `json_server.rb`. Although logic existed in the handler, the server returned a 404 because the route was not registered. **All API endpoints must be explicitly handled.**
 

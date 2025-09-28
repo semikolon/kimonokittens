@@ -39,11 +39,12 @@ model RentLedger {
   id          String   @id @default(cuid())
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  period      DateTime // e.g., 2025-01-01 for Jan 2025
-  amountDue   Float
-  amountPaid  Float
-  paymentDate DateTime?
+  period      DateTime // e.g., 2025-01-01 for Jan 2025 (rent period, not config period)
+  amountDue   Float    // Amount calculated for this tenant/period
+  amountPaid  Float    // Amount actually paid (may differ from amountDue)
+  paymentDate DateTime? // When payment was received
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model RentConfig {
@@ -55,16 +56,4 @@ model RentConfig {
   period    DateTime @default(now())
 }
 
-/*
-// BLOCKED until user provides rent calculation logic
-model RentLedger {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  period      DateTime // e.g., 2025-01-01 for Jan 2025
-  amountDue   Float
-  amountPaid  Float
-  paymentDate DateTime?
-  createdAt   DateTime @default(now())
-}
-*/ 
+ 

@@ -235,3 +235,61 @@ Train departures use **keyless SL Transport API** (`transport.integration.sl.se`
 ---
 
 **Remember: When in doubt about rent timing, the dashboard request month determines the config period, not the rent month shown in the message.**
+
+## 🚨 PRODUCTION DEPLOYMENT & HISTORICAL DATA MIGRATION
+
+### CRITICAL: Historical Data Migration Protocol
+**COMPLETED September 28, 2025** - All production deployments MUST include historical data migration.
+
+#### Migration Components:
+- **`deployment/production_migration.rb`**: Enhanced with historical JSON processing
+- **`data/rent_history/`**: Required directory containing 14+ JSON files
+- **Tenant Mapping**: Automatic name-to-ID conversion for foreign keys
+- **Semantic Conversion**: CONFIG PERIOD MONTH → rent period month (month 7 → August rent)
+- **Result**: 58 historical RentLedger records from corrected JSON data
+
+#### Database State After Migration:
+```
+RentConfig: 7 records (electricity, base rent, utilities, quarterly invoice)
+Tenants: 8 records (Adam, Amanda, Astrid, Elvira, Frans-Lukas, Fredrik, Malin, Rasmus)
+RentLedger: 58 records (complete historical rent payments)
+```
+
+#### Migration Verification Commands:
+```bash
+# Verify RentLedger record count
+ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.class.rent_ledger.count"
+
+# Check historical coverage
+ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.class.rent_ledger.group(:period).count"
+```
+
+### Production Deployment Files Checklist:
+```
+deployment/production_database_20250928.json    ✅ Core data export
+deployment/production_migration.rb              ✅ WITH HISTORICAL DATA PROCESSING
+deployment/export_production_data.rb            ✅ Backup script
+deployment/DEPLOYMENT_CHECKLIST.md              ✅ Step-by-step guide
+DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md               ✅ Hardware setup
+data/rent_history/                               ✅ REQUIRED FOR MIGRATION
+```
+
+### ⚠️ IMPORTANT MIGRATION REMINDERS:
+
+1. **Never deploy without `data/rent_history/` directory** - Historical data won't migrate
+2. **CONFIG PERIOD MONTH semantics are corrected** - Files already fixed (month 7 = August rent)
+3. **Tenant mapping is automatic** - Script handles name-to-ID conversion
+4. **One-time operation** - Historical migration only runs during initial deployment
+5. **Backup exists** - Original JSON files preserved at `data/rent_history_original_backup_20250928/`
+
+### Production Health Checks:
+```bash
+# Database connectivity
+ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.get_tenants.length"
+
+# API endpoints
+curl http://localhost:3001/api/rent/friendly_message
+
+# WebSocket connection
+# Check browser console for WebSocket at ws://localhost:3001
+```

@@ -9,6 +9,7 @@ import { StravaWidget } from './components/StravaWidget'
 import { TodoWidget } from './components/TodoWidget'
 import { CalendarWidget } from './components/CalendarWidget'
 import { RentWidget } from './components/RentWidget'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { Wifi, WifiOff } from 'lucide-react'
 import AnoAI from './components/ui/animated-shader-background'
 
@@ -120,12 +121,16 @@ function BackendDataWidgets() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
         <div className="md:col-span-2">
           <Widget title="Huset" accent={true} horsemenFont={true}>
-            <TemperatureWidget />
+            <ErrorBoundary resetKeys={[temperatureData?.last_updated_time]}>
+              <TemperatureWidget />
+            </ErrorBoundary>
           </Widget>
         </div>
         <div className="md:col-span-2">
           <Widget title="Klimat" accent={true} horsemenFont={true}>
-            <WeatherWidget />
+            <ErrorBoundary resetKeys={[weatherData?.generated_at]}>
+              <WeatherWidget />
+            </ErrorBoundary>
           </Widget>
         </div>
       </div>
@@ -133,21 +138,27 @@ function BackendDataWidgets() {
       {/* Full-width transport section */}
       <div className="mb-12">
         <Widget accent={true} className="w-full">
-          <TrainWidget />
+          <ErrorBoundary resetKeys={[trainData?.generated_at, connectionStatus]}>
+            <TrainWidget />
+          </ErrorBoundary>
         </Widget>
       </div>
 
       {/* Full-width rent section */}
       <div className="mb-12">
         <Widget title="Hyran" horsemenFont={true} accent={true} className="w-full">
-          <RentWidget />
+          <ErrorBoundary resetKeys={[rentData?.generated_at]}>
+            <RentWidget />
+          </ErrorBoundary>
         </Widget>
       </div>
 
       {/* Full-width Strava section */}
       <div className="mb-12">
         <Widget title="Fredriks skogsturer" horsemenFont={true} className="w-full bg-purple-900/10">
-          <StravaWidget />
+          <ErrorBoundary resetKeys={[stravaData?.generated_at]}>
+            <StravaWidget />
+          </ErrorBoundary>
         </Widget>
       </div>
 
@@ -179,7 +190,9 @@ function DashboardContent() {
         {/* Featured section - Full width Clock with integrated logo */}
         <div className="mb-12">
           <Widget large={true} accent={true} allowOverflow={true} className="min-h-[260px] w-full" innerClassName="px-6 pt-4 pb-2 md:px-8">
-            <ClockWidget />
+            <ErrorBoundary>
+              <ClockWidget />
+            </ErrorBoundary>
           </Widget>
         </div>
 

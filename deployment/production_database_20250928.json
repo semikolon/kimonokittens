@@ -1,0 +1,122 @@
+{
+  "export_date": "2025-09-28T19:31:57+02:00",
+  "database_version": "kimonokittens_production_v1",
+  "rent_configs": [
+    {
+      "key": "kallhyra",
+      "value": "24530",
+      "period": "2025-08-01 00:00:00 +0200",
+      "created_at": "2025-07-04 20:22:29 +0200",
+      "updated_at": "2025-09-28 08:50:48 +0200"
+    },
+    {
+      "key": "bredband",
+      "value": "400",
+      "period": "2025-08-01 00:00:00 +0200",
+      "created_at": "2025-07-04 20:22:29 +0200",
+      "updated_at": "2025-09-28 08:50:48 +0200"
+    },
+    {
+      "key": "vattenavgift",
+      "value": "375",
+      "period": "2025-08-01 00:00:00 +0200",
+      "created_at": "2025-07-04 20:22:29 +0200",
+      "updated_at": "2025-09-28 08:50:48 +0200"
+    },
+    {
+      "key": "drift_rakning",
+      "value": "2612",
+      "period": "2024-10-01 00:00:00 +0200",
+      "created_at": "2025-09-28 08:46:48 +0200",
+      "updated_at": "2025-09-28 08:50:48 +0200"
+    },
+    {
+      "key": "el",
+      "value": "2424",
+      "period": "2025-08-01 00:00:00 +0200",
+      "created_at": "2025-07-04 20:22:29 +0200",
+      "updated_at": "2025-09-28 08:50:48 +0200"
+    },
+    {
+      "key": "el",
+      "value": "1876",
+      "period": "2025-10-01 00:00:00 +0200",
+      "created_at": "2025-09-28 08:48:04 +0200",
+      "updated_at": "2025-09-28 08:50:48 +0200"
+    },
+    {
+      "key": "el",
+      "value": "2424",
+      "period": "2025-09-01 00:00:00 +0200",
+      "created_at": "2025-09-28 08:48:04 +0200",
+      "updated_at": "2025-09-28 08:50:48 +0200"
+    }
+  ],
+  "tenants": [
+    {
+      "id": "cmcp5ovvc0000mnpiq34uprjv",
+      "name": "Adam",
+      "email": "adam@kimonokittens.com",
+      "startDate": "2025-03-01 00:00:00 +0100",
+      "departureDate": null,
+      "roomAdjustment": null
+    },
+    {
+      "id": "cmd4xvdmi00000zpiz9hfcspx",
+      "name": "Amanda",
+      "email": "amanda@kimonokittens.com",
+      "startDate": "2025-08-02 00:00:00 +0200",
+      "departureDate": null,
+      "roomAdjustment": null
+    },
+    {
+      "id": "cmcp56en8000ryzpi8q7wtlbx",
+      "name": "Astrid",
+      "email": "astrid@kimonokittens.com",
+      "startDate": "2024-02-01 00:00:00 +0100",
+      "departureDate": "2024-11-30 00:00:00 +0100",
+      "roomAdjustment": -1400.0
+    },
+    {
+      "id": "cmcp56en8000qyzpicykv9t82",
+      "name": "Elvira",
+      "email": "elvira@kimonokittens.com",
+      "startDate": "2024-11-22 00:00:00 +0100",
+      "departureDate": "2025-08-01 00:00:00 +0200",
+      "roomAdjustment": null
+    },
+    {
+      "id": "cmcp56en7000oyzpilhvyi16d",
+      "name": "Frans-Lukas",
+      "email": "frans-lukas@kimonokittens.com",
+      "startDate": "2023-12-01 00:00:00 +0100",
+      "departureDate": "2025-03-01 00:00:00 +0100",
+      "roomAdjustment": null
+    },
+    {
+      "id": "cmcp56en7000myzpivjxfmxcc",
+      "name": "Fredrik",
+      "email": "fredrik@kimonokittens.com",
+      "startDate": "2023-02-01 00:00:00 +0100",
+      "departureDate": null,
+      "roomAdjustment": null
+    },
+    {
+      "id": "cmcp56en8000pyzpivlwr1c4p",
+      "name": "Malin",
+      "email": "malin@kimonokittens.com",
+      "startDate": "2023-02-01 00:00:00 +0100",
+      "departureDate": "2024-11-21 00:00:00 +0100",
+      "roomAdjustment": null
+    },
+    {
+      "id": "cmcp56en7000nyzpi90f6dnkx",
+      "name": "Rasmus",
+      "email": "rasmus@kimonokittens.com",
+      "startDate": "2023-06-01 00:00:00 +0200",
+      "departureDate": null,
+      "roomAdjustment": null
+    }
+  ],
+  "rent_ledger": []
+}

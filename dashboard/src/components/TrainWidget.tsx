@@ -569,32 +569,36 @@ export function TrainWidget() {
   const { state } = useData()
   const { trainData, connectionStatus } = state
 
+  // Calculate state flags
   const loading = connectionStatus === 'connecting' && !trainData
   const error = connectionStatus === 'closed' ? 'WebSocket-anslutning avbruten' : null
-
-  if (loading) {
-    return <div className="text-purple-200">Laddar...</div>
-  }
-
-  if (error) {
-    return (
-      <div>
-        <div className="text-red-400">Fel: {error}</div>
-        <div className="text-xs text-purple-200 mt-1">
-          (Kontrollera att SL API fungerar)
-        </div>
-      </div>
-    )
-  }
-
-  if (!trainData) {
-    return <div className="text-purple-200">Ingen data tillgänglig</div>
-  }
+  const hasNoData = !trainData
 
   // Handle both old HTML format (backwards compatibility) and new structured format
-  const isStructuredData = trainData.trains !== undefined
+  const isStructuredData = trainData?.trains !== undefined
+  const structuredData = isStructuredData ? trainData as StructuredTransportData : null
 
-  if (!isStructuredData) {
+  // IMPORTANT: All hooks must be called before any conditional returns
+  // Prepare data for hooks (use empty arrays if no structured data)
+  const trainsForHooks = structuredData ?
+    mergeDelayInfoIntoTrains(structuredData.trains, structuredData.deviations) : []
+
+  const feasibleTrainsForHooks = trainsForHooks.filter(train => {
+    const adjusted = calculateAdjustedDeparture(train)
+    return adjusted.adjustedMinutesUntil >= 0 && isFeasibleTrainDeparture(adjusted.adjustedMinutesUntil)
+  })
+
+  const busesForHooks = structuredData?.buses || []
+  const feasibleBusesForHooks = busesForHooks.filter(bus =>
+    bus.minutes_until >= 0 && isFeasibleBusDeparture(bus.minutes_until)
+  )
+
+  // Call all hooks with safe data (React Hooks Rules - must be called in same order every render)
+  const { urgentFlashingTrains, criticalFlashingTrains } = useUrgentDepartureFlashing(feasibleTrainsForHooks)
+  const { urgentFlashingBuses, criticalFlashingBuses } = useUrgentBusFlashing(feasibleBusesForHooks)
+
+  // Now we can do conditional returns after all hooks are called
+  if (!trainData || !isStructuredData) {
     // Legacy fallback - show message about format upgrade
     return (
       <div className="text-orange-400">
@@ -606,24 +610,11 @@ export function TrainWidget() {
     )
   }
 
-  const structuredData = trainData as StructuredTransportData
+  // Safe to use structured data now
   const { buses, deviations } = structuredData
-
-  // Merge delay info from deviations array into train objects
-  const trainsWithMergedDelays = mergeDelayInfoIntoTrains(structuredData.trains, deviations)
-
-  // Filter for feasible departures using adjusted departure times
-  const feasibleTrains = trainsWithMergedDelays.filter(train => {
-    const adjusted = calculateAdjustedDeparture(train)
-    return adjusted.adjustedMinutesUntil >= 0 && isFeasibleTrainDeparture(adjusted.adjustedMinutesUntil)
-  })
-
-  // Add urgent departure flashing
-  const { urgentFlashingTrains, criticalFlashingTrains } = useUrgentDepartureFlashing(feasibleTrains)
-
-  const feasibleBuses = buses.filter(bus =>
-    bus.minutes_until >= 0 && isFeasibleBusDeparture(bus.minutes_until)
-  )
+  const trainsWithMergedDelays = trainsForHooks
+  const feasibleTrains = feasibleTrainsForHooks
+  const feasibleBuses = feasibleBusesForHooks
 
   // Debug logging
   console.log('Bus data debug:', {
@@ -632,9 +623,6 @@ export function TrainWidget() {
     feasibleBuses: feasibleBuses.length,
     generatedAt: structuredData.generated_at
   })
-
-  // Add urgent bus flashing
-  const { urgentFlashingBuses, criticalFlashingBuses } = useUrgentBusFlashing(feasibleBuses)
 
   // Only show deviations for feasible departures
   const feasibleDeviations = deviations.filter(deviation =>

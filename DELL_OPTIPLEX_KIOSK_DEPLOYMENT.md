@@ -35,6 +35,88 @@ Internet ──→ GitHub Webhook ──→ Dell Optiplex
 
 ---
 
+## 🗄️ Production Database Setup
+
+### Database Migration Strategy
+
+**CRITICAL**: Complete this section before starting application services.
+
+#### Prerequisites
+```bash
+# Install PostgreSQL
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+# Create production database and user
+sudo -u postgres createuser -P kimonokittens
+sudo -u postgres createdb kimonokittens_production -O kimonokittens
+```
+
+#### Environment Configuration
+Create `/home/kimonokittens/.env` with production settings:
+```bash
+DATABASE_URL=postgresql://kimonokittens:YOUR_PASSWORD@localhost/kimonokittens_production
+NODE_ENV=production
+RAILS_ENV=production
+PORT=3001
+```
+
+#### Database Migration Process
+
+**Step 1: Transfer Migration Files**
+```bash
+# Copy migration files to production server
+scp deployment/production_database_20250928.json user@optiplex:/home/kimonokittens/
+scp deployment/production_migration.rb user@optiplex:/home/kimonokittens/
+```
+
+**Step 2: Run Prisma Migration**
+```bash
+cd /home/kimonokittens
+npx prisma migrate deploy
+npx prisma generate
+```
+
+**Step 3: Import Production Data**
+```bash
+# Load initial production data (rent configs, tenants)
+ruby deployment/production_migration.rb
+```
+
+#### Data Verification
+```bash
+# Verify database state
+ruby -e "
+require 'dotenv/load'
+require_relative 'lib/rent_db'
+db = RentDb.instance
+puts 'RentConfig: ' + db.class.rent_configs.count.to_s
+puts 'Tenants: ' + db.class.tenants.count.to_s
+puts 'RentLedger: ' + db.class.rent_ledger.count.to_s
+"
+```
+
+**Expected Output**:
+```
+RentConfig: 7
+Tenants: 8
+RentLedger: 0
+```
+
+#### Historical Data (Backup Only)
+The corrected historical JSON files in `data/rent_history/` serve as:
+- **Disaster recovery backup**
+- **Data integrity reference**
+- **Audit trail for rent calculations**
+
+These files use **CONFIG PERIOD MONTH** semantics:
+- `month: 7` → August rent calculation
+- `month: 10` → November rent calculation
+
+**Note**: Database is the production source of truth; JSON files are backup only.
+
+---
+
 ## 🖥️ Kiosk Display Setup
 
 ### System Users
