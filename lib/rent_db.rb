@@ -55,41 +55,62 @@ class RentDb
       .all
   end
 
+  # Configuration key classification based on business logic
+  PERIOD_SPECIFIC_KEYS = %w[el drift_rakning saldo_innan extra_in].freeze
+  PERSISTENT_KEYS = %w[kallhyra bredband vattenavgift va larm].freeze
+
+  # Default values for persistent keys when no configuration is found
+  DEFAULTS = {
+    kallhyra: 24530,
+    bredband: 400,
+    vattenavgift: 375,
+    va: 300,
+    larm: 150
+  }.freeze
+
   def get_rent_config(year:, month:)
-    # This query finds the most recent value for each configuration key
-    # that is effective for a given month. Uses Sequel's advanced querying.
-    end_of_month = (Date.new(year, month, 1).next_month - 1).to_time.utc
+    target_date = Date.new(year, month, 1)
+    # Use Time.utc for consistent timezone handling
+    target_time = Time.utc(year, month, 1)
+    end_of_month = (target_date.next_month - 1).to_time.utc
 
-    # Use Sequel's window functions for the ranked query
-    ranked_configs = self.class.rent_configs
-      .where { period <= end_of_month }
-      .select(
-        :key,
-        :value,
-        :period,
-        Sequel.function(:row_number).over(partition: :key, order: Sequel.desc(:period)).as(:rn)
-      )
-      .from_self
-      .where(rn: 1)
-      .select(:key, :value)
-
-    # Return result in format compatible with existing code (string keys, not symbols)
     result = []
-    ranked_configs.each { |row|
-      # Convert symbol keys to string keys to match original PG::Result behavior
-      result << row.transform_keys(&:to_s)
-    }
+
+    # Period-specific keys: exact match only, no carry-forward
+    PERIOD_SPECIFIC_KEYS.each do |key|
+      config_record = self.class.rent_configs
+        .where(key: key, period: target_time)
+        .first
+
+      value = config_record ? config_record[:value] : 0
+      result << { 'key' => key, 'value' => value }
+    end
+
+    # Persistent keys: use most recent value where period <= target
+    PERSISTENT_KEYS.each do |key|
+      config_record = self.class.rent_configs
+        .where(key: key)
+        .where { period <= end_of_month }
+        .order(Sequel.desc(:period))
+        .first
+
+      value = config_record ? config_record[:value] : (DEFAULTS[key.to_sym] || 0)
+      result << { 'key' => key, 'value' => value }
+    end
 
     # Create a mock PG::Result-like object for compatibility
     MockPGResult.new(result)
   end
 
   def set_config(key, value, period = Time.now)
+    # Normalize period to month start for exact matching and uniqueness
+    normalized_period = Time.utc(period.year, period.month, 1)
+
     self.class.rent_configs.insert(
       id: Cuid.generate,
       key: key,
       value: value,
-      period: period.utc,
+      period: normalized_period,
       createdAt: Time.now.utc,
       updatedAt: Time.now.utc
     )
