@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROCFILE="${PROCFILE:-Procfile.dev}"
+PORT_BASE="${PORT_BASE:-3001}"
+SOCKET="${OVERMIND_SOCKET:-./.overmind.sock}"
+
+ensure_tmp() { mkdir -p tmp; }
+
+have_overmind() { command -v overmind >/dev/null 2>&1; }
+running_overmind() { [ -S "$SOCKET" ] && overmind status >/dev/null 2>&1; }
+
+cmd="${1:-start}"
+
+case "$cmd" in
+  start)
+    ensure_tmp
+    if have_overmind; then
+      if running_overmind; then
+        echo "dev already running – attaching"
+        exec overmind connect
+      else
+        exec overmind start -f "$PROCFILE" -p "$PORT_BASE"
+      fi
+    else
+      echo "overmind not found; using foreman via Bundler (install overmind for best UX)."
+      echo "install with: brew install tmux overmind"
+      exec bundle exec foreman start -f "$PROCFILE" -p "$PORT_BASE"
+    fi
+    ;;
+  stop)
+    if have_overmind && running_overmind; then
+      exec overmind quit
+    else
+      echo "No running Overmind session detected."
+      echo "If you used Foreman, stop with Ctrl-C in that terminal or:"
+      echo "  pkill -f 'ruby.*puma_server.rb'"
+      echo "  pkill -f 'vite.*--port 5175'"
+    fi
+    ;;
+  status)
+    if have_overmind && running_overmind; then
+      exec overmind status
+    else
+      echo "Overmind not running. Checking for manual processes:"
+      lsof -i :3001 :5175 2>/dev/null || echo "No processes found on ports 3001, 5175"
+    fi
+    ;;
+  restart)
+    if have_overmind && running_overmind; then
+      overmind restart
+      exit 0
+    fi
+    echo "Restarting via stop -> start"
+    "$0" stop
+    sleep 1
+    exec "$0" start
+    ;;
+  logs)
+    if have_overmind && running_overmind; then
+      exec overmind connect
+    else
+      echo "No Overmind session; start first with: bin/dev start"
+    fi
+    ;;
+  *)
+    echo "Usage: bin/dev [start|stop|restart|status|logs]"
+    echo ""
+    echo "  start   - Start all dev processes (backend + frontend)"
+    echo "  stop    - Stop all dev processes"
+    echo "  restart - Restart all dev processes"
+    echo "  status  - Show process status"
+    echo "  logs    - View/attach to process logs"
+    echo ""
+    echo "Processes: Ruby backend (port 3001), Vite frontend (port 5175)"
+    exit 1
+    ;;
+esac

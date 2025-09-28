@@ -42,6 +42,7 @@ group :test, :development do
   gem 'rack-test', '~> 2.1'
   gem 'pry'
   gem 'listen', '~> 3.8'
+  gem 'foreman', '~> 0.90' # Process management for development
 end
 
 # Assets (not required in production)

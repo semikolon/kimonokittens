@@ -1,0 +1,2 @@
+web: ENABLE_BROADCASTER=1 ruby puma_server.rb
+frontend: npm run dev --workspace=dashboard

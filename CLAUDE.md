@@ -104,11 +104,49 @@ curl -s http://localhost:3001/api/rent/friendly_message | jq .message
 
 ## Development Workflow
 
+### Daily Process Management 🔧
+**Problem**: Multiple backend processes lead to stale code caching (7,492 kr bug was caused by old server running since Saturday).
+
+**Solution**: Use Procfile.dev + bin/dev for single-instance process management.
+
+**Commands** (all equivalent):
+```bash
+# Start all dev processes (backend + frontend)
+npm run dev          # OR
+bin/dev start        # OR
+bin/dev              # (default)
+
+# Check status
+npm run dev:status   # Shows running processes and ports
+
+# Restart all
+npm run dev:restart  # Clean restart prevents stale cache
+
+# Stop all
+npm run dev:stop     # Clean shutdown
+
+# View logs
+npm run dev:logs     # Attach to process logs
+```
+
+**Ports**:
+- **Backend**: 3001 (Ruby Puma + WebSocket broadcaster)
+- **Frontend**: 5175 (Vite dev server)
+
+**Best Practice**: Always use `npm run dev:restart` instead of manual commands to ensure clean process state.
+
+**Process Files**:
+- `Procfile.dev`: Defines all dev processes
+- `bin/dev`: Single-instance orchestration script with Overmind/Foreman support
+
+### Code Change Workflow
+
 1. **Before making rent changes**: Read this file
 2. **Check database state**: Use quick reference commands above
 3. **Update configs**: Use correct timing (current month period for next month rent)
-4. **Verify results**: Test API and check dashboard
-5. **Clean up**: Remove any test data from production DB
+4. **Restart processes**: `npm run dev:restart` to ensure fresh backend
+5. **Verify results**: Test API and check dashboard
+6. **Clean up**: Remove any test data from production DB
 
 ## Train/Bus Animation System 🚂
 
