@@ -29,25 +29,29 @@ sudo bash deployment/scripts/setup_production.sh
 - ✅ **PostgreSQL database** with production data migration
 - ✅ **Nginx web server** serving dashboard
 - ✅ **Ruby backend** (3.3.8 via rbenv) with real-time data
-- ✅ **Chromium kiosk** with GPU acceleration
+- ✅ **Google Chrome kiosk** with GPU acceleration (official .deb)
 - ✅ **SystemD services** for reliability
-- ✅ **Auto-login kiosk mode** on boot
+- ✅ **GDM3 auto-login** with native GNOME integration
 
-### **Architecture**
+### **Architecture (Pop!_OS 22.04 Native)**
 ```
-Dell Optiplex → Auto-login → kimonokittens user → Chromium kiosk → Dashboard
-                                 ↓
-                         Ruby backend (port 3001) ← PostgreSQL
-                                 ↓
-                         Nginx (port 80) ← Dashboard build
+Dell Optiplex → GDM3 auto-login → kimonokittens user → Google Chrome kiosk
+                                       ↓                        ↓
+                               GNOME autostart              Dashboard
+                                       ↓
+                               Ruby backend (port 3001) ← PostgreSQL
+                                       ↓
+                               Nginx (port 80) ← Dashboard build
 ```
 
 ## ⚡ **Performance Optimizations**
 
-- **Chromium browser** (2-3x faster WebGL than Firefox)
+- **Google Chrome browser** (superior WebGL performance for dashboard animations)
+- **Official .deb package** (no snap sandbox overhead)
 - **GPU acceleration** enabled for smooth animations
 - **Hardware-optimized** kiosk flags
-- **Single-user architecture** for simplified debugging
+- **Native Pop!_OS integration** (GDM3, GNOME autostart)
+- **Modern secure GPG keyring** (no deprecated apt-key warnings)
 
 ## 🔒 **Security**
 
