@@ -6,6 +6,7 @@ class DataBroadcaster
     @pubsub = pubsub
     @running = false
     @threads = []
+    @base_url = ENV['API_BASE_URL'] || 'http://localhost:3001'
   end
 
   def start
@@ -16,11 +17,11 @@ class DataBroadcaster
     initial_broadcast
 
     # Start thread-based schedulers for different data sources
-    @threads << periodic(30) { fetch_and_publish('train_data', 'http://localhost:3001/data/train_departures') }
-    @threads << periodic(60) { fetch_and_publish('temperature_data', 'http://localhost:3001/data/temperature') }
-    @threads << periodic(300) { fetch_and_publish('weather_data', 'http://localhost:3001/data/weather') }
-    @threads << periodic(600) { fetch_and_publish('strava_data', 'http://localhost:3001/data/strava_stats') }
-    @threads << periodic(3600) { fetch_and_publish('rent_data', 'http://localhost:3001/api/rent/friendly_message') }
+    @threads << periodic(30) { fetch_and_publish('train_data', "#{@base_url}/data/train_departures") }
+    @threads << periodic(60) { fetch_and_publish('temperature_data', "#{@base_url}/data/temperature") }
+    @threads << periodic(300) { fetch_and_publish('weather_data', "#{@base_url}/data/weather") }
+    @threads << periodic(600) { fetch_and_publish('strava_data', "#{@base_url}/data/strava_stats") }
+    @threads << periodic(3600) { fetch_and_publish('rent_data', "#{@base_url}/api/rent/friendly_message") }
     @threads << periodic(300) { fetch_and_publish_todos }
 
     puts "DataBroadcaster: All scheduled tasks started"
@@ -30,11 +31,11 @@ class DataBroadcaster
     # Send all data immediately on startup for fast loading
     Thread.new do
       puts "DataBroadcaster: Sending initial broadcasts..."
-      fetch_and_publish('weather_data', 'http://localhost:3001/data/weather')
-      fetch_and_publish('strava_data', 'http://localhost:3001/data/strava_stats')
-      fetch_and_publish('train_data', 'http://localhost:3001/data/train_departures')
-      fetch_and_publish('temperature_data', 'http://localhost:3001/data/temperature')
-      fetch_and_publish('rent_data', 'http://localhost:3001/api/rent/friendly_message')
+      fetch_and_publish('weather_data', "#{@base_url}/data/weather")
+      fetch_and_publish('strava_data', "#{@base_url}/data/strava_stats")
+      fetch_and_publish('train_data', "#{@base_url}/data/train_departures")
+      fetch_and_publish('temperature_data', "#{@base_url}/data/temperature")
+      fetch_and_publish('rent_data', "#{@base_url}/api/rent/friendly_message")
       fetch_and_publish_todos
       puts "DataBroadcaster: Initial broadcasts complete"
     end
@@ -44,11 +45,11 @@ class DataBroadcaster
     # Send all data immediately when a new WebSocket client connects
     Thread.new do
       puts "DataBroadcaster: Sending immediate data to new client..."
-      fetch_and_publish('weather_data', 'http://localhost:3001/data/weather')
-      fetch_and_publish('strava_data', 'http://localhost:3001/data/strava_stats')
-      fetch_and_publish('train_data', 'http://localhost:3001/data/train_departures')
-      fetch_and_publish('temperature_data', 'http://localhost:3001/data/temperature')
-      fetch_and_publish('rent_data', 'http://localhost:3001/api/rent/friendly_message')
+      fetch_and_publish('weather_data', "#{@base_url}/data/weather")
+      fetch_and_publish('strava_data', "#{@base_url}/data/strava_stats")
+      fetch_and_publish('train_data', "#{@base_url}/data/train_departures")
+      fetch_and_publish('temperature_data', "#{@base_url}/data/temperature")
+      fetch_and_publish('rent_data', "#{@base_url}/api/rent/friendly_message")
       fetch_and_publish_todos
       puts "DataBroadcaster: Immediate data sent to new client"
     end
@@ -94,7 +95,7 @@ class DataBroadcaster
   end
 
   def fetch_and_publish_todos
-    response = HTTParty.get('http://localhost:3001/api/todos', timeout: 10)
+    response = HTTParty.get("#{@base_url}/api/todos", timeout: 10)
     return unless response.success?
 
     # Parse markdown list items into structured JSON
