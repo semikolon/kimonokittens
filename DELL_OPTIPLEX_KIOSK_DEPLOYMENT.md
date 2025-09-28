@@ -1,8 +1,10 @@
-# Dell Optiplex 7010 Kiosk Dashboard & Handbook Hosting Deployment Guide
+# Dell Optiplex 7010 Kiosk Dashboard Deployment Guide
 
 **Target Hardware**: Dell Optiplex 7010 running PopOS Linux
-**Purpose**: Dedicated kiosk server hosting real-time dashboard and Handbook AI system
-**Display**: Fullscreen browser in kiosk mode with auto-updates from GitHub
+**Purpose**: Dedicated kiosk server hosting real-time dashboard
+**Display**: Chromium fullscreen kiosk with GPU acceleration and auto-updates
+
+> **📋 Quick Deploy**: See `deployment/` folder for streamlined setup process.
 
 ---
 
@@ -188,6 +190,7 @@ WantedBy=graphical.target
 ```bash
 firefox --kiosk --private-window http://localhost
 ```
+**Note**: We now use Chromium by default for better GPU performance.
 
 ---
 

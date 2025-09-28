@@ -5,6 +5,52 @@
 This document provides a detailed, step-by-step implementation plan for the Kimonokittens monorepo projects. It is designed to be executed by an AI assistant with minimal context loss. Execute tasks sequentially unless marked as `(BLOCKED)`.
 
 ---
+## 🚀 PRODUCTION DEPLOYMENT - Dell Optiplex Kiosk [IN PROGRESS]
+
+**Goal:** Deploy Kimonokittens dashboard as production kiosk on Dell Optiplex
+
+**Status:** Ready for deployment - all infrastructure prepared
+
+### **Production Environment Setup**
+- [ ] **CRITICAL: Run production deployment script**
+  ```bash
+  sudo bash deployment/scripts/setup_production.sh
+  ```
+- [ ] **Configure GitHub webhook secret** (post-deployment)
+- [ ] **Test webhook:** `http://DELL_IP/webhook`
+- [ ] **Verify services:** `systemctl status kimonokittens-dashboard nginx`
+- [ ] **Reboot for kiosk mode:** `sudo reboot`
+
+### **Production Architecture** (SIMPLIFIED)
+- **User:** `kimonokittens` (single user for backend + kiosk display)
+- **Ruby:** 3.3.8 via rbenv (copied to production user)
+- **Database:** PostgreSQL with production data migration
+- **Frontend:** Nginx serving built dashboard
+- **Auto-updates:** GitHub webhook → deployment script
+
+### **Critical Blocker: Dotfiles Setup**
+- [ ] **Locate and sync global Claude config** from Mac Mini M2
+- [ ] **Setup dotfiles repository** with symlink strategy for `.zshrc`, `.claude/`
+- [ ] **Add rbenv Claude Code compatibility section** to global CLAUDE.md:
+  ```markdown
+  ## Claude Code & rbenv Compatibility
+  Claude Code Bash tool doesn't load shell functions. Use direct paths:
+
+  # ❌ Won't work: rbenv exec ruby --version
+  # ✅ Works: ~/.rbenv/bin/rbenv exec ruby --version
+  ```
+- [ ] **Create bootstrap script** for consistent machine setup
+- [ ] **Document dotfiles structure** and deployment process
+
+**Priority**: HIGH - Affects all future Claude Code sessions and development workflow
+**Details**: See `deployment/DOTFILES_SETUP_BLOCKER.md`
+
+**References:**
+- `deployment/README.md` (quick start guide)
+- `deployment/DEPLOYMENT_CHECKLIST.md` (step-by-step)
+- `deployment/SIMPLIFIED_ARCHITECTURE.md` (technical details)
+
+---
 ## Immediate Tasks & Repository Hygiene
 
 **Goal:** Address outstanding technical debt and improve overall code quality.
