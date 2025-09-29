@@ -1,29 +1,25 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // The connection URL will be provided later
+  url      = env("DATABASE_URL")
 }
 
 model Tenant {
-  id             String      @id @default(cuid())
+  id             String        @id @default(cuid())
+  facebookId     String?       @unique
   name           String
-  email          String      @unique
-  facebookId     String?     @unique
+  email          String        @unique
   avatarUrl      String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   roomAdjustment Float?
-  startDate      DateTime?   // Add the missing start date
   departureDate  DateTime?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  coOwnedItems   CoOwnedItem[] @relation("ItemOwners")
-
+  startDate      DateTime?
   rentLedger     RentLedger[]
+  coOwnedItems   CoOwnedItem[] @relation("ItemOwners")
 }
 
 model CoOwnedItem {
@@ -31,29 +27,30 @@ model CoOwnedItem {
   name         String
   description  String?
   purchaseDate DateTime
-  value        Float // Original value in SEK
+  value        Float
   owners       Tenant[] @relation("ItemOwners")
 }
 
 model RentLedger {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  period      DateTime // e.g., 2025-01-01 for Jan 2025 (rent period, not config period)
-  amountDue   Float    // Amount calculated for this tenant/period
-  amountPaid  Float    // Amount actually paid (may differ from amountDue)
-  paymentDate DateTime? // When payment was received
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  period      DateTime
+  amountDue   Float
+  amountPaid  Float
+  paymentDate DateTime?
+  createdAt   DateTime  @default(now())
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
 }
 
 model RentConfig {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  period    DateTime @default(now())
-}
+  id           String    @id @default(cuid())
+  key          String
+  value        String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  period       DateTime  @default(now())
+  period_month DateTime? @default(dbgenerated("(date_trunc('month'::text, period))::date")) @db.Date
 
- 
+  @@unique([key, period_month], map: "rentconfig_key_period_month_uniq")
+  @@index([key, period(sort: Desc)], map: "rentconfig_key_period_desc_idx")
+}
