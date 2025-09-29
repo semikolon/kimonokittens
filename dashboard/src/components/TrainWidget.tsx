@@ -175,40 +175,72 @@ const generateBusId = (bus: BusDeparture): string =>
 
 // Hook for detecting list changes (not just data updates)
 const useTrainListChanges = (currentTrains: TrainDeparture[]) => {
-  const [prevTrainIds, setPrevTrainIds] = useState<Set<string>>(new Set())
+  const [prevTrains, setPrevTrains] = useState<TrainDeparture[]>([])
 
   return useMemo(() => {
     const currentIds = new Set(currentTrains.map(generateTrainId))
-    const added = [...currentIds].filter(id => !prevTrainIds.has(id))
-    const removed = [...prevTrainIds].filter(id => !currentIds.has(id))
+    const prevIds = new Set(prevTrains.map(generateTrainId))
 
-    const hasStructuralChange = added.length > 0 || removed.length > 0
+    const potentiallyAdded = [...currentIds].filter(id => !prevIds.has(id))
+    const removed = [...prevIds].filter(id => !currentIds.has(id))
+
+    // Filter out false "new" trains that are just time updates
+    const genuinelyAdded = potentiallyAdded.filter(newTrainId => {
+      const newTrain = currentTrains.find(train => generateTrainId(train) === newTrainId)!
+
+      // Check if this is just a time update of an existing train
+      const isTimeUpdate = prevTrains.some(prevTrain =>
+        prevTrain.line_number === newTrain.line_number &&
+        prevTrain.destination === newTrain.destination &&
+        Math.abs(prevTrain.departure_timestamp - newTrain.departure_timestamp) <= 300 // 5 min window
+      )
+
+      return !isTimeUpdate // Only include genuinely new trains
+    })
+
+    const hasStructuralChange = genuinelyAdded.length > 0 || removed.length > 0
 
     // Update state for next comparison (but don't trigger re-render)
     setTimeout(() => {
-      setPrevTrainIds(currentIds)
+      setPrevTrains([...currentTrains])
     }, 0)
 
-    return { hasStructuralChange, added, removed }
-  }, [currentTrains, prevTrainIds])
+    return { hasStructuralChange, added: genuinelyAdded, removed }
+  }, [currentTrains, prevTrains])
 }
 
 const useBusListChanges = (currentBuses: BusDeparture[]) => {
-  const [prevBusIds, setPrevBusIds] = useState<Set<string>>(new Set())
+  const [prevBuses, setPrevBuses] = useState<BusDeparture[]>([])
 
   return useMemo(() => {
     const currentIds = new Set(currentBuses.map(generateBusId))
-    const added = [...currentIds].filter(id => !prevBusIds.has(id))
-    const removed = [...prevBusIds].filter(id => !currentIds.has(id))
+    const prevIds = new Set(prevBuses.map(generateBusId))
 
-    const hasStructuralChange = added.length > 0 || removed.length > 0
+    const potentiallyAdded = [...currentIds].filter(id => !prevIds.has(id))
+    const removed = [...prevIds].filter(id => !currentIds.has(id))
+
+    // Filter out false "new" buses that are just time updates
+    const genuinelyAdded = potentiallyAdded.filter(newBusId => {
+      const newBus = currentBuses.find(bus => generateBusId(bus) === newBusId)!
+
+      // Check if this is just a time update of an existing bus
+      const isTimeUpdate = prevBuses.some(prevBus =>
+        prevBus.line_number === newBus.line_number &&
+        prevBus.destination === newBus.destination &&
+        Math.abs(prevBus.departure_timestamp - newBus.departure_timestamp) <= 300 // 5 min window
+      )
+
+      return !isTimeUpdate // Only include genuinely new buses
+    })
+
+    const hasStructuralChange = genuinelyAdded.length > 0 || removed.length > 0
 
     setTimeout(() => {
-      setPrevBusIds(currentIds)
+      setPrevBuses([...currentBuses])
     }, 0)
 
-    return { hasStructuralChange, added, removed }
-  }, [currentBuses, prevBusIds])
+    return { hasStructuralChange, added: genuinelyAdded, removed }
+  }, [currentBuses, prevBuses])
 }
 
 // Urgent departure detection and flashing
