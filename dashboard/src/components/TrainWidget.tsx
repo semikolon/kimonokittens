@@ -51,8 +51,19 @@ interface AdjustedDeparture {
 }
 
 const parseDelayInfo = (note: string): DelayInfo => {
+  // Defensive: ensure note is a string and not null/undefined
+  if (!note || typeof note !== 'string') {
+    return { isDelayed: false, delayMinutes: 0, originalNote: '' }
+  }
+
+  // Defensive: trim whitespace and ensure it's not empty
+  const trimmedNote = note.trim()
+  if (!trimmedNote) {
+    return { isDelayed: false, delayMinutes: 0, originalNote: note }
+  }
+
   // Handle both "försenad X min" and just "försenad"
-  const delayWithMinutes = note.match(/försenad (\d+) min/)
+  const delayWithMinutes = trimmedNote.match(/försenad (\d+) min/)
   if (delayWithMinutes) {
     return {
       isDelayed: true,
@@ -62,7 +73,7 @@ const parseDelayInfo = (note: string): DelayInfo => {
   }
 
   // Check for just "försenad" without specific minutes
-  if (note.includes('försenad')) {
+  if (trimmedNote.includes('försenad')) {
     return {
       isDelayed: true,
       delayMinutes: 0, // We'll estimate from time difference
@@ -76,8 +87,9 @@ const parseDelayInfo = (note: string): DelayInfo => {
 // Merge delay information from deviations array into train objects
 const mergeDelayInfoIntoTrains = (trains: TrainDeparture[], deviations: Deviation[]): TrainDeparture[] => {
   return trains.map(train => {
-    // If train already has delay info in summary_deviation_note, use it
-    if (train.summary_deviation_note.trim()) {
+    // Defensive: ensure summary_deviation_note exists and is a string
+    const existingNote = train.summary_deviation_note
+    if (existingNote && typeof existingNote === 'string' && existingNote.trim()) {
       return train
     }
 
