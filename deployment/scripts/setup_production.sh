@@ -862,7 +862,9 @@ set -e
 export PATH="/home/$SERVICE_USER/.rbenv/bin:\$PATH"
 eval "\$(rbenv init -)"
 cd "/home/$SERVICE_USER/Projects/kimonokittens"
-source "/home/$SERVICE_USER/.env"
+
+# Copy .env to project directory for dotenv to find
+cp "/home/$SERVICE_USER/.env" "./.env"
 
 echo "Running production data migration..."
 bundle exec ruby deployment/production_migration.rb
