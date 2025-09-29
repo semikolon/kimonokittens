@@ -42,8 +42,8 @@ begin
       roomAdjustment: tenant['roomAdjustment'],
       startDate: tenant['startDate'] ? Time.parse(tenant['startDate']) : nil,
       departureDate: tenant['departureDate'] ? Time.parse(tenant['departureDate']) : nil,
-      createdAt: Time.parse(tenant['createdAt']),
-      updatedAt: Time.parse(tenant['updatedAt'])
+      createdAt: tenant['createdAt'] ? Time.parse(tenant['createdAt']) : Time.now.utc,
+      updatedAt: tenant['updatedAt'] ? Time.parse(tenant['updatedAt']) : Time.now.utc
     )
   end
 
