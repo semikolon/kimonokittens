@@ -1,5 +1,0 @@
--- AlterTable
-ALTER TABLE "Tenant" ADD COLUMN     "departureDate" TIMESTAMP(3),
-ALTER COLUMN "roomAdjustment" DROP NOT NULL,
-ALTER COLUMN "roomAdjustment" DROP DEFAULT,
-ALTER COLUMN "roomAdjustment" SET DATA TYPE DOUBLE PRECISION;
