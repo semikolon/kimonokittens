@@ -5,6 +5,7 @@ import useWebSocket from 'react-use-websocket'
 interface TrainData {
   summary: string
   deviation_summary: string
+  generated_at?: string
 }
 
 interface TemperatureData {
@@ -62,10 +63,12 @@ interface WeatherData {
     country: string
   }
   error?: string
+  generated_at?: string
 }
 
 interface StravaData {
   runs: string
+  generated_at?: string
 }
 
 interface RentData {

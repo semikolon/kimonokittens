@@ -284,6 +284,9 @@ data/rent_history/                               ✅ REQUIRED FOR MIGRATION
 
 ### Production Health Checks:
 ```bash
+# Ruby dependencies
+bundle install --deployment --without development test assets
+
 # Database connectivity
 ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.get_tenants.length"
 
