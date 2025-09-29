@@ -52,14 +52,20 @@ NODE_ENV=production
 PORT=3001
 ```
 
-### Step 3: Schema Migration
+### Step 3: Ruby Dependencies
+```bash
+cd /home/kimonokittens
+bundle install --deployment --without development test assets
+```
+
+### Step 4: Schema Migration
 ```bash
 cd /home/kimonokittens
 npx prisma migrate deploy
 npx prisma generate
 ```
 
-### Step 4: Data Import
+### Step 5: Data Import
 ```bash
 ruby deployment/production_migration.rb
 ```
@@ -70,7 +76,7 @@ ruby deployment/production_migration.rb
 - Payment dates from calculation timestamps
 - All amounts marked as fully paid for historical data
 
-### Step 5: Verification
+### Step 6: Verification
 Expected output:
 ```
 RentConfig: 7

@@ -51,8 +51,19 @@ interface AdjustedDeparture {
 }
 
 const parseDelayInfo = (note: string): DelayInfo => {
+  // Defensive: ensure note is a string and not null/undefined
+  if (!note || typeof note !== 'string') {
+    return { isDelayed: false, delayMinutes: 0, originalNote: '' }
+  }
+
+  // Defensive: trim whitespace and ensure it's not empty
+  const trimmedNote = note.trim()
+  if (!trimmedNote) {
+    return { isDelayed: false, delayMinutes: 0, originalNote: note }
+  }
+
   // Handle both "försenad X min" and just "försenad"
-  const delayWithMinutes = note.match(/försenad (\d+) min/)
+  const delayWithMinutes = trimmedNote.match(/försenad (\d+) min/)
   if (delayWithMinutes) {
     return {
       isDelayed: true,
@@ -62,7 +73,7 @@ const parseDelayInfo = (note: string): DelayInfo => {
   }
 
   // Check for just "försenad" without specific minutes
-  if (note.includes('försenad')) {
+  if (trimmedNote.includes('försenad')) {
     return {
       isDelayed: true,
       delayMinutes: 0, // We'll estimate from time difference
@@ -76,8 +87,9 @@ const parseDelayInfo = (note: string): DelayInfo => {
 // Merge delay information from deviations array into train objects
 const mergeDelayInfoIntoTrains = (trains: TrainDeparture[], deviations: Deviation[]): TrainDeparture[] => {
   return trains.map(train => {
-    // If train already has delay info in summary_deviation_note, use it
-    if (train.summary_deviation_note.trim()) {
+    // Defensive: ensure summary_deviation_note exists and is a string
+    const existingNote = train.summary_deviation_note
+    if (existingNote && typeof existingNote === 'string' && existingNote.trim()) {
       return train
     }
 
@@ -213,48 +225,90 @@ const isCriticalDeparture = (train: TrainDeparture): boolean => {
          train.suffix.includes('spring')
 }
 
-const useUrgentDepartureFlashing = (trains: TrainDeparture[]) => {
-  const [urgentFlashingTrains, setUrgentFlashingTrains] = useState<Set<string>>(new Set())
-  const [criticalFlashingTrains, setCriticalFlashingTrains] = useState<Set<string>>(new Set())
-  const [alreadyFlashed, setAlreadyFlashed] = useState<Set<string>>(new Set())
+const useDepartureSequence = (trains: TrainDeparture[]) => {
+  const [trainStates, setTrainStates] = useState<Map<string, DepartureState>>(new Map())
+  const [warningTrains, setWarningTrains] = useState<Set<string>>(new Set())
+  const [criticalTrains, setCriticalTrains] = useState<Set<string>>(new Set())
+  const [departingTrains, setDepartingTrains] = useState<Set<string>>(new Set())
+  const [processedTransitions, setProcessedTransitions] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     trains.forEach(train => {
       const trainId = generateTrainId(train)
+      const adjusted = calculateAdjustedDeparture(train)
+      const minutesUntil = adjusted.adjustedMinutesUntil
+      const currentState = trainStates.get(trainId) || 'feasible'
+      const transitionKey = `${trainId}-${currentState}`
 
-      // Check for urgent departures (warning phase)
-      if (isUrgentDeparture(train) && !alreadyFlashed.has(trainId + '-urgent')) {
-        setAlreadyFlashed(prev => new Set([...prev, trainId + '-urgent']))
-        setUrgentFlashingTrains(prev => new Set([...prev, trainId]))
+      // Trigger departure sequence when train becomes infeasible (< 6 minutes)
+      if (currentState === 'feasible' && minutesUntil < 6 && minutesUntil >= 0 && !processedTransitions.has(transitionKey)) {
+        console.log(`Starting departure sequence for train ${trainId} (${minutesUntil}m remaining)`)
+        setProcessedTransitions(prev => new Set([...prev, transitionKey]))
 
-        // Stop flashing after 4 flashes × 2.5s = 10s
+        // Phase 1: Warning (orange glow) - 4 seconds
+        setTrainStates(prev => new Map(prev).set(trainId, 'warning'))
+        setWarningTrains(prev => new Set([...prev, trainId]))
+
         setTimeout(() => {
-          setUrgentFlashingTrains(prev => {
+          // Phase 2: Critical (orange-red glow) - 3 seconds
+          setTrainStates(prev => new Map(prev).set(trainId, 'critical'))
+          setWarningTrains(prev => {
             const newSet = new Set(prev)
             newSet.delete(trainId)
             return newSet
           })
-        }, 10000)
-      }
+          setCriticalTrains(prev => new Set([...prev, trainId]))
 
-      // Check for critical departures (emergency phase)
-      if (isCriticalDeparture(train) && !alreadyFlashed.has(trainId + '-critical')) {
-        setAlreadyFlashed(prev => new Set([...prev, trainId + '-critical']))
-        setCriticalFlashingTrains(prev => new Set([...prev, trainId]))
+          setTimeout(() => {
+            // Phase 3: Departing (fade out) - 2 seconds
+            setTrainStates(prev => new Map(prev).set(trainId, 'departing'))
+            setCriticalTrains(prev => {
+              const newSet = new Set(prev)
+              newSet.delete(trainId)
+              return newSet
+            })
+            setDepartingTrains(prev => new Set([...prev, trainId]))
 
-        // Stop flashing after 2 flashes × 2s = 4s
-        setTimeout(() => {
-          setCriticalFlashingTrains(prev => {
-            const newSet = new Set(prev)
-            newSet.delete(trainId)
-            return newSet
-          })
+            setTimeout(() => {
+              // Phase 4: Departed (remove from lists)
+              setTrainStates(prev => new Map(prev).set(trainId, 'departed'))
+              setDepartingTrains(prev => {
+                const newSet = new Set(prev)
+                newSet.delete(trainId)
+                return newSet
+              })
+            }, 2000)
+          }, 3000)
         }, 4000)
       }
     })
-  }, [trains, alreadyFlashed])
+  }, [trains, trainStates, processedTransitions])
 
-  return { urgentFlashingTrains, criticalFlashingTrains }
+  // Clean up states for trains that are no longer in the list
+  useEffect(() => {
+    const currentTrainIds = new Set(trains.map(generateTrainId))
+    setTrainStates(prev => {
+      const newMap = new Map(prev)
+      for (const trainId of prev.keys()) {
+        if (!currentTrainIds.has(trainId)) {
+          newMap.delete(trainId)
+        }
+      }
+      return newMap
+    })
+
+    // Clean up flash sets
+    setWarningTrains(prev => new Set([...prev].filter(id => currentTrainIds.has(id))))
+    setCriticalTrains(prev => new Set([...prev].filter(id => currentTrainIds.has(id))))
+    setDepartingTrains(prev => new Set([...prev].filter(id => currentTrainIds.has(id))))
+  }, [trains])
+
+  return {
+    trainStates,
+    urgentFlashingTrains: warningTrains, // Keep same interface for compatibility
+    criticalFlashingTrains: criticalTrains,
+    departingTrains
+  }
 }
 
 // Bus urgent departure detection and flashing
@@ -327,6 +381,13 @@ const isFeasibleTrainDeparture = (minutesUntil: number): boolean => {
   return minutesUntil >= 6 // Need at least 6 minutes to reach train station
 }
 
+// Enhanced departure sequence states
+type DepartureState = 'feasible' | 'warning' | 'critical' | 'departing' | 'departed'
+
+interface TrainWithDepartureState extends TrainDeparture {
+  departureState?: DepartureState
+}
+
 const isFeasibleBusDeparture = (minutesUntil: number): boolean => {
   return minutesUntil >= 0 // Bus stop is right outside (1min walk), show until departure
 }
@@ -337,36 +398,37 @@ const AnimatedTrainList: React.FC<{
   renderItem: (train: TrainDeparture, index: number, isUrgentFlashing: boolean, isCriticalFlashing: boolean) => React.ReactNode;
   urgentFlashingTrains?: Set<string>;
   criticalFlashingTrains?: Set<string>;
-}> = ({ trains, renderItem, urgentFlashingTrains = new Set(), criticalFlashingTrains = new Set() }) => {
+  departingTrains?: Set<string>;
+  trainStates?: Map<string, DepartureState>;
+}> = ({
+  trains,
+  renderItem,
+  urgentFlashingTrains = new Set(),
+  criticalFlashingTrains = new Set(),
+  departingTrains = new Set(),
+  trainStates = new Map()
+}) => {
   const { hasStructuralChange, removed } = useTrainListChanges(trains)
-  const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set())
-
-  // Handle train removal animation
-  useEffect(() => {
-    if (removed.length > 0) {
-      setAnimatingItems(new Set(removed))
-
-      // Clear animation state after animation completes
-      const timer = setTimeout(() => {
-        setAnimatingItems(new Set())
-      }, 400) // Match CSS transition duration
-
-      return () => clearTimeout(timer)
-    }
-  }, [removed])
 
   return (
     <div className="train-list-container">
       {trains.map((train, index) => {
         const trainId = generateTrainId(train)
-        const isAnimating = animatingItems.has(trainId)
+        const departureState = trainStates.get(trainId) || 'feasible'
         const isUrgentFlashing = urgentFlashingTrains.has(trainId)
         const isCriticalFlashing = criticalFlashingTrains.has(trainId)
+        const isDeparting = departingTrains.has(trainId)
+
+        // Build CSS classes based on departure state
+        const cssClasses = ['train-departure-item']
+        if (departureState === 'warning') cssClasses.push('warning-glow')
+        if (departureState === 'critical') cssClasses.push('critical-glow')
+        if (departureState === 'departing' || isDeparting) cssClasses.push('departing')
 
         return (
           <div
             key={trainId}
-            className={`train-departure-item ${isAnimating ? 'departing' : ''}`}
+            className={cssClasses.join(' ')}
             style={{ '--item-index': index } as React.CSSProperties}
           >
             {renderItem(train, index, isUrgentFlashing, isCriticalFlashing)}
@@ -406,10 +468,10 @@ const AnimatedBusList: React.FC<{
     if (added.length > 0) {
       setArrivingItems(new Set(added))
 
-      // Trigger arrival animation after a brief delay
+      // Trigger arrival animation - duration matches CSS animation (10s)
       const timer = setTimeout(() => {
         setArrivingItems(new Set())
-      }, 100)
+      }, 10000)
 
       return () => clearTimeout(timer)
     }
@@ -478,7 +540,6 @@ const TrainDepartureLine: React.FC<{
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
-        marginBottom: '2px',
         display: 'flex',
         alignItems: 'flex-start'
       }}
@@ -508,7 +569,6 @@ const BusDepartureLine: React.FC<{
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
-        marginBottom: '2px',
         display: 'flex',
         alignItems: 'flex-start'
       }}
@@ -583,9 +643,20 @@ export function TrainWidget() {
   const trainsForHooks = structuredData ?
     mergeDelayInfoIntoTrains(structuredData.trains, structuredData.deviations) : []
 
+  // Include trains in departure sequence (warning, critical, departing states)
+  const { trainStates, urgentFlashingTrains, criticalFlashingTrains, departingTrains } = useDepartureSequence(trainsForHooks)
+
   const feasibleTrainsForHooks = trainsForHooks.filter(train => {
+    const trainId = generateTrainId(train)
     const adjusted = calculateAdjustedDeparture(train)
-    return adjusted.adjustedMinutesUntil >= 0 && isFeasibleTrainDeparture(adjusted.adjustedMinutesUntil)
+    const departureState = trainStates.get(trainId) || 'feasible'
+
+    // Include trains that are feasible OR in departure sequence (warning, critical, departing)
+    // Only exclude trains that are fully departed
+    return adjusted.adjustedMinutesUntil >= 0 && (
+      isFeasibleTrainDeparture(adjusted.adjustedMinutesUntil) ||
+      ['warning', 'critical', 'departing'].includes(departureState)
+    )
   })
 
   const busesForHooks = structuredData?.buses || []
@@ -594,7 +665,7 @@ export function TrainWidget() {
   )
 
   // Call all hooks with safe data (React Hooks Rules - must be called in same order every render)
-  const { urgentFlashingTrains, criticalFlashingTrains } = useUrgentDepartureFlashing(feasibleTrainsForHooks)
+  // Note: departure sequence for trains is already handled above
   const { urgentFlashingBuses, criticalFlashingBuses } = useUrgentBusFlashing(feasibleBusesForHooks)
 
   // Now we can do conditional returns after all hooks are called
@@ -654,6 +725,8 @@ export function TrainWidget() {
                   )}
                   urgentFlashingTrains={urgentFlashingTrains}
                   criticalFlashingTrains={criticalFlashingTrains}
+                  departingTrains={departingTrains}
+                  trainStates={trainStates}
                 />
               ) : (
                 <div style={{ opacity: 0.6 }}>Inga pendeltåg inom en timme</div>

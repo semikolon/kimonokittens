@@ -1,13 +1,10 @@
 import React from 'react'
 import { DataProvider, useData } from './context/DataContext'
 import { ClockWidget } from './components/ClockWidget'
-import { LogoWidget } from './components/LogoWidget'
 import { WeatherWidget } from './components/WeatherWidget'
 import { TemperatureWidget } from './components/TemperatureWidget'
 import { TrainWidget } from './components/TrainWidget'
 import { StravaWidget } from './components/StravaWidget'
-import { TodoWidget } from './components/TodoWidget'
-import { CalendarWidget } from './components/CalendarWidget'
 import { RentWidget } from './components/RentWidget'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Wifi, WifiOff } from 'lucide-react'
@@ -19,7 +16,6 @@ const Widget = ({
   title,
   className = "",
   accent = false,
-  large = false,
   horsemenFont = false,
   allowOverflow = false,
   innerClassName
@@ -28,7 +24,6 @@ const Widget = ({
   title?: string,
   className?: string,
   accent?: boolean,
-  large?: boolean,
   horsemenFont?: boolean,
   allowOverflow?: boolean,
   innerClassName?: string
@@ -51,35 +46,6 @@ const Widget = ({
   )
 }
 
-function ConnectionStatus() {
-  const { state } = useData()
-  const { connectionStatus } = state
-
-  const getStatusIcon = () => {
-    switch (connectionStatus) {
-      case 'open': return <Wifi className="h-4 w-4 text-emerald-500" />
-      case 'connecting': return <Wifi className="h-4 w-4 text-amber-500 animate-pulse" />
-      case 'closed': return <WifiOff className="h-4 w-4 text-rose-500" />
-      default: return <WifiOff className="h-4 w-4 text-gray-400" />
-    }
-  }
-
-  const getStatusText = () => {
-    switch (connectionStatus) {
-      case 'open': return 'Ansluten'
-      case 'connecting': return 'Återansluter...'
-      case 'closed': return 'Återansluter automatiskt...'
-      default: return 'Okänd status'
-    }
-  }
-
-  return (
-    <div className="fixed top-6 right-6 flex items-center space-x-3 text-xs z-50 backdrop-blur-md bg-slate-900/60 px-4 py-2 rounded-full shadow-sm border border-purple-800/30">
-      {getStatusIcon()}
-      <span className="text-purple-100 font-medium tracking-wide">{getStatusText()}</span>
-    </div>
-  )
-}
 
 function BackendErrorMessage() {
   const { state } = useData()

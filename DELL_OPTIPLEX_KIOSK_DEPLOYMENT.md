@@ -72,16 +72,23 @@ scp deployment/production_database_20250928.json user@optiplex:/home/kimonokitte
 scp deployment/production_migration.rb user@optiplex:/home/kimonokittens/
 ```
 
-**Step 2: Run Prisma Migration**
+**Step 2: Install Ruby Dependencies**
+```bash
+cd /home/kimonokittens
+# Install required Ruby gems (including sequel, pg, etc.)
+bundle install --deployment --without development test assets
+```
+
+**Step 3: Run Prisma Migration**
 ```bash
 cd /home/kimonokittens
 npx prisma migrate deploy
 npx prisma generate
 ```
 
-**Step 3: Import Production Data**
+**Step 4: Import Production Data**
 ```bash
-# Load initial production data (rent configs, tenants)
+# Load initial production data (rent configs, tenants, historical data)
 ruby deployment/production_migration.rb
 ```
 

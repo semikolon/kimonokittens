@@ -5,6 +5,7 @@ import useWebSocket from 'react-use-websocket'
 interface TrainData {
   summary: string
   deviation_summary: string
+  generated_at?: string
 }
 
 interface TemperatureData {
@@ -62,10 +63,12 @@ interface WeatherData {
     country: string
   }
   error?: string
+  generated_at?: string
 }
 
 interface StravaData {
   runs: string
+  generated_at?: string
 }
 
 interface RentData {
@@ -73,6 +76,8 @@ interface RentData {
   year: number
   month: number
   generated_at: string
+  electricity_amount?: number
+  electricity_month?: string
   data_source?: {
     type: 'actual' | 'historical' | 'defaults'
     electricity_source: 'current_bills' | 'historical_lookup' | 'fallback_defaults'
