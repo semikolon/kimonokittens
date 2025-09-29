@@ -727,10 +727,25 @@ export function TrainWidget() {
     generatedAt: structuredData.generated_at
   })
 
-  // Only show deviations for feasible departures
-  const feasibleDeviations = deviations.filter(deviation =>
-    isFeasibleTrainDeparture(getMinutesUntilFromTime(deviation.time))
-  )
+  // Only show deviations for feasible departures (accounting for delays)
+  const feasibleDeviations = deviations.filter(deviation => {
+    // Check if this is a delay deviation and extract delay minutes
+    const isDelayDeviation = /försenad (\d+) min/.test(deviation.reason)
+    if (isDelayDeviation) {
+      const delayMatch = deviation.reason.match(/försenad (\d+) min/)
+      const delayMinutes = delayMatch ? parseInt(delayMatch[1]) : 0
+
+      // Calculate adjusted departure time (original time + delay)
+      const originalMinutesUntil = getMinutesUntilFromTime(deviation.time)
+      const adjustedMinutesUntil = Math.max(0, originalMinutesUntil - delayMinutes)
+
+      // Only show if the adjusted departure time is still feasible
+      return isFeasibleTrainDeparture(adjustedMinutesUntil)
+    }
+
+    // For non-delay deviations, use original time
+    return isFeasibleTrainDeparture(getMinutesUntilFromTime(deviation.time))
+  })
 
   return (
     <div>
