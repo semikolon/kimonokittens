@@ -835,9 +835,12 @@ fi
 if [ -f "prisma/schema.prisma" ]; then
     log "Found Prisma schema, running Prisma migrations..."
 
+    # Copy .env to project directory for Prisma (Prisma looks for .env in cwd)
+    cp "/home/$SERVICE_USER/.env" "./.env"
+    chown "$SERVICE_USER:$SERVICE_USER" "./.env"
+
     if ! sudo -u "$SERVICE_USER" bash -c "
         source $SERVICE_USER_NVM_DIR/nvm.sh
-        source /home/$SERVICE_USER/.env
         npx prisma migrate deploy
     "; then
         error_exit "Prisma migrate deploy failed"
@@ -845,7 +848,6 @@ if [ -f "prisma/schema.prisma" ]; then
 
     if ! sudo -u "$SERVICE_USER" bash -c "
         source $SERVICE_USER_NVM_DIR/nvm.sh
-        source /home/$SERVICE_USER/.env
         npx prisma generate
     "; then
         error_exit "Prisma generate failed"
