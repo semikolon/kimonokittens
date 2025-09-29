@@ -151,7 +151,8 @@
       "Bash(for browser in firefox chromium-browser google-chrome brave-browser microsoft-edge)",
       "Bash(for:*)",
       "Bash(head:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

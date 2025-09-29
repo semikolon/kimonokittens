@@ -88,7 +88,7 @@ wiki/                 Approved live Markdown pages
 proposals/            Drafts awaiting ≥2 approvals
 frontend/             React SPA source (Vite)
 server/agoo/          Ruby API (mounts into existing json_server.rb)
-prisma/               Schema & migrations for Postgres
+../prisma/            Schema & migrations for Postgres (shared)
 .cursor/rules/        Cursor IDE project rules (auto-attached)
 ```
 
@@ -111,7 +111,7 @@ docker run --name handbook-pg -e POSTGRES_PASSWORD=wiki -p5432:5432 -d postgres:
 
 # 3. initialise DB
 cp .env.example .env          # fill in FACEBOOK_* & DATABASE_URL
-pnpm prisma migrate dev
+npx prisma migrate dev  # From repo root
 
 # 4. run everything
 pnpm dev            # Vite + Tailwind HMR on :5173

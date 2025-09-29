@@ -9,7 +9,7 @@
 ### **Phase 1: Backend Configuration & Database Prep (COMPLETED)**
 
 1.  ✅ **Update the Database Schema:**
-    *   Added `facebookId` field to the `Tenant` model in `handbook/prisma/schema.prisma`
+    *   Added `facebookId` field to the `Tenant` model in `/prisma/schema.prisma`
     *   Field is nullable and unique for Facebook OAuth integration
 
 2.  ✅ **Add Backend Dependencies:**
@@ -84,7 +84,7 @@
         ```
 
 3.  **Run Database Migration:**
-    *   Once `DATABASE_URL` is set: `cd handbook && npx prisma migrate dev --name add_facebook_id_to_tenant`
+    *   Once `DATABASE_URL` is set: `npx prisma migrate dev --name add_facebook_id_to_tenant` (from repo root)
 
 ---
 

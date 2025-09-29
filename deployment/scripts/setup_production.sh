@@ -835,11 +835,17 @@ fi
 if [ -f "prisma/schema.prisma" ]; then
     log "Found Prisma schema, running Prisma migrations..."
 
-    if ! sudo -u "$SERVICE_USER" npx prisma migrate deploy; then
+    if ! sudo -u "$SERVICE_USER" bash -c "
+        source $SERVICE_USER_NVM_DIR/nvm.sh
+        npx prisma migrate deploy
+    "; then
         error_exit "Prisma migrate deploy failed"
     fi
 
-    if ! sudo -u "$SERVICE_USER" npx prisma generate; then
+    if ! sudo -u "$SERVICE_USER" bash -c "
+        source $SERVICE_USER_NVM_DIR/nvm.sh
+        npx prisma generate
+    "; then
         error_exit "Prisma generate failed"
     fi
 

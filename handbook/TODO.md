@@ -8,7 +8,7 @@
 
 ### Milestone 1 – Auth & DB
 - [ ] Next-Auth setup (Facebook provider) – `.env` vars + `/api/auth/*` routes
-- [ ] Prisma schema + first migration
+- [x] Prisma schema + first migration (moved to /prisma)
 - [ ] `<RentPanel/>` component showing logged-in user's ledger
 
 ### Milestone 2 – Review flow polish
@@ -24,7 +24,7 @@
 ### Milestone 4 – Deployment
 - [ ] `infra/compose.yml` for Postgres + Watchtower upgrade
 - [ ] systemd unit `handbook.service` to start Agoo with `bundle exec`
-- [ ] CI: Vite build + rspec + prisma validate
+- [ ] CI: Vite build + rspec + prisma validate (from root)
 
 ### Stretch ideas
 - [ ] Stripe webhook to auto-mark rent paid, update ledger
@@ -36,7 +36,7 @@
 - [ ] Implement WebSocket push for real-time page updates after merges.
 
 ### Financials & Contracts
-- [ ] Define Prisma schema for `Tenant` and `RentLedger`.
+- [x] Define Prisma schema for `Tenant` and `RentLedger` (moved to /prisma).
 - [ ] Implement `<RentPanel/>` component to display data from the API.
 - [ ] Research and integrate a third-party e-signing service (DocuSign, Scrive) for contracts.
 
