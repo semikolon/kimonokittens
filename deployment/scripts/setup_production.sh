@@ -959,12 +959,9 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
-# Security hardening
+# Security hardening (relaxed for home directory access)
 NoNewPrivileges=yes
 PrivateTmp=yes
-ProtectSystem=strict
-ReadWritePaths=/home/$SERVICE_USER
-ProtectHome=yes
 
 [Install]
 WantedBy=multi-user.target
