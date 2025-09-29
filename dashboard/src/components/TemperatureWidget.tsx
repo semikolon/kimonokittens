@@ -103,10 +103,12 @@ export function TemperatureWidget() {
       // Create key with date info for proper lookup
       const hourKey = `${timelineHour.getFullYear()}-${timelineHour.getMonth()}-${timelineHour.getDate()}-${hour}`
       const isScheduledOn = scheduleMap.get(hourKey) || false
+      // For current hour, use ACTUAL heatpump state instead of schedule prediction
+      const actualState = isCurrentHour ? !temperatureData.heatpump_disabled : isScheduledOn
 
       hours.push({
         hour,
-        isScheduledOn,
+        isScheduledOn: actualState,
         isCurrentHour,
         displayHour: hour.toString().padStart(2, '0'),
         minuteProgress: isCurrentHour ? currentMinutes / 60 : 0
