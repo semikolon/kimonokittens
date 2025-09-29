@@ -389,11 +389,24 @@ PROD_PROJECT_DIR="/home/$SERVICE_USER/Projects/kimonokittens"
 if [ -d "$PROD_PROJECT_DIR" ]; then
     log "Repository already exists, updating..."
 
-    # Service user doesn't need SSH keys - just use fresh copy from development
-    log "Updating with fresh copy from development..."
-    rm -rf "$PROD_PROJECT_DIR"
-    if ! cp -r "$REAL_HOME/Projects/kimonokittens" "/home/$SERVICE_USER/Projects/"; then
-        error_exit "Failed to copy project repository"
+    # Try git pull first, fall back to fresh copy if needed
+    if [ -d "$PROD_PROJECT_DIR/.git" ]; then
+        log "Attempting git pull..."
+        if sudo -u "$SERVICE_USER" git -C "$PROD_PROJECT_DIR" pull origin master; then
+            log "✅ Git pull successful"
+        else
+            log "⚠️ Git pull failed (likely no SSH keys for service user), using fresh copy"
+            rm -rf "$PROD_PROJECT_DIR"
+            if ! cp -r "$REAL_HOME/Projects/kimonokittens" "/home/$SERVICE_USER/Projects/"; then
+                error_exit "Failed to copy project repository"
+            fi
+        fi
+    else
+        log "Not a git repository, copying fresh..."
+        rm -rf "$PROD_PROJECT_DIR"
+        if ! cp -r "$REAL_HOME/Projects/kimonokittens" "/home/$SERVICE_USER/Projects/"; then
+            error_exit "Failed to copy project repository"
+        fi
     fi
 else
     log "Copying repository from development location..."
@@ -422,6 +435,12 @@ for file in "${CRITICAL_FILES[@]}"; do
 done
 
 log "✅ Repository setup and verified"
+
+# Optional: Set up SSH keys for service user to enable direct git operations
+# Note: For now, git pull falls back to copying from development directory
+# To enable direct git pull for service user, generate SSH keys:
+# sudo -u kimonokittens ssh-keygen -t ed25519 -C "kimonokittens@production"
+# Then add the public key to GitHub
 
 # Step 6: Create environment file
 log "⚙️ Step 6: Creating environment configuration..."
