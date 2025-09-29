@@ -834,7 +834,7 @@ cd "/home/$SERVICE_USER/Projects/kimonokittens"
 source "/home/$SERVICE_USER/.env"
 
 echo "Running production data migration..."
-ruby deployment/production_migration.rb
+bundle exec ruby deployment/production_migration.rb
 
 echo "Migration completed successfully"
 EOF
@@ -860,7 +860,7 @@ cd "/home/$SERVICE_USER/Projects/kimonokittens"
 source "/home/$SERVICE_USER/.env"
 
 echo "Checking tenant count..."
-ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.get_tenants.length.to_s + ' tenants found'"
+bundle exec ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.get_tenants.length.to_s + ' tenants found'"
 
 echo "Data verification complete"
 EOF
@@ -1116,7 +1116,7 @@ if sudo -u "$SERVICE_USER" bash -c "
     eval \"\$(rbenv init -)\"
     cd \"/home/$SERVICE_USER/Projects/kimonokittens\"
     source \"/home/$SERVICE_USER/.env\"
-    ruby -e \"require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.get_tenants.length.to_s + ' tenants found'\"
+    bundle exec ruby -e \"require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.get_tenants.length.to_s + ' tenants found'\"
 " 2>/dev/null; then
     log "✅ OK"
 else
