@@ -184,7 +184,7 @@ npm run dev:logs     # Attach to live process logs
 5. **Verify results**: Test API and check dashboard
 6. **Clean up**: Remove any test data from production DB
 
-## Train/Bus Animation System 🚂
+## Train/Bus Animation System 🚂 **COMPLETED ✅**
 
 ### Smart Identity Tracking for Sliding Animations
 **Location**: `dashboard/src/components/TrainWidget.tsx:129-130`
@@ -196,29 +196,30 @@ const generateTrainId = (train: TrainDeparture): string =>
   `${train.departure_time}-${train.line_number}-${train.destination}`
 ```
 
-**Why this is genius**: Delayed trains maintain their identity and don't trigger unnecessary "new arrival" animations when delay info updates.
+**Why this works**: Delayed trains maintain their identity and don't trigger unnecessary animations when delay info updates.
 
-### Delay Display Logic
-- **Delay parsing**: Extracts "försenad X min" from `summary_deviation_note`
-- **Dual times**: Preserves `originalTime` for IDs, calculates `adjustedTime` for display
-- **Smart animations**: Only triggers slide effects on actual list composition changes, not countdown updates
+### Complete Animation System ✅ (September 29, 2025)
+**Major breakthrough**: Fully implemented comprehensive animation system addressing all edge cases:
 
-### Animation Architecture
-- **Performance**: Uses `transform` and `opacity` for 60fps GPU acceleration
+1. **Introduction Animations**: Both trains and buses slide in when becoming feasible (`introducing` class, 5s duration)
+2. **Departure Animations**: Smooth removal animations when becoming infeasible (400ms slide out)
+3. **Feasibility Transition Support**: Fixed core bug - trains transitioning infeasible→feasible now animate properly
+4. **Smart List Change Detection**: Compare previous feasible vs current feasible (not raw API vs feasible)
+5. **Bus Glow Timing**: Optimized from 4-3min to 2-1min to prevent slide-in glow
+6. **Terminology Fix**: "introducing" (not "arriving" - trains arrive at platforms, not departure lists)
+
+### Critical Bug Fixes Implemented ✅
+- **Missing train introduction animations**: Trains had zero slide-in animations vs buses
+- **Feasibility transition detection**: List change hooks compared wrong datasets causing missed transitions
+- **False animation prevention**: 5-minute time window prevents API time updates from triggering animations
+- **Animation simplification**: Removed blur/scale effects, reduced 10s→5s for cleaner experience
+- **Störningar filtering**: Delayed trains in disruption box now respect adjusted feasibility times
+
+### Performance & Architecture
+- **GPU acceleration**: `transform` and `opacity` for 60fps animations
 - **Accessibility**: Respects `prefers-reduced-motion` media query
-- **Timing**: 400ms slides, 300ms fades, 50ms stagger per item
-
-### False Animation Bug Fix ⚠️
-**Issue**: Buses/trains already displayed would trigger slide-in animations when transit APIs updated departure times in real-time.
-
-**Root Cause**: ID generation uses departure time (`"15:30-744-Gladö"`), so when API updates `"15:30"` → `"15:31"`, React thinks it's a new item.
-
-**Solution**: Enhanced `useTrainListChanges` & `useBusListChanges` with smart time-window filtering:
-- **5-minute tolerance window** (300 seconds) for timestamp comparison
-- **Logic**: Same line + destination + timestamp within 300s = time update (not new arrival)
-- **Result**: Eliminates false animations while preserving genuine new arrival effects
-
-**Location**: `dashboard/src/components/TrainWidget.tsx:177-244` (list change detection hooks)
+- **Consistent timing**: 5s introduction, 400ms departure, 0.1s stagger per item
+- **Memory management**: Proper cleanup of animation states and timeouts
 
 ## WebSocket Architecture ⚡
 

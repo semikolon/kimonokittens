@@ -173,23 +173,24 @@ const generateTrainId = (train: TrainDeparture): string =>
 const generateBusId = (bus: BusDeparture): string =>
   `${bus.departure_time}-${bus.line_number}-${bus.destination}`
 
-// Hook for detecting list changes (not just data updates)
-const useTrainListChanges = (currentTrains: TrainDeparture[]) => {
-  const [prevTrains, setPrevTrains] = useState<TrainDeparture[]>([])
+// Hook for detecting feasible list changes (not just data updates)
+// KEY FIX: Track previously FEASIBLE trains, not all trains from API
+const useTrainListChanges = (currentFeasibleTrains: TrainDeparture[]) => {
+  const [prevFeasibleTrains, setPrevFeasibleTrains] = useState<TrainDeparture[]>([])
 
   return useMemo(() => {
-    const currentIds = new Set(currentTrains.map(generateTrainId))
-    const prevIds = new Set(prevTrains.map(generateTrainId))
+    const currentIds = new Set(currentFeasibleTrains.map(generateTrainId))
+    const prevIds = new Set(prevFeasibleTrains.map(generateTrainId))
 
     const potentiallyAdded = [...currentIds].filter(id => !prevIds.has(id))
     const removed = [...prevIds].filter(id => !currentIds.has(id))
 
     // Filter out false "new" trains that are just time updates
     const genuinelyAdded = potentiallyAdded.filter(newTrainId => {
-      const newTrain = currentTrains.find(train => generateTrainId(train) === newTrainId)!
+      const newTrain = currentFeasibleTrains.find(train => generateTrainId(train) === newTrainId)!
 
       // Check if this is just a time update of an existing train
-      const isTimeUpdate = prevTrains.some(prevTrain =>
+      const isTimeUpdate = prevFeasibleTrains.some(prevTrain =>
         prevTrain.line_number === newTrain.line_number &&
         prevTrain.destination === newTrain.destination &&
         Math.abs(prevTrain.departure_timestamp - newTrain.departure_timestamp) <= 300 // 5 min window
@@ -202,29 +203,31 @@ const useTrainListChanges = (currentTrains: TrainDeparture[]) => {
 
     // Update state for next comparison (but don't trigger re-render)
     setTimeout(() => {
-      setPrevTrains([...currentTrains])
+      setPrevFeasibleTrains([...currentFeasibleTrains])
     }, 0)
 
     return { hasStructuralChange, added: genuinelyAdded, removed }
-  }, [currentTrains, prevTrains])
+  }, [currentFeasibleTrains, prevFeasibleTrains])
 }
 
-const useBusListChanges = (currentBuses: BusDeparture[]) => {
-  const [prevBuses, setPrevBuses] = useState<BusDeparture[]>([])
+// Hook for detecting feasible bus list changes (not just data updates)
+// KEY FIX: Track previously FEASIBLE buses, not all buses from API
+const useBusListChanges = (currentFeasibleBuses: BusDeparture[]) => {
+  const [prevFeasibleBuses, setPrevFeasibleBuses] = useState<BusDeparture[]>([])
 
   return useMemo(() => {
-    const currentIds = new Set(currentBuses.map(generateBusId))
-    const prevIds = new Set(prevBuses.map(generateBusId))
+    const currentIds = new Set(currentFeasibleBuses.map(generateBusId))
+    const prevIds = new Set(prevFeasibleBuses.map(generateBusId))
 
     const potentiallyAdded = [...currentIds].filter(id => !prevIds.has(id))
     const removed = [...prevIds].filter(id => !currentIds.has(id))
 
     // Filter out false "new" buses that are just time updates
     const genuinelyAdded = potentiallyAdded.filter(newBusId => {
-      const newBus = currentBuses.find(bus => generateBusId(bus) === newBusId)!
+      const newBus = currentFeasibleBuses.find(bus => generateBusId(bus) === newBusId)!
 
       // Check if this is just a time update of an existing bus
-      const isTimeUpdate = prevBuses.some(prevBus =>
+      const isTimeUpdate = prevFeasibleBuses.some(prevBus =>
         prevBus.line_number === newBus.line_number &&
         prevBus.destination === newBus.destination &&
         Math.abs(prevBus.departure_timestamp - newBus.departure_timestamp) <= 300 // 5 min window
@@ -236,11 +239,11 @@ const useBusListChanges = (currentBuses: BusDeparture[]) => {
     const hasStructuralChange = genuinelyAdded.length > 0 || removed.length > 0
 
     setTimeout(() => {
-      setPrevBuses([...currentBuses])
+      setPrevFeasibleBuses([...currentFeasibleBuses])
     }, 0)
 
     return { hasStructuralChange, added: genuinelyAdded, removed }
-  }, [currentBuses, prevBuses])
+  }, [currentFeasibleBuses, prevFeasibleBuses])
 }
 
 // Urgent departure detection and flashing
@@ -345,13 +348,13 @@ const useDepartureSequence = (trains: TrainDeparture[]) => {
 
 // Bus urgent departure detection and flashing
 const isUrgentBusDeparture = (bus: BusDeparture): boolean => {
-  // Flash when 4 minutes left (orange warning)
-  return bus.minutes_until === 4
+  // Flash when 2 minutes left (orange warning) - allows buses to settle before glowing
+  return bus.minutes_until === 2
 }
 
 const isCriticalBusDeparture = (bus: BusDeparture): boolean => {
-  // Flash when 3 minutes left (red-orange critical)
-  return bus.minutes_until === 3
+  // Flash when 1 minute left (red-orange critical)
+  return bus.minutes_until === 1
 }
 
 const useUrgentBusFlashing = (buses: BusDeparture[]) => {
@@ -440,7 +443,36 @@ const AnimatedTrainList: React.FC<{
   departingTrains = new Set(),
   trainStates = new Map()
 }) => {
-  const { hasStructuralChange, removed } = useTrainListChanges(trains)
+  const { hasStructuralChange, added, removed } = useTrainListChanges(trains)
+  const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set())
+  const [introducingItems, setIntroducingItems] = useState<Set<string>>(new Set())
+
+  // Handle train departure animation
+  useEffect(() => {
+    if (removed.length > 0) {
+      setAnimatingItems(new Set(removed))
+
+      const timer = setTimeout(() => {
+        setAnimatingItems(new Set())
+      }, 400)
+
+      return () => clearTimeout(timer)
+    }
+  }, [removed])
+
+  // Handle train introduction animation
+  useEffect(() => {
+    if (added.length > 0) {
+      setIntroducingItems(new Set(added))
+
+      // Trigger introduction animation - duration matches CSS animation (5s)
+      const timer = setTimeout(() => {
+        setIntroducingItems(new Set())
+      }, 5000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [added])
 
   return (
     <div className="train-list-container">
@@ -449,13 +481,16 @@ const AnimatedTrainList: React.FC<{
         const departureState = trainStates.get(trainId) || 'feasible'
         const isUrgentFlashing = urgentFlashingTrains.has(trainId)
         const isCriticalFlashing = criticalFlashingTrains.has(trainId)
-        const isDeparting = departingTrains.has(trainId)
+        const isDeparting = departingTrains.has(trainId) || animatingItems.has(trainId)
+        const isIntroducing = introducingItems.has(trainId)
 
-        // Build CSS classes based on departure state
+        // Build CSS classes based on departure state and animations
         const cssClasses = ['train-departure-item']
         if (departureState === 'warning') cssClasses.push('warning-glow')
         if (departureState === 'critical') cssClasses.push('critical-glow')
         if (departureState === 'departing' || isDeparting) cssClasses.push('departing')
+        if (isIntroducing) cssClasses.push('introducing')
+        else if (!isDeparting) cssClasses.push('introduced')
 
         return (
           <div
@@ -480,7 +515,7 @@ const AnimatedBusList: React.FC<{
 }> = ({ buses, renderItem, urgentFlashingBuses = new Set(), criticalFlashingBuses = new Set() }) => {
   const { hasStructuralChange, added, removed } = useBusListChanges(buses)
   const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set())
-  const [arrivingItems, setArrivingItems] = useState<Set<string>>(new Set())
+  const [introducingItems, setIntroducingItems] = useState<Set<string>>(new Set())
 
   // Handle bus removal animation
   useEffect(() => {
@@ -495,15 +530,15 @@ const AnimatedBusList: React.FC<{
     }
   }, [removed])
 
-  // Handle bus arrival animation
+  // Handle bus introduction animation
   useEffect(() => {
     if (added.length > 0) {
-      setArrivingItems(new Set(added))
+      setIntroducingItems(new Set(added))
 
-      // Trigger arrival animation - duration matches CSS animation (10s)
+      // Trigger introduction animation - duration matches CSS animation (5s)
       const timer = setTimeout(() => {
-        setArrivingItems(new Set())
-      }, 10000)
+        setIntroducingItems(new Set())
+      }, 5000)
 
       return () => clearTimeout(timer)
     }
@@ -514,14 +549,14 @@ const AnimatedBusList: React.FC<{
       {buses.map((bus, index) => {
         const busId = generateBusId(bus)
         const isDeparting = animatingItems.has(busId)
-        const isArriving = arrivingItems.has(busId)
+        const isIntroducing = introducingItems.has(busId)
         const isUrgentFlashing = urgentFlashingBuses.has(busId)
         const isCriticalFlashing = criticalFlashingBuses.has(busId)
 
         const classNames = [
           'train-departure-item',
           isDeparting ? 'departing' : '',
-          isArriving ? 'arriving' : 'arrived'
+          isIntroducing ? 'introducing' : 'introduced'
         ].filter(Boolean).join(' ')
 
         return (
