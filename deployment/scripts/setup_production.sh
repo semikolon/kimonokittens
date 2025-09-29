@@ -389,29 +389,32 @@ PROD_PROJECT_DIR="/home/$SERVICE_USER/Projects/kimonokittens"
 if [ -d "$PROD_PROJECT_DIR" ]; then
     log "Repository already exists, updating..."
 
-    # Try git pull first, fall back to fresh copy if needed
+    # Try git pull first, fall back to fresh clone if needed
     if [ -d "$PROD_PROJECT_DIR/.git" ]; then
-        log "Attempting git pull..."
+        log "Attempting git pull as service user..."
+        # Service user now has SSH keys, can do git operations directly
         if sudo -u "$SERVICE_USER" git -C "$PROD_PROJECT_DIR" pull origin master; then
             log "✅ Git pull successful"
         else
-            log "⚠️ Git pull failed (likely no SSH keys for service user), using fresh copy"
+            log "⚠️ Git pull failed, cloning fresh from GitHub"
             rm -rf "$PROD_PROJECT_DIR"
-            if ! cp -r "$REAL_HOME/Projects/kimonokittens" "/home/$SERVICE_USER/Projects/"; then
-                error_exit "Failed to copy project repository"
+            if ! sudo -u "$SERVICE_USER" git clone git@github.com:semikolon/kimonokittens.git "$PROD_PROJECT_DIR"; then
+                error_exit "Failed to clone repository from GitHub"
             fi
         fi
     else
-        log "Not a git repository, copying fresh..."
+        log "Not a git repository, cloning fresh from GitHub..."
         rm -rf "$PROD_PROJECT_DIR"
-        if ! cp -r "$REAL_HOME/Projects/kimonokittens" "/home/$SERVICE_USER/Projects/"; then
-            error_exit "Failed to copy project repository"
+        # Service user now has SSH keys, can clone directly
+        if ! sudo -u "$SERVICE_USER" git clone git@github.com:semikolon/kimonokittens.git "$PROD_PROJECT_DIR"; then
+            error_exit "Failed to clone repository from GitHub"
         fi
     fi
 else
-    log "Copying repository from development location..."
-    if ! cp -r "$REAL_HOME/Projects/kimonokittens" "/home/$SERVICE_USER/Projects/"; then
-        error_exit "Failed to copy project repository"
+    log "Cloning repository from GitHub..."
+    # Service user now has SSH keys, can clone directly
+    if ! sudo -u "$SERVICE_USER" git clone git@github.com:semikolon/kimonokittens.git "$PROD_PROJECT_DIR"; then
+        error_exit "Failed to clone repository from GitHub"
     fi
 fi
 
@@ -436,11 +439,37 @@ done
 
 log "✅ Repository setup and verified"
 
-# Optional: Set up SSH keys for service user to enable direct git operations
-# Note: For now, git pull falls back to copying from development directory
-# To enable direct git pull for service user, generate SSH keys:
-# sudo -u kimonokittens ssh-keygen -t ed25519 -C "kimonokittens@production"
-# Then add the public key to GitHub
+# Ensure service user has SSH keys for webhook git operations
+if [ ! -f "/home/$SERVICE_USER/.ssh/id_ed25519" ]; then
+    log "Setting up SSH keys for service user (needed for webhook deployments)..."
+
+    # Create .ssh directory if it doesn't exist
+    if ! mkdir -p "/home/$SERVICE_USER/.ssh"; then
+        error_exit "Failed to create .ssh directory for service user"
+    fi
+
+    # Copy SSH keys from fredrik to service user
+    if ! cp "/home/$REAL_USER/.ssh/id_ed25519"* "/home/$SERVICE_USER/.ssh/"; then
+        error_exit "Failed to copy SSH keys to service user"
+    fi
+
+    # Set proper ownership and permissions
+    chown -R "$SERVICE_USER:$SERVICE_USER" "/home/$SERVICE_USER/.ssh"
+    chmod 700 "/home/$SERVICE_USER/.ssh"
+    chmod 600 "/home/$SERVICE_USER/.ssh/id_ed25519"
+    chmod 644 "/home/$SERVICE_USER/.ssh/id_ed25519.pub"
+
+    log "✅ SSH keys configured for service user"
+else
+    log "✅ SSH keys already exist for service user"
+fi
+
+# Test service user's GitHub access
+if sudo -u "$SERVICE_USER" ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+    log "✅ Service user GitHub SSH access verified"
+else
+    log "⚠️ Service user GitHub SSH access verification failed"
+fi
 
 # Step 6: Create environment file
 log "⚙️ Step 6: Creating environment configuration..."
