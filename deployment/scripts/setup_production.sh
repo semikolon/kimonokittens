@@ -952,7 +952,7 @@ Environment="ENABLE_BROADCASTER=1"
 Environment="NODE_ENV=production"
 Environment="API_BASE_URL=http://localhost:3001"
 EnvironmentFile=-/home/$SERVICE_USER/.env
-ExecStart=/home/$SERVICE_USER/.rbenv/shims/ruby puma_server.rb
+ExecStart=/bin/bash -c 'source /home/$SERVICE_USER/.rbenv/bin/rbenv init - bash && ruby puma_server.rb'
 ExecReload=/bin/kill -USR1 \$MAINPID
 Restart=always
 RestartSec=10
