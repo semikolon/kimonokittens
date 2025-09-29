@@ -112,15 +112,34 @@ log "✅ Pre-flight checks passed"
 # Step 1: Install required packages (excluding Ruby since we have rbenv)
 log "📦 Step 1: Installing required packages..."
 
+# Setup PostgreSQL 17 repository if not already configured
+if ! [ -f /etc/apt/sources.list.d/pgdg.list ]; then
+    log "Adding PostgreSQL 17 official repository..."
+
+    # Install prerequisites
+    apt install -y curl ca-certificates
+
+    # Import repository signing key
+    install -d /usr/share/postgresql-common/pgdg
+    curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+
+    # Create repository configuration
+    sh -c "echo 'deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main' > /etc/apt/sources.list.d/pgdg.list"
+
+    log "✅ PostgreSQL 17 repository added"
+else
+    log "✅ PostgreSQL repository already configured"
+fi
+
 # Update package cache
 if ! apt update; then
     error_exit "Failed to update package cache"
 fi
 
-# Install packages with validation (Pop!_OS 22.04 optimized)
+# Install packages with validation (Pop!_OS 22.04 optimized with PostgreSQL 17)
 REQUIRED_PACKAGES=(
-    "postgresql"
-    "postgresql-contrib"
+    "postgresql-17"
+    "postgresql-contrib-17"
     "nginx"
     "build-essential"
     "libpq-dev"
@@ -140,11 +159,39 @@ if ! apt install -y "${REQUIRED_PACKAGES[@]}"; then
 fi
 
 # Verify critical packages installed correctly
-for package in postgresql nginx; do
-    if ! dpkg -l | grep -q "^ii.*$package"; then
-        error_exit "Package $package failed to install properly"
+# Check if ANY PostgreSQL cluster is running (14 or 17)
+if pg_lsclusters 2>/dev/null | grep -q "online" || :; then
+    log "✅ PostgreSQL cluster verified (existing cluster running)"
+elif dpkg -l | grep -E -q "^ii\s+postgresql-(14|17)\s" || :; then
+    # PostgreSQL package installed but no cluster yet
+    log "PostgreSQL package installed, cluster will be created if needed"
+
+    # Try to create PostgreSQL 17 cluster if it doesn't exist
+    if pg_lsclusters | grep -q "^17" || :; then
+        log "PostgreSQL 17 cluster already exists"
+    else
+        log "Creating PostgreSQL 17 cluster..."
+        if pg_createcluster 17 main --start; then
+            log "✅ PostgreSQL 17 cluster created"
+        else
+            log "⚠️ Could not create PostgreSQL 17 cluster, will use existing PostgreSQL 14"
+        fi
     fi
-done
+else
+    error_exit "PostgreSQL server failed to install properly"
+fi
+
+# Check nginx installation
+if command -v nginx >/dev/null 2>&1; then
+    # Check for main nginx package with proper set -e handling
+    if dpkg -l | grep -E -q "^ii\s+nginx\s" || :; then
+        log "✅ Nginx verified successfully"
+    else
+        error_exit "Nginx command exists but package verification failed"
+    fi
+else
+    error_exit "Nginx command not found after installation"
+fi
 
 # Install Google Chrome (modern secure method - 2024 best practice)
 log "Installing Google Chrome for kiosk mode..."
@@ -164,10 +211,22 @@ if ! command -v google-chrome >/dev/null 2>&1; then
         error_exit "Failed to add Google Chrome repository"
     fi
 
-    # Update package cache
-    if ! apt update; then
-        error_exit "Failed to update package cache after adding Chrome repository"
-    fi
+    # Update package cache with APT lock handling
+    log "Updating package cache (handling potential APT locks)..."
+
+    # Wait for APT locks to be released (common with packagekitd)
+    for i in {1..30}; do
+        if apt update; then
+            log "✅ Package cache updated successfully"
+            break
+        else
+            if [ $i -eq 30 ]; then
+                error_exit "Failed to update package cache after 30 attempts - APT locks persist"
+            fi
+            log "APT lock detected, waiting 2 seconds... (attempt $i/30)"
+            sleep 2
+        fi
+    done
 
     # Install Google Chrome
     if ! apt install -y google-chrome-stable; then
@@ -428,29 +487,46 @@ EOF
     log "✅ Environment file created with secure permissions"
 fi
 
-# Step 7: Setup rbenv for service user
+# Step 7: Setup rbenv for service user (FRESH INSTALLATION)
 log "💎 Step 7: Setting up rbenv for service user..."
 
 RBENV_DIR="/home/$SERVICE_USER/.rbenv"
 RBENV_BIN="$RBENV_DIR/bin/rbenv"
 
-# Check if rbenv exists in source location
-if [ ! -d "$REAL_HOME/.rbenv" ]; then
-    error_exit "rbenv not found in $REAL_HOME/.rbenv - please install rbenv first"
-fi
-
-# Copy rbenv if not already present
+# Install fresh rbenv for service user (security isolation like nvm)
 if [ ! -d "$RBENV_DIR" ]; then
-    log "Copying rbenv installation to $SERVICE_USER user..."
-    if ! cp -r "$REAL_HOME/.rbenv" "/home/$SERVICE_USER/"; then
-        error_exit "Failed to copy rbenv installation"
+    log "Installing fresh rbenv for $SERVICE_USER user (production isolation)..."
+
+    # Create rbenv installation script for service user
+    RBENV_INSTALL_SCRIPT="/tmp/install_rbenv_${SERVICE_USER}.sh"
+    cat > "$RBENV_INSTALL_SCRIPT" <<EOF
+#!/bin/bash
+set -e
+export HOME="/home/$SERVICE_USER"
+cd "\$HOME"
+
+# Clone rbenv
+git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+
+# Clone ruby-build plugin
+git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+
+# Set up shell integration (for when service user might need interactive access)
+echo 'export PATH="\$HOME/.rbenv/bin:\$PATH"' >> ~/.bashrc
+echo 'eval "\$(rbenv init -)"' >> ~/.bashrc
+
+echo "✅ rbenv installed for $SERVICE_USER"
+EOF
+
+    chmod +x "$RBENV_INSTALL_SCRIPT"
+
+    if ! sudo -u "$SERVICE_USER" bash "$RBENV_INSTALL_SCRIPT"; then
+        error_exit "Failed to install rbenv for service user"
     fi
 
-    if ! chown -R "$SERVICE_USER:$SERVICE_USER" "$RBENV_DIR"; then
-        error_exit "Failed to set rbenv ownership"
-    fi
+    rm "$RBENV_INSTALL_SCRIPT"
 
-    log "✅ rbenv copied successfully"
+    log "✅ rbenv installed successfully for $SERVICE_USER"
 else
     log "✅ rbenv already exists for $SERVICE_USER"
 fi
@@ -465,21 +541,27 @@ if ! sudo -u "$SERVICE_USER" "$RBENV_BIN" --version >/dev/null 2>&1; then
     error_exit "rbenv not working for $SERVICE_USER user"
 fi
 
-# Check Ruby version availability
-log "Checking Ruby version availability..."
-RUBY_VERSIONS=(3.3.8 3.3.0)
-SELECTED_RUBY=""
+# Install Ruby 3.3.8 for service user (fresh installation)
+log "Installing Ruby 3.3.8 for service user..."
+SELECTED_RUBY="3.3.8"
 
-for version in "${RUBY_VERSIONS[@]}"; do
-    if sudo -u "$SERVICE_USER" "$RBENV_BIN" versions | grep -q "$version"; then
-        SELECTED_RUBY="$version"
-        log "✅ Found Ruby $version"
-        break
+# Check if Ruby version already installed
+if sudo -u "$SERVICE_USER" "$RBENV_BIN" versions 2>/dev/null | grep -q "$SELECTED_RUBY"; then
+    log "✅ Ruby $SELECTED_RUBY already installed"
+else
+    log "Installing Ruby $SELECTED_RUBY (this may take several minutes)..."
+
+    # Install Ruby using rbenv from service user's home directory (avoid permission issues)
+    if ! sudo -u "$SERVICE_USER" bash -c "cd /home/$SERVICE_USER && $RBENV_BIN install $SELECTED_RUBY"; then
+        error_exit "Failed to install Ruby $SELECTED_RUBY"
     fi
-done
 
-if [ -z "$SELECTED_RUBY" ]; then
-    error_exit "No suitable Ruby version found. Available versions: $(sudo -u "$SERVICE_USER" "$RBENV_BIN" versions)"
+    log "✅ Ruby $SELECTED_RUBY installed successfully"
+fi
+
+# Set global Ruby version for service user
+if ! sudo -u "$SERVICE_USER" "$RBENV_BIN" global "$SELECTED_RUBY"; then
+    error_exit "Failed to set global Ruby version"
 fi
 
 # Install Ruby dependencies as service user
