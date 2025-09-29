@@ -837,7 +837,7 @@ if [ -f "prisma/schema.prisma" ]; then
 
     if ! sudo -u "$SERVICE_USER" bash -c "
         source $SERVICE_USER_NVM_DIR/nvm.sh
-        export DATABASE_URL=\"postgresql://$DB_USER:$DB_PASS@localhost:5432/$DB_NAME\"
+        source /home/$SERVICE_USER/.env
         npx prisma migrate deploy
     "; then
         error_exit "Prisma migrate deploy failed"
@@ -845,7 +845,7 @@ if [ -f "prisma/schema.prisma" ]; then
 
     if ! sudo -u "$SERVICE_USER" bash -c "
         source $SERVICE_USER_NVM_DIR/nvm.sh
-        export DATABASE_URL=\"postgresql://$DB_USER:$DB_PASS@localhost:5432/$DB_NAME\"
+        source /home/$SERVICE_USER/.env
         npx prisma generate
     "; then
         error_exit "Prisma generate failed"
