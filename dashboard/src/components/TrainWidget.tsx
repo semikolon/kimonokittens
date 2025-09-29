@@ -345,13 +345,13 @@ const useDepartureSequence = (trains: TrainDeparture[]) => {
 
 // Bus urgent departure detection and flashing
 const isUrgentBusDeparture = (bus: BusDeparture): boolean => {
-  // Flash when 4 minutes left (orange warning)
-  return bus.minutes_until === 4
+  // Flash when 2 minutes left (orange warning) - allows buses to settle before glowing
+  return bus.minutes_until === 2
 }
 
 const isCriticalBusDeparture = (bus: BusDeparture): boolean => {
-  // Flash when 3 minutes left (red-orange critical)
-  return bus.minutes_until === 3
+  // Flash when 1 minute left (red-orange critical)
+  return bus.minutes_until === 1
 }
 
 const useUrgentBusFlashing = (buses: BusDeparture[]) => {
