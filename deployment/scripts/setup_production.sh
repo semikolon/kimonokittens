@@ -968,7 +968,7 @@ ProtectHome=read-only
 ProtectControlGroups=yes
 ProtectKernelModules=yes
 ProtectKernelTunables=yes
-ReadWritePaths=/home/$SERVICE_USER/Projects/kimonokittens
+ReadWritePaths=/home/$SERVICE_USER/Projects/kimonokittens /var/log/kimonokittens /home/$SERVICE_USER/backups /var/www/kimonokittens /tmp
 
 [Install]
 WantedBy=multi-user.target
