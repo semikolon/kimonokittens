@@ -83,10 +83,17 @@ begin
         year = historical_data['constants']['year']
         config_month = historical_data['constants']['month']
 
-        # Skip files without proper year/month information
+        # If missing from constants, try to extract from filename (e.g., "2023_11_v1.json")
         if year.nil? || config_month.nil?
-          puts "   ⚠️  Warning: Missing year/month in #{File.basename(json_file)}, skipping"
-          next
+          filename_match = File.basename(json_file).match(/^(\d{4})_(\d{1,2})_v\d+\.json$/)
+          if filename_match
+            year = filename_match[1].to_i
+            config_month = filename_match[2].to_i
+            puts "   📅 Extracted year=#{year}, month=#{config_month} from filename"
+          else
+            puts "   ⚠️  Warning: Cannot extract year/month from #{File.basename(json_file)}, skipping"
+            next
+          end
         end
 
         # Convert config period month to rent period month
@@ -116,8 +123,7 @@ begin
               amountDue: amount,
               amountPaid: amount, # Assume fully paid for historical data
               paymentDate: calculation_date,
-              createdAt: calculation_date,
-              updatedAt: calculation_date
+              createdAt: calculation_date
             )
             historical_count += 1
           else
