@@ -90,6 +90,11 @@ export function WeatherWidget() {
     return 'Farlig'
   }
 
+  const shortenWeatherText = (text: string) => {
+    // Shorten common long Swedish weather descriptions to prevent wrapping
+    return text.replace('Områden med regn i närheten', 'Regn i närheten')
+  }
+
   return (
     <div>
       {/* Current Weather */}
@@ -103,7 +108,7 @@ export function WeatherWidget() {
               {weatherData.current.temp_c}°
             </div>
             <div className="text-purple-200">
-              {weatherData.current.condition.text}
+              {shortenWeatherText(weatherData.current.condition.text)}
             </div>
           </div>
         </div>
