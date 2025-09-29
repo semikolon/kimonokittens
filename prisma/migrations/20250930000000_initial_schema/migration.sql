@@ -46,7 +46,7 @@ CREATE TABLE "RentConfig" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "period" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "period_month" DATE DEFAULT (date_trunc('month'::text, period))::date,
+    "period_month" DATE GENERATED ALWAYS AS ((date_trunc('month'::text, period))::date) STORED,
 
     CONSTRAINT "RentConfig_pkey" PRIMARY KEY ("id")
 );
