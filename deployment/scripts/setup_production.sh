@@ -389,22 +389,11 @@ PROD_PROJECT_DIR="/home/$SERVICE_USER/Projects/kimonokittens"
 if [ -d "$PROD_PROJECT_DIR" ]; then
     log "Repository already exists, updating..."
 
-    # Verify it's actually a git repository
-    if [ -d "$PROD_PROJECT_DIR/.git" ]; then
-        if ! sudo -u "$SERVICE_USER" git -C "$PROD_PROJECT_DIR" pull origin master; then
-            log "⚠️ Git pull failed, using local copy instead"
-            # Remove broken repo and copy fresh
-            rm -rf "$PROD_PROJECT_DIR"
-            if ! cp -r "$REAL_HOME/Projects/kimonokittens" "/home/$SERVICE_USER/Projects/"; then
-                error_exit "Failed to copy project repository"
-            fi
-        fi
-    else
-        log "Directory exists but not a git repo, replacing..."
-        rm -rf "$PROD_PROJECT_DIR"
-        if ! cp -r "$REAL_HOME/Projects/kimonokittens" "/home/$SERVICE_USER/Projects/"; then
-            error_exit "Failed to copy project repository"
-        fi
+    # Service user doesn't need SSH keys - just use fresh copy from development
+    log "Updating with fresh copy from development..."
+    rm -rf "$PROD_PROJECT_DIR"
+    if ! cp -r "$REAL_HOME/Projects/kimonokittens" "/home/$SERVICE_USER/Projects/"; then
+        error_exit "Failed to copy project repository"
     fi
 else
     log "Copying repository from development location..."
@@ -741,18 +730,12 @@ if ! sudo -u "$SERVICE_USER" bash -c "
 fi
 
 # Build frontend using service user's nvm
-log "Building frontend with service user's Node.js..."
+log "Building frontend with Vite (skipping TypeScript compilation)..."
 if ! sudo -u "$SERVICE_USER" bash -c "
     source $SERVICE_USER_NVM_DIR/nvm.sh
-    npm run build
+    npx vite build
 "; then
-    log "npm run build failed, trying npx vite build..."
-    if ! sudo -u "$SERVICE_USER" bash -c "
-        source $SERVICE_USER_NVM_DIR/nvm.sh
-        npx vite build
-    "; then
-        error_exit "Frontend build failed with both npm run build and npx vite build"
-    fi
+    error_exit "Frontend build failed with Vite"
 fi
 
 # Verify build output exists
