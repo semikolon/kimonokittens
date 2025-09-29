@@ -1,7 +1,14 @@
-# Train List Sliding Animations - Implementation Plan
+# Train & Bus Animation System - COMPLETED ✅
 
 ## Overview
-Implement smooth sliding animations that trigger only when trains are added/removed from the list, not when countdown numbers change. When a train departs, remaining trains should slide upward smoothly to fill the gap.
+**IMPLEMENTED**: Complete animation system for both trains and buses with smart list change detection, introduction animations, departure animations, and feasibility transition support. Animations trigger only on structural changes, not countdown updates.
+
+## Key Features Implemented
+- **Introduction Animations**: Trains/buses slide in when becoming feasible
+- **Departure Animations**: Smooth removal when becoming infeasible
+- **Feasibility Transition Detection**: Proper handling of infeasible→feasible transitions
+- **Smart Change Detection**: Distinguishes real changes from time updates
+- **Consistent Terminology**: "introducing" (not "arriving") for new departures
 
 ## Technical Requirements
 
