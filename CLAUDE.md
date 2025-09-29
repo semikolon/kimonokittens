@@ -208,6 +208,18 @@ const generateTrainId = (train: TrainDeparture): string =>
 - **Accessibility**: Respects `prefers-reduced-motion` media query
 - **Timing**: 400ms slides, 300ms fades, 50ms stagger per item
 
+### False Animation Bug Fix ⚠️
+**Issue**: Buses/trains already displayed would trigger slide-in animations when transit APIs updated departure times in real-time.
+
+**Root Cause**: ID generation uses departure time (`"15:30-744-Gladö"`), so when API updates `"15:30"` → `"15:31"`, React thinks it's a new item.
+
+**Solution**: Enhanced `useTrainListChanges` & `useBusListChanges` with smart time-window filtering:
+- **5-minute tolerance window** (300 seconds) for timestamp comparison
+- **Logic**: Same line + destination + timestamp within 300s = time update (not new arrival)
+- **Result**: Eliminates false animations while preserving genuine new arrival effects
+
+**Location**: `dashboard/src/components/TrainWidget.tsx:177-244` (list change detection hooks)
+
 ## WebSocket Architecture ⚡
 
 ### DataBroadcaster URLs - FIXED ✅
