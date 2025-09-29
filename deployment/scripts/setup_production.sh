@@ -959,9 +959,16 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
-# Security hardening (relaxed for home directory access)
+# Security hardening (defense in depth with least privilege)
 NoNewPrivileges=yes
 PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ReadWritePaths=/home/$SERVICE_USER/Projects/kimonokittens
 
 [Install]
 WantedBy=multi-user.target
