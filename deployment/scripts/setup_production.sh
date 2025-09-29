@@ -1005,9 +1005,13 @@ fi
 systemctl daemon-reload
 
 for service in kimonokittens-dashboard kimonokittens-kiosk; do
-    if ! systemctl is-valid "$service" >/dev/null 2>&1; then
-        error_exit "Service file validation failed: $service"
+    # Check if service file loads properly (status command will fail if file is invalid)
+    status_output=$(systemctl status "$service" 2>&1 || true)
+    if echo "$status_output" | grep -q "could not be found\|No such file\|not found\|Failed to parse"; then
+        error_exit "Service file validation failed: $service (service file not found or invalid)"
     fi
+    # If it's just inactive/failed, that's expected before first start
+    log "✅ Service $service validated (file loads properly)"
 done
 
 log "✅ SystemD services configured and validated"
