@@ -770,12 +770,20 @@ export function TrainWidget() {
       const delayMatch = deviation.reason.match(/försenad (\d+) min/)
       const delayMinutes = delayMatch ? parseInt(delayMatch[1]) : 0
 
-      // Calculate adjusted departure time (original time + delay)
-      const originalMinutesUntil = getMinutesUntilFromTime(deviation.time)
-      const adjustedMinutesUntil = Math.max(0, originalMinutesUntil - delayMinutes)
+      // Parse original departure time for TODAY only (no tomorrow logic like getMinutesUntilFromTime)
+      const [hours, minutes] = deviation.time.split(':').map(Number)
+      const originalDeparture = new Date()
+      originalDeparture.setHours(hours, minutes, 0, 0)
 
-      // Only show if the adjusted departure time is still feasible
-      return isFeasibleTrainDeparture(adjustedMinutesUntil)
+      // Calculate actual departure time (original + delay)
+      const actualDeparture = new Date(originalDeparture.getTime() + delayMinutes * 60 * 1000)
+
+      // Calculate minutes until actual departure (can be negative for already-departed)
+      const now = new Date()
+      const minutesUntilActual = Math.round((actualDeparture.getTime() - now.getTime()) / (1000 * 60))
+
+      // Only show if actual departure is in future and feasible
+      return minutesUntilActual >= 6
     }
 
     // For non-delay deviations, use original time
