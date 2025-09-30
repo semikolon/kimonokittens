@@ -4,6 +4,9 @@
 
 **🔥 MANDATORY RULES FOR ALL CLAUDE CODE SESSIONS - NEVER DEVIATE! 🔥**
 
+**Status**: ✅ PRODUCTION - Bulletproof (Sep 30, 2025)
+**Deep Dive**: See `docs/PROCESS_MANAGEMENT_DEEP_DIVE.md` for complete technical analysis
+
 ### ✅ ALWAYS DO:
 - **ONLY** use these exact commands for ALL process management:
   ```bash
@@ -11,6 +14,7 @@
   npm run dev:stop     # Stop all processes (calls bin/dev stop)
   npm run dev:restart  # Clean restart (calls bin/dev restart)
   npm run dev:status   # Check status (calls bin/dev status)
+  bin/dev nuke         # Nuclear cleanup (only if above fails)
   ```
 - **ALWAYS** use `run_in_background=true` - commands are designed for background execution
 - **ALWAYS** check status before starting to verify clean state
@@ -25,10 +29,18 @@
 **Orphaned processes cause:**
 - Port conflicts ("Address already in use" errors)
 - Stale data caching (7,492 kr rent bug was caused by old server running since Saturday)
+- Cross-session zombie persistence (processes from old CC sessions surviving)
 - Development workflow chaos
 - Hours of debugging pain
 
-**The bin/dev commands include aggressive cleanup that handles orphaned processes from ANY source.**
+**The bin/dev commands include multi-layered cleanup that handles:**
+- ✅ Claude Code's known orphan bug ([GitHub #5545](https://github.com/anthropics/claude-code/issues/5545))
+- ✅ Zombie tmux sessions across CC session boundaries
+- ✅ Stale socket files from abnormal termination
+- ✅ Port-based cleanup (fixed lsof syntax bug - commit `4f72e62`)
+- ✅ Process name pattern matching
+
+**Defense in depth**: Graceful → Aggressive → Nuclear cleanup strategies ensure processes NEVER survive.
 
 ---
 
