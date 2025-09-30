@@ -441,12 +441,16 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
-# Security hardening
+# Security hardening (defense in depth with least privilege)
 NoNewPrivileges=yes
 PrivateTmp=yes
+PrivateDevices=yes
 ProtectSystem=strict
-ReadWritePaths=/home/kimonokittens
-ProtectHome=yes
+ProtectHome=read-only
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ReadWritePaths=/home/kimonokittens/Projects/kimonokittens /var/log/kimonokittens /home/kimonokittens/backups /var/www/kimonokittens /tmp
 
 [Install]
 WantedBy=multi-user.target
@@ -478,12 +482,16 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
-# Security hardening
+# Security hardening (defense in depth with least privilege)
 NoNewPrivileges=yes
 PrivateTmp=yes
+PrivateDevices=yes
 ProtectSystem=strict
-ReadWritePaths=/home/kimonokittens
-ProtectHome=yes
+ProtectHome=read-only
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ReadWritePaths=/home/kimonokittens/Projects/kimonokittens /var/log/kimonokittens /home/kimonokittens/backups /var/www/kimonokittens /tmp
 
 [Install]
 WantedBy=multi-user.target
@@ -926,6 +934,26 @@ echo "=== End Health Check ==="
 ---
 
 ## 🔒 Security Considerations
+
+### SystemD Service Hardening
+
+The service configurations use **defense in depth** security hardening:
+
+- **`ProtectSystem=strict`**: Entire filesystem read-only except `/dev`, `/proc`, `/sys`
+- **`ProtectHome=read-only`**: Prevents writes to home directories, allows config reads
+- **`ReadWritePaths=`**: Grants write access **only** to required directories:
+  - `/home/kimonokittens/Projects/kimonokittens` - Application code and data
+  - `/var/log/kimonokittens` - Service logs only
+  - `/home/kimonokittens/backups` - Deployment backups
+  - `/var/www/kimonokittens` - Web content deployment
+  - `/tmp` - Temporary files and update signals
+- **Additional protections**: `PrivateDevices`, `ProtectKernelModules`, `NoNewPrivileges`
+
+This prevents:
+- Modification of system files or other users' data
+- Hardware device access or kernel tampering
+- Privilege escalation attacks
+- Writing to 95% of the filesystem
 
 ### Firewall Rules
 
