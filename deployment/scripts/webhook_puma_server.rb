@@ -39,7 +39,7 @@ class WebhookHandler
     when '/status'
       handle_status_check(env)
     else
-      [404, json_headers, [{ error: 'Not Found' }.to_json]]
+      [404, json_headers, [{ error: 'Not Found', available_endpoints: ['/webhook', '/health', '/status'] }.to_json]]
     end
   rescue => e
     $logger.error("Webhook error: #{e.message}")
@@ -359,26 +359,10 @@ class DeploymentHandler
   end
 end
 
-# Create Rack application following dashboard pattern
+# Create Rack application with single handler for all routes
 app = Rack::Builder.new do
-  # Webhook routes
-  map "/webhook" do
-    run WebhookHandler.new
-  end
-
-  map "/health" do
-    run WebhookHandler.new
-  end
-
-  map "/status" do
-    run WebhookHandler.new
-  end
-
-  # Catch-all
-  run lambda { |env|
-    [404, { 'Content-Type' => 'application/json' },
-     [{ error: 'Not Found', available_endpoints: ['/webhook', '/health', '/status'] }.to_json]]
-  }
+  # Single handler handles all routing internally
+  run WebhookHandler.new
 end
 
 # Configure Puma
