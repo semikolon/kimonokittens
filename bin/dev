@@ -28,8 +28,8 @@ case "$cmd" in
       fi
     fi
 
-    # Aggressive port cleanup to handle straggling processes
-    ports_to_kill=$(lsof -ti :3001,:5175 2>/dev/null || true)
+    # Aggressive port cleanup to handle straggling processes (run separately - comma syntax doesn't work)
+    ports_to_kill=$(lsof -ti :3001 2>/dev/null; lsof -ti :5175 2>/dev/null)
     if [ -n "$ports_to_kill" ]; then
       echo "⚠️  Ports occupied, cleaning up: $ports_to_kill"
       echo "$ports_to_kill" | xargs kill -9 2>/dev/null || true
@@ -85,8 +85,8 @@ case "$cmd" in
     rm -rf /tmp/tmux-$(id -u)/overmind-kimonokittens-* 2>/dev/null || true
     rm -rf /var/folders/*/T/overmind-kimonokittens-* 2>/dev/null || true
 
-    # Kill processes by port
-    ports_to_kill=$(lsof -ti :3001,:5175 2>/dev/null || true)
+    # Kill processes by port (run separately - comma syntax doesn't work)
+    ports_to_kill=$(lsof -ti :3001 2>/dev/null; lsof -ti :5175 2>/dev/null)
     if [ -n "$ports_to_kill" ]; then
       echo "   Killing processes on ports 3001, 5175: $ports_to_kill"
       echo "$ports_to_kill" | xargs kill -9 2>/dev/null || true
