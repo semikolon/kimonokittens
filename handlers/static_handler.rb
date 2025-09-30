@@ -1,15 +1,20 @@
-require 'agoo'
+require 'logger'
 
 class StaticHandler
   WWW_DIR = File.expand_path("../www", __FILE__)
 
+  def initialize
+    @logger = Logger.new(STDOUT)
+    @logger.level = Logger::INFO
+  end
+
   def call(req)
     path = File.join(WWW_DIR, req['PATH_INFO'])
     if File.exist?(path) && !File.directory?(path)
-      Agoo::Log.info("Serving file: #{path}")
+      @logger.info("Serving file: #{path}")
       serve_file(path)
     else
-      Agoo::Log.warn("File not found: #{path}")
+      @logger.warn("File not found: #{path}")
       [404, { 'Content-Type' => 'text/plain' }, [ "File not found." ]]
     end
   end
