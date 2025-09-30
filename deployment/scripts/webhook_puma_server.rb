@@ -7,6 +7,7 @@ require 'json'
 require 'openssl'
 require 'logger'
 require 'fileutils'
+require 'time'
 
 # Configure logging
 if ENV['RACK_ENV'] == 'production'
