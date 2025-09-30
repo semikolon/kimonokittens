@@ -209,6 +209,24 @@ class DeploymentHandler
     end
   end
 
+  def deployment_status
+    @deployment_mutex.synchronize do
+      if @pending_event && @deployment_start_time
+        elapsed = (Time.now - @deployment_start_time).to_i
+        remaining = [@debounce_seconds - elapsed, 0].max
+        {
+          pending: true,
+          time_remaining: remaining,
+          commit_sha: @pending_event[:event_data].dig('head_commit', 'id')&.slice(0, 7)
+        }
+      else
+        { pending: false }
+      end
+    end
+  rescue => e
+    { pending: false, error: "Status unavailable: #{e.message}" }
+  end
+
   private
 
   def perform_actual_deployment(changes)
@@ -242,24 +260,6 @@ class DeploymentHandler
 
     $logger.info("🎉 Deployment completed: #{deployed_components.join(', ')}")
     true
-  end
-
-  def deployment_status
-    @deployment_mutex.synchronize do
-      if @pending_event && @deployment_start_time
-        elapsed = (Time.now - @deployment_start_time).to_i
-        remaining = [@debounce_seconds - elapsed, 0].max
-        {
-          pending: true,
-          time_remaining: remaining,
-          commit_sha: @pending_event[:event_data].dig('head_commit', 'id')&.slice(0, 7)
-        }
-      else
-        { pending: false }
-      end
-    end
-  rescue => e
-    { pending: false, error: "Status unavailable: #{e.message}" }
   end
 
   private
