@@ -953,7 +953,7 @@ Environment="ENABLE_BROADCASTER=1"
 Environment="NODE_ENV=production"
 Environment="API_BASE_URL=http://localhost:3001"
 EnvironmentFile=-/home/$SERVICE_USER/.env
-ExecStart=/bin/bash -c 'eval "\$(/home/$SERVICE_USER/.rbenv/bin/rbenv init - bash)" && ruby puma_server.rb'
+ExecStart=/bin/bash -c 'eval "\$(/home/$SERVICE_USER/.rbenv/bin/rbenv init - bash)" && bundle exec ruby puma_server.rb'
 ExecReload=/bin/kill -USR1 \$MAINPID
 Restart=always
 RestartSec=10
@@ -975,41 +975,63 @@ ReadWritePaths=/home/$SERVICE_USER/Projects/kimonokittens /var/log/kimonokittens
 WantedBy=multi-user.target
 EOF
 
-# Create enhanced kiosk service
-cat > /etc/systemd/system/kimonokittens-kiosk.service <<EOF
+# Create user service for kiosk browser (modern approach)
+USER_SERVICE_DIR="/home/$SERVICE_USER/.config/systemd/user"
+mkdir -p "$USER_SERVICE_DIR"
+
+cat > "$USER_SERVICE_DIR/kimonokittens-kiosk.service" <<EOF
 [Unit]
-Description=Kimonokittens Kiosk Browser
-After=graphical.target kimonokittens-dashboard.service
-Wants=kimonokittens-dashboard.service
+Description=Kimonokittens Kiosk Browser (User Service)
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+Environment="XDG_RUNTIME_DIR=/run/user/1001"
+ExecStartPre=/bin/sleep 15
+ExecStart=/usr/bin/google-chrome --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost
+Restart=always
+RestartSec=30
+StartLimitBurst=5
+StartLimitIntervalSec=300
+
+[Install]
+WantedBy=default.target
+EOF
+
+# Set proper ownership for user service
+chown -R "$SERVICE_USER:$SERVICE_USER" "$USER_SERVICE_DIR"
+
+# Create smart webhook service
+cat > /etc/systemd/system/kimonokittens-webhook.service <<EOF
+[Unit]
+Description=Kimonokittens Smart Webhook Receiver
+After=network.target
 
 [Service]
 Type=simple
 User=$SERVICE_USER
 Group=$SERVICE_USER
-Environment="DISPLAY=:0"
-Environment="XAUTHORITY=/home/$SERVICE_USER/.Xauthority"
-ExecStartPre=/bin/sleep 15
-ExecStart=/usr/bin/chromium-browser --kiosk --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-first-run --enable-gpu --app=http://localhost
+WorkingDirectory=/home/$SERVICE_USER/Projects/kimonokittens
+Environment="PATH=/home/$SERVICE_USER/.rbenv/bin:/home/$SERVICE_USER/.rbenv/shims:/usr/local/bin:/usr/bin:/bin"
+Environment="WEBHOOK_SECRET=CHANGE_ME_TO_SECURE_SECRET"
+Environment="PORT=9001"
+EnvironmentFile=-/home/$SERVICE_USER/.env
+ExecStart=/bin/bash -c 'eval "\$(/home/$SERVICE_USER/.rbenv/bin/rbenv init - bash)" && bundle exec ruby deployment/scripts/smart_webhook_receiver.rb'
 Restart=always
-RestartSec=30
+RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
 EOF
-
-# Create webhook service if source exists
-if [ -f "deployment/configs/systemd/kimonokittens-webhook.service" ]; then
-    sed "s|ExecStart=/usr/bin/ruby|ExecStart=/home/$SERVICE_USER/.rbenv/shims/ruby|g" \
-        deployment/configs/systemd/kimonokittens-webhook.service > \
-        /etc/systemd/system/kimonokittens-webhook.service
-fi
 
 # Validate service files
 systemctl daemon-reload
 
-for service in kimonokittens-dashboard kimonokittens-kiosk; do
+# Validate system services
+for service in kimonokittens-dashboard kimonokittens-webhook; do
     # Check if service file loads properly (status command will fail if file is invalid)
     status_output=$(systemctl status "$service" 2>&1 || true)
     if echo "$status_output" | grep -q "could not be found\|No such file\|not found\|Failed to parse"; then
@@ -1018,6 +1040,19 @@ for service in kimonokittens-dashboard kimonokittens-kiosk; do
     # If it's just inactive/failed, that's expected before first start
     log "✅ Service $service validated (file loads properly)"
 done
+
+# Validate user service (different approach)
+if sudo -u "$SERVICE_USER" systemctl --user daemon-reload 2>/dev/null; then
+    log "✅ User service daemon reloaded successfully"
+else
+    log "⚠️ User service daemon reload failed (may be normal if no user session)"
+fi
+
+if [ -f "$USER_SERVICE_DIR/kimonokittens-kiosk.service" ]; then
+    log "✅ User service file created: kimonokittens-kiosk.service"
+else
+    error_exit "User service file validation failed: kimonokittens-kiosk.service not found"
+fi
 
 log "✅ SystemD services configured and validated"
 
@@ -1060,8 +1095,8 @@ fi
 
 log "✅ Nginx configured and running"
 
-# Step 12: Configure GDM3 auto-login and GNOME kiosk (Pop!_OS native)
-log "🖥️ Step 12: Configuring native Pop!_OS kiosk display..."
+# Step 12: Configure GDM3 auto-login and user service kiosk (modern approach)
+log "🖥️ Step 12: Configuring modern user service kiosk display..."
 
 # Backup GDM3 config
 backup_config "/etc/gdm3/custom.conf"
@@ -1085,25 +1120,21 @@ else
     log "✅ GDM3 auto-login configured for $SERVICE_USER"
 fi
 
-# Create GNOME autostart configuration for Chrome kiosk
-AUTOSTART_DIR="/home/$SERVICE_USER/.config/autostart"
-mkdir -p "$AUTOSTART_DIR"
+# Enable persistent user sessions for remote management
+log "Enabling persistent user sessions..."
+if ! loginctl enable-linger "$SERVICE_USER"; then
+    error_exit "Failed to enable user linger for $SERVICE_USER"
+fi
 
-# Create kiosk browser autostart with Google Chrome
-cat > "$AUTOSTART_DIR/kimonokittens-kiosk.desktop" <<EOF
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Kimonokittens Dashboard Kiosk
-Comment=Launch dashboard in kiosk mode
-Exec=/bin/bash -c "sleep 15 && google-chrome --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost"
-Terminal=false
-Hidden=false
-NoDisplay=false
-X-GNOME-Autostart-enabled=true
-StartupNotify=false
-Categories=Utility;
-EOF
+# Set up X11 display permissions for remote management
+log "Setting up X11 display permissions..."
+if ! sudo -u "$SERVICE_USER" bash -c 'echo "xhost +SI:localuser:kimonokittens 2>/dev/null" >> ~/.bashrc'; then
+    error_exit "Failed to set up xhost permissions"
+fi
+
+# Create directories for user service
+mkdir -p "/home/$SERVICE_USER/.config"
+mkdir -p "/home/$SERVICE_USER/.local/share/applications"
 
 # Create a fallback desktop entry for manual launch
 cat > "/home/$SERVICE_USER/.local/share/applications/kimonokittens-dashboard.desktop" <<EOF
@@ -1119,31 +1150,30 @@ Categories=Network;WebBrowser;
 StartupWMClass=kimonokittens-dashboard
 EOF
 
-# Set proper ownership for all GNOME configuration
+# Set proper ownership for all configuration
 if ! chown -R "$SERVICE_USER:$SERVICE_USER" "/home/$SERVICE_USER/.config" "/home/$SERVICE_USER/.local"; then
-    error_exit "Failed to set GNOME configuration permissions"
+    error_exit "Failed to set configuration permissions"
 fi
 
 # Ensure desktop file is executable
-chmod +x "$AUTOSTART_DIR/kimonokittens-kiosk.desktop"
 chmod +x "/home/$SERVICE_USER/.local/share/applications/kimonokittens-dashboard.desktop"
 
-log "✅ Native Pop!_OS GNOME kiosk mode configured with Google Chrome"
+log "✅ Modern user service kiosk mode configured with persistent sessions"
 
 # Step 13: Enable and start services (ENHANCED)
 log "🚀 Step 13: Starting services..."
 
-# Enable services
-SERVICES_TO_ENABLE=(kimonokittens-dashboard nginx)
+# Enable system services
+SYSTEM_SERVICES_TO_ENABLE=(kimonokittens-dashboard kimonokittens-webhook nginx)
 
-for service in "${SERVICES_TO_ENABLE[@]}"; do
+for service in "${SYSTEM_SERVICES_TO_ENABLE[@]}"; do
     if ! systemctl enable "$service"; then
         error_exit "Failed to enable service: $service"
     fi
 done
 
-# Start services with validation
-for service in "${SERVICES_TO_ENABLE[@]}"; do
+# Start system services with validation
+for service in "${SYSTEM_SERVICES_TO_ENABLE[@]}"; do
     if ! systemctl start "$service"; then
         error_exit "Failed to start service: $service"
     fi
@@ -1156,6 +1186,14 @@ for service in "${SERVICES_TO_ENABLE[@]}"; do
 
     log "✅ Service $service started and running"
 done
+
+# Enable user service (will start automatically on login)
+log "Enabling user kiosk service..."
+if sudo -u "$SERVICE_USER" systemctl --user enable kimonokittens-kiosk.service 2>/dev/null; then
+    log "✅ User service enabled for auto-start on login"
+else
+    log "⚠️ User service enable failed (will be enabled on first login)"
+fi
 
 # Step 14: Comprehensive verification (ENHANCED)
 log ""
@@ -1188,7 +1226,7 @@ fi
 
 # Service status check
 log "Service status verification..."
-for service in kimonokittens-dashboard nginx; do
+for service in kimonokittens-dashboard kimonokittens-webhook nginx; do
     if systemctl is-active "$service" >/dev/null 2>&1; then
         log "✅ $service: active"
     else
@@ -1196,31 +1234,47 @@ for service in kimonokittens-dashboard nginx; do
     fi
 done
 
+# Webhook endpoint test
+log "Webhook endpoint test..."
+if curl -s --connect-timeout 5 http://localhost:9001/health | grep -q "OK"; then
+    log "✅ Smart webhook receiver responding"
+else
+    log "⚠️ Webhook receiver test failed - may need more time to start"
+fi
+
 # Final success message
 log ""
 log "🎉 === BULLETPROOF SETUP COMPLETE! ==="
 log ""
-log "📊 ARCHITECTURE SUMMARY (Pop!_OS 22.04 Native):"
+log "📊 ARCHITECTURE SUMMARY (Modern User Service Architecture):"
 log "✅ User '$SERVICE_USER' handles both backend and kiosk display"
 log "✅ Ruby $(sudo -u "$SERVICE_USER" "/home/$SERVICE_USER/.rbenv/shims/ruby" --version 2>/dev/null | cut -d' ' -f2 || echo '3.3.x') via rbenv"
 log "✅ Node.js Dev: $(node --version 2>/dev/null || echo 'v24.x') (fredrik user nvm)"
 log "✅ Node.js Prod: $(sudo -u "$SERVICE_USER" bash -c "source /home/$SERVICE_USER/.nvm/nvm.sh 2>/dev/null && node --version" || echo 'LTS') (service user nvm)"
 log "✅ Dual nvm installation - secure isolation between users"
 log "✅ Dashboard deployed to /var/www/kimonokittens/dashboard"
-log "✅ All services configured and running"
-log "✅ Google Chrome kiosk mode configured with GDM3 auto-login"
-log "✅ Native GNOME/Pop!_OS integration (no LightDM/XFCE4 conflicts)"
+log "✅ System services: dashboard backend + smart webhook receiver"
+log "✅ User service: Google Chrome kiosk (starts automatically on login)"
+log "✅ GDM3 auto-login with persistent user sessions"
+log "✅ X11 display permissions configured for remote management"
+log "✅ Smart webhook: only deploys when relevant files change"
 log "✅ Modern secure GPG keyring method (no deprecated apt-key)"
 log "✅ Comprehensive error recovery and logging enabled"
 log ""
 log "📋 NEXT STEPS:"
 log "1. Configure GitHub webhook secret: sudo systemctl edit kimonokittens-webhook"
-log "2. Add webhook URL in GitHub: http://YOUR_IP/webhook"
-log "3. Reboot to activate kiosk mode: sudo reboot"
+log "   Add: Environment=\"WEBHOOK_SECRET=your-secure-secret\""
+log "2. Add webhook URL in GitHub: http://YOUR_IP:9001/webhook"
+log "   Events: Just 'push' event, Content type: application/json"
+log "3. Reboot to activate user service kiosk mode: sudo reboot"
+log "4. After reboot, kiosk will start automatically on login"
 log ""
 log "🔧 MONITORING:"
-log "- Service status: systemctl status kimonokittens-dashboard"
+log "- System services: systemctl status kimonokittens-dashboard kimonokittens-webhook"
+log "- User service: sudo -u $SERVICE_USER systemctl --user status kimonokittens-kiosk"
 log "- View logs: journalctl -u kimonokittens-dashboard -f"
+log "- Webhook logs: journalctl -u kimonokittens-webhook -f"
+log "- User service logs: sudo -u $SERVICE_USER journalctl --user -u kimonokittens-kiosk -f"
 log "- Setup log: $LOG_FILE"
 log "- Config backups: $BACKUP_DIR"
 log ""

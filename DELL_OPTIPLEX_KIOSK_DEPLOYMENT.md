@@ -23,17 +23,19 @@ Transform the Dell Optiplex into a production-ready kiosk server that:
 Internet ──→ GitHub Webhook ──→ Dell Optiplex
                 │
                 ├─ Dashboard Backend (Puma :3001)
-                ├─ Handbook Backend (Puma :3002)
+                ├─ Smart Webhook Receiver (:9001)
                 ├─ Nginx Frontend (:80)
-                └─ Chromium Kiosk Display
+                └─ Google Chrome Kiosk Display
 ```
 
-### Process Isolation Strategy
+### Modern User Service Strategy (2024 Best Practice)
+- **Single User**: `kimonokittens` runs all services for security and simplicity
+- **User Services**: systemd `--user` services with persistent linger
 - **Dashboard Process**: Puma server on port 3001 (real-time WebSocket data)
-- **Handbook Process**: Separate Puma instance on port 3002 (AI/RAG system)
-- **Frontend Delivery**: Nginx on port 80/443 serving both SPAs
-- **Process Management**: systemd services for reliability and auto-restart
-- **Display**: Dedicated kiosk user with minimal permissions
+- **Smart Webhook**: Only deploys when relevant files change
+- **Frontend Delivery**: Nginx on port 80 serving React SPA
+- **Kiosk Display**: Google Chrome with user service auto-launch
+- **X11 Permissions**: Proper xhost configuration for display access
 
 ---
 
@@ -130,27 +132,24 @@ These files use **CONFIG PERIOD MONTH** semantics:
 
 ### System Users
 ```bash
-# Create dedicated service user
-sudo useradd -r -s /bin/false -m /home/kimonokittens kimonokittens
+# Create unified service and kiosk user
+sudo useradd -m -s /bin/bash kimonokittens
+sudo usermod -a -G video,audio kimonokittens
 
-# Create kiosk display user
-sudo useradd -m -s /bin/bash kiosk
-sudo usermod -a -G video kiosk
+# Enable persistent user sessions for remote management
+sudo loginctl enable-linger kimonokittens
 ```
 
 ### Display Manager Configuration
 
-**LightDM Setup** (`/etc/lightdm/lightdm.conf`):
+**GDM3 Auto-login Setup** (`/etc/gdm3/custom.conf`):
 ```ini
-[Seat:*]
-autologin-guest=false
-autologin-user=kiosk
-autologin-user-timeout=0
-autologin-session=xfce
-user-session=xfce
+[daemon]
+AutomaticLoginEnable=True
+AutomaticLogin=kimonokittens
 ```
 
-**X11 GPU Acceleration** (`/home/kiosk/.xsessionrc`):
+**X11 GPU Acceleration** (`/home/kimonokittens/.xsessionrc`):
 ```bash
 #!/bin/bash
 export DISPLAY=:0
@@ -158,42 +157,79 @@ export GPU_MAX_HEAP_SIZE=100
 export GPU_MAX_ALLOC_PERCENT=100
 ```
 
-### Browser Kiosk Mode
+### Browser Kiosk Mode (Modern User Service Approach)
 
-**Chromium Kiosk Service** (`/etc/systemd/system/kimonokittens-kiosk.service`):
+**Chrome Kiosk User Service** (`~/.config/systemd/user/kimonokittens-kiosk.service`):
 ```ini
 [Unit]
-Description=Kimonokittens Kiosk Browser
-After=graphical.target kimonokittens-dashboard.service
-Wants=kimonokittens-dashboard.service
+Description=Kimonokittens Kiosk Browser (User Service)
+After=graphical-session.target
+Wants=graphical-session.target
 
 [Service]
 Type=simple
-User=kiosk
-Group=kiosk
-Environment="DISPLAY=:0"
-Environment="XAUTHORITY=/home/kiosk/.Xauthority"
+Environment="XDG_RUNTIME_DIR=/run/user/1001"
 ExecStartPre=/bin/sleep 15
-ExecStart=/usr/bin/chromium --kiosk \
+ExecStart=/usr/bin/google-chrome --kiosk \
+          --no-first-run \
           --disable-infobars \
           --disable-session-crashed-bubble \
           --disable-web-security \
           --disable-features=TranslateUI \
           --noerrdialogs \
           --incognito \
-          --no-first-run \
-          --enable-gpu \
+          --no-default-browser-check \
+          --password-store=basic \
+          --start-maximized \
           --app=http://localhost
 Restart=always
 RestartSec=30
-StandardOutput=journal
-StandardError=journal
+StartLimitBurst=5
+StartLimitIntervalSec=300
 
 [Install]
-WantedBy=graphical.target
+WantedBy=default.target
 ```
 
-**Alternative: Firefox Kiosk** (if Chromium issues):
+**Setup Commands**:
+```bash
+# Create user service directory
+sudo -u kimonokittens mkdir -p /home/kimonokittens/.config/systemd/user
+
+# Copy service file
+sudo cp modern-kiosk-user.service /home/kimonokittens/.config/systemd/user/kimonokittens-kiosk.service
+sudo chown kimonokittens:kimonokittens /home/kimonokittens/.config/systemd/user/kimonokittens-kiosk.service
+
+# Enable and start user service
+sudo -u kimonokittens systemctl --user daemon-reload
+sudo -u kimonokittens systemctl --user enable kimonokittens-kiosk.service
+sudo -u kimonokittens systemctl --user start kimonokittens-kiosk.service
+```
+
+### X11 Display Permissions (Critical for Remote Management)
+
+**For Cross-User Display Access** (if needed):
+```bash
+# Allow kimonokittens to access display (run as display owner)
+xhost +SI:localuser:kimonokittens
+
+# Make permanent by adding to user's .bashrc
+echo "xhost +SI:localuser:kimonokittens 2>/dev/null" >> ~/.bashrc
+```
+
+**User Session Management**:
+```bash
+# Enable persistent user sessions (allows SSH management)
+sudo loginctl enable-linger kimonokittens
+
+# Check user session status
+sudo loginctl user-status kimonokittens
+
+# Manage user service remotely via SSH
+sudo -u kimonokittens systemctl --user restart kimonokittens-kiosk
+```
+
+**Alternative: Firefox Kiosk** (if Chrome issues):
 ```bash
 firefox --kiosk --private-window http://localhost
 ```
@@ -203,26 +239,43 @@ firefox --kiosk --private-window http://localhost
 
 ## 🔄 Auto-Update System
 
-### GitHub Webhook Setup
+### GitHub Smart Webhook Setup
 
-**1. Create Webhook Receiver** (`/home/kimonokittens/webhook_receiver.rb`):
+**1. Smart Webhook Receiver** (`deployment/scripts/smart_webhook_receiver.rb`):
+
+The smart webhook receiver analyzes changed files and only deploys what's needed:
+
+- **Frontend changes** → Frontend rebuild + kiosk refresh
+- **Backend changes** → Backend restart only
+- **Docs/config only** → No deployment (saves unnecessary restarts)
+
+Key features:
 ```ruby
-#!/usr/bin/env ruby
+# Analyzes commits to determine what changed
+def analyze_changes(commits)
+  frontend_changed = false
+  backend_changed = false
 
-require 'sinatra'
-require 'json'
-require 'openssl'
-require 'logger'
+  commits.each do |commit|
+    (commit['modified'] || []).each do |file|
+      case file
+      when /^dashboard\//
+        frontend_changed = true
+      when /\.(rb|ru|gemspec|Gemfile)$/
+        backend_changed = true
+      end
+    end
+  end
 
-# Configure logging
-logger = Logger.new('/var/log/kimonokittens/webhook.log')
-logger.level = Logger::INFO
-
-configure do
-  set :port, 9001
-  set :bind, '0.0.0.0'
-  set :environment, :production
+  { frontend: frontend_changed, backend: backend_changed }
 end
+```
+
+**Features:**
+- File change analysis (frontend vs backend vs docs)
+- Conditional deployment (only what changed)
+- Kiosk browser refresh on frontend changes
+- Secure signature verification
 
 # Health check endpoint
 get '/health' do
@@ -276,19 +329,22 @@ post '/webhook' do
 end
 ```
 
-**2. Webhook systemd Service** (`/etc/systemd/system/kimonokittens-webhook.service`):
+**2. Smart Webhook systemd Service** (`/etc/systemd/system/kimonokittens-webhook.service`):
 ```ini
 [Unit]
-Description=Kimonokittens Webhook Receiver
+Description=Kimonokittens Smart Webhook Receiver
 After=network.target
 
 [Service]
 Type=simple
 User=kimonokittens
 Group=kimonokittens
-WorkingDirectory=/home/kimonokittens
+WorkingDirectory=/home/kimonokittens/Projects/kimonokittens
+Environment="PATH=/home/kimonokittens/.rbenv/bin:/home/kimonokittens/.rbenv/shims:/usr/local/bin:/usr/bin:/bin"
 Environment="WEBHOOK_SECRET=your-secret-here"
-ExecStart=/usr/bin/ruby webhook_receiver.rb
+Environment="PORT=9001"
+EnvironmentFile=-/home/kimonokittens/.env
+ExecStart=/bin/bash -c 'eval "$(/home/kimonokittens/.rbenv/bin/rbenv init - bash)" && bundle exec ruby deployment/scripts/smart_webhook_receiver.rb'
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -707,21 +763,19 @@ server.mount "/api/version", VersionHandler
 # Update system
 sudo apt update && sudo apt upgrade -y
 
-# Install base dependencies
+# Install base dependencies (Pop!_OS 22.04 optimized)
 sudo apt install -y \
   nginx \
-  chromium-browser \
-  ruby \
-  ruby-dev \
-  nodejs \
-  npm \
+  google-chrome-stable \
+  postgresql-17 \
+  postgresql-contrib-17 \
+  build-essential \
+  libpq-dev \
   git \
   curl \
-  build-essential \
-  lightdm \
-  xorg \
-  xfce4 \
-  rsync
+  rsync \
+  jq \
+  software-properties-common
 
 # Install Ruby gems
 gem install bundler puma sinatra
@@ -779,26 +833,18 @@ sudo systemctl enable kimonokittens-kiosk
 sudo systemctl enable nginx
 ```
 
-### 4. Configure LightDM
+### 4. Configure GDM3 Auto-login
 
 ```bash
-# Enable autologin
-sudo sed -i 's/#autologin-user=/autologin-user=kiosk/' /etc/lightdm/lightdm.conf
-sudo sed -i 's/#autologin-user-timeout=0/autologin-user-timeout=0/' /etc/lightdm/lightdm.conf
+# Enable autologin for unified user (GDM3 - Pop!_OS default)
+sudo sed -i '/\[daemon\]/a AutomaticLoginEnable=True' /etc/gdm3/custom.conf
+sudo sed -i "/AutomaticLoginEnable=True/a AutomaticLogin=kimonokittens" /etc/gdm3/custom.conf
 
-# Create kiosk autostart
-sudo mkdir -p /home/kiosk/.config/autostart
-sudo tee /home/kiosk/.config/autostart/kiosk.desktop << EOF
-[Desktop Entry]
-Type=Application
-Name=Kiosk Browser
-Exec=/bin/sleep 10 && chromium --kiosk --app=http://localhost
-Hidden=false
-NoDisplay=false
-X-GNOME-Autostart-enabled=true
-EOF
+# Enable persistent user sessions for remote management
+sudo loginctl enable-linger kimonokittens
 
-sudo chown -R kiosk:kiosk /home/kiosk/.config
+# Set up xhost permissions for display access
+sudo -u kimonokittens bash -c 'echo "xhost +SI:localuser:kimonokittens 2>/dev/null" >> ~/.bashrc'
 ```
 
 ### 5. GitHub Webhook Configuration
@@ -1142,12 +1188,11 @@ sudo useradd kiosk
 sudo usermod -a -G video kiosk
 ```
 
-**2. LightDM Configuration** (The Big Manual Step):
+**2. GDM3 Configuration** (Scriptable):
 ```bash
-# Requires editing system files:
-sudo nano /etc/lightdm/lightdm.conf
-# OR can be scripted with:
-sudo sed -i 's/#autologin-user=/autologin-user=kiosk/' /etc/lightdm/lightdm.conf
+# GDM3 auto-login setup (Pop!_OS default display manager):
+sudo sed -i '/\[daemon\]/a AutomaticLoginEnable=True' /etc/gdm3/custom.conf
+sudo sed -i "/AutomaticLoginEnable=True/a AutomaticLogin=kimonokittens" /etc/gdm3/custom.conf
 ```
 
 **3. GitHub Webhook Configuration:**
@@ -1160,18 +1205,18 @@ sudo sed -i 's/#autologin-user=/autologin-user=kiosk/' /etc/lightdm/lightdm.conf
 - **Keyboard/mouse removal** (after testing)
 - **Monitor connection verification**
 
-### **💡 What is LightDM?**
+### **💡 What is GDM3?**
 
-**LightDM** = **"Light Display Manager"** - Think of it as the **login screen controller** for Linux:
+**GDM3** = **"GNOME Display Manager 3"** - Pop!_OS default **login screen controller**:
 
 - **Normal desktop**: Shows login screen → user logs in → desktop loads
-- **Kiosk mode**: **Automatically logs in** → **skips to browser fullscreen**
+- **Kiosk mode**: **Automatically logs in** → **starts user services** → **launches browser fullscreen**
 
 ```
-Boot → LightDM → Auto-login 'kiosk' user → Launch browser kiosk
+Boot → GDM3 → Auto-login 'kimonokittens' user → User services → Browser kiosk
 ```
 
-**Alternative approaches** (more automation-friendly):
+**Modern approaches** (fully automation-friendly):
 
 #### **Option A: Docker Kiosk** (95% Automated)
 ```bash
@@ -1215,8 +1260,9 @@ echo "chromium --kiosk http://localhost" >> ~/.xinitrc
 After Claude Code completes automated setup:
 
 ```bash
-# 1. Enable kiosk autologin (can be scripted)
-sudo sed -i 's/#autologin-user=/autologin-user=kiosk/' /etc/lightdm/lightdm.conf
+# 1. Enable kiosk autologin (fully scripted in setup script)
+sudo sed -i '/\[daemon\]/a AutomaticLoginEnable=True' /etc/gdm3/custom.conf
+sudo sed -i "/AutomaticLoginEnable=True/a AutomaticLogin=kimonokittens" /etc/gdm3/custom.conf
 
 # 2. Set webhook secret in service
 sudo systemctl edit kimonokittens-webhook
@@ -1232,13 +1278,13 @@ sudo reboot
 
 # 5. Test deployment
 git push origin master
-# Should trigger auto-update on kiosk
+# Should trigger smart deployment (only deploys what changed)
 ```
 
 ### **💭 Automation Verdict**
 
 **Claude Code can handle 85-90% automatically** with sudo access. The remaining manual steps are:
-1. **One LightDM configuration line** (scriptable)
+1. **GDM3 auto-login configuration** (fully scriptable)
 2. **GitHub webhook setup** (5 minutes in browser)
 3. **One reboot** to activate kiosk mode
 4. **Physical hardware** (unplug keyboard/mouse)
