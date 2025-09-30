@@ -1017,7 +1017,7 @@ Environment="PATH=/home/$SERVICE_USER/.rbenv/bin:/home/$SERVICE_USER/.rbenv/shim
 Environment="WEBHOOK_SECRET=CHANGE_ME_TO_SECURE_SECRET"
 Environment="PORT=9001"
 EnvironmentFile=-/home/$SERVICE_USER/.env
-ExecStart=/bin/bash -c 'eval "\$(/home/$SERVICE_USER/.rbenv/bin/rbenv init - bash)" && bundle exec ruby deployment/scripts/smart_webhook_receiver.rb'
+ExecStart=/bin/bash -c 'eval "\$(/home/$SERVICE_USER/.rbenv/bin/rbenv init - bash)" && bundle exec ruby deployment/scripts/webhook_puma_server.rb'
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -1257,7 +1257,7 @@ log "✅ System services: dashboard backend + smart webhook receiver"
 log "✅ User service: Google Chrome kiosk (starts automatically on login)"
 log "✅ GDM3 auto-login with persistent user sessions"
 log "✅ X11 display permissions configured for remote management"
-log "✅ Smart webhook: only deploys when relevant files change"
+log "✅ Smart webhook: Puma server with unified architecture, concurrent-ready"
 log "✅ Modern secure GPG keyring method (no deprecated apt-key)"
 log "✅ Comprehensive error recovery and logging enabled"
 log ""

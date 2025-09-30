@@ -32,10 +32,11 @@ Internet ──→ GitHub Webhook ──→ Dell Optiplex
 - **Single User**: `kimonokittens` runs all services for security and simplicity
 - **User Services**: systemd `--user` services with persistent linger
 - **Dashboard Process**: Puma server on port 3001 (real-time WebSocket data)
-- **Smart Webhook**: Only deploys when relevant files change
+- **Smart Webhook**: Puma server on port 9001 (unified architecture, concurrent-ready)
 - **Frontend Delivery**: Nginx on port 80 serving React SPA
 - **Kiosk Display**: Google Chrome with user service auto-launch
 - **X11 Permissions**: Proper xhost configuration for display access
+- **Unified Stack**: Both servers use Puma + Rack for consistency and performance
 
 ---
 
@@ -241,17 +242,27 @@ firefox --kiosk --private-window http://localhost
 
 ### GitHub Smart Webhook Setup
 
-**1. Smart Webhook Receiver** (`deployment/scripts/smart_webhook_receiver.rb`):
+**1. Smart Webhook Server** (`deployment/scripts/webhook_puma_server.rb`):
 
-The smart webhook receiver analyzes changed files and only deploys what's needed:
+The smart webhook server uses **Puma architecture** (unified with dashboard) and analyzes changed files to only deploy what's needed:
 
 - **Frontend changes** → Frontend rebuild + kiosk refresh
 - **Backend changes** → Backend restart only
 - **Docs/config only** → No deployment (saves unnecessary restarts)
 
-Key features:
+**Puma Architecture Benefits:**
+- **Multi-threaded**: Handles concurrent webhook requests efficiently
+- **Unified stack**: Same server technology as dashboard (Puma + Rack)
+- **Extensible**: Easy to add new endpoints for multiple projects
+- **Future-proof**: Scales with concurrent git push hooks
+
+**Key endpoints:**
+- `/webhook` - GitHub webhook receiver
+- `/health` - Simple health check
+- `/status` - Detailed status with uptime and configuration
+
+**Smart Analysis Logic:**
 ```ruby
-# Analyzes commits to determine what changed
 def analyze_changes(commits)
   frontend_changed = false
   backend_changed = false
@@ -271,11 +282,11 @@ def analyze_changes(commits)
 end
 ```
 
-**Features:**
-- File change analysis (frontend vs backend vs docs)
-- Conditional deployment (only what changed)
-- Kiosk browser refresh on frontend changes
-- Secure signature verification
+**Unified Architecture Features:**
+- **Rack::Builder**: Same routing pattern as dashboard
+- **Handler classes**: Consistent `call(env)` pattern
+- **Error handling**: Comprehensive logging and CORS support
+- **Concurrent processing**: Puma's multi-threading for webhook bursts
 
 # Health check endpoint
 get '/health' do
@@ -344,7 +355,7 @@ Environment="PATH=/home/kimonokittens/.rbenv/bin:/home/kimonokittens/.rbenv/shim
 Environment="WEBHOOK_SECRET=your-secret-here"
 Environment="PORT=9001"
 EnvironmentFile=-/home/kimonokittens/.env
-ExecStart=/bin/bash -c 'eval "$(/home/kimonokittens/.rbenv/bin/rbenv init - bash)" && bundle exec ruby deployment/scripts/smart_webhook_receiver.rb'
+ExecStart=/bin/bash -c 'eval "$(/home/kimonokittens/.rbenv/bin/rbenv init - bash)" && bundle exec ruby deployment/scripts/webhook_puma_server.rb'
 Restart=always
 RestartSec=10
 StandardOutput=journal
