@@ -2,6 +2,7 @@
 # Smart webhook server using Puma architecture (unified with dashboard)
 require 'dotenv/load'
 require 'puma'
+require 'rack'
 require 'json'
 require 'openssl'
 require 'logger'
