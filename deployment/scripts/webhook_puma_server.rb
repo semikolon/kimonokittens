@@ -94,11 +94,14 @@ class WebhookHandler
   end
 
   def handle_status_check(env)
+    deployment_status = @deployment_handler.deployment_status
     status = {
       status: 'running',
       timestamp: Time.now.iso8601,
       uptime: Process.clock_gettime(Process::CLOCK_MONOTONIC),
-      webhook_secret_configured: !@webhook_secret.include?('CHANGE_ME')
+      webhook_secret_configured: !@webhook_secret.include?('CHANGE_ME'),
+      debounce_seconds: ENV.fetch('WEBHOOK_DEBOUNCE_SECONDS', '120').to_i,
+      deployment: deployment_status
     }
     [200, json_headers, [status.to_json]]
   end
@@ -127,10 +130,14 @@ class WebhookHandler
   end
 end
 
-# Smart deployment handler with change analysis
+# Smart deployment handler with change analysis and debouncing
 class DeploymentHandler
   def initialize
     @project_dir = '/home/kimonokittens/Projects/kimonokittens'
+    @deployment_timer = nil
+    @debounce_seconds = ENV.fetch('WEBHOOK_DEBOUNCE_SECONDS', '120').to_i
+    @pending_event = nil
+    @deployment_mutex = Mutex.new
   end
 
   def process_webhook(event_data)
@@ -145,6 +152,43 @@ class DeploymentHandler
 
     $logger.info("📝 Change summary: Frontend=#{changes[:frontend]}, Backend=#{changes[:backend]}, Deployment=#{changes[:deployment]}")
 
+    # Store the latest event data and changes for debounced deployment
+    @deployment_mutex.synchronize do
+      @pending_event = { event_data: event_data, changes: changes }
+
+      # Cancel existing timer if running
+      if @deployment_timer && @deployment_timer.alive?
+        @deployment_timer.kill
+        $logger.info("🔄 Cancelled previous deployment timer - new push detected")
+      end
+
+      # Start new deployment timer
+      @deployment_timer = Thread.new do
+        begin
+          sleep(@debounce_seconds)
+          @deployment_mutex.synchronize do
+            if @pending_event
+              $logger.info("⏰ Debounce period finished - starting deployment")
+              perform_actual_deployment(@pending_event[:changes])
+              @pending_event = nil
+            end
+          end
+        rescue => e
+          $logger.error("Deployment timer error: #{e.message}")
+        end
+      end
+
+      commit_sha = event_data.dig('head_commit', 'id')&.slice(0, 7) || 'unknown'
+      {
+        success: true,
+        message: "Deployment queued for commit #{commit_sha} (#{@debounce_seconds}s debounce)"
+      }
+    end
+  end
+
+  private
+
+  def perform_actual_deployment(changes)
     deployment_success = true
     deployed_components = []
 
@@ -153,7 +197,8 @@ class DeploymentHandler
       if deploy_backend
         deployed_components << 'backend'
       else
-        return { success: false, message: 'Backend deployment failed' }
+        $logger.error("Backend deployment failed")
+        return false
       end
     end
 
@@ -162,7 +207,8 @@ class DeploymentHandler
       if deploy_frontend
         deployed_components << 'frontend'
       else
-        return { success: false, message: 'Frontend deployment failed' }
+        $logger.error("Frontend deployment failed")
+        return false
       end
     end
 
@@ -171,10 +217,24 @@ class DeploymentHandler
       restart_kiosk
     end
 
-    {
-      success: true,
-      message: "Deployed: #{deployed_components.join(', ')}"
-    }
+    $logger.info("🎉 Deployment completed: #{deployed_components.join(', ')}")
+    true
+  end
+
+  def deployment_status
+    @deployment_mutex.synchronize do
+      if @pending_event
+        {
+          pending: true,
+          time_remaining: [@debounce_seconds - (Time.now - @deployment_timer.created_at).to_i, 0].max,
+          commit_sha: @pending_event[:event_data].dig('head_commit', 'id')&.slice(0, 7)
+        }
+      else
+        { pending: false }
+      end
+    end
+  rescue
+    { pending: false, error: 'Status unavailable' }
   end
 
   private

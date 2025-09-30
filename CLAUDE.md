@@ -249,6 +249,94 @@ Train departures use **keyless SL Transport API** (`transport.integration.sl.se`
 
 **Remember: When in doubt about rent timing, the dashboard request month determines the config period, not the rent month shown in the message.**
 
+## 🔄 SMART WEBHOOK DEPLOYMENT SYSTEM
+
+### Overview: Modern Event-Driven Deployment
+
+The kimonokittens project uses a **smart webhook system** with Puma architecture for automated deployments. The system analyzes changed files and only deploys what's necessary, with intelligent debouncing for rapid development workflows.
+
+**Architecture**: Unified Puma + Rack across all services (dashboard port 3001, webhook port 9001)
+
+### Key Features
+
+#### 🎯 **Smart Change Analysis**
+- **Frontend changes** (`dashboard/`) → Frontend rebuild + kiosk refresh only
+- **Backend changes** (`.rb`, `.ru`, `Gemfile`) → Backend restart only
+- **Docs/config only** → No deployment (zero disruption)
+- **Mixed changes** → Deploy both components
+
+#### ⏱️ **Deployment Debouncing (Anti-Spam)**
+- **Problem**: Rapid git pushes (3-7 commits in 5 minutes) cause deployment spam
+- **Solution**: 2-minute debounce timer (configurable via `WEBHOOK_DEBOUNCE_SECONDS`)
+- **Behavior**: New push cancels previous timer, always deploys latest code
+- **Guarantee**: `git pull origin master` ensures latest HEAD deployment
+
+#### 🔒 **Database Safety**
+- **Webhook never touches database** - deployments are code-only
+- **Migrations are manual** - run `production_migration.rb` deliberately
+- **Zero database risk** from automated deployments
+
+### Deployment Scenarios
+
+#### **Scenario A: Frontend Development**
+```
+You edit: dashboard/src/components/Widget.tsx
+Webhook: Detects frontend change → npm run build → deploy to nginx → refresh kiosk
+Result: New UI appears on kiosk, backend keeps running
+```
+
+#### **Scenario B: Backend Development**
+```
+You edit: handlers/rent_calculator_handler.rb
+Webhook: Detects backend change → git pull → bundle install → restart service
+Result: New API behavior, frontend stays cached
+```
+
+#### **Scenario C: Documentation**
+```
+You edit: README.md, docs/architecture.md
+Webhook: No relevant changes detected → "No deployment needed"
+Result: Zero disruption, zero resources wasted
+```
+
+#### **Scenario D: Rapid Development (Debouncing)**
+```
+10:01 - Push typo fix → "Deployment queued (2min debounce)"
+10:02 - Push another fix → "Previous cancelled, new deployment queued"
+10:03 - Push final fix → "Previous cancelled, new deployment queued"
+10:05 - Timer fires → Deploys latest code only (all 3 fixes included)
+Result: One deployment with all changes, not three separate deployments
+```
+
+### Webhook Endpoints
+
+- **`POST /webhook`** - GitHub webhook receiver (signature verified)
+- **`GET /health`** - Simple health check
+- **`GET /status`** - Detailed status including pending deployments
+
+### Monitoring Deployments
+
+```bash
+# Check if deployment is pending
+curl http://localhost:9001/status | jq .deployment
+
+# View webhook logs
+journalctl -u kimonokittens-webhook -f
+
+# View deployment timer status
+curl http://localhost:9001/status | jq '{pending: .deployment.pending, time_remaining: .deployment.time_remaining}'
+```
+
+### Future-Proofing
+
+The Puma architecture is designed for:
+- **Multiple projects** - easily add new webhook endpoints
+- **Concurrent requests** - multi-threaded webhook handling
+- **Scalability** - same battle-tested server as dashboard
+- **Cognitive ease** - unified Rack patterns across services
+
+---
+
 ## 🚨 PRODUCTION DEPLOYMENT & HISTORICAL DATA MIGRATION
 
 ### CRITICAL: Historical Data Migration Protocol
