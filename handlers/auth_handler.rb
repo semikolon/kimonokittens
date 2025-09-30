@@ -1,4 +1,4 @@
-require 'agoo'
+# require 'agoo' # Removed - using Puma instead
 require 'httparty'
 require 'jwt'
 require 'json'

@@ -1,4 +1,3 @@
-require 'agoo'
 require 'json'
 require 'pinecone'
 require 'openai'

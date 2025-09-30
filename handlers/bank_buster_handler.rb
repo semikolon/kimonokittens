@@ -1,7 +1,7 @@
 # require_relative '../bank_buster'
 require 'oj'
 # require 'pry'  # Temporarily disabled due to gem conflict
-require 'agoo'
+# require 'agoo' # Removed - using Puma instead
 
 =begin
 class BankBusterHandler

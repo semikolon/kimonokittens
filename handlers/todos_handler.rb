@@ -1,4 +1,4 @@
-require 'agoo'
+# require 'agoo' # Removed - using Puma instead
 
 class TodosHandler
   def call(req)
