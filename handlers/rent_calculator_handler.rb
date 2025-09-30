@@ -44,7 +44,6 @@
 # architecture. The API layer simply needs to provide endpoints for updating and
 # retrieving this information.
 
-require 'agoo'
 require 'rack'
 require_relative '../rent'
 require_relative '../lib/rent_db'
