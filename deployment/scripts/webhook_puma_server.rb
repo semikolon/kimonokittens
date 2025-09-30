@@ -137,6 +137,7 @@ class DeploymentHandler
   def initialize
     @project_dir = '/home/kimonokittens/Projects/kimonokittens'
     @deployment_timer = nil
+    @deployment_start_time = nil
     @debounce_seconds = ENV.fetch('WEBHOOK_DEBOUNCE_SECONDS', '120').to_i
     @pending_event = nil
     @deployment_mutex = Mutex.new
@@ -165,6 +166,7 @@ class DeploymentHandler
       end
 
       # Start new deployment timer
+      @deployment_start_time = Time.now
       @deployment_timer = Thread.new do
         begin
           sleep(@debounce_seconds)
@@ -173,6 +175,7 @@ class DeploymentHandler
               $logger.info("⏰ Debounce period finished - starting deployment")
               perform_actual_deployment(@pending_event[:changes])
               @pending_event = nil
+              @deployment_start_time = nil
             end
           end
         rescue => e
@@ -225,18 +228,20 @@ class DeploymentHandler
 
   def deployment_status
     @deployment_mutex.synchronize do
-      if @pending_event
+      if @pending_event && @deployment_start_time
+        elapsed = (Time.now - @deployment_start_time).to_i
+        remaining = [@debounce_seconds - elapsed, 0].max
         {
           pending: true,
-          time_remaining: [@debounce_seconds - (Time.now - @deployment_timer.created_at).to_i, 0].max,
+          time_remaining: remaining,
           commit_sha: @pending_event[:event_data].dig('head_commit', 'id')&.slice(0, 7)
         }
       else
         { pending: false }
       end
     end
-  rescue
-    { pending: false, error: 'Status unavailable' }
+  rescue => e
+    { pending: false, error: "Status unavailable: #{e.message}" }
   end
 
   private
