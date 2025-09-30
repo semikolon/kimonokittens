@@ -1015,7 +1015,7 @@ Group=$SERVICE_USER
 WorkingDirectory=/home/$SERVICE_USER/Projects/kimonokittens
 Environment="PATH=/home/$SERVICE_USER/.rbenv/bin:/home/$SERVICE_USER/.rbenv/shims:/usr/local/bin:/usr/bin:/bin"
 Environment="WEBHOOK_SECRET=CHANGE_ME_TO_SECURE_SECRET"
-Environment="PORT=9001"
+Environment="WEBHOOK_PORT=9001"
 Environment="WEBHOOK_DEBOUNCE_SECONDS=120"
 EnvironmentFile=-/home/$SERVICE_USER/.env
 ExecStart=/bin/bash -c 'eval "\$(/home/$SERVICE_USER/.rbenv/bin/rbenv init - bash)" && bundle exec ruby deployment/scripts/webhook_puma_server.rb'

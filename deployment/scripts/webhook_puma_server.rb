@@ -102,6 +102,7 @@ class WebhookHandler
       uptime: Process.clock_gettime(Process::CLOCK_MONOTONIC),
       webhook_secret_configured: !@webhook_secret.include?('CHANGE_ME'),
       debounce_seconds: ENV.fetch('WEBHOOK_DEBOUNCE_SECONDS', '120').to_i,
+      webhook_port: ENV.fetch('WEBHOOK_PORT', 9001).to_i,
       deployment: deployment_status
     }
     [200, json_headers, [status.to_json]]
@@ -381,7 +382,7 @@ app = Rack::Builder.new do
 end
 
 # Configure Puma
-port = ENV.fetch('PORT', 9001).to_i
+port = ENV.fetch('WEBHOOK_PORT', 9001).to_i
 
 # If this file is run directly, start the server manually for testing
 if __FILE__ == $0
