@@ -620,7 +620,8 @@ echo "Installing required gems..."
 gem install bundler puma sinatra dotenv pg || exit 1
 
 echo "Installing project dependencies..."
-bundle install --deployment --without development test || exit 1
+cd /home/$SERVICE_USER/Projects/kimonokittens
+bundle install --without development test || exit 1
 
 echo "Ruby setup complete"
 EOF
@@ -952,7 +953,7 @@ Environment="ENABLE_BROADCASTER=1"
 Environment="NODE_ENV=production"
 Environment="API_BASE_URL=http://localhost:3001"
 EnvironmentFile=-/home/$SERVICE_USER/.env
-ExecStart=/bin/bash -c 'source /home/$SERVICE_USER/.rbenv/bin/rbenv init - bash && ruby puma_server.rb'
+ExecStart=/bin/bash -c 'eval "\$(/home/$SERVICE_USER/.rbenv/bin/rbenv init - bash)" && ruby puma_server.rb'
 ExecReload=/bin/kill -USR1 \$MAINPID
 Restart=always
 RestartSec=10
