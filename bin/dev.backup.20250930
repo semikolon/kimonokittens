@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROCFILE="${PROCFILE:-Procfile.dev}"
+PORT_BASE="${PORT_BASE:-3001}"
+SOCKET="${OVERMIND_SOCKET:-./.overmind.sock}"
+
+ensure_tmp() { mkdir -p tmp; }
+
+have_overmind() { command -v overmind >/dev/null 2>&1; }
+running_overmind() { [ -S "$SOCKET" ] && overmind status >/dev/null 2>&1; }
+
+cmd="${1:-start}"
+
+case "$cmd" in
+  start)
+    ensure_tmp
+
+    # Aggressive port cleanup to handle straggling processes from any source
+    echo "Cleaning up any straggling processes on ports 3001, 5175..."
+    lsof -ti :3001,:5175 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+    sleep 1
+
+    if have_overmind; then
+      if running_overmind; then
+        echo "dev already running – attaching"
+        exec overmind connect
+      else
+        exec overmind start -f "$PROCFILE" -p "$PORT_BASE"
+      fi
+    else
+      echo "overmind not found; using foreman via Bundler (install overmind for best UX)."
+      echo "install with: brew install tmux overmind"
+      exec bundle exec foreman start -f "$PROCFILE" -p "$PORT_BASE"
+    fi
+    ;;
+  stop)
+    if have_overmind && running_overmind; then
+      overmind quit
+    fi
+
+    # Always perform aggressive cleanup regardless of overmind status
+    echo "Ensuring all development processes are stopped..."
+    lsof -ti :3001,:5175 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+    pkill -f 'ruby.*puma_server.rb' 2>/dev/null || true
+    pkill -f 'vite.*--port 5175' 2>/dev/null || true
+    sleep 1
+    echo "All processes stopped."
+    ;;
+  status)
+    echo "🔍 Development Environment Status"
+    echo "================================="
+
+    # Check Overmind status
+    if have_overmind && running_overmind; then
+      echo "✅ Overmind: RUNNING"
+      overmind status 2>/dev/null || echo "   (Status details unavailable)"
+    else
+      echo "❌ Overmind: NOT RUNNING"
+    fi
+
+    echo ""
+    echo "📊 Port Analysis:"
+
+    # Check port 3001 (backend)
+    backend_proc=$(lsof -ti :3001 2>/dev/null)
+    if [ -n "$backend_proc" ]; then
+      backend_cmd=$(ps -p "$backend_proc" -o comm= 2>/dev/null || echo "unknown")
+      echo "✅ Port 3001 (Backend): OCCUPIED by PID $backend_proc ($backend_cmd)"
+    else
+      echo "❌ Port 3001 (Backend): FREE"
+    fi
+
+    # Check port 5175 (frontend)
+    frontend_proc=$(lsof -ti :5175 2>/dev/null)
+    if [ -n "$frontend_proc" ]; then
+      frontend_cmd=$(ps -p "$frontend_proc" -o comm= 2>/dev/null || echo "unknown")
+      echo "✅ Port 5175 (Frontend): OCCUPIED by PID $frontend_proc ($frontend_cmd)"
+    else
+      echo "❌ Port 5175 (Frontend): FREE"
+    fi
+
+    echo ""
+    echo "🔧 Process Summary:"
+    ruby_procs=$(pgrep -f 'ruby.*puma_server.rb' 2>/dev/null | wc -l | tr -d ' ')
+    vite_procs=$(pgrep -f 'vite.*--port 5175' 2>/dev/null | wc -l | tr -d ' ')
+    echo "   Ruby processes: $ruby_procs"
+    echo "   Vite processes: $vite_procs"
+
+    # Overall health check
+    echo ""
+    if [ -n "$backend_proc" ] && [ -n "$frontend_proc" ]; then
+      echo "🟢 Status: HEALTHY - Both services running"
+    elif [ -n "$backend_proc" ] || [ -n "$frontend_proc" ]; then
+      echo "🟡 Status: PARTIAL - Some services running"
+    else
+      echo "🔴 Status: STOPPED - No services running"
+    fi
+    ;;
+  restart)
+    if have_overmind && running_overmind; then
+      overmind restart
+      exit 0
+    fi
+    echo "Restarting via stop -> start"
+    "$0" stop
+    sleep 1
+    exec "$0" start
+    ;;
+  logs)
+    if have_overmind && running_overmind; then
+      exec overmind connect
+    else
+      echo "No Overmind session; start first with: bin/dev start"
+    fi
+    ;;
+  *)
+    echo "Usage: bin/dev [start|stop|restart|status|logs]"
+    echo ""
+    echo "  start   - Start all dev processes (backend + frontend)"
+    echo "  stop    - Stop all dev processes"
+    echo "  restart - Restart all dev processes"
+    echo "  status  - Show process status"
+    echo "  logs    - View/attach to process logs"
+    echo ""
+    echo "Processes: Ruby backend (port 3001), Vite frontend (port 5175)"
+    exit 1
+    ;;
+esac

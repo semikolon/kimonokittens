@@ -102,7 +102,18 @@ class TrainDepartureHandler
 
       deviation_note = train['deviation_note'] || ''
       summary_deviation_note = ''
-      summary_deviation_note = ' (försenad)' if deviation_note.include?('Försenad') || deviation_note.include?('delayed')
+
+      # Extract delay information with minutes if available
+      if deviation_note.include?('Försenad') || deviation_note.include?('delayed')
+        # Try to extract delay minutes from the deviation note
+        if match = deviation_note.match(/(\d+)\s*min/)
+          summary_deviation_note = "försenad #{match[1]} min"
+        else
+          # If no specific minutes found, don't show delay (avoid "0m sen")
+          summary_deviation_note = ''
+        end
+      end
+
       summary_deviation_note = ' (inställd)' if deviation_note.include?('Inställd') || deviation_note.include?('cancelled')
 
       {

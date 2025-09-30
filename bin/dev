@@ -16,54 +16,128 @@ case "$cmd" in
   start)
     ensure_tmp
 
-    # Aggressive port cleanup to handle straggling processes from any source
-    echo "Cleaning up any straggling processes on ports 3001, 5175..."
-    lsof -ti :3001,:5175 2>/dev/null | xargs -r kill -9 2>/dev/null || true
-    sleep 1
+    echo "🚀 Starting development environment..."
+
+    # Pre-flight check: Ensure we're in clean state
+    if [ -S "$SOCKET" ]; then
+      echo "⚠️  Socket file exists, verifying session..."
+      if ! overmind status >/dev/null 2>&1; then
+        echo "⚠️  Stale socket detected. Running cleanup..."
+        "$0" stop
+        sleep 1
+      fi
+    fi
+
+    # Aggressive port cleanup to handle straggling processes
+    ports_to_kill=$(lsof -ti :3001,:5175 2>/dev/null || true)
+    if [ -n "$ports_to_kill" ]; then
+      echo "⚠️  Ports occupied, cleaning up: $ports_to_kill"
+      echo "$ports_to_kill" | xargs kill -9 2>/dev/null || true
+      sleep 1
+    fi
 
     if have_overmind; then
       if running_overmind; then
-        echo "dev already running – attaching"
+        echo "✅ Dev already running – attaching"
         exec overmind connect
       else
+        echo "✨ Starting fresh Overmind session..."
         exec overmind start -f "$PROCFILE" -p "$PORT_BASE"
       fi
     else
-      echo "overmind not found; using foreman via Bundler (install overmind for best UX)."
-      echo "install with: brew install tmux overmind"
+      echo "⚠️  Overmind not found; using foreman via Bundler"
+      echo "    (Install with: brew install tmux overmind)"
       exec bundle exec foreman start -f "$PROCFILE" -p "$PORT_BASE"
     fi
     ;;
   stop)
-    if have_overmind && running_overmind; then
-      overmind quit
+    echo "🛑 Stopping all development processes..."
+
+    # LEVEL 1: Try graceful shutdown if Overmind is actually running
+    if have_overmind; then
+      if overmind status >/dev/null 2>&1; then
+        echo "   Graceful Overmind shutdown..."
+        overmind quit 2>/dev/null || true
+        sleep 0.5
+      fi
     fi
 
-    # Always perform aggressive cleanup regardless of overmind status
-    echo "Ensuring all development processes are stopped..."
-    lsof -ti :3001,:5175 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+    # LEVEL 2: Aggressive cleanup (ALWAYS runs, regardless of Level 1 result)
+    echo "   Aggressive cleanup..."
+
+    # Kill ALL tmux sessions matching our project pattern
+    tmux_sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep "^kimonokittens" || true)
+    if [ -n "$tmux_sessions" ]; then
+      echo "   Killing tmux sessions: $tmux_sessions"
+      echo "$tmux_sessions" | xargs -I {} tmux kill-session -t {} 2>/dev/null || true
+    fi
+
+    # Kill ALL orphaned tmux processes with our project in the name
+    pkill -f 'tmux.*overmind-kimonokittens' 2>/dev/null || true
+
+    # Remove socket file unconditionally
+    if [ -e "$SOCKET" ]; then
+      echo "   Removing socket: $SOCKET"
+      rm -f "$SOCKET"
+    fi
+
+    # Remove any tmux temporary directories for this project
+    rm -rf /tmp/tmux-$(id -u)/overmind-kimonokittens-* 2>/dev/null || true
+    rm -rf /var/folders/*/T/overmind-kimonokittens-* 2>/dev/null || true
+
+    # Kill processes by port
+    ports_to_kill=$(lsof -ti :3001,:5175 2>/dev/null || true)
+    if [ -n "$ports_to_kill" ]; then
+      echo "   Killing processes on ports 3001, 5175: $ports_to_kill"
+      echo "$ports_to_kill" | xargs kill -9 2>/dev/null || true
+    fi
+
+    # Kill processes by name pattern
     pkill -f 'ruby.*puma_server.rb' 2>/dev/null || true
     pkill -f 'vite.*--port 5175' 2>/dev/null || true
+
     sleep 1
-    echo "All processes stopped."
+    echo "✅ All processes stopped and cleaned up."
     ;;
   status)
     echo "🔍 Development Environment Status"
     echo "================================="
 
     # Check Overmind status
-    if have_overmind && running_overmind; then
-      echo "✅ Overmind: RUNNING"
-      overmind status 2>/dev/null || echo "   (Status details unavailable)"
+    overmind_healthy=false
+    if have_overmind; then
+      if overmind status >/dev/null 2>&1; then
+        echo "✅ Overmind: RUNNING"
+        overmind status 2>/dev/null || echo "   (Status details unavailable)"
+        overmind_healthy=true
+      else
+        echo "❌ Overmind: NOT RUNNING"
+        if [ -S "$SOCKET" ]; then
+          echo "⚠️  WARNING: Stale socket detected at $SOCKET"
+        fi
+      fi
     else
-      echo "❌ Overmind: NOT RUNNING"
+      echo "⚠️  Overmind: NOT INSTALLED"
+    fi
+
+    # Check for zombie tmux sessions
+    zombie_sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep "^kimonokittens" || true)
+    if [ -n "$zombie_sessions" ]; then
+      echo "⚠️  WARNING: Zombie tmux sessions detected:"
+      echo "$zombie_sessions" | sed 's/^/      /'
+    fi
+
+    # Check for orphaned tmux processes
+    orphan_count=$(pgrep -f 'tmux.*overmind-kimonokittens' 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$orphan_count" -gt 0 ]; then
+      echo "⚠️  WARNING: $orphan_count orphaned tmux processes detected"
     fi
 
     echo ""
     echo "📊 Port Analysis:"
 
     # Check port 3001 (backend)
-    backend_proc=$(lsof -ti :3001 2>/dev/null)
+    backend_proc=$(lsof -ti :3001 2>/dev/null || true)
     if [ -n "$backend_proc" ]; then
       backend_cmd=$(ps -p "$backend_proc" -o comm= 2>/dev/null || echo "unknown")
       echo "✅ Port 3001 (Backend): OCCUPIED by PID $backend_proc ($backend_cmd)"
@@ -72,7 +146,7 @@ case "$cmd" in
     fi
 
     # Check port 5175 (frontend)
-    frontend_proc=$(lsof -ti :5175 2>/dev/null)
+    frontend_proc=$(lsof -ti :5175 2>/dev/null || true)
     if [ -n "$frontend_proc" ]; then
       frontend_cmd=$(ps -p "$frontend_proc" -o comm= 2>/dev/null || echo "unknown")
       echo "✅ Port 5175 (Frontend): OCCUPIED by PID $frontend_proc ($frontend_cmd)"
@@ -89,22 +163,33 @@ case "$cmd" in
 
     # Overall health check
     echo ""
-    if [ -n "$backend_proc" ] && [ -n "$frontend_proc" ]; then
-      echo "🟢 Status: HEALTHY - Both services running"
+    if [ "$overmind_healthy" = true ] && [ -n "$backend_proc" ] && [ -n "$frontend_proc" ]; then
+      echo "🟢 Status: HEALTHY - All systems operational"
     elif [ -n "$backend_proc" ] || [ -n "$frontend_proc" ]; then
       echo "🟡 Status: PARTIAL - Some services running"
+      echo ""
+      echo "💡 Recommendation: Run 'bin/dev restart' for clean state"
     else
       echo "🔴 Status: STOPPED - No services running"
+      if [ -S "$SOCKET" ] || [ -n "$zombie_sessions" ] || [ "$orphan_count" -gt 0 ]; then
+        echo ""
+        echo "⚠️  CLEANUP NEEDED:"
+        [ -S "$SOCKET" ] && echo "   • Stale socket file"
+        [ -n "$zombie_sessions" ] && echo "   • Zombie tmux sessions"
+        [ "$orphan_count" -gt 0 ] && echo "   • Orphaned tmux processes"
+        echo ""
+        echo "💡 Run: bin/dev stop    # Aggressive cleanup"
+        echo "💡 Or:  bin/dev nuke    # Nuclear cleanup (last resort)"
+      fi
     fi
     ;;
   restart)
-    if have_overmind && running_overmind; then
-      overmind restart
-      exit 0
-    fi
-    echo "Restarting via stop -> start"
+    echo "🔄 Restarting development environment..."
+
+    # NEVER trust Overmind's restart - always do stop → start
+    # This ensures clean state every time
     "$0" stop
-    sleep 1
+    sleep 2
     exec "$0" start
     ;;
   logs)
@@ -114,16 +199,61 @@ case "$cmd" in
       echo "No Overmind session; start first with: bin/dev start"
     fi
     ;;
+  nuke)
+    echo "☢️  NUCLEAR CLEANUP - Killing ALL tmux sessions and processes"
+    echo ""
+    read -p "This will kill ALL tmux sessions and Ruby/Node processes. Continue? [y/N] " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      echo "Aborted."
+      exit 1
+    fi
+
+    echo "🧨 Proceeding with nuclear cleanup..."
+
+    # Kill ALL tmux sessions
+    tmux_sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null || true)
+    if [ -n "$tmux_sessions" ]; then
+      echo "   Killing all tmux sessions"
+      tmux kill-server 2>/dev/null || true
+    fi
+
+    # Remove ALL tmux sockets for current user
+    rm -rf /tmp/tmux-$(id -u)/* 2>/dev/null || true
+    rm -rf /var/folders/*/T/tmux-$(id -u)/* 2>/dev/null || true
+
+    # Remove project socket
+    rm -f "$SOCKET" 2>/dev/null || true
+
+    # Kill ALL Ruby processes
+    pkill -9 ruby 2>/dev/null || true
+
+    # Kill ALL Node processes
+    pkill -9 node 2>/dev/null || true
+
+    # Kill ALL processes on development ports
+    lsof -ti :3001,:5175,:8080,:3000,:5000 2>/dev/null | xargs kill -9 2>/dev/null || true
+
+    sleep 2
+    echo "☢️  Nuclear cleanup complete. All clear."
+    echo ""
+    echo "You can now run: bin/dev start"
+    ;;
   *)
-    echo "Usage: bin/dev [start|stop|restart|status|logs]"
+    echo "Usage: bin/dev [start|stop|restart|status|logs|nuke]"
     echo ""
     echo "  start   - Start all dev processes (backend + frontend)"
-    echo "  stop    - Stop all dev processes"
-    echo "  restart - Restart all dev processes"
-    echo "  status  - Show process status"
+    echo "  stop    - Stop all dev processes (aggressive cleanup)"
+    echo "  restart - Restart all dev processes (stop + start)"
+    echo "  status  - Show process status and health check"
     echo "  logs    - View/attach to process logs"
+    echo "  nuke    - Nuclear cleanup (kills ALL tmux and Ruby/Node)"
     echo ""
     echo "Processes: Ruby backend (port 3001), Vite frontend (port 5175)"
+    echo ""
+    echo "🔧 Troubleshooting:"
+    echo "   If 'start' fails with 'already running', run: bin/dev stop"
+    echo "   If 'stop' doesn't fix it, run: bin/dev nuke"
     exit 1
     ;;
 esac

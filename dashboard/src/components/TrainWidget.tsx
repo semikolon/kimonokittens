@@ -159,7 +159,7 @@ const formatDelayAwareTimeDisplay = (departure: TrainDeparture): string => {
     return adjusted.adjustedTime
   }
 
-  if (adjusted.isDelayed) {
+  if (adjusted.isDelayed && adjusted.delayMinutes > 0) {
     return `${adjusted.adjustedTime} - om ${adjusted.adjustedMinutesUntil}m (${adjusted.delayMinutes}m sen)`
   } else {
     return `${adjusted.adjustedTime} - om ${adjusted.adjustedMinutesUntil}m`
