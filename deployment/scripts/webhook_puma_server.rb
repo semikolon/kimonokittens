@@ -95,17 +95,35 @@ class WebhookHandler
   end
 
   def handle_status_check(env)
-    deployment_status = @deployment_handler.deployment_status
-    status = {
-      status: 'running',
-      timestamp: Time.now.iso8601,
-      uptime: Process.clock_gettime(Process::CLOCK_MONOTONIC),
-      webhook_secret_configured: !@webhook_secret.include?('CHANGE_ME'),
-      debounce_seconds: ENV.fetch('WEBHOOK_DEBOUNCE_SECONDS', '120').to_i,
-      webhook_port: ENV.fetch('WEBHOOK_PORT', 9001).to_i,
-      deployment: deployment_status
-    }
-    [200, json_headers, [status.to_json]]
+    begin
+      $logger.info("Status check requested")
+
+      # Test each component separately to isolate the error
+      $logger.info("Getting deployment status...")
+      deployment_status = @deployment_handler.deployment_status
+      $logger.info("Deployment status retrieved: #{deployment_status}")
+
+      $logger.info("Building status object...")
+      status = {
+        status: 'running',
+        timestamp: Time.now.iso8601,
+        uptime: Process.clock_gettime(Process::CLOCK_MONOTONIC),
+        webhook_secret_configured: !@webhook_secret.include?('CHANGE_ME'),
+        debounce_seconds: ENV.fetch('WEBHOOK_DEBOUNCE_SECONDS', '120').to_i,
+        webhook_port: ENV.fetch('WEBHOOK_PORT', 9001).to_i,
+        deployment: deployment_status
+      }
+
+      $logger.info("Status object created, converting to JSON...")
+      response_json = status.to_json
+      $logger.info("JSON conversion successful")
+
+      [200, json_headers, [response_json]]
+    rescue => e
+      $logger.error("Status check failed: #{e.message}")
+      $logger.error("Backtrace: #{e.backtrace.join("\n")}")
+      [500, json_headers, [{ error: "Status check failed: #{e.message}" }.to_json]]
+    end
   end
 
   def verify_signature(payload, signature)
