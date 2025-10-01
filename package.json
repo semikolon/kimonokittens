@@ -17,6 +17,8 @@
     "prisma": "^6.11.1"
   },
   "dependencies": {
-    "@prisma/client": "^6.11.1"
+    "@prisma/client": "^6.11.1",
+    "react": "19.2.0-canary-ef889445-20250930",
+    "react-dom": "19.2.0-canary-ef889445-20250930"
   }
 }
