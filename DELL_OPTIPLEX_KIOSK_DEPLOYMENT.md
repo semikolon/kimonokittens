@@ -801,7 +801,24 @@ sudo mkdir -p /home/kimonokittens/backups
 sudo chown -R kimonokittens:kimonokittens /home/kimonokittens
 sudo chown -R www-data:www-data /var/www/kimonokittens
 sudo chown kimonokittens:adm /var/log/kimonokittens
+
+# Setup group-based permissions for development access
+# Add your admin user (e.g., fredrik) to kimonokittens group for read access
+ADMIN_USER="fredrik"  # Change to your admin username
+sudo usermod -a -G kimonokittens $ADMIN_USER
+sudo chmod -R g+rX /home/kimonokittens/Projects
+# Note: Admin user needs to logout/login for group membership to take effect
+
+# Protect sensitive files (owner-only access)
+sudo chmod 600 /home/kimonokittens/Projects/kimonokittens/.env
 ```
+
+**Why group-based permissions?**
+- Allows admin user read access for debugging without sudo
+- Service user (kimonokittens) maintains ownership
+- Only Projects directory exposed, not entire home
+- Sensitive files (.env) remain protected (600 = owner-only)
+- Standard Unix development practice
 
 ### 2. Clone and Setup Repository
 

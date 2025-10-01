@@ -277,6 +277,28 @@ if ! id -u "$SERVICE_USER" >/dev/null 2>&1; then
     error_exit "User creation verification failed"
 fi
 
+# Setup group-based permissions for development user access
+log "Setting up group-based permissions for development access..."
+CURRENT_USER="${SUDO_USER:-$USER}"
+
+if [ "$CURRENT_USER" != "$SERVICE_USER" ] && [ -n "$CURRENT_USER" ]; then
+    # Add development user to service user's group for read access
+    if ! groups "$CURRENT_USER" | grep -q "$SERVICE_USER"; then
+        log "Adding $CURRENT_USER to $SERVICE_USER group..."
+        usermod -a -G "$SERVICE_USER" "$CURRENT_USER" || error_exit "Failed to add user to group"
+        log "✅ Added $CURRENT_USER to $SERVICE_USER group (requires logout/login)"
+    fi
+
+    # Set group read permissions on Projects directory
+    if [ -d "/home/$SERVICE_USER/Projects" ]; then
+        log "Setting group read permissions on Projects directory..."
+        chmod -R g+rX "/home/$SERVICE_USER/Projects" || error_exit "Failed to set group permissions"
+        log "✅ Group read permissions set"
+    fi
+
+    log "⚠️  Note: $CURRENT_USER will need to logout/login for group membership to take effect"
+fi
+
 # Step 3: Setup PostgreSQL database
 log "🗄️ Step 3: Setting up PostgreSQL database..."
 
