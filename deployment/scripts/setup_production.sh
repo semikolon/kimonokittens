@@ -1105,10 +1105,15 @@ backup_config "/etc/gdm3/custom.conf"
 # Configure GDM3 auto-login (Pop!_OS default display manager)
 log "Configuring GDM3 auto-login for $SERVICE_USER..."
 
-# Check if AutomaticLoginEnable already exists
-if grep -q "AutomaticLoginEnable" /etc/gdm3/custom.conf; then
-    log "Auto-login already configured in GDM3"
+# Check if auto-login is ACTUALLY enabled (not just commented lines)
+if grep -q "^AutomaticLoginEnable=True" /etc/gdm3/custom.conf && \
+   grep -q "^AutomaticLogin=$SERVICE_USER" /etc/gdm3/custom.conf; then
+    log "✅ Auto-login already properly configured in GDM3"
 else
+    # Remove any existing auto-login configuration (including commented lines)
+    sed -i '/^AutomaticLoginEnable/d' /etc/gdm3/custom.conf
+    sed -i '/^AutomaticLogin=/d' /etc/gdm3/custom.conf
+
     # Add auto-login configuration to GDM3
     if ! sed -i '/\[daemon\]/a AutomaticLoginEnable=True' /etc/gdm3/custom.conf; then
         error_exit "Failed to enable auto-login in GDM3"
