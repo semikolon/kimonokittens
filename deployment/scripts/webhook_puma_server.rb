@@ -385,12 +385,41 @@ class DeploymentHandler
       return true
     end
 
-    # Working tree is dirty - log and auto-reset
-    $logger.warn("⚠️  Git working tree is dirty - auto-resetting to origin/master")
-    $logger.warn("Modified files:")
-    git_status.lines.each { |line| $logger.warn("  #{line.strip}") }
+    # Categorize changes: source code vs build artifacts
+    source_files = []
+    build_artifacts = []
 
-    # Auto-reset to match remote (production should always match git)
+    git_status.lines.each do |line|
+      # Parse git status format: "XY filename"
+      file = line.strip.split(/\s+/, 2)[1]
+      next unless file
+
+      if file =~ /\.(rb|tsx?|jsx?|vue|css|html|md|yml|yaml)$/
+        source_files << file
+      elsif file =~ /(package.*\.json|node_modules|dist|\.lock|Gemfile\.lock)/
+        build_artifacts << file
+      else
+        source_files << file  # Unknown files = treat as source (safe)
+      end
+    end
+
+    # ABORT if source code modified (requires manual intervention)
+    unless source_files.empty?
+      $logger.error("❌ SOURCE CODE MODIFIED - deployment aborted for safety!")
+      $logger.error("Production checkout has uncommitted changes to:")
+      source_files.each { |f| $logger.error("  #{f}") }
+      $logger.error("")
+      $logger.error("Resolution options:")
+      $logger.error("  1. Commit changes: git add . && git commit && git push")
+      $logger.error("  2. Discard changes: git reset --hard origin/master")
+      $logger.error("  3. Investigate manually before deciding")
+      return false
+    end
+
+    # Auto-reset only build artifacts (safe, common from npm/bundle operations)
+    $logger.warn("⚠️  Build artifacts modified - auto-resetting (safe)")
+    build_artifacts.each { |f| $logger.warn("  #{f}") }
+
     unless system('git fetch origin master && git reset --hard origin/master')
       $logger.error("❌ Git reset failed - deployment aborted")
       return false
