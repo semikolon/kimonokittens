@@ -174,78 +174,8 @@ const generateTrainId = (train: TrainDeparture): string =>
 const generateBusId = (bus: BusDeparture): string =>
   `${bus.departure_time}-${bus.line_number}-${bus.destination}`
 
-// Hook for detecting feasible list changes (not just data updates)
-// KEY FIX: Track previously FEASIBLE trains, not all trains from API
-const useTrainListChanges = (currentFeasibleTrains: TrainDeparture[]) => {
-  const [prevFeasibleTrains, setPrevFeasibleTrains] = useState<TrainDeparture[]>([])
-
-  return useMemo(() => {
-    const currentIds = new Set(currentFeasibleTrains.map(generateTrainId))
-    const prevIds = new Set(prevFeasibleTrains.map(generateTrainId))
-
-    const potentiallyAdded = [...currentIds].filter(id => !prevIds.has(id))
-    const removed = [...prevIds].filter(id => !currentIds.has(id))
-
-    // Filter out false "new" trains that are just time updates
-    const genuinelyAdded = potentiallyAdded.filter(newTrainId => {
-      const newTrain = currentFeasibleTrains.find(train => generateTrainId(train) === newTrainId)!
-
-      // Check if this is just a time update of an existing train
-      const isTimeUpdate = prevFeasibleTrains.some(prevTrain =>
-        prevTrain.line_number === newTrain.line_number &&
-        prevTrain.destination === newTrain.destination &&
-        Math.abs(prevTrain.departure_timestamp - newTrain.departure_timestamp) <= 300 // 5 min window
-      )
-
-      return !isTimeUpdate // Only include genuinely new trains
-    })
-
-    const hasStructuralChange = genuinelyAdded.length > 0 || removed.length > 0
-
-    // Update state for next comparison (but don't trigger re-render)
-    setTimeout(() => {
-      setPrevFeasibleTrains([...currentFeasibleTrains])
-    }, 0)
-
-    return { hasStructuralChange, added: genuinelyAdded, removed }
-  }, [currentFeasibleTrains, prevFeasibleTrains])
-}
-
-// Hook for detecting feasible bus list changes (not just data updates)
-// KEY FIX: Track previously FEASIBLE buses, not all buses from API
-const useBusListChanges = (currentFeasibleBuses: BusDeparture[]) => {
-  const [prevFeasibleBuses, setPrevFeasibleBuses] = useState<BusDeparture[]>([])
-
-  return useMemo(() => {
-    const currentIds = new Set(currentFeasibleBuses.map(generateBusId))
-    const prevIds = new Set(prevFeasibleBuses.map(generateBusId))
-
-    const potentiallyAdded = [...currentIds].filter(id => !prevIds.has(id))
-    const removed = [...prevIds].filter(id => !currentIds.has(id))
-
-    // Filter out false "new" buses that are just time updates
-    const genuinelyAdded = potentiallyAdded.filter(newBusId => {
-      const newBus = currentFeasibleBuses.find(bus => generateBusId(bus) === newBusId)!
-
-      // Check if this is just a time update of an existing bus
-      const isTimeUpdate = prevFeasibleBuses.some(prevBus =>
-        prevBus.line_number === newBus.line_number &&
-        prevBus.destination === newBus.destination &&
-        Math.abs(prevBus.departure_timestamp - newBus.departure_timestamp) <= 300 // 5 min window
-      )
-
-      return !isTimeUpdate // Only include genuinely new buses
-    })
-
-    const hasStructuralChange = genuinelyAdded.length > 0 || removed.length > 0
-
-    setTimeout(() => {
-      setPrevFeasibleBuses([...currentFeasibleBuses])
-    }, 0)
-
-    return { hasStructuralChange, added: genuinelyAdded, removed }
-  }, [currentFeasibleBuses, prevFeasibleBuses])
-}
+// NOTE: useTrainListChanges and useBusListChanges removed in Phase 4
+// ViewTransition API handles structural change detection via useEffect in TrainWidget
 
 // Urgent departure detection and flashing
 const isUrgentDeparture = (train: TrainDeparture): boolean => {
@@ -428,157 +358,9 @@ const isFeasibleBusDeparture = (minutesUntil: number): boolean => {
   return minutesUntil >= 0 // Bus stop is right outside (1min walk), show until departure
 }
 
-// Animated Train List Wrapper
-const AnimatedTrainList: React.FC<{
-  trains: TrainDeparture[];
-  renderItem: (train: TrainDeparture, index: number, isUrgentFlashing: boolean, isCriticalFlashing: boolean) => React.ReactNode;
-  urgentFlashingTrains?: Set<string>;
-  criticalFlashingTrains?: Set<string>;
-  departingTrains?: Set<string>;
-  trainStates?: Map<string, DepartureState>;
-}> = ({
-  trains,
-  renderItem,
-  urgentFlashingTrains = new Set(),
-  criticalFlashingTrains = new Set(),
-  departingTrains = new Set(),
-  trainStates = new Map()
-}) => {
-  const { hasStructuralChange, added, removed } = useTrainListChanges(trains)
-  const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set())
-  const [introducingItems, setIntroducingItems] = useState<Set<string>>(new Set())
-
-  // Handle train departure animation
-  useEffect(() => {
-    if (removed.length > 0) {
-      setAnimatingItems(new Set(removed))
-
-      const timer = setTimeout(() => {
-        setAnimatingItems(new Set())
-      }, 400)
-
-      return () => clearTimeout(timer)
-    }
-  }, [removed])
-
-  // Handle train introduction animation
-  useEffect(() => {
-    if (added.length > 0) {
-      setIntroducingItems(new Set(added))
-
-      // Trigger introduction animation - duration matches CSS animation (5s)
-      const timer = setTimeout(() => {
-        setIntroducingItems(new Set())
-      }, 5000)
-
-      return () => clearTimeout(timer)
-    }
-  }, [added])
-
-  return (
-    <div className="train-list-container">
-      {trains.map((train, index) => {
-        const trainId = generateTrainId(train)
-        const departureState = trainStates.get(trainId) || 'feasible'
-        const isUrgentFlashing = urgentFlashingTrains.has(trainId)
-        const isCriticalFlashing = criticalFlashingTrains.has(trainId)
-        const isDeparting = departingTrains.has(trainId) || animatingItems.has(trainId)
-        const isIntroducing = introducingItems.has(trainId)
-
-        // Build CSS classes based on departure state and animations
-        const cssClasses = ['train-departure-item']
-        if (departureState === 'warning') cssClasses.push('warning-glow')
-        if (departureState === 'critical') cssClasses.push('critical-glow')
-        if (departureState === 'departing' || isDeparting) cssClasses.push('departing')
-        if (isIntroducing) cssClasses.push('introducing')
-        else if (!isDeparting) cssClasses.push('introduced')
-
-        return (
-          <div
-            key={trainId}
-            className={cssClasses.join(' ')}
-            style={{
-              '--item-index': index,
-              viewTransitionName: trainId
-            } as React.CSSProperties}
-          >
-            {renderItem(train, index, isUrgentFlashing, isCriticalFlashing)}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-// Animated Bus List Wrapper
-const AnimatedBusList: React.FC<{
-  buses: BusDeparture[];
-  renderItem: (bus: BusDeparture, index: number, isUrgentFlashing: boolean, isCriticalFlashing: boolean) => React.ReactNode;
-  urgentFlashingBuses?: Set<string>;
-  criticalFlashingBuses?: Set<string>;
-}> = ({ buses, renderItem, urgentFlashingBuses = new Set(), criticalFlashingBuses = new Set() }) => {
-  const { hasStructuralChange, added, removed } = useBusListChanges(buses)
-  const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set())
-  const [introducingItems, setIntroducingItems] = useState<Set<string>>(new Set())
-
-  // Handle bus removal animation
-  useEffect(() => {
-    if (removed.length > 0) {
-      setAnimatingItems(new Set(removed))
-
-      const timer = setTimeout(() => {
-        setAnimatingItems(new Set())
-      }, 400)
-
-      return () => clearTimeout(timer)
-    }
-  }, [removed])
-
-  // Handle bus introduction animation
-  useEffect(() => {
-    if (added.length > 0) {
-      setIntroducingItems(new Set(added))
-
-      // Trigger introduction animation - duration matches CSS animation (5s)
-      const timer = setTimeout(() => {
-        setIntroducingItems(new Set())
-      }, 5000)
-
-      return () => clearTimeout(timer)
-    }
-  }, [added])
-
-  return (
-    <div className="train-list-container">
-      {buses.map((bus, index) => {
-        const busId = generateBusId(bus)
-        const isDeparting = animatingItems.has(busId)
-        const isIntroducing = introducingItems.has(busId)
-        const isUrgentFlashing = urgentFlashingBuses.has(busId)
-        const isCriticalFlashing = criticalFlashingBuses.has(busId)
-
-        const classNames = [
-          'train-departure-item',
-          isDeparting ? 'departing' : '',
-          isIntroducing ? 'introducing' : 'introduced'
-        ].filter(Boolean).join(' ')
-
-        return (
-          <div
-            key={busId}
-            className={classNames}
-            style={{
-              '--item-index': index,
-              viewTransitionName: busId
-            } as React.CSSProperties}
-          >
-            {renderItem(bus, index, isUrgentFlashing, isCriticalFlashing)}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
+// NOTE: AnimatedTrainList and AnimatedBusList removed in Phase 4
+// ViewTransition API handles all entry/exit animations via CSS pseudo-elements
+// Glow effects (warning-glow, critical-glow) still applied via trainStates/useDepartureSequence
 
 // Format time display with action suffix
 const formatTimeDisplay = (departure: TrainDeparture | BusDeparture): string => {
@@ -836,20 +618,36 @@ export function TrainWidget() {
           <div className="mb-3">
             <div className="leading-relaxed">
               {feasibleTrains.length > 0 ? (
-                <AnimatedTrainList
-                  trains={feasibleTrains}
-                  renderItem={(train, index, isUrgentFlashing, isCriticalFlashing) => (
-                    <TrainDepartureLine
-                      departure={train}
-                      isUrgentFlashing={isUrgentFlashing}
-                      isCriticalFlashing={isCriticalFlashing}
-                    />
-                  )}
-                  urgentFlashingTrains={urgentFlashingTrains}
-                  criticalFlashingTrains={criticalFlashingTrains}
-                  departingTrains={departingTrains}
-                  trainStates={trainStates}
-                />
+                <div className="train-list-container">
+                  {feasibleTrains.map((train, index) => {
+                    const trainId = generateTrainId(train)
+                    const departureState = trainStates.get(trainId) || 'feasible'
+                    const isUrgentFlashing = urgentFlashingTrains.has(trainId)
+                    const isCriticalFlashing = criticalFlashingTrains.has(trainId)
+
+                    // Build CSS classes based on departure state (ViewTransitions handle animations)
+                    const cssClasses = ['train-departure-item']
+                    if (departureState === 'warning') cssClasses.push('warning-glow')
+                    if (departureState === 'critical') cssClasses.push('critical-glow')
+
+                    return (
+                      <div
+                        key={trainId}
+                        className={cssClasses.join(' ')}
+                        style={{
+                          '--item-index': index,
+                          viewTransitionName: trainId
+                        } as React.CSSProperties}
+                      >
+                        <TrainDepartureLine
+                          departure={train}
+                          isUrgentFlashing={isUrgentFlashing}
+                          isCriticalFlashing={isCriticalFlashing}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
               ) : (
                 <div style={{ opacity: 0.6 }}>Inga pendeltåg inom en timme</div>
               )}
@@ -866,18 +664,30 @@ export function TrainWidget() {
           <div className="mb-3">
             <div className="leading-relaxed">
               {feasibleBuses.length > 0 ? (
-                <AnimatedBusList
-                  buses={feasibleBuses}
-                  renderItem={(bus, index, isUrgentFlashing, isCriticalFlashing) => (
-                    <BusDepartureLine
-                      departure={bus}
-                      isUrgentFlashing={isUrgentFlashing}
-                      isCriticalFlashing={isCriticalFlashing}
-                    />
-                  )}
-                  urgentFlashingBuses={urgentFlashingBuses}
-                  criticalFlashingBuses={criticalFlashingBuses}
-                />
+                <div className="train-list-container">
+                  {feasibleBuses.map((bus, index) => {
+                    const busId = generateBusId(bus)
+                    const isUrgentFlashing = urgentFlashingBuses.has(busId)
+                    const isCriticalFlashing = criticalFlashingBuses.has(busId)
+
+                    return (
+                      <div
+                        key={busId}
+                        className="train-departure-item"
+                        style={{
+                          '--item-index': index,
+                          viewTransitionName: busId
+                        } as React.CSSProperties}
+                      >
+                        <BusDepartureLine
+                          departure={bus}
+                          isUrgentFlashing={isUrgentFlashing}
+                          isCriticalFlashing={isCriticalFlashing}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
               ) : (
                 <div style={{ opacity: 0.6 }}>Inga bussar tillgängliga</div>
               )}
