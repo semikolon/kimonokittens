@@ -191,11 +191,11 @@ const isCriticalDeparture = (train: TrainDeparture): boolean => {
          train.suffix.includes('spring')
 }
 
+// Simplified departure sequence - only warning/critical glows (ViewTransitions handle departing)
 const useDepartureSequence = (trains: TrainDeparture[]) => {
   const [trainStates, setTrainStates] = useState<Map<string, DepartureState>>(new Map())
   const [warningTrains, setWarningTrains] = useState<Set<string>>(new Set())
   const [criticalTrains, setCriticalTrains] = useState<Set<string>>(new Set())
-  const [departingTrains, setDepartingTrains] = useState<Set<string>>(new Set())
   const [processedTransitions, setProcessedTransitions] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -226,24 +226,12 @@ const useDepartureSequence = (trains: TrainDeparture[]) => {
           setCriticalTrains(prev => new Set([...prev, trainId]))
 
           setTimeout(() => {
-            // Phase 3: Departing (fade out) - 2 seconds
-            setTrainStates(prev => new Map(prev).set(trainId, 'departing'))
+            // Phase 3: Cleanup (ViewTransition API handles exit animation)
             setCriticalTrains(prev => {
               const newSet = new Set(prev)
               newSet.delete(trainId)
               return newSet
             })
-            setDepartingTrains(prev => new Set([...prev, trainId]))
-
-            setTimeout(() => {
-              // Phase 4: Departed (remove from lists)
-              setTrainStates(prev => new Map(prev).set(trainId, 'departed'))
-              setDepartingTrains(prev => {
-                const newSet = new Set(prev)
-                newSet.delete(trainId)
-                return newSet
-              })
-            }, 2000)
           }, 3000)
         }, 4000)
       }
@@ -266,14 +254,12 @@ const useDepartureSequence = (trains: TrainDeparture[]) => {
     // Clean up flash sets
     setWarningTrains(prev => new Set([...prev].filter(id => currentTrainIds.has(id))))
     setCriticalTrains(prev => new Set([...prev].filter(id => currentTrainIds.has(id))))
-    setDepartingTrains(prev => new Set([...prev].filter(id => currentTrainIds.has(id))))
   }, [trains])
 
   return {
     trainStates,
     urgentFlashingTrains: warningTrains, // Keep same interface for compatibility
-    criticalFlashingTrains: criticalTrains,
-    departingTrains
+    criticalFlashingTrains: criticalTrains
   }
 }
 
@@ -499,19 +485,19 @@ export function TrainWidget() {
   const trainsForHooks = structuredData ?
     mergeDelayInfoIntoTrains(structuredData.trains, structuredData.deviations) : []
 
-  // Include trains in departure sequence (warning, critical, departing states)
-  const { trainStates, urgentFlashingTrains, criticalFlashingTrains, departingTrains } = useDepartureSequence(trainsForHooks)
+  // Include trains in departure sequence (warning, critical states) - ViewTransitions handle exit animations
+  const { trainStates, urgentFlashingTrains, criticalFlashingTrains } = useDepartureSequence(trainsForHooks)
 
   const feasibleTrainsForHooks = trainsForHooks.filter(train => {
     const trainId = generateTrainId(train)
     const adjusted = calculateAdjustedDeparture(train)
     const departureState = trainStates.get(trainId) || 'feasible'
 
-    // Include trains that are feasible OR in departure sequence (warning, critical, departing)
-    // Only exclude trains that are fully departed
+    // Include trains that are feasible OR in departure sequence (warning, critical)
+    // Trains are removed from list naturally when no longer feasible; ViewTransitions handle exit animation
     return adjusted.adjustedMinutesUntil >= 0 && (
       isFeasibleTrainDeparture(adjusted.adjustedMinutesUntil) ||
-      ['warning', 'critical', 'departing'].includes(departureState)
+      ['warning', 'critical'].includes(departureState)
     )
   })
 
