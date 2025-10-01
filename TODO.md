@@ -91,6 +91,14 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 **Goal:** Address outstanding technical debt and improve overall code quality.
 
+-   [ ] **Test ViewTransition animations** (manual browser verification)
+    -   [ ] Verify train intro/departure animations (5s slide-in, 400ms slide-out)
+    -   [ ] Verify bus intro/departure animations
+    -   [ ] Verify warning/critical glows still trigger correctly
+    -   [ ] Check delay display (no "0m sen" regression)
+    -   [ ] Monitor performance marks in console (should be <50ms)
+    -   **Details:** See `docs/VIEWTRANSITION_SESSION_STATE.md` for complete implementation summary
+    -   **Commits:** 13 commits (0b7d1e7 and earlier) - ~278 lines removed, native browser API
 -   [ ] **Fix Failing Specs: [In Progress]**
     -   [ ] **BankBuster:** All 5 specs for `bank_buster_spec.rb` are failing.
     -   [ ] **HandbookHandler:** All 12 specs for `handbook_handler_spec.rb` are failing.
