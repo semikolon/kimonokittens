@@ -345,9 +345,9 @@ class DeploymentHandler
     # Change to frontend directory
     Dir.chdir(frontend_dir)
 
-    # Install Node dependencies and build (skip TypeScript compilation, use Vite directly)
+    # Install Node dependencies and build (include dev deps for vite)
     commands = [
-      'npm ci --only=production',
+      'npm ci',
       'npx vite build'
     ]
 
