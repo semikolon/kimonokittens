@@ -7,7 +7,6 @@ import { TrainWidget } from './components/TrainWidget'
 import { StravaWidget } from './components/StravaWidget'
 import { RentWidget } from './components/RentWidget'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { Wifi, WifiOff } from 'lucide-react'
 import AnoAI from './components/ui/animated-shader-background'
 
 // Refined widget component with organic, magazine-style design
@@ -155,7 +154,7 @@ function DashboardContent() {
 
         {/* Featured section - Full width Clock with integrated logo */}
         <div className="mb-12">
-          <Widget large={true} accent={true} allowOverflow={true} className="min-h-[260px] w-full" innerClassName="px-6 pt-4 pb-2 md:px-8">
+          <Widget accent={true} allowOverflow={true} className="min-h-[260px] w-full" innerClassName="px-6 pt-4 pb-2 md:px-8">
             <ErrorBoundary>
               <ClockWidget />
             </ErrorBoundary>
