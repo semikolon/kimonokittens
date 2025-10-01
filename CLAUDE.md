@@ -42,6 +42,23 @@
 
 **Defense in depth**: Graceful → Aggressive → Nuclear cleanup strategies ensure processes NEVER survive.
 
+### 🧹 Cache Cleanup After Major Changes
+
+**CRITICAL: After major dependency changes (React version jumps, etc.), always clean build caches:**
+
+```bash
+# Clear Vite cache (fixes module resolution errors after React updates)
+rm -rf dashboard/node_modules/.vite
+
+# If problems persist, nuclear node_modules cleanup:
+cd dashboard && rm -rf node_modules && npm install && cd ..
+```
+
+**Why this matters:**
+- Vite caches React's internal dependency graph
+- Version mismatches cause "Cannot find module" errors (e.g., `dep-BO5GbxpL.js`)
+- Restart commands DON'T fix corrupted caches - manual cleanup required
+
 ---
 
 ## 🔐 Environment Variables
