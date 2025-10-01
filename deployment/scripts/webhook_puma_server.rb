@@ -345,10 +345,10 @@ class DeploymentHandler
     # Change to frontend directory
     Dir.chdir(frontend_dir)
 
-    # Install Node dependencies and build
+    # Install Node dependencies and build (skip TypeScript compilation, use Vite directly)
     commands = [
       'npm ci --only=production',
-      'npm run build'
+      'npx vite build'
     ]
 
     commands.each do |cmd|
@@ -359,8 +359,8 @@ class DeploymentHandler
       $logger.info("✅ #{cmd} successful")
     end
 
-    # Copy built files to nginx directory
-    unless system('sudo rsync -av dist/ /var/www/kimonokittens/')
+    # Copy built files to nginx directory (matches setup_production.sh approach)
+    unless system('sudo cp -r dist/* /var/www/kimonokittens/dashboard/')
       $logger.error("❌ Frontend file deployment failed")
       return false
     end
