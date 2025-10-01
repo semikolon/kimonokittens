@@ -1026,7 +1026,7 @@ Wants=graphical-session.target
 Type=simple
 Environment="XDG_RUNTIME_DIR=/run/user/1001"
 ExecStartPre=/bin/sleep 15
-ExecStart=/usr/bin/google-chrome --enable-gpu-rasterization --enable-zero-copy --ignore-gpu-blocklist --enable-features=VaapiVideoDecoder --use-gl=desktop --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost
+ExecStart=/usr/bin/google-chrome --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost
 Restart=always
 RestartSec=30
 StartLimitBurst=5
