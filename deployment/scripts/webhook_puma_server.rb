@@ -313,6 +313,9 @@ class DeploymentHandler
     # Change to project directory
     Dir.chdir(@project_dir)
 
+    # Ensure git working tree is clean before pulling
+    return false unless ensure_clean_git_state
+
     # Pull latest changes
     unless system('git pull origin master')
       $logger.error("❌ Git pull failed")
@@ -340,6 +343,10 @@ class DeploymentHandler
   def deploy_frontend
     $logger.info("🔄 Starting frontend deployment...")
 
+    # Ensure git working tree is clean before building
+    Dir.chdir(@project_dir)
+    return false unless ensure_clean_git_state
+
     frontend_dir = File.join(@project_dir, 'dashboard')
 
     # Change to frontend directory
@@ -366,6 +373,30 @@ class DeploymentHandler
     end
     $logger.info("✅ Frontend files deployed")
 
+    true
+  end
+
+  def ensure_clean_git_state
+    # Check if working tree is clean
+    git_status = `git status --porcelain 2>&1`.strip
+
+    if git_status.empty?
+      $logger.info("✅ Git working tree is clean")
+      return true
+    end
+
+    # Working tree is dirty - log and auto-reset
+    $logger.warn("⚠️  Git working tree is dirty - auto-resetting to origin/master")
+    $logger.warn("Modified files:")
+    git_status.lines.each { |line| $logger.warn("  #{line.strip}") }
+
+    # Auto-reset to match remote (production should always match git)
+    unless system('git fetch origin master && git reset --hard origin/master')
+      $logger.error("❌ Git reset failed - deployment aborted")
+      return false
+    end
+
+    $logger.info("✅ Git working tree reset to origin/master")
     true
   end
 

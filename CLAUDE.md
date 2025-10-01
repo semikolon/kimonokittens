@@ -97,6 +97,103 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 ---
 
+## 🚀 DEPLOYMENT ARCHITECTURE
+
+### Production Paths & Services
+```
+/home/kimonokittens/                          # Service user home
+├── .env                                       # Production secrets (source of truth)
+└── Projects/kimonokittens/                    # Git checkout
+    ├── .env → /home/kimonokittens/.env        # Symlink (no duplication)
+    ├── puma_server.rb                         # Backend API + WebSocket
+    ├── dashboard/                             # Frontend source
+    │   └── dist/                              # Built frontend (rsync'd to nginx)
+    └── deployment/scripts/
+        ├── setup_production.sh                # Initial deployment script
+        ├── configure_chrome_kiosk.sh          # GPU acceleration config
+        └── webhook_puma_server.rb             # Smart webhook receiver
+
+/var/www/kimonokittens/dashboard/              # Nginx serves from here
+/home/kimonokittens/.config/systemd/user/      # User services
+├── kimonokittens-kiosk.service                # Chrome kiosk (port localhost)
+└── (dashboard managed by root systemd)
+```
+
+### System Services
+```bash
+# Backend API + WebSocket (root systemd)
+sudo systemctl status kimonokittens-dashboard  # Runs: puma_server.rb on port 3001
+
+# Webhook receiver (root systemd)
+sudo systemctl status kimonokittens-webhook    # Runs: webhook_puma_server.rb on port 9001
+
+# Chrome kiosk (user systemd via kimonokittens user)
+sudo -u kimonokittens systemctl --user status kimonokittens-kiosk
+# Or via machinectl:
+machinectl shell kimonokittens@ /usr/bin/systemctl --user status kimonokittens-kiosk
+```
+
+### Webhook Deployment Flow
+**Smart change detection + 2-minute debounce + component-specific deployment**
+
+1. **Push to master** → GitHub webhook → `POST localhost:9001/webhook`
+2. **Analyze changes**:
+   - `dashboard/` → Frontend deployment
+   - `*.rb`, `Gemfile` → Backend deployment
+   - `docs/`, `README.md` → No deployment
+3. **Debounce (120s)**: Rapid pushes cancel previous timer, always deploy latest
+4. **Deploy components**:
+   ```bash
+   # Frontend: npm ci → npx vite build → rsync to nginx → restart kiosk
+   # Backend: git pull → bundle install → systemctl restart dashboard
+   ```
+5. **Monitor**: `journalctl -u kimonokittens-webhook -f`
+
+**Webhook endpoints**: `/webhook` (GitHub), `/health`, `/status` (deployment queue info)
+
+### Frontend Build & Deploy
+```bash
+# Development build (localhost:5175)
+cd dashboard && npm run dev
+
+# Production build
+cd dashboard && npx vite build  # Outputs to dist/
+
+# Deploy to nginx
+sudo rsync -av --delete dashboard/dist/ /var/www/kimonokittens/dashboard/
+
+# Restart kiosk to reload
+sudo -u kimonokittens systemctl --user restart kimonokittens-kiosk
+```
+
+### Backend Deploy
+```bash
+# Pull latest code
+git pull origin master
+
+# Install dependencies
+bundle install --deployment
+
+# Restart service
+sudo systemctl restart kimonokittens-dashboard
+```
+
+### Port Architecture
+- **3001**: Backend API + WebSocket (Puma)
+- **5175**: Frontend dev server (Vite, dev only)
+- **9001**: Webhook receiver (Puma)
+- **80/443**: Nginx → serves `/var/www/kimonokittens/dashboard/`
+- **localhost**: Kiosk Chrome points here (nginx proxy)
+
+### Key Deployment Insights
+- **Webhook requires ALL npm deps** - `npm ci` not `npm ci --only=production` (vite is dev dependency)
+- **Symlink .env, don't duplicate** - Single source of truth in `/home/kimonokittens/.env`
+- **Kiosk auto-refresh on frontend deploy** - Webhook restarts kiosk service after rsync
+- **2-minute debounce prevents spam** - Rapid development pushes = one deployment with all changes
+- **No database changes via webhook** - Migrations are manual (run `production_migration.rb`)
+
+---
+
 **CRITICAL: Read this file completely before working on rent calculations or database operations.**
 
 ## Rent Calculation Timing Quirks ⚠️
