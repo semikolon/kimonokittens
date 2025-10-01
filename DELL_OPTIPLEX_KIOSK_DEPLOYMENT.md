@@ -895,7 +895,95 @@ sudo systemctl status nginx
 curl -X POST http://localhost:9001/health
 ```
 
-### 7. Configure Boot to Kiosk
+### 7. Install Custom Fonts
+
+**Required fonts for dashboard:**
+- **Galvji** - Primary sans-serif font
+- **Horsemen** - Decorative font for widget titles
+- **JetBrains Mono** - Monospace font (auto-installed)
+
+**Step 1: Copy fonts from Mac to Linux machine**
+
+On your Mac:
+```bash
+# Create font directory on Linux
+ssh pop "mkdir -p /tmp/kimonokittens-fonts"
+
+# Copy Galvji fonts
+scp ~/Library/Fonts/Galvji* pop:/tmp/kimonokittens-fonts/
+
+# Copy Horsemen fonts
+scp ~/Library/Fonts/Horsemen* pop:/tmp/kimonokittens-fonts/
+```
+
+If you can't find the fonts:
+```bash
+# Search on Mac
+find ~/Library/Fonts /Library/Fonts -name "*Galvji*" -o -name "*Horsemen*" 2>/dev/null
+```
+
+**Step 2: Install fonts on Linux**
+
+On the Dell Optiplex:
+```bash
+# Run font installation script
+sudo /home/kimonokittens/Projects/kimonokittens/deployment/scripts/install_fonts.sh
+
+# Verify fonts installed
+fc-list | grep -i galvji
+fc-list | grep -i horsemen
+fc-list | grep -i jetbrains
+```
+
+**Step 3: Restart browser to load fonts**
+```bash
+sudo -u kimonokittens systemctl --user restart kimonokittens-kiosk
+```
+
+### 8. Configure Screen Rotation (Portrait Mode)
+
+The dashboard is designed for portrait mode (monitor rotated 90° clockwise).
+
+**Step 1: Configure rotation in user session**
+
+1. Log in as `kimonokittens` user
+2. Open **Settings** → **Displays**
+3. Set **Orientation** to **Portrait Right** (90° clockwise)
+4. Click **Apply** and **Keep Changes**
+
+This creates `~/.config/monitors.xml` with the display configuration.
+
+**Step 2: Apply to GDM3 login screen and all users**
+
+```bash
+# Run screen rotation configuration script
+sudo /home/kimonokittens/Projects/kimonokittens/deployment/scripts/configure_screen_rotation.sh kimonokittens
+
+# Restart GDM3 to apply (closes all graphical sessions!)
+sudo systemctl restart gdm3
+```
+
+This makes rotation persistent across:
+- ✅ GDM3 login screen
+- ✅ All user sessions
+- ✅ Reboots
+
+**Alternative manual method:**
+```bash
+# Create GDM config directory
+sudo mkdir -p /var/lib/gdm3/.config
+
+# Copy user's monitor config to GDM3
+sudo cp ~/.config/monitors.xml /var/lib/gdm3/.config/monitors.xml
+
+# Set proper ownership
+sudo chown gdm:gdm /var/lib/gdm3/.config/monitors.xml
+
+# Restart display manager
+sudo systemctl restart gdm3
+```
+
+### 9. Configure Boot to Kiosk
 
 ```bash
 # Set default target to graphical
@@ -1321,7 +1409,9 @@ Add this deployment as the top priority in TODO.md:
 
 ## 🎯 Success Criteria
 
-- ✅ Dell Optiplex boots directly to fullscreen dashboard
+- ✅ Dell Optiplex boots directly to fullscreen dashboard in portrait mode
+- ✅ Screen rotation applied to GDM3 login screen and all user sessions
+- ✅ Custom fonts (Galvji, Horsemen, JetBrains Mono) installed and rendering correctly
 - ✅ Dashboard updates automatically on GitHub pushes
 - ✅ Both dashboard and handbook hosted on same server
 - ✅ System runs reliably without keyboard/mouse
