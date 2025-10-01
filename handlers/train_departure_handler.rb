@@ -262,6 +262,7 @@ class TrainDepartureHandler
     now = Time.now.in_time_zone('Stockholm')
 
     # Filter only buses and transform to internal format
+    # Frontend handles feasibility filtering to enable departure animations
     raw_data['departures']
       .select { |departure| departure['line']['transport_mode'] == 'BUS' }
       .map do |departure|
@@ -277,11 +278,6 @@ class TrainDepartureHandler
           'line_number' => line_number,
           'departure_time' => departure_time
         }
-      end
-      .select do |bus|
-        # Filter out buses that have already departed
-        bus_time = Time.parse(bus['departure_time']).in_time_zone('Stockholm')
-        bus_time > now # Only show buses departing in the future
       end
   end
 
