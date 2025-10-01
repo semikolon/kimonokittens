@@ -1027,7 +1027,7 @@ Wants=graphical-session.target
 Type=simple
 Environment="XDG_RUNTIME_DIR=/run/user/1001"
 ExecStartPre=/bin/sleep 15
-ExecStart=/usr/bin/google-chrome --ignore-gpu-blocklist --enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL,VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs --force-gpu-mem-available-mb=4096 --force-device-scale-factor=1.15 --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost
+ExecStart=/usr/bin/google-chrome --kiosk --app=http://localhost
 Restart=always
 RestartSec=30
 StartLimitBurst=5
@@ -1039,6 +1039,20 @@ EOF
 
 # Set proper ownership for user service
 chown -R "$SERVICE_USER:$SERVICE_USER" "$USER_SERVICE_DIR"
+
+# Apply optimized Chrome flags using configure script
+CHROME_CONFIGURE_SCRIPT="$PROD_PROJECT_DIR/deployment/scripts/configure_chrome_kiosk.sh"
+if [ -f "$CHROME_CONFIGURE_SCRIPT" ]; then
+    log "Applying optimized Chrome GPU acceleration flags..."
+    if bash "$CHROME_CONFIGURE_SCRIPT" "$SERVICE_USER"; then
+        log "✅ Chrome kiosk configured with GPU acceleration + 115% zoom"
+    else
+        log "⚠️ Chrome configuration script failed (non-critical, using defaults)"
+    fi
+else
+    log "⚠️ Chrome configure script not found: $CHROME_CONFIGURE_SCRIPT"
+    log "   Using basic kiosk flags only"
+fi
 
 # Create smart webhook service
 cat > /etc/systemd/system/kimonokittens-webhook.service <<EOF

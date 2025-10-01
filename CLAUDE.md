@@ -206,6 +206,36 @@ npm run dev:logs     # Attach to live process logs
 5. **Verify results**: Test API and check dashboard
 6. **Clean up**: Remove any test data from production DB
 
+## 🖥️ Kiosk GPU Acceleration (Oct 2, 2025) **COMPLETED ✅**
+
+**Status**: Production-ready with NVIDIA GTX 1650 on PopOS Linux
+
+### Achievement Summary
+Successfully configured hardware GPU acceleration for WebGL shader animations on Dell Optiplex 7010 kiosk after resolving crash-loop issues caused by outdated Chrome flags.
+
+**Problem Solved**: Initial GPU flags (`--enable-gpu-rasterization`, `--enable-zero-copy`, `--use-gl=desktop`) caused Chrome to crash every 60 seconds, spawning 9+ renderer processes and consuming 737.5% CPU. System was unusable.
+
+**Solution**: 2024 NVIDIA-specific flags that properly enable GPU acceleration without conflicts:
+```bash
+--ignore-gpu-blocklist
+--enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL,VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs
+--force-gpu-mem-available-mb=4096  # Matched to actual GTX 1650 VRAM
+--force-device-scale-factor=1.15   # 115% zoom for readability
+```
+
+**Performance Results**:
+- ✅ GPU: 52% utilization (WebGL shader running on hardware)
+- ✅ VRAM: 1.2GB / 4GB (well within limits)
+- ✅ CPU: 275% total (normal for shader coordination)
+- ✅ Smooth 60fps animations, no crashes
+- ✅ Fan noise acceptable, display stays cool
+
+**Architecture**: DRY pattern - `setup_production.sh` creates basic service, then calls `configure_chrome_kiosk.sh` to apply optimized flags. Single source of truth for Chrome configuration.
+
+**Documentation**: `DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md` section "Browser Performance" documents flag choices and VRAM verification.
+
+---
+
 ## Train/Bus Animation System 🚂 **COMPLETED ✅**
 
 ### Smart Identity Tracking for Sliding Animations
