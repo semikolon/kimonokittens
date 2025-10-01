@@ -306,6 +306,48 @@
   transition-delay: calc(var(--item-index) * 0.1s);
 }
 
+/* ViewTransition API animations - Phase 3 */
+/* Entry animations: 5s slide-in (matches .introducing class timing) */
+::view-transition-new(root) {
+  animation: none; /* Disable root transition */
+}
+
+::view-transition-old(root) {
+  animation: none; /* Disable root transition */
+}
+
+/* Entry animation for trains/buses */
+::view-transition-new(*) {
+  animation: viewTransitionSlideIn 5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes viewTransitionSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Exit animation for departing trains/buses */
+::view-transition-old(*) {
+  animation: viewTransitionSlideOut 400ms ease-out;
+}
+
+@keyframes viewTransitionSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
 /* Urgent departure text glow animations */
 @keyframes urgentTextGlow {
   0%, 90% {
