@@ -51,6 +51,42 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 - `deployment/SIMPLIFIED_ARCHITECTURE.md` (technical details)
 
 ---
+
+## 🌙 Dashboard Sleep Schedule Feature
+
+**Goal:** Add configurable sleep schedule to dashboard kiosk for energy savings and display longevity.
+
+### Requirements
+- **Frontend-based implementation** (no system-level power management changes)
+- **Gradual dimming**: Transition to black screen over 2 minutes
+- **No screen lock**: Display stays unlocked, just visually dark
+- **Default schedule**:
+  - Sleep: 1:00 AM (weeknights)
+  - Wake: 5:30 AM
+- **Configuration UI**: Settings panel to adjust sleep/wake times
+- **Weekend behavior**: TBD (possibly different schedule or always-on)
+
+### Technical Approach
+- CSS transitions for smooth opacity fade (0.0 to 1.0 over 2min)
+- JavaScript timer to trigger sleep/wake based on schedule
+- LocalStorage to persist user preferences
+- Black overlay div that fades in/out
+- Keep WebSocket connections alive during sleep
+- Resume normal operation on wake (no refresh needed)
+
+### Implementation Tasks
+- [ ] Create SleepSchedule component with time pickers
+- [ ] Implement gradual fade-to-black animation
+- [ ] Add schedule configuration UI in dashboard
+- [ ] Store schedule preferences in localStorage
+- [ ] Add manual sleep/wake buttons for testing
+- [ ] Test WebSocket behavior during sleep mode
+- [ ] Consider motion sensor integration for instant wake
+
+**Priority**: MEDIUM - Nice to have, not blocking deployment
+**Estimated effort**: 4-6 hours
+
+---
 ## Immediate Tasks & Repository Hygiene
 
 **Goal:** Address outstanding technical debt and improve overall code quality.
