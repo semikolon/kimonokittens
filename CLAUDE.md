@@ -4,8 +4,34 @@
 
 **🔥 MANDATORY RULES FOR ALL CLAUDE CODE SESSIONS - NEVER DEVIATE! 🔥**
 
-**Status**: ✅ PRODUCTION - Bulletproof (Sep 30, 2025)
+**Status**: ✅ PRODUCTION - with Claude Code Background Caveats (Oct 1, 2025)
 **Deep Dive**: See `docs/PROCESS_MANAGEMENT_DEEP_DIVE.md` for complete technical analysis
+
+### 🐛 CLAUDE CODE BACKGROUND PROCESS BUG - CRITICAL AWARENESS
+
+**Claude Code has a systemic background process status tracking bug:**
+
+1. **Status in system reminders is UNRELIABLE** - may show "status: running" when process died instantly
+2. **BashOutput tool shows CORRECT status** - always cross-verify with `BashOutput` tool
+3. **Always verify with ps/pgrep** - don't trust system reminder status alone
+
+**Validation commands** (run these to verify actual process state):
+```bash
+# Check if processes actually exist:
+ps aux | grep -E "(npm run dev|ruby.*puma|vite.*5175)" | grep -v grep
+
+# Check if ports are actually occupied:
+lsof -ti :3001 :5175
+
+# Use BashOutput tool to see real status, not system reminders
+```
+
+**Related GitHub Issues:**
+- [#7838](https://github.com/anthropics/claude-code/issues/7838) - No process health monitoring, text-based polling unreliable
+- [#1481](https://github.com/anthropics/claude-code/issues/1481) - Background processes still wait for child processes
+- [#759](https://github.com/anthropics/claude-code/issues/759) - CLI hanging and background behavior issues
+
+**Discovered**: Oct 1, 2025 - Commands appeared to "hang for 26 minutes" but actually failed instantly. System reminders showed "running" while BashOutput showed "failed". Cross-verification with `ps` confirmed no processes existed.
 
 ### ✅ ALWAYS DO:
 - **ONLY** use these exact commands for ALL process management:
@@ -16,8 +42,8 @@
   npm run dev:status   # Check status (calls bin/dev status)
   bin/dev nuke         # Nuclear cleanup (only if above fails)
   ```
-- **ALWAYS** use `run_in_background=true` - commands are designed for background execution
-- **ALWAYS** check status before starting to verify clean state
+- **VERIFY status after background commands** using `ps` or `BashOutput` tool
+- **Check status before starting** to verify clean state
 
 ### ❌ NEVER DO:
 - **NEVER** use direct commands like `ruby puma_server.rb` or `PORT=3001 ENABLE_BROADCASTER=1 ruby puma_server.rb`
@@ -176,13 +202,13 @@ curl -s http://localhost:3001/api/rent/friendly_message | jq .message
 ## Development Workflow
 
 ### Process Management Protocol 🔧
-**The bin/dev system provides foolproof process lifecycle management with aggressive cleanup.**
+**The bin/dev system provides robust process lifecycle management with aggressive cleanup.**
 
 **Core Features**:
 - **Aggressive port cleanup**: Kills ALL processes on ports 3001/5175 before starting
-- **Background-friendly**: Designed to work perfectly with Claude Code's `run_in_background=true`
-- **Idempotent operations**: Safe to run multiple times, always works
+- **Idempotent operations**: Safe to run multiple times
 - **Comprehensive status**: Shows ports, processes, and Overmind state
+- **Handles Claude Code orphans**: Works around CC's known orphan bug ([#5545](https://github.com/anthropics/claude-code/issues/5545))
 
 **Commands**:
 ```bash
@@ -208,11 +234,11 @@ npm run dev:logs     # Attach to live process logs
 - **Process manager**: Overmind (preferred) or Foreman (fallback)
 - **Definition**: `Procfile.dev` defines all development processes
 
-**Critical Features for Claude Code**:
-- Commands work perfectly with background execution
-- Aggressive cleanup handles orphaned processes from ANY source
-- Comprehensive error reporting guides correct usage
-- All operations are idempotent and safe
+**Important for Claude Code Users**:
+- ⚠️ **Status tracking unreliable**: Always verify with `ps` or `BashOutput` after background commands
+- ✅ **Cleanup logic is solid**: Aggressive cleanup handles orphaned processes from ANY source
+- ✅ **Commands are idempotent**: Safe to run multiple times, won't break on re-run
+- ⚠️ **Error output may be hidden**: Check `BashOutput` tool, not just system reminders
 
 ### Code Change Workflow
 

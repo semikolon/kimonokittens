@@ -35,10 +35,10 @@ case "$cmd" in
     fi
 
     # Aggressive port cleanup to handle straggling processes (run separately - comma syntax doesn't work)
-    ports_to_kill=$(timeout 3 lsof -ti :3001 2>/dev/null; timeout 3 lsof -ti :5175 2>/dev/null)
+    ports_to_kill=$(lsof -ti :3001 2>/dev/null || true; lsof -ti :5175 2>/dev/null || true)
     if [ -n "$ports_to_kill" ]; then
       echo "⚠️  Ports occupied, cleaning up: $ports_to_kill"
-      echo "$ports_to_kill" | timeout 5 xargs kill -9 2>/dev/null || true
+      echo "$ports_to_kill" | xargs kill -9 2>/dev/null || true
       sleep 1
     fi
 
@@ -86,12 +86,12 @@ case "$cmd" in
     # Kill ALL tmux sessions matching our project pattern
     # Check if tmux server is running first to avoid hanging
     tmux_sessions=""
-    if timeout 2 tmux has-session 2>/dev/null; then
-      tmux_sessions=$(timeout 2 tmux list-sessions -F "#{session_name}" 2>/dev/null | grep "^kimonokittens" || true)
+    if tmux has-session 2>/dev/null; then
+      tmux_sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep "^kimonokittens" || true)
     fi
     if [ -n "$tmux_sessions" ]; then
       echo "   Killing tmux sessions: $tmux_sessions"
-      echo "$tmux_sessions" | timeout 5 xargs -I {} tmux kill-session -t {} 2>/dev/null || true
+      echo "$tmux_sessions" | xargs -I {} tmux kill-session -t {} 2>/dev/null || true
     fi
 
     # Kill ALL orphaned tmux processes with our project in the name
@@ -108,10 +108,10 @@ case "$cmd" in
     rm -rf /var/folders/*/T/overmind-kimonokittens-* 2>/dev/null || true
 
     # Kill processes by port (run separately - comma syntax doesn't work)
-    ports_to_kill=$(timeout 3 lsof -ti :3001 2>/dev/null; timeout 3 lsof -ti :5175 2>/dev/null)
+    ports_to_kill=$(lsof -ti :3001 2>/dev/null || true; lsof -ti :5175 2>/dev/null || true)
     if [ -n "$ports_to_kill" ]; then
       echo "   Killing processes on ports 3001, 5175: $ports_to_kill"
-      echo "$ports_to_kill" | timeout 5 xargs kill -9 2>/dev/null || true
+      echo "$ports_to_kill" | xargs kill -9 2>/dev/null || true
     fi
 
     # Kill processes by name pattern
