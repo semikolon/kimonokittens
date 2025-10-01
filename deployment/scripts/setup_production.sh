@@ -1248,6 +1248,66 @@ else
     log "⚠️ Webhook receiver test failed - may need more time to start"
 fi
 
+# Step 15: Optional Configuration (Fonts and Screen Rotation)
+log ""
+log "🎨 Step 15: Optional Configuration (Fonts and Screen Rotation)..."
+
+# Font installation (if fonts are available)
+FONT_SOURCE_DIR="/tmp/kimonokittens-fonts"
+FONT_SCRIPT="$PROD_PROJECT_DIR/deployment/scripts/install_fonts.sh"
+
+log ""
+log "Checking for custom fonts..."
+if [ -d "$FONT_SOURCE_DIR" ] && \
+   find "$FONT_SOURCE_DIR" -iname "*galvji*" -o -iname "*horsemen*" | grep -q .; then
+    log "✅ Custom fonts found, installing..."
+    if [ -f "$FONT_SCRIPT" ]; then
+        if bash "$FONT_SCRIPT" "$FONT_SOURCE_DIR"; then
+            log "✅ Fonts installed successfully"
+        else
+            log "⚠️ Font installation failed (non-critical)"
+        fi
+    else
+        log "⚠️ Font installation script not found: $FONT_SCRIPT"
+    fi
+else
+    log "ℹ️  Custom fonts not found in $FONT_SOURCE_DIR"
+    log "   To install fonts later, copy them from your Mac:"
+    log "   mkdir -p $FONT_SOURCE_DIR"
+    log "   scp ~/Library/Fonts/Galvji* YOUR_IP:$FONT_SOURCE_DIR/"
+    log "   scp ~/Library/Fonts/Horsemen* YOUR_IP:$FONT_SOURCE_DIR/"
+    log "   sudo $FONT_SCRIPT $FONT_SOURCE_DIR"
+fi
+
+# Screen rotation configuration (if monitor config exists)
+ROTATION_SCRIPT="$PROD_PROJECT_DIR/deployment/scripts/configure_screen_rotation.sh"
+USER_MONITORS_CONFIG="$USER_HOME/.config/monitors.xml"
+
+log ""
+log "Checking for screen rotation configuration..."
+if [ -f "$USER_MONITORS_CONFIG" ]; then
+    log "✅ Monitor configuration found, applying to GDM3..."
+    if [ -f "$ROTATION_SCRIPT" ]; then
+        if bash "$ROTATION_SCRIPT" "$SERVICE_USER"; then
+            log "✅ Screen rotation configured successfully"
+            log "   Run 'sudo systemctl restart gdm3' to apply (will close graphical sessions)"
+        else
+            log "⚠️ Screen rotation configuration failed (non-critical)"
+        fi
+    else
+        log "⚠️ Screen rotation script not found: $ROTATION_SCRIPT"
+    fi
+else
+    log "ℹ️  Monitor configuration not found: $USER_MONITORS_CONFIG"
+    log "   To configure screen rotation later:"
+    log "   1. Log in as $SERVICE_USER"
+    log "   2. Settings → Displays → Orientation → Portrait Right (90° clockwise)"
+    log "   3. Click Apply and Keep Changes"
+    log "   4. sudo $ROTATION_SCRIPT $SERVICE_USER"
+fi
+
+log "✅ Optional configuration complete"
+
 # Final success message
 log ""
 log "🎉 === BULLETPROOF SETUP COMPLETE! ==="
@@ -1268,12 +1328,17 @@ log "✅ Modern secure GPG keyring method (no deprecated apt-key)"
 log "✅ Comprehensive error recovery and logging enabled"
 log ""
 log "📋 NEXT STEPS:"
-log "1. Configure GitHub webhook secret: sudo systemctl edit kimonokittens-webhook"
+log "1. (Optional) Install fonts if not already done:"
+log "   deployment/scripts/install_fonts.sh /tmp/kimonokittens-fonts"
+log "2. (Optional) Configure screen rotation for portrait mode:"
+log "   Settings → Displays → Portrait Right, then:"
+log "   deployment/scripts/configure_screen_rotation.sh kimonokittens"
+log "3. Configure GitHub webhook secret: sudo systemctl edit kimonokittens-webhook"
 log "   Add: Environment=\"WEBHOOK_SECRET=your-secure-secret\""
-log "2. Add webhook URL in GitHub: http://YOUR_IP:9001/webhook"
+log "4. Add webhook URL in GitHub: http://YOUR_IP:9001/webhook"
 log "   Events: Just 'push' event, Content type: application/json"
-log "3. Reboot to activate user service kiosk mode: sudo reboot"
-log "4. After reboot, kiosk will start automatically on login"
+log "5. Reboot to activate user service kiosk mode: sudo reboot"
+log "6. After reboot, kiosk will start automatically on login"
 log ""
 log "🔧 MONITORING:"
 log "- System services: systemctl status kimonokittens-dashboard kimonokittens-webhook"
