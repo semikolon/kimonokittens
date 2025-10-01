@@ -42,8 +42,8 @@ else
     echo "Backup already exists for today: $BACKUP_FILE"
 fi
 
-# Define the correct Chrome flags (minimal, stable)
-CORRECT_FLAGS='--kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost'
+# Define the correct Chrome flags (2024 NVIDIA GPU acceleration + 110% zoom)
+CORRECT_FLAGS='--ignore-gpu-blocklist --enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL,VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs --force-gpu-mem-available-mb=8192 --force-device-scale-factor=1.1 --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost'
 
 # Check if flags are already correct
 CURRENT_FLAGS=$(grep "ExecStart=" "$USER_SERVICE_FILE" | sed 's/ExecStart=\/usr\/bin\/google-chrome //')
@@ -55,12 +55,18 @@ fi
 
 echo "Fixing Chrome flags to stable configuration..."
 echo ""
-echo -e "${YELLOW}Removing problematic GPU acceleration flags:${NC}"
-echo "  --enable-gpu-rasterization"
-echo "  --enable-zero-copy"
-echo "  --ignore-gpu-blocklist"
-echo "  --enable-features=VaapiVideoDecoder"
-echo "  --use-gl=desktop"
+echo -e "${YELLOW}Updating to 2024 NVIDIA-optimized GPU acceleration flags:${NC}"
+echo "  ✅ --ignore-gpu-blocklist (override software rendering)"
+echo "  ✅ --enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL"
+echo "  ✅ --enable-features=VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs (NVIDIA-specific)"
+echo "  ✅ --force-gpu-mem-available-mb=8192 (tell Chrome about VRAM)"
+echo "  ✅ --force-device-scale-factor=1.1 (110% zoom for readability)"
+echo ""
+echo -e "${RED}Removed problematic flags (caused crash loops):${NC}"
+echo "  ❌ --enable-gpu-rasterization"
+echo "  ❌ --enable-zero-copy"
+echo "  ❌ --enable-features=VaapiVideoDecoder (outdated)"
+echo "  ❌ --use-gl=desktop (conflicts)"
 echo ""
 
 # Replace the entire ExecStart line with correct flags

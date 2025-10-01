@@ -1245,16 +1245,35 @@ echo 'net.core.netdev_max_backlog=5000' | sudo tee -a /etc/sysctl.conf
 
 ### Browser Performance
 
-**Chromium GPU Acceleration** (`/home/kiosk/.config/chromium-flags.conf`):
+**Chrome GPU Acceleration for NVIDIA (2024 Updated Flags)**
+
+Modern Chrome on Linux with NVIDIA GPUs requires specific flags for optimal performance. The kiosk service uses these via systemd:
+
+```bash
+# 2024 NVIDIA-optimized GPU acceleration flags
+--ignore-gpu-blocklist                                # Override software rendering list
+--enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL  # Video decode
+--enable-features=VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs  # NVIDIA-specific
+--force-gpu-mem-available-mb=8192                    # Tell Chrome about available VRAM
+--force-device-scale-factor=1.1                      # 110% zoom for readability
 ```
---enable-gpu-rasterization
---enable-zero-copy
---enable-features=VaapiVideoDecoder
---disable-features=VizDisplayCompositor
---max-tiles-for-interest-area=512
---default-tile-width=512
---default-tile-height=512
-```
+
+**Why these flags:**
+- ✅ **WebGL shader animations** (like the dashboard background) run smoothly at 60fps
+- ✅ **Hardware video decoding** for efficient media playback
+- ✅ **NVIDIA driver compatibility** - uses 2024 syntax that doesn't crash
+- ✅ **VRAM detection** - Chrome knows it has enough memory for complex graphics
+
+**Avoided problematic flags (caused crash loops on NVIDIA):**
+- ❌ `--enable-gpu-rasterization` (conflicts with NVIDIA driver)
+- ❌ `--enable-zero-copy` (unstable with certain NVIDIA versions)
+- ❌ `--enable-features=VaapiVideoDecoder` (outdated syntax, replaced with AcceleratedVideoDecodeLinuxGL)
+- ❌ `--use-gl=desktop` (causes conflicts on some systems)
+
+**Verification:**
+Visit `chrome://gpu` in the kiosk browser to verify "WebGL: Hardware accelerated" is enabled.
+
+**Script:** Run `sudo deployment/scripts/configure_chrome_kiosk.sh` to apply these flags automatically.
 
 ### Nginx Optimization
 

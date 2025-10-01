@@ -873,9 +873,10 @@ fi
 if [ -f "prisma/schema.prisma" ]; then
     log "Found Prisma schema, running Prisma migrations..."
 
-    # Copy .env to project directory for Prisma (Prisma looks for .env in cwd)
-    cp "/home/$SERVICE_USER/.env" "./.env"
-    chown "$SERVICE_USER:$SERVICE_USER" "./.env"
+    # Symlink .env to project directory for Prisma (Prisma looks for .env in cwd)
+    # Source of truth: /home/$SERVICE_USER/.env
+    rm -f "./.env"
+    ln -s "/home/$SERVICE_USER/.env" "./.env"
 
     if ! sudo -u "$SERVICE_USER" bash -c "
         source $SERVICE_USER_NVM_DIR/nvm.sh
@@ -911,8 +912,8 @@ export PATH="/home/$SERVICE_USER/.rbenv/bin:\$PATH"
 eval "\$(rbenv init -)"
 cd "/home/$SERVICE_USER/Projects/kimonokittens"
 
-# Copy .env to project directory for dotenv to find
-cp "/home/$SERVICE_USER/.env" "./.env"
+# Symlink .env to project directory for dotenv to find
+# Source of truth: /home/$SERVICE_USER/.env (already symlinked during Prisma setup)
 
 echo "Running production data migration..."
 bundle exec ruby deployment/production_migration.rb
@@ -1026,7 +1027,7 @@ Wants=graphical-session.target
 Type=simple
 Environment="XDG_RUNTIME_DIR=/run/user/1001"
 ExecStartPre=/bin/sleep 15
-ExecStart=/usr/bin/google-chrome --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost
+ExecStart=/usr/bin/google-chrome --ignore-gpu-blocklist --enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL,VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs --force-gpu-mem-available-mb=8192 --force-device-scale-factor=1.1 --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost
 Restart=always
 RestartSec=30
 StartLimitBurst=5
