@@ -12,7 +12,7 @@ export OVERMIND_SOCKET="${OVERMIND_SOCKET:-$PWD/tmp/overmind-kimonokittens.sock}
 SOCKET="$OVERMIND_SOCKET"
 
 have_overmind() { command -v overmind >/dev/null 2>&1; }
-running_overmind() { [ -S "$SOCKET" ] && overmind status >/dev/null 2>&1; }
+running_overmind() { [ -S "$SOCKET" ] && timeout 1 overmind status >/dev/null 2>&1; }
 is_tty() { [ -t 1 ] && [ -t 0 ]; }
 
 cmd="${1:-start}"
@@ -26,7 +26,8 @@ case "$cmd" in
     # Pre-flight check: Ensure we're in clean state
     if [ -S "$SOCKET" ]; then
       echo "⚠️  Socket file exists, verifying session..."
-      if ! overmind status >/dev/null 2>&1; then
+      # Use timeout to prevent overmind status from hanging indefinitely
+      if ! timeout 1 overmind status >/dev/null 2>&1; then
         echo "⚠️  Stale socket detected. Running cleanup..."
         "$0" stop
         sleep 1
@@ -72,7 +73,7 @@ case "$cmd" in
 
     # LEVEL 1: Try graceful shutdown if Overmind is actually running
     if have_overmind; then
-      if overmind status >/dev/null 2>&1; then
+      if timeout 1 overmind status >/dev/null 2>&1; then
         echo "   Graceful Overmind shutdown..."
         overmind quit 2>/dev/null || true
         sleep 0.5
@@ -83,7 +84,11 @@ case "$cmd" in
     echo "   Aggressive cleanup..."
 
     # Kill ALL tmux sessions matching our project pattern
-    tmux_sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep "^kimonokittens" || true)
+    # Check if tmux server is running first to avoid hanging
+    tmux_sessions=""
+    if tmux has-session 2>/dev/null; then
+      tmux_sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep "^kimonokittens" || true)
+    fi
     if [ -n "$tmux_sessions" ]; then
       echo "   Killing tmux sessions: $tmux_sessions"
       echo "$tmux_sessions" | xargs -I {} tmux kill-session -t {} 2>/dev/null || true
@@ -123,9 +128,9 @@ case "$cmd" in
     # Check Overmind status
     overmind_healthy=false
     if have_overmind; then
-      if overmind status >/dev/null 2>&1; then
+      if timeout 1 overmind status >/dev/null 2>&1; then
         echo "✅ Overmind: RUNNING"
-        overmind status 2>/dev/null || echo "   (Status details unavailable)"
+        timeout 1 overmind status 2>/dev/null || echo "   (Status details unavailable)"
         overmind_healthy=true
       else
         echo "❌ Overmind: NOT RUNNING"
@@ -138,7 +143,11 @@ case "$cmd" in
     fi
 
     # Check for zombie tmux sessions
-    zombie_sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep "^kimonokittens" || true)
+    # Check if tmux server is running first to avoid hanging
+    zombie_sessions=""
+    if tmux has-session 2>/dev/null; then
+      zombie_sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep "^kimonokittens" || true)
+    fi
     if [ -n "$zombie_sessions" ]; then
       echo "⚠️  WARNING: Zombie tmux sessions detected:"
       echo "$zombie_sessions" | sed 's/^/      /'
@@ -229,7 +238,11 @@ case "$cmd" in
     echo "🧨 Proceeding with nuclear cleanup..."
 
     # Kill ALL tmux sessions
-    tmux_sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null || true)
+    # Check if tmux server is running first to avoid hanging
+    tmux_sessions=""
+    if tmux has-session 2>/dev/null; then
+      tmux_sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null || true)
+    fi
     if [ -n "$tmux_sessions" ]; then
       echo "   Killing all tmux sessions"
       tmux kill-server 2>/dev/null || true
