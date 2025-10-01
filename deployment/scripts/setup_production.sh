@@ -805,8 +805,8 @@ if [ -d "$FRONTEND_DEPLOY_DIR" ] && [ "$(ls -A "$FRONTEND_DEPLOY_DIR" 2>/dev/nul
     rm -rf "${FRONTEND_DEPLOY_DIR:?}"/*
 fi
 
-# Copy build output
-if ! cp -r dist/* "$FRONTEND_DEPLOY_DIR/"; then
+# Copy build output (using rsync for incremental updates and better reliability)
+if ! rsync -av dist/ "$FRONTEND_DEPLOY_DIR/"; then
     error_exit "Failed to copy frontend build to deployment directory"
 fi
 

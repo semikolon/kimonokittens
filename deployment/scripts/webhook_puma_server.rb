@@ -360,7 +360,7 @@ class DeploymentHandler
     end
 
     # Copy built files to nginx directory (matches setup_production.sh approach)
-    unless system('sudo cp -r dist/* /var/www/kimonokittens/dashboard/')
+    unless system('sudo rsync -av dist/ /var/www/kimonokittens/dashboard/')
       $logger.error("❌ Frontend file deployment failed")
       return false
     end
