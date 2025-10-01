@@ -1306,6 +1306,24 @@ else
     log "   4. sudo $ROTATION_SCRIPT $SERVICE_USER"
 fi
 
+# Kiosk power management (disable screen blanking, dimming, lock screen)
+POWER_SCRIPT="$PROD_PROJECT_DIR/deployment/scripts/configure_kiosk_power.sh"
+
+log ""
+log "Configuring kiosk power management (always-on display)..."
+if [ -f "$POWER_SCRIPT" ]; then
+    if bash "$POWER_SCRIPT" "$SERVICE_USER"; then
+        log "✅ Kiosk power management configured successfully"
+        log "   Screen will stay on 24/7 without dimming or locking"
+    else
+        log "⚠️ Kiosk power management configuration failed (non-critical)"
+        log "   To configure manually later:"
+        log "   sudo $POWER_SCRIPT $SERVICE_USER"
+    fi
+else
+    log "⚠️ Kiosk power script not found: $POWER_SCRIPT"
+fi
+
 log "✅ Optional configuration complete"
 
 # Final success message
@@ -1333,12 +1351,14 @@ log "   deployment/scripts/install_fonts.sh /tmp/kimonokittens-fonts"
 log "2. (Optional) Configure screen rotation for portrait mode:"
 log "   Settings → Displays → Portrait Right, then:"
 log "   deployment/scripts/configure_screen_rotation.sh kimonokittens"
-log "3. Configure GitHub webhook secret: sudo systemctl edit kimonokittens-webhook"
+log "3. (Optional) Configure kiosk power management (done automatically above):"
+log "   deployment/scripts/configure_kiosk_power.sh kimonokittens"
+log "4. Configure GitHub webhook secret: sudo systemctl edit kimonokittens-webhook"
 log "   Add: Environment=\"WEBHOOK_SECRET=your-secure-secret\""
-log "4. Add webhook URL in GitHub: http://YOUR_IP:9001/webhook"
+log "5. Add webhook URL in GitHub: http://YOUR_IP:9001/webhook"
 log "   Events: Just 'push' event, Content type: application/json"
-log "5. Reboot to activate user service kiosk mode: sudo reboot"
-log "6. After reboot, kiosk will start automatically on login"
+log "6. Reboot to activate user service kiosk mode: sudo reboot"
+log "7. After reboot, kiosk will start automatically on login"
 log ""
 log "🔧 MONITORING:"
 log "- System services: systemctl status kimonokittens-dashboard kimonokittens-webhook"

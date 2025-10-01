@@ -983,7 +983,44 @@ sudo chown gdm:gdm /var/lib/gdm3/.config/monitors.xml
 sudo systemctl restart gdm3
 ```
 
-### 9. Configure Boot to Kiosk
+### 9. Configure Kiosk Power Management (Always-On Display)
+
+The kiosk display must stay on 24/7 without dimming, blanking, or locking.
+
+**Run the power management configuration script:**
+
+```bash
+sudo /home/kimonokittens/Projects/kimonokittens/deployment/scripts/configure_kiosk_power.sh kimonokittens
+```
+
+**This script configures:**
+- ✅ Disables screen blanking (never turns off)
+- ✅ Disables automatic brightness dimming
+- ✅ Disables screensaver activation
+- ✅ Disables automatic screen locking
+- ✅ Disables automatic sleep/suspend
+- ✅ Sets idle delay to 0 (never idle)
+
+**Settings are applied via gsettings and affect:**
+- `org.gnome.desktop.session` - idle behavior
+- `org.gnome.settings-daemon.plugins.power` - power management
+- `org.gnome.desktop.screensaver` - screensaver and lock screen
+- `org.gnome.desktop.lockdown` - lock screen lockdown
+
+**Verification:**
+
+The script automatically verifies all settings. Changes take effect immediately for active sessions, but a logout/login or reboot ensures full effect.
+
+**Manual brightness adjustment (if needed):**
+```bash
+# Via Settings GUI
+Settings → Displays → Brightness slider
+
+# Via command line
+xrandr --output <display-name> --brightness 1.0
+```
+
+### 10. Configure Boot to Kiosk
 
 ```bash
 # Set default target to graphical
@@ -1412,6 +1449,7 @@ Add this deployment as the top priority in TODO.md:
 - ✅ Dell Optiplex boots directly to fullscreen dashboard in portrait mode
 - ✅ Screen rotation applied to GDM3 login screen and all user sessions
 - ✅ Custom fonts (Galvji, Horsemen, JetBrains Mono) installed and rendering correctly
+- ✅ Display stays on 24/7 without dimming, blanking, or locking (kiosk power management)
 - ✅ Dashboard updates automatically on GitHub pushes
 - ✅ Both dashboard and handbook hosted on same server
 - ✅ System runs reliably without keyboard/mouse
