@@ -3,12 +3,17 @@ set -euo pipefail
 
 PROCFILE="${PROCFILE:-Procfile.dev}"
 PORT_BASE="${PORT_BASE:-3001}"
-SOCKET="${OVERMIND_SOCKET:-./.overmind.sock}"
 
 ensure_tmp() { mkdir -p tmp; }
 
+# Pin Overmind identity for consistent socket/session management
+export OVERMIND_NAME="kimonokittens"
+export OVERMIND_SOCKET="${OVERMIND_SOCKET:-$PWD/tmp/overmind-kimonokittens.sock}"
+SOCKET="$OVERMIND_SOCKET"
+
 have_overmind() { command -v overmind >/dev/null 2>&1; }
 running_overmind() { [ -S "$SOCKET" ] && overmind status >/dev/null 2>&1; }
+is_tty() { [ -t 1 ] && [ -t 0 ]; }
 
 cmd="${1:-start}"
 
@@ -38,11 +43,23 @@ case "$cmd" in
 
     if have_overmind; then
       if running_overmind; then
-        echo "✅ Dev already running – attaching"
-        exec overmind connect
+        if is_tty; then
+          echo "✅ Dev already running – attaching"
+          exec overmind connect
+        else
+          echo "✅ Dev already running (background mode - not attaching)"
+          exit 0
+        fi
       else
         echo "✨ Starting fresh Overmind session..."
-        exec overmind start -f "$PROCFILE" -p "$PORT_BASE"
+        if is_tty; then
+          exec overmind start -f "$PROCFILE" -p "$PORT_BASE"
+        else
+          # Daemonize for non-TTY (Claude Code) - launches as daemon
+          overmind start -f "$PROCFILE" -p "$PORT_BASE" -D
+          echo "✅ Started Overmind as daemon (check status with: npm run dev:status)"
+          exit 0
+        fi
       fi
     else
       echo "⚠️  Overmind not found; using foreman via Bundler"
