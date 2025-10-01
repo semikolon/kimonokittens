@@ -1254,9 +1254,11 @@ Modern Chrome on Linux with NVIDIA GPUs requires specific flags for optimal perf
 --ignore-gpu-blocklist                                # Override software rendering list
 --enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL  # Video decode
 --enable-features=VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs  # NVIDIA-specific
---force-gpu-mem-available-mb=8192                    # Tell Chrome about available VRAM
+--force-gpu-mem-available-mb=4096                    # Match actual VRAM (GTX 1650 = 4GB)
 --force-device-scale-factor=1.1                      # 110% zoom for readability
 ```
+
+**Important:** Verify your GPU's VRAM with `nvidia-smi --query-gpu=memory.total --format=csv,noheader` and adjust the `--force-gpu-mem-available-mb` flag accordingly. The Dell Optiplex 7010 with GTX 1650 has 4096 MB VRAM.
 
 **Why these flags:**
 - ✅ **WebGL shader animations** (like the dashboard background) run smoothly at 60fps
