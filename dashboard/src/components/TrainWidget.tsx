@@ -275,8 +275,8 @@ const useDepartureSequence = (trains: TrainDeparture[]) => {
       const currentState = trainStates.get(trainId) || 'feasible'
       const transitionKey = `${trainId}-${currentState}`
 
-      // Trigger departure sequence when train becomes infeasible (< 6 minutes)
-      if (currentState === 'feasible' && minutesUntil < 6 && minutesUntil >= 0 && !processedTransitions.has(transitionKey)) {
+      // Trigger departure sequence when train becomes infeasible (< 5 minutes)
+      if (currentState === 'feasible' && minutesUntil < 5 && minutesUntil >= 0 && !processedTransitions.has(transitionKey)) {
         console.log(`Starting departure sequence for train ${trainId} (${minutesUntil}m remaining)`)
         setProcessedTransitions(prev => new Set([...prev, transitionKey]))
 
@@ -413,7 +413,7 @@ const getTimeOpacity = (minutesUntil: number): number => {
 }
 
 const isFeasibleTrainDeparture = (minutesUntil: number): boolean => {
-  return minutesUntil >= 6 // Need at least 6 minutes to reach train station
+  return minutesUntil >= 5 // Can bike/run to station in 5 minutes (matches backend RUN_TIME)
 }
 
 // Enhanced departure sequence states

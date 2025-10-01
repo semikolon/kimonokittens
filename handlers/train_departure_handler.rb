@@ -139,10 +139,10 @@ class TrainDepartureHandler
       end
     end.compact
 
-    # Filter for trains that aren't cancelled and aren't past rushing to the station
+    # Filter out cancelled trains only - frontend handles feasibility filtering
+    # This enables departure animations to work (trains need to exist in data to animate out)
     departures = departures.select do |d|
-      d[:summary_deviation_note] != ' (inställd)' &&
-      d[:minutes_until_departure] > RUN_TIME
+      d[:summary_deviation_note] != ' (inställd)'
     end
 
     # Convert departures to structured format with timestamps
