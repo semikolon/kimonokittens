@@ -806,19 +806,28 @@ sudo chown kimonokittens:adm /var/log/kimonokittens
 # Add your admin user (e.g., fredrik) to kimonokittens group for read access
 ADMIN_USER="fredrik"  # Change to your admin username
 sudo usermod -a -G kimonokittens $ADMIN_USER
+
+# Set group read permissions on home directory and subdirectories
+sudo chmod g+rX /home/kimonokittens
 sudo chmod -R g+rX /home/kimonokittens/Projects
-# Note: Admin user needs to logout/login for group membership to take effect
+sudo chmod -R g+rX /home/kimonokittens/.config
 
 # Protect sensitive files (owner-only access)
-sudo chmod 600 /home/kimonokittens/Projects/kimonokittens/.env
+sudo chmod 600 /home/kimonokittens/.env* 2>/dev/null || true
+sudo chmod 700 /home/kimonokittens/.ssh 2>/dev/null || true
+sudo chmod 700 /home/kimonokittens/.gnupg 2>/dev/null || true
+
+# Note: Admin user needs to logout/login for group membership to take effect
 ```
 
-**Why group-based permissions?**
+**Why group-based permissions on entire home directory?**
 - Allows admin user read access for debugging without sudo
 - Service user (kimonokittens) maintains ownership
-- Only Projects directory exposed, not entire home
-- Sensitive files (.env) remain protected (600 = owner-only)
-- Standard Unix development practice
+- Full visibility into systemd user services (`.config/systemd/`)
+- Application configs, logs, and project files accessible
+- Sensitive files (`.env`, `.ssh`, `.gnupg`) remain protected (owner-only)
+- Practical for single-user kiosk system where admin already has sudo
+- Standard Unix development practice with defense-in-depth
 
 ### 2. Clone and Setup Repository
 
@@ -1037,7 +1046,36 @@ Settings → Displays → Brightness slider
 xrandr --output <display-name> --brightness 1.0
 ```
 
-### 10. Configure Boot to Kiosk
+### 10. Hide Mouse Cursor in Kiosk Mode
+
+The mouse cursor should be hidden when idle in kiosk mode for a cleaner display.
+
+**Run the cursor hiding configuration script:**
+
+```bash
+sudo /home/kimonokittens/Projects/kimonokittens/deployment/scripts/hide_kiosk_cursor.sh
+```
+
+**This script configures:**
+- ✅ Installs `unclutter` package for cursor management
+- ✅ Creates autostart entry for kimonokittens user
+- ✅ Hides cursor immediately when idle (0.1s delay)
+
+**How it works:**
+- `unclutter` runs automatically when kimonokittens user logs in
+- Cursor disappears after 0.1 seconds of mouse inactivity
+- Cursor reappears instantly when mouse moves
+- No impact on kiosk functionality
+
+**Verification:**
+- Log in as kimonokittens user
+- Move mouse and wait 0.1 seconds
+- Cursor should disappear
+
+**Admin access alternative:**
+For quick admin work without seeing the cursor, use **Ctrl+Alt+F3** to switch to a text console, or configure a keyboard shortcut to switch users.
+
+### 11. Configure Boot to Kiosk
 
 ```bash
 # Set default target to graphical
@@ -1467,6 +1505,7 @@ Add this deployment as the top priority in TODO.md:
 - ✅ Screen rotation applied to GDM3 login screen and all user sessions
 - ✅ Custom fonts (Galvji, Horsemen, JetBrains Mono) installed and rendering correctly
 - ✅ Display stays on 24/7 without dimming, blanking, or locking (kiosk power management)
+- ✅ Mouse cursor hidden when idle in kiosk mode (unclutter)
 - ✅ Dashboard updates automatically on GitHub pushes
 - ✅ Both dashboard and handbook hosted on same server
 - ✅ System runs reliably without keyboard/mouse

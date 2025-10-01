@@ -289,13 +289,28 @@ if [ "$CURRENT_USER" != "$SERVICE_USER" ] && [ -n "$CURRENT_USER" ]; then
         log "✅ Added $CURRENT_USER to $SERVICE_USER group (requires logout/login)"
     fi
 
-    # Set group read permissions on Projects directory
+    # Set group read permissions on home directory
+    log "Setting group read permissions on home directory..."
+    chmod g+rX "/home/$SERVICE_USER" || error_exit "Failed to set home directory permissions"
+
+    # Set group read permissions recursively on Projects directory
     if [ -d "/home/$SERVICE_USER/Projects" ]; then
-        log "Setting group read permissions on Projects directory..."
-        chmod -R g+rX "/home/$SERVICE_USER/Projects" || error_exit "Failed to set group permissions"
-        log "✅ Group read permissions set"
+        chmod -R g+rX "/home/$SERVICE_USER/Projects" || error_exit "Failed to set Projects permissions"
     fi
 
+    # Set group read permissions on .config directory (for systemd service files)
+    if [ -d "/home/$SERVICE_USER/.config" ]; then
+        chmod -R g+rX "/home/$SERVICE_USER/.config" || error_exit "Failed to set .config permissions"
+    fi
+
+    # Protect sensitive files (owner-only)
+    log "Securing sensitive files..."
+    chmod 600 "/home/$SERVICE_USER/.env"* 2>/dev/null || true
+    chmod 700 "/home/$SERVICE_USER/.ssh" 2>/dev/null || true
+    chmod 700 "/home/$SERVICE_USER/.gnupg" 2>/dev/null || true
+
+    log "✅ Group read permissions set on home directory"
+    log "✅ Sensitive files protected (owner-only)"
     log "⚠️  Note: $CURRENT_USER will need to logout/login for group membership to take effect"
 fi
 
@@ -1011,7 +1026,7 @@ Wants=graphical-session.target
 Type=simple
 Environment="XDG_RUNTIME_DIR=/run/user/1001"
 ExecStartPre=/bin/sleep 15
-ExecStart=/usr/bin/google-chrome --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost
+ExecStart=/usr/bin/google-chrome --enable-gpu-rasterization --enable-zero-copy --ignore-gpu-blocklist --enable-features=VaapiVideoDecoder --use-gl=desktop --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost
 Restart=always
 RestartSec=30
 StartLimitBurst=5
@@ -1344,6 +1359,24 @@ if [ -f "$POWER_SCRIPT" ]; then
     fi
 else
     log "⚠️ Kiosk power script not found: $POWER_SCRIPT"
+fi
+
+# Hide mouse cursor in kiosk mode
+CURSOR_SCRIPT="$PROD_PROJECT_DIR/deployment/scripts/hide_kiosk_cursor.sh"
+
+log ""
+log "Configuring cursor hiding for kiosk mode..."
+if [ -f "$CURSOR_SCRIPT" ]; then
+    if bash "$CURSOR_SCRIPT"; then
+        log "✅ Cursor hiding configured successfully"
+        log "   Mouse cursor will be hidden when idle in kiosk session"
+    else
+        log "⚠️ Cursor hiding configuration failed (non-critical)"
+        log "   To configure manually later:"
+        log "   sudo $CURSOR_SCRIPT"
+    fi
+else
+    log "⚠️ Cursor hiding script not found: $CURSOR_SCRIPT"
 fi
 
 log "✅ Optional configuration complete"
