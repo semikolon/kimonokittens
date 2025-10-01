@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useData } from '../context/DataContext'
+import { startListTransition } from './ViewTransition'
 
 // Types for structured transport data
 interface TrainDeparture {
@@ -496,7 +497,10 @@ const AnimatedTrainList: React.FC<{
           <div
             key={trainId}
             className={cssClasses.join(' ')}
-            style={{ '--item-index': index } as React.CSSProperties}
+            style={{
+              '--item-index': index,
+              viewTransitionName: trainId
+            } as React.CSSProperties}
           >
             {renderItem(train, index, isUrgentFlashing, isCriticalFlashing)}
           </div>
@@ -563,7 +567,10 @@ const AnimatedBusList: React.FC<{
           <div
             key={busId}
             className={classNames}
-            style={{ '--item-index': index } as React.CSSProperties}
+            style={{
+              '--item-index': index,
+              viewTransitionName: busId
+            } as React.CSSProperties}
           >
             {renderItem(bus, index, isUrgentFlashing, isCriticalFlashing)}
           </div>
@@ -735,6 +742,30 @@ export function TrainWidget() {
   // Note: departure sequence for trains is already handled above
   const { urgentFlashingBuses, criticalFlashingBuses } = useUrgentBusFlashing(feasibleBusesForHooks)
 
+  // ViewTransition state management - store lists in state to enable transition wrapping
+  const [feasibleTrainsState, setFeasibleTrainsState] = useState<TrainDeparture[]>([])
+  const [feasibleBusesState, setFeasibleBusesState] = useState<BusDeparture[]>([])
+
+  // Detect structural changes and update with ViewTransitions
+  useEffect(() => {
+    const hasStructuralChange = (oldList: any[], newList: any[], generateId: (item: any) => string) => {
+      const oldIds = new Set(oldList.map(generateId))
+      const newIds = new Set(newList.map(generateId))
+      return oldIds.size !== newIds.size || ![...oldIds].every(id => newIds.has(id))
+    }
+
+    const trainsChanged = hasStructuralChange(feasibleTrainsState, feasibleTrainsForHooks, generateTrainId)
+    const busesChanged = hasStructuralChange(feasibleBusesState, feasibleBusesForHooks, generateBusId)
+
+    if (trainsChanged) {
+      startListTransition(setFeasibleTrainsState, feasibleTrainsForHooks, true)
+    }
+
+    if (busesChanged) {
+      startListTransition(setFeasibleBusesState, feasibleBusesForHooks, true)
+    }
+  }, [feasibleTrainsForHooks, feasibleBusesForHooks])
+
   // Now we can do conditional returns after all hooks are called
   if (!trainData || !isStructuredData) {
     // Legacy fallback - show message about format upgrade
@@ -751,8 +782,9 @@ export function TrainWidget() {
   // Safe to use structured data now
   const { buses, deviations } = structuredData
   const trainsWithMergedDelays = trainsForHooks
-  const feasibleTrains = feasibleTrainsForHooks
-  const feasibleBuses = feasibleBusesForHooks
+  // Use ViewTransition-managed state for rendering (falls back to derived data on first render)
+  const feasibleTrains = feasibleTrainsState.length > 0 ? feasibleTrainsState : feasibleTrainsForHooks
+  const feasibleBuses = feasibleBusesState.length > 0 ? feasibleBusesState : feasibleBusesForHooks
 
   // Debug logging
   console.log('Bus data debug:', {
