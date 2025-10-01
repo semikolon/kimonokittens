@@ -273,40 +273,14 @@
   }
 }
 
-/* Fade out animation for departing trains */
-.train-departure-item.departing {
-  transform: translateY(-20px);
-  opacity: 0;
-  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-}
-
-/* Slide in animation for new trains/buses being introduced to the list */
-.train-departure-item.introducing {
-  animation: fadeInSlide 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-
-@keyframes fadeInSlide {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.train-departure-item.introduced {
-  transform: translateY(0);
-  opacity: 1;
-}
-
-/* Staggered animation support */
-.train-departure-item {
-  transition-delay: calc(var(--item-index) * 0.1s);
-}
-
 /* ViewTransition API animations - Phase 3 */
+/* Old manual animation CSS removed in Phase 5:
+   - .train-departure-item.departing (fade out)
+   - .train-departure-item.introducing (slide in)
+   - @keyframes fadeInSlide
+   - .train-departure-item.introduced
+   - Staggered animation support
+   All animations now handled by ViewTransition API via ::view-transition-new/old */
 /* Entry animations: 5s slide-in (matches .introducing class timing) */
 ::view-transition-new(root) {
   animation: none; /* Disable root transition */
