@@ -1,9 +1,12 @@
 #!/bin/bash
 # Automated GitHub Webhook Setup
 # - Generates secure webhook secret
-# - Updates production .env
+# - Updates production .env and systemd service file
 # - Restarts webhook service
 # - Creates GitHub webhook (via gh CLI or manual instructions)
+#
+# Usage: sudo ./setup_github_webhook.sh [SERVICE_USER] [WEBHOOK_PORT]
+# Example: sudo ./setup_github_webhook.sh kimonokittens 49123
 
 set -e
 
@@ -14,9 +17,9 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 SERVICE_USER="${1:-kimonokittens}"
+WEBHOOK_PORT="${2:-${WEBHOOK_PORT:-9001}}"  # Use arg2, then env var, then default 9001
 ENV_FILE="/home/$SERVICE_USER/.env"
 REPO="semikolon/kimonokittens"
-WEBHOOK_PORT="${WEBHOOK_PORT:-9001}"  # Override with: WEBHOOK_PORT=49123 ./setup_github_webhook.sh
 
 # Check if running with sudo
 if [ "$EUID" -ne 0 ]; then
@@ -52,6 +55,38 @@ if grep -q "^WEBHOOK_SECRET=" "$ENV_FILE"; then
 else
     echo "WEBHOOK_SECRET=$SECRET" | sudo -u $SERVICE_USER tee -a "$ENV_FILE" >/dev/null
     echo -e "${GREEN}✅ WEBHOOK_SECRET added${NC}"
+fi
+
+# Update or add WEBHOOK_PORT
+echo ""
+echo "📝 Configuring WEBHOOK_PORT=$WEBHOOK_PORT in .env..."
+if grep -q "^WEBHOOK_PORT=" "$ENV_FILE"; then
+    sudo -u $SERVICE_USER sed -i "s/^WEBHOOK_PORT=.*/WEBHOOK_PORT=$WEBHOOK_PORT/" "$ENV_FILE"
+    echo -e "${GREEN}✅ WEBHOOK_PORT updated${NC}"
+else
+    echo "WEBHOOK_PORT=$WEBHOOK_PORT" | sudo -u $SERVICE_USER tee -a "$ENV_FILE" >/dev/null
+    echo -e "${GREEN}✅ WEBHOOK_PORT added${NC}"
+fi
+
+# Remove WEBHOOK_PORT from systemd service file if it exists (should only be in .env)
+echo ""
+echo "🔧 Ensuring port is configured in .env only (removing from systemd)..."
+SERVICE_FILE="/etc/systemd/system/kimonokittens-webhook.service"
+
+if [ -f "$SERVICE_FILE" ]; then
+    # Remove Environment="WEBHOOK_PORT=..." line if it exists
+    if grep -q "^Environment=\"WEBHOOK_PORT=" "$SERVICE_FILE"; then
+        sed -i '/^Environment="WEBHOOK_PORT=/d' "$SERVICE_FILE"
+        echo -e "${GREEN}✅ Removed WEBHOOK_PORT from service file (now only in .env)${NC}"
+
+        # Reload systemd to pick up changes
+        systemctl daemon-reload
+        echo -e "${GREEN}✅ Systemd daemon reloaded${NC}"
+    else
+        echo -e "${GREEN}✅ WEBHOOK_PORT already removed from service file${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠️  Warning: Service file not found at $SERVICE_FILE${NC}"
 fi
 
 # Restart webhook service
@@ -162,8 +197,8 @@ if command -v gh &> /dev/null; then
             gh auth login
         fi
 
-        # Check if auth succeeded
-        if gh auth status &> /dev/null; then
+        # Check if auth succeeded (run as the user who authenticated)
+        if sudo -u "${SUDO_USER:-$USER}" gh auth status &> /dev/null; then
             echo ""
             echo -e "${GREEN}✅ GitHub CLI authenticated successfully${NC}"
             echo ""
