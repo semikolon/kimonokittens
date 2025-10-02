@@ -244,7 +244,8 @@
   position: relative;
 }
 
-.train-departure-item {
+.train-departure-item,
+.bus-departure-item {
   transform: translateY(0);
   transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   opacity: 1;
@@ -256,31 +257,31 @@
   transform: translateY(-100%);
 }
 
-/* Warning glow for trains approaching departure */
-.train-departure-item.warning-glow {
-  animation: warningGlow 4s ease-in-out forwards;
+/* Shine swoosh animation for urgent departures (trains: 9-8-7m, buses: 4-3-2m) */
+.train-departure-item.shine-swoosh,
+.bus-departure-item.shine-swoosh {
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 1) 30%,
+    rgba(255, 140, 0, 1) 50%,
+    rgba(255, 255, 255, 1) 70%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: shineSwoosh 2s linear;
 }
 
-@keyframes warningGlow {
-  0%, 100% {
-    box-shadow: 0 0 0 transparent;
+@keyframes shineSwoosh {
+  0% {
+    background-position: -200% 0;
   }
-  50% {
-    box-shadow: 0 0 12px rgba(255, 165, 0, 0.4), 0 0 24px rgba(255, 165, 0, 0.2);
-  }
-}
-
-/* Critical glow for trains about to depart */
-.train-departure-item.critical-glow {
-  animation: criticalGlow 3s ease-in-out forwards;
-}
-
-@keyframes criticalGlow {
-  0%, 100% {
-    box-shadow: 0 0 0 transparent;
-  }
-  50% {
-    box-shadow: 0 0 16px rgba(255, 100, 0, 0.6), 0 0 32px rgba(255, 100, 0, 0.3);
+  100% {
+    background-position: 200% 0;
   }
 }
 
@@ -317,9 +318,9 @@
   }
 }
 
-/* Exit animation for departing trains/buses */
+/* Exit animation for departing trains/buses - 800ms for graceful departure */
 ::view-transition-old(*) {
-  animation: viewTransitionSlideOut 400ms ease-out;
+  animation: viewTransitionSlideOut 800ms ease-out;
 }
 
 @keyframes viewTransitionSlideOut {
@@ -369,9 +370,16 @@
   .train-time-update,
   .schedule-cursor,
   .heatpump-status,
-  .train-departure-item {
+  .train-departure-item,
+  .shine-swoosh {
     animation: none !important;
     transition: none !important;
+  }
+
+  /* Ensure text stays visible when animations are disabled */
+  .shine-swoosh {
+    background: none !important;
+    color: white !important;
   }
 }
 
