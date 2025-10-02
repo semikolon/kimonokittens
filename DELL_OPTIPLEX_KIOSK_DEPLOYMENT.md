@@ -28,6 +28,27 @@ Internet ──→ GitHub Webhook ──→ Dell Optiplex
                 └─ Google Chrome Kiosk Display
 ```
 
+### Dual-Purpose Server Philosophy
+
+**This Dell Optiplex serves BOTH production and development roles:**
+
+- **Production Kiosk**: Runs 24/7 displaying dashboard, serves as household information display
+- **Development Workstation**: SSH access for remote coding, GUI access for local development, testing ground for new features
+
+**Why This Works:**
+- **Small team context**: Single developer, low traffic, home automation project
+- **Rapid iteration**: Direct deployment without complex CI/CD overhead
+- **Practical debugging**: Can test in production environment, fix issues on the spot
+- **Cost effective**: No separate staging server needed, one machine does it all
+
+**Architectural Implications:**
+- ✅ **Dev dependencies in production**: Necessary for local builds and testing (vite, webpack, etc.)
+- ✅ **Builds on production server**: Developer may SSH in and run `npm run build` during development
+- ✅ **Full toolchain available**: Git, Node, Ruby, all build tools present and ready
+- ✅ **Disk space prioritized over security hardening**: ~150MB of dev dependencies is acceptable trade-off
+
+**This is an intentional architectural choice**, not a deployment anti-pattern for this use case. For enterprise/high-traffic scenarios, CI/CD with artifact deployment would be preferred, but for this household dashboard the simplicity and flexibility of a dual-purpose server is optimal.
+
 ### Modern User Service Strategy (2024 Best Practice)
 - **Single User**: `kimonokittens` runs all services for security and simplicity
 - **User Services**: systemd `--user` services with persistent linger

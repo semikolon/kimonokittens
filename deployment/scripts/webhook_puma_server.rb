@@ -376,7 +376,8 @@ class DeploymentHandler
     return false unless ensure_clean_git_state
 
     # Install workspace dependencies from root (monorepo setup)
-    unless system('npm ci')
+    # Use --include=dev to ensure build tools (vite) are installed even in production
+    unless system('npm ci --include=dev')
       $logger.error("❌ npm ci (workspace root) failed")
       return false
     end
