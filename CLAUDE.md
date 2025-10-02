@@ -186,7 +186,11 @@ sudo systemctl restart kimonokittens-dashboard
 - **localhost**: Kiosk Chrome points here (nginx proxy)
 
 ### Key Deployment Insights
-- **Webhook requires ALL npm deps** - `npm ci` not `npm ci --only=production` (vite is dev dependency)
+- **⚠️ NPM WORKSPACES CRITICAL** - ALWAYS run `npm ci` from **project root**, never from `dashboard/` subdirectory
+  - Monorepo uses npm workspaces (`dashboard`, `handbook/frontend`, `packages/*`)
+  - Running npm in subdirectory silently skips devDependencies like vite
+  - Correct: `cd /home/kimonokittens/Projects/kimonokittens && npm ci`
+  - Wrong: `cd dashboard && npm ci` (will break builds)
 - **Symlink .env, don't duplicate** - Single source of truth in `/home/kimonokittens/.env`
 - **Kiosk auto-refresh on frontend deploy** - Webhook restarts kiosk service after rsync
 - **2-minute debounce prevents spam** - Rapid development pushes = one deployment with all changes

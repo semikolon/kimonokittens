@@ -786,7 +786,8 @@ if [ ! -f "$DASHBOARD_DIR/package.json" ]; then
     error_exit "package.json not found in dashboard directory"
 fi
 
-cd "$DASHBOARD_DIR"
+# Change to project root (npm workspaces must install from root)
+cd "/home/$SERVICE_USER/Projects/kimonokittens"
 
 # Check if node modules already exist and are valid
 if [ -d "node_modules" ]; then
@@ -797,13 +798,13 @@ if [ -d "node_modules" ]; then
     fi
 fi
 
-# Install npm dependencies using service user's nvm
-log "Installing npm dependencies with service user's Node.js..."
+# Install workspace dependencies from root (monorepo setup)
+log "Installing npm workspace dependencies from project root..."
 if ! sudo -u "$SERVICE_USER" bash -c "
     source $SERVICE_USER_NVM_DIR/nvm.sh
-    npm install
+    npm ci
 "; then
-    error_exit "npm install failed - check network connectivity and package.json"
+    error_exit "npm ci failed - check network connectivity and package.json"
 fi
 
 # Verify build tools are available
@@ -815,21 +816,22 @@ if ! sudo -u "$SERVICE_USER" bash -c "
     error_exit "Vite build tool not available after npm install"
 fi
 
-# Build frontend using service user's nvm
+# Build frontend using service user's nvm (from dashboard directory)
 log "Building frontend with Vite (skipping TypeScript compilation)..."
 if ! sudo -u "$SERVICE_USER" bash -c "
     source $SERVICE_USER_NVM_DIR/nvm.sh
+    cd $DASHBOARD_DIR
     npx vite build
 "; then
     error_exit "Frontend build failed with Vite"
 fi
 
 # Verify build output exists
-if [ ! -d "dist" ]; then
+if [ ! -d "$DASHBOARD_DIR/dist" ]; then
     error_exit "Build output directory 'dist' not found after build"
 fi
 
-if [ -z "$(ls -A dist 2>/dev/null)" ]; then
+if [ -z "$(ls -A $DASHBOARD_DIR/dist 2>/dev/null)" ]; then
     error_exit "Build output directory 'dist' is empty"
 fi
 
@@ -843,7 +845,7 @@ if [ -d "$FRONTEND_DEPLOY_DIR" ] && [ "$(ls -A "$FRONTEND_DEPLOY_DIR" 2>/dev/nul
 fi
 
 # Copy build output (using rsync for incremental updates and better reliability)
-if ! rsync -av dist/ "$FRONTEND_DEPLOY_DIR/"; then
+if ! rsync -av "$DASHBOARD_DIR/dist/" "$FRONTEND_DEPLOY_DIR/"; then
     error_exit "Failed to copy frontend build to deployment directory"
 fi
 
