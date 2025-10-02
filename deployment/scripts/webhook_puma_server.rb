@@ -352,9 +352,9 @@ class DeploymentHandler
     # Change to frontend directory
     Dir.chdir(frontend_dir)
 
-    # Install Node dependencies and build (include dev deps for vite)
+    # Install Node dependencies and build (use npm install to ensure dev deps included)
     commands = [
-      'npm ci',
+      'npm install',
       'npx vite build'
     ]
 
