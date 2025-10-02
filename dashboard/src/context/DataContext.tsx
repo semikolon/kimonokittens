@@ -91,6 +91,12 @@ interface TodoData {
 }
 
 // Define the state shape
+interface DeploymentStatus {
+  pending: boolean
+  time_remaining?: number
+  commit_sha?: string
+}
+
 interface DashboardState {
   trainData: TrainData | null
   temperatureData: TemperatureData | null
@@ -98,6 +104,7 @@ interface DashboardState {
   stravaData: StravaData | null
   rentData: RentData | null
   todoData: TodoData[] | null
+  deploymentStatus: DeploymentStatus | null
   connectionStatus: 'connecting' | 'open' | 'closed'
   lastUpdated: {
     train: number | null
@@ -117,6 +124,7 @@ type DashboardAction =
   | { type: 'SET_STRAVA_DATA'; payload: StravaData }
   | { type: 'SET_RENT_DATA'; payload: RentData }
   | { type: 'SET_TODO_DATA'; payload: TodoData[] }
+  | { type: 'SET_DEPLOYMENT_STATUS'; payload: DeploymentStatus }
   | { type: 'SET_CONNECTION_STATUS'; payload: 'connecting' | 'open' | 'closed' }
 
 // Initial state
@@ -127,6 +135,7 @@ const initialState: DashboardState = {
   stravaData: null,
   rentData: null,
   todoData: null,
+  deploymentStatus: null,
   connectionStatus: 'connecting',
   lastUpdated: {
     train: null,
@@ -176,6 +185,11 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         ...state,
         todoData: action.payload,
         lastUpdated: { ...state.lastUpdated, todo: Date.now() }
+      }
+    case 'SET_DEPLOYMENT_STATUS':
+      return {
+        ...state,
+        deploymentStatus: action.payload
       }
     case 'SET_CONNECTION_STATUS':
       return {
@@ -258,6 +272,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           case 'reload':
             console.log('Reload message received from server, reloading page...')
             window.location.reload()
+            break
+          case 'deployment_status':
+            dispatch({ type: 'SET_DEPLOYMENT_STATUS', payload: message.payload })
             break
           default:
             console.log('Unknown message type:', message.type)

@@ -6,6 +6,7 @@ import { TemperatureWidget } from './components/TemperatureWidget'
 import { TrainWidget } from './components/TrainWidget'
 import { StravaWidget } from './components/StravaWidget'
 import { RentWidget } from './components/RentWidget'
+import { DeploymentBanner } from './components/DeploymentBanner'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import AnoAI from './components/ui/animated-shader-background'
 
@@ -134,6 +135,7 @@ function BackendDataWidgets() {
 function DashboardContent() {
   return (
     <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(25,20,30)_0%,_rgb(25,18,32)_100%)] overflow-x-clip relative">
+      <DeploymentBanner />
       {/* Animated shader background */}
       <div className="fixed inset-0 w-full h-full opacity-30 mix-blend-screen" style={{ zIndex: 1 }}>
         <AnoAI />

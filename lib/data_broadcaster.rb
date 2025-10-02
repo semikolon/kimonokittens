@@ -23,6 +23,7 @@ class DataBroadcaster
     @threads << periodic(600) { fetch_and_publish('strava_data', "#{@base_url}/data/strava_stats") }
     @threads << periodic(3600) { fetch_and_publish('rent_data', "#{@base_url}/api/rent/friendly_message") }
     @threads << periodic(300) { fetch_and_publish_todos }
+    @threads << periodic(5) { fetch_and_publish_deployment_status }
 
     puts "DataBroadcaster: All scheduled tasks started"
   end
@@ -120,5 +121,27 @@ class DataBroadcaster
     }.to_json
     @pubsub.publish(message)
     puts "DataBroadcaster: todo_data broadcast (#{todo_items.length} items)"
+  end
+
+  def fetch_and_publish_deployment_status
+    webhook_port = ENV['WEBHOOK_PORT'] || '49123'
+    response = HTTParty.get("http://localhost:#{webhook_port}/status", timeout: 2)
+    return unless response.success?
+
+    data = JSON.parse(response.body)
+
+    message = {
+      type: 'deployment_status',
+      payload: data['deployment'],
+      timestamp: Time.now.to_i
+    }.to_json
+    @pubsub.publish(message)
+
+    # Only log when deployment is pending to avoid spam
+    if data.dig('deployment', 'pending')
+      puts "DataBroadcaster: deployment_status broadcast (#{data.dig('deployment', 'time_remaining')}s remaining)"
+    end
+  rescue => e
+    # Silently fail if webhook server not running
   end
 end 
