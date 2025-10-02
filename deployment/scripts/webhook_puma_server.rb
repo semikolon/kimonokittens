@@ -67,7 +67,26 @@ class WebhookHandler
       return [200, json_headers, [{ status: 'pong', message: 'Webhook configured correctly' }.to_json]]
     end
 
-    # Verify GitHub signature
+    # Parse payload based on content type
+    # GitHub sends either application/json or application/x-www-form-urlencoded
+    content_type = env['CONTENT_TYPE'] || env['HTTP_CONTENT_TYPE'] || ''
+
+    if content_type.include?('application/x-www-form-urlencoded')
+      # Form-encoded: JSON is in 'payload' parameter
+      require 'cgi'
+      params = CGI.parse(payload)
+      json_payload = params['payload']&.first
+
+      unless json_payload
+        $logger.error("❌ No 'payload' parameter in form data")
+        return [400, json_headers, [{ error: 'Missing payload parameter' }.to_json]]
+      end
+    else
+      # application/json: payload is raw JSON
+      json_payload = payload
+    end
+
+    # Verify GitHub signature (use original payload for signature verification)
     signature = env['HTTP_X_HUB_SIGNATURE_256']
     if signature && !verify_signature(payload, signature)
       $logger.warn("❌ Invalid webhook signature from #{env['REMOTE_ADDR']}")
@@ -76,7 +95,7 @@ class WebhookHandler
 
     # Parse JSON payload
     begin
-      event_data = JSON.parse(payload)
+      event_data = JSON.parse(json_payload)
     rescue JSON::ParserError => e
       $logger.error("❌ Invalid JSON payload: #{e.message}")
       return [400, json_headers, [{ error: 'Invalid JSON' }.to_json]]
