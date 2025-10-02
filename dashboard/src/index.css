@@ -40,7 +40,7 @@
     color: rgb(221 214 254); /* text-purple-200 - default text color */
     font-size: 1.5rem; /* 20% larger than 1.25rem - increased base text size */
     background: radial-gradient(circle at center, rgb(25,20,30) 0%, rgb(12,10,16) 100%);
-    overflow: hidden; /* Hide scrollbars on body - test deployment */
+    overflow: hidden; /* Hide scrollbars on body */
   }
 
   /* Hide scrollbars globally but keep scrolling functionality */
