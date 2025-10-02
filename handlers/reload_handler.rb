@@ -7,9 +7,9 @@ class ReloadHandler
     @last_reload_broadcast = nil
   end
 
-  def call(req)
+  def call(env)
     # Only allow POST requests
-    return [405, {'Content-Type' => 'application/json'}, [{error: 'Method not allowed'}.to_json]] unless req.post?
+    return [405, {'Content-Type' => 'application/json'}, [{error: 'Method not allowed'}.to_json]] unless env['REQUEST_METHOD'] == 'POST'
 
     now = Time.now.to_i
 

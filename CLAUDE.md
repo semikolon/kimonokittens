@@ -493,6 +493,8 @@ Train departures use **keyless SL Transport API** (`transport.integration.sl.se`
 
 The kimonokittens project uses a **smart webhook system** with Puma architecture for automated deployments. The system analyzes changed files and only deploys what's necessary, with intelligent debouncing for rapid development workflows.
 
+**Status**: ✅ **WORKING** (Oct 2, 2025) - Core pipeline functional: git pull → npm ci --legacy-peer-deps → vite build → rsync deploy
+**Known Issue**: Kiosk reload trigger logs stop after rsync (deployment succeeds, reload uncertain)
 **Architecture**: Unified Puma + Rack across all services (dashboard port 3001, webhook port 49123)
 
 ### Key Features
