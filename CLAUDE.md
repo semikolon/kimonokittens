@@ -554,6 +554,29 @@ Result: One deployment with all changes, not three separate deployments
 - **`GET /health`** - Simple health check
 - **`GET /status`** - Detailed status including pending deployments
 
+### ⚠️ CRITICAL: Webhook Self-Update Limitation
+
+**The webhook service CANNOT automatically restart itself when its own code changes.**
+
+**Why:** Chicken-and-egg problem - the deployment thread runs inside the process that needs to restart. Ruby can't restart a process from within while maintaining active HTTP connections.
+
+**When webhook code changes (`deployment/scripts/*.rb`):**
+1. Webhook pulls latest code to disk ✅
+2. Webhook deployment runs with OLD code in memory ❌
+3. **Manual restart required:** `sudo systemctl restart kimonokittens-webhook`
+4. Next deployment uses new code ✅
+
+**Quick check if restart needed:**
+```bash
+# Compare running code vs on-disk code
+journalctl -u kimonokittens-webhook --since "5 minutes ago" | grep "Backend change detected: deployment"
+# If found → restart webhook to load new code
+```
+
+**Services restart behavior:**
+- `kimonokittens-dashboard`: Auto-reloads via USR1 signal ✅
+- `kimonokittens-webhook`: **Manual restart required** ⚠️
+
 ### Monitoring Deployments
 
 ```bash

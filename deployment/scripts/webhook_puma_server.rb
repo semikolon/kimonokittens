@@ -363,6 +363,8 @@ class DeploymentHandler
     $logger.info("✅ Bundle install successful")
 
     # Reload backend service (graceful restart via USR1 signal to Puma)
+    # NOTE: If webhook code itself changed (deployment/*.rb), this runs OLD code!
+    # Webhook CANNOT self-restart - requires manual: sudo systemctl restart kimonokittens-webhook
     # Find PID from systemd service
     pid_output = `systemctl show kimonokittens-dashboard --property=MainPID --value`.strip
     if pid_output.empty? || pid_output == "0"
