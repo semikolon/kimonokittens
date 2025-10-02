@@ -371,9 +371,18 @@ class DeploymentHandler
   def deploy_frontend
     $logger.info("🔄 Starting frontend deployment...")
 
-    # Ensure git working tree is clean before building
+    # Change to project directory
     Dir.chdir(@project_dir)
+
+    # Ensure git working tree is clean before pulling
     return false unless ensure_clean_git_state
+
+    # Pull latest changes (same as backend deployment)
+    unless system('git pull origin master')
+      $logger.error("❌ Git pull failed")
+      return false
+    end
+    $logger.info("✅ Git pull successful")
 
     # Install workspace dependencies from root (monorepo setup)
     # CRITICAL: Unset NODE_ENV during install to ensure devDependencies are installed
