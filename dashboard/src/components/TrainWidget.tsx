@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useData } from '../context/DataContext'
-import { startListTransition } from './ViewTransition'
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 
 // Types for structured transport data
 interface TrainDeparture {
@@ -178,22 +178,10 @@ const generateBusId = (bus: BusDeparture): string =>
 // ViewTransition API handles structural change detection via useEffect in TrainWidget
 
 // Urgent departure detection and flashing
-const isUrgentDeparture = (train: TrainDeparture): boolean => {
-  // Flash when 9-10 minutes left (2 minutes before "spring eller cykla")
-  return train.minutes_until >= 9 &&
-         train.minutes_until <= 10 &&
-         train.can_walk
-}
-
-const isCriticalDeparture = (train: TrainDeparture): boolean => {
-  // Flash when train shows "spring eller cykla" (too late to walk)
-  return !train.can_walk &&
-         train.suffix.includes('spring')
-}
-
 // Shine animation + pre-emptive removal for smooth exit at 5 minutes
 const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
-  const [shineAnimatedTrains, setShineAnimatedTrains] = useState<Set<string>>(new Set())
+  // Map stores trainId -> isRedTinted (true for last swoosh at 7m)
+  const [shineAnimatedTrains, setShineAnimatedTrains] = useState<Map<string, boolean>>(new Map())
   const [trainsMarkedForRemoval, setTrainsMarkedForRemoval] = useState<Set<string>>(new Set())
   const animatedAtMinuteRef = useRef<Map<string, Set<number>>>(new Map())
   const markedForRemovalRef = useRef<Set<string>>(new Set())
@@ -236,29 +224,30 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
       if (minutesUntil === 9 || minutesUntil === 8 || minutesUntil === 7) {
         const animatedMinutes = animatedAtMinuteRef.current.get(trainId) || new Set()
         if (!animatedMinutes.has(minutesUntil)) {
-          console.log(`Shine swoosh animation for train ${trainId} at ${minutesUntil}m`)
+          const isLastSwoosh = minutesUntil === 7 // Red-tinted at 7m (last before removal at 5m)
+          console.log(`Shine swoosh animation for train ${trainId} at ${minutesUntil}m${isLastSwoosh ? ' (RED)' : ''}`)
           animatedMinutes.add(minutesUntil)
           animatedAtMinuteRef.current.set(trainId, animatedMinutes)
 
-          setShineAnimatedTrains(prev => new Set([...prev, trainId]))
+          setShineAnimatedTrains(prev => new Map(prev).set(trainId, isLastSwoosh))
 
           // Remove shine class after 2s (animation duration)
           setTimeout(() => {
             setShineAnimatedTrains(prev => {
-              const newSet = new Set(prev)
-              newSet.delete(trainId)
-              return newSet
+              const newMap = new Map(prev)
+              newMap.delete(trainId)
+              return newMap
             })
           }, 2000)
         }
       }
 
-      // Pre-emptive removal at exactly 5 minutes (ViewTransition captures "5m" snapshot)
+      // Pre-emptive removal at exactly 5 minutes (train slides out before showing 4m)
       if (minutesUntil === 5 && !markedForRemovalRef.current.has(trainId)) {
-        console.log(`Marking train ${trainId} for removal at 5m (will slide out over 800ms)`)
+        console.log(`Marking train ${trainId} for removal at 5m (will slide out over 1s)`)
         markedForRemovalRef.current.add(trainId)
 
-        // Brief delay to ensure snapshot is captured, then remove from list
+        // Brief delay to ensure Framer Motion captures "5m" snapshot, then remove from list
         setTimeout(() => {
           setTrainsMarkedForRemoval(prev => new Set([...prev, trainId]))
         }, 100)
@@ -285,7 +274,8 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
 
 // Bus shine animation at 4m, 3m, 2m
 const useBusDepartureAnimation = (buses: BusDeparture[]) => {
-  const [shineAnimatedBuses, setShineAnimatedBuses] = useState<Set<string>>(new Set())
+  // Map stores busId -> isRedTinted (true for last swoosh at 2m)
+  const [shineAnimatedBuses, setShineAnimatedBuses] = useState<Map<string, boolean>>(new Map())
   const animatedAtMinuteRef = useRef<Map<string, Set<number>>>(new Map())
   const prevBusesRef = useRef<BusDeparture[]>([])
 
@@ -325,18 +315,19 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
       if (minutesUntil === 4 || minutesUntil === 3 || minutesUntil === 2) {
         const animatedMinutes = animatedAtMinuteRef.current.get(busId) || new Set()
         if (!animatedMinutes.has(minutesUntil)) {
-          console.log(`Shine swoosh animation for bus ${busId} at ${minutesUntil}m`)
+          const isLastSwoosh = minutesUntil === 2 // Red-tinted at 2m (last before removal at 0m)
+          console.log(`Shine swoosh animation for bus ${busId} at ${minutesUntil}m${isLastSwoosh ? ' (RED)' : ''}`)
           animatedMinutes.add(minutesUntil)
           animatedAtMinuteRef.current.set(busId, animatedMinutes)
 
-          setShineAnimatedBuses(prev => new Set([...prev, busId]))
+          setShineAnimatedBuses(prev => new Map(prev).set(busId, isLastSwoosh))
 
           // Remove shine class after 2s (animation duration)
           setTimeout(() => {
             setShineAnimatedBuses(prev => {
-              const newSet = new Set(prev)
-              newSet.delete(busId)
-              return newSet
+              const newMap = new Map(prev)
+              newMap.delete(busId)
+              return newMap
             })
           }, 2000)
         }
@@ -344,11 +335,11 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
     })
   }, [buses, genuinelyNewBuses])
 
-  // Clean up animated buses set when they're gone from incoming data
+  // Clean up animated buses map when they're gone from incoming data
   useEffect(() => {
     const currentBusIds = new Set(buses.map(generateBusId))
     setShineAnimatedBuses(prev => {
-      const filtered = new Set([...prev].filter(id => currentBusIds.has(id)))
+      const filtered = new Map([...prev].filter(([id]) => currentBusIds.has(id)))
       // Only update if actually changed
       if (filtered.size === prev.size) return prev
       return filtered
@@ -558,56 +549,7 @@ export function TrainWidget() {
   // Call all hooks with safe data (React Hooks Rules - must be called in same order every render)
   const { shineAnimatedBuses } = useBusDepartureAnimation(feasibleBusesForHooks)
 
-  // ViewTransition state management - store lists in state to enable transition wrapping
-  const [feasibleTrainsState, setFeasibleTrainsState] = useState<TrainDeparture[]>([])
-  const [feasibleBusesState, setFeasibleBusesState] = useState<BusDeparture[]>([])
-
-  // Detect structural changes and update with ViewTransitions
-  useEffect(() => {
-    const hasStructuralChange = (oldList: any[], newList: any[], generateId: (item: any) => string) => {
-      const oldIds = new Set(oldList.map(generateId))
-      const newIds = new Set(newList.map(generateId))
-      return oldIds.size !== newIds.size || ![...oldIds].every(id => newIds.has(id))
-    }
-
-    const trainsChanged = hasStructuralChange(feasibleTrainsState, feasibleTrainsForHooks, generateTrainId)
-    const busesChanged = hasStructuralChange(feasibleBusesState, feasibleBusesForHooks, generateBusId)
-
-    console.log('🔄 ViewTransition Effect Running:', {
-      trainsChanged,
-      busesChanged,
-      feasibleTrainsState_count: feasibleTrainsState.length,
-      feasibleTrainsForHooks_count: feasibleTrainsForHooks.length,
-      feasibleBusesState_count: feasibleBusesState.length,
-      feasibleBusesForHooks_count: feasibleBusesForHooks.length
-    })
-
-    if (trainsChanged) {
-      console.log('🚂 TRAIN TRANSITION FIRING:', {
-        oldCount: feasibleTrainsState.length,
-        newCount: feasibleTrainsForHooks.length,
-        oldIds: feasibleTrainsState.map(generateTrainId),
-        newIds: feasibleTrainsForHooks.map(generateTrainId)
-      })
-      startListTransition(setFeasibleTrainsState, feasibleTrainsForHooks, true)
-    } else if (feasibleTrainsState.length === 0 && feasibleTrainsForHooks.length === 0) {
-      console.log('ℹ️ No trains to transition (both lists empty)')
-    } else {
-      console.log('ℹ️ No train structural change detected')
-    }
-
-    if (busesChanged) {
-      console.log('🚌 BUS TRANSITION FIRING:', {
-        oldCount: feasibleBusesState.length,
-        newCount: feasibleBusesForHooks.length
-      })
-      startListTransition(setFeasibleBusesState, feasibleBusesForHooks, true)
-    } else if (feasibleBusesState.length === 0 && feasibleBusesForHooks.length === 0) {
-      console.log('ℹ️ No buses to transition (both lists empty)')
-    } else {
-      console.log('ℹ️ No bus structural change detected')
-    }
-  }, [feasibleTrainsForHooks, feasibleBusesForHooks])
+  // Framer Motion will handle all structural changes and animations automatically
 
   // Now we can do conditional returns after all hooks are called
   if (!trainData || !isStructuredData) {
@@ -625,32 +567,9 @@ export function TrainWidget() {
   // Safe to use structured data now
   const { buses, deviations } = structuredData
   const trainsWithMergedDelays = trainsForHooks
-  // Use ViewTransition-managed state for rendering (falls back to derived data on first render)
-  const feasibleTrains = feasibleTrainsState.length > 0 ? feasibleTrainsState : feasibleTrainsForHooks
-  const feasibleBuses = feasibleBusesState.length > 0 ? feasibleBusesState : feasibleBusesForHooks
-
-  // Debug logging for empty line issue (only when state changes)
-  useEffect(() => {
-    console.log('Train visibility debug:', {
-      feasibleTrainsForHooks: feasibleTrainsForHooks.length,
-      feasibleTrainsState: feasibleTrainsState.length,
-      trainsMarkedForRemoval: Array.from(trainsMarkedForRemoval),
-      firstTrain: feasibleTrainsForHooks[0] ? {
-        time: feasibleTrainsForHooks[0].departure_time,
-        minutes: calculateAdjustedDeparture(feasibleTrainsForHooks[0]).adjustedMinutesUntil,
-        id: generateTrainId(feasibleTrainsForHooks[0])
-      } : null
-    })
-  }, [feasibleTrainsForHooks.length, feasibleTrainsState.length, trainsMarkedForRemoval.size])
-
-  useEffect(() => {
-    console.log('Bus data debug:', {
-      totalBuses: buses.length,
-      buses: buses.map(b => `${b.line_number} to ${b.destination} at ${b.departure_time} (${b.minutes_until}m)`),
-      feasibleBuses: feasibleBuses.length,
-      generatedAt: structuredData.generated_at
-    })
-  }, [buses.length, feasibleBuses.length])
+  // Use derived feasible data directly (Framer Motion handles all transitions)
+  const feasibleTrains = feasibleTrainsForHooks
+  const feasibleBuses = feasibleBusesForHooks
 
   // Only show deviations for feasible departures (accounting for delays)
   const feasibleDeviations = deviations.filter(deviation => {
@@ -694,34 +613,39 @@ export function TrainWidget() {
           <div className="mb-3">
             <div className="leading-relaxed">
               {feasibleTrains.length > 0 ? (
-                <div className="train-list-container">
-                  {feasibleTrains.map((train, index) => {
-                    const trainId = generateTrainId(train)
-                    const hasShineAnimation = shineAnimatedTrains.has(trainId)
+                <LayoutGroup>
+                  <AnimatePresence mode="popLayout">
+                    {feasibleTrains.map((train, index) => {
+                      const trainId = generateTrainId(train)
+                      const isRedTinted = shineAnimatedTrains.get(trainId) // undefined if not animating, true if red, false if orange
 
-                    // Build CSS classes - shine swoosh at 8-9 minutes
-                    const cssClasses = ['train-departure-item']
-                    if (hasShineAnimation) cssClasses.push('shine-swoosh')
+                      // Build CSS classes - shine swoosh at 9-8-7 minutes (red at 7m)
+                      const cssClasses = ['train-departure-item']
+                      if (isRedTinted !== undefined) {
+                        cssClasses.push(isRedTinted ? 'shine-swoosh-red' : 'shine-swoosh')
+                      }
 
-                    return (
-                      <div
-                        key={trainId}
-                        className={cssClasses.join(' ')}
-                        style={{
-                          '--item-index': index,
-                          viewTransitionName: trainId
-                        } as React.CSSProperties}
-                      >
-                        <TrainDepartureLine
-                          departure={train}
-                          isUrgentFlashing={false}
-                          isCriticalFlashing={false}
-                          hasShineAnimation={hasShineAnimation}
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
+                      return (
+                        <motion.div
+                          key={trainId}
+                          layout
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ duration: 1 }}
+                          className={cssClasses.join(' ')}
+                        >
+                          <TrainDepartureLine
+                            departure={train}
+                            isUrgentFlashing={false}
+                            isCriticalFlashing={false}
+                            hasShineAnimation={isRedTinted !== undefined}
+                          />
+                        </motion.div>
+                      )
+                    })}
+                  </AnimatePresence>
+                </LayoutGroup>
               ) : (
                 <div style={{ opacity: 0.6 }}>Inga pendeltåg inom en timme</div>
               )}
@@ -738,34 +662,39 @@ export function TrainWidget() {
           <div className="mb-3">
             <div className="leading-relaxed">
               {feasibleBuses.length > 0 ? (
-                <div className="train-list-container">
-                  {feasibleBuses.map((bus, index) => {
-                    const busId = generateBusId(bus)
-                    const hasShineAnimation = shineAnimatedBuses.has(busId)
+                <LayoutGroup>
+                  <AnimatePresence mode="popLayout">
+                    {feasibleBuses.map((bus, index) => {
+                      const busId = generateBusId(bus)
+                      const isRedTinted = shineAnimatedBuses.get(busId) // undefined if not animating, true if red, false if orange
 
-                    // Build CSS classes - shine swoosh at 4-3-2 minutes
-                    const cssClasses = ['bus-departure-item']
-                    if (hasShineAnimation) cssClasses.push('shine-swoosh')
+                      // Build CSS classes - shine swoosh at 4-3-2 minutes (red at 2m)
+                      const cssClasses = ['bus-departure-item']
+                      if (isRedTinted !== undefined) {
+                        cssClasses.push(isRedTinted ? 'shine-swoosh-red' : 'shine-swoosh')
+                      }
 
-                    return (
-                      <div
-                        key={busId}
-                        className={cssClasses.join(' ')}
-                        style={{
-                          '--item-index': index,
-                          viewTransitionName: busId
-                        } as React.CSSProperties}
-                      >
-                        <BusDepartureLine
-                          departure={bus}
-                          isUrgentFlashing={false}
-                          isCriticalFlashing={false}
-                          hasShineAnimation={hasShineAnimation}
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
+                      return (
+                        <motion.div
+                          key={busId}
+                          layout
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ duration: 1 }}
+                          className={cssClasses.join(' ')}
+                        >
+                          <BusDepartureLine
+                            departure={bus}
+                            isUrgentFlashing={false}
+                            isCriticalFlashing={false}
+                            hasShineAnimation={isRedTinted !== undefined}
+                          />
+                        </motion.div>
+                      )
+                    })}
+                  </AnimatePresence>
+                </LayoutGroup>
               ) : (
                 <div style={{ opacity: 0.6 }}>Inga bussar tillgängliga</div>
               )}
