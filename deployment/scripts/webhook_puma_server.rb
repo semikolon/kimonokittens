@@ -347,14 +347,18 @@ class DeploymentHandler
     Dir.chdir(@project_dir)
     return false unless ensure_clean_git_state
 
-    frontend_dir = File.join(@project_dir, 'dashboard')
+    # Install workspace dependencies from root (monorepo setup)
+    unless system('npm ci')
+      $logger.error("❌ npm ci (workspace root) failed")
+      return false
+    end
+    $logger.info("✅ npm ci (workspace root) successful")
 
-    # Change to frontend directory
+    frontend_dir = File.join(@project_dir, 'dashboard')
     Dir.chdir(frontend_dir)
 
-    # Install Node dependencies and build (use npm install to ensure dev deps included)
+    # Build frontend
     commands = [
-      'npm install',
       'npx vite build'
     ]
 

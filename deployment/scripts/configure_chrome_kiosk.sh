@@ -42,9 +42,9 @@ else
     echo "Backup already exists for today: $BACKUP_FILE"
 fi
 
-# Define the correct Chrome flags (2024 NVIDIA GPU acceleration + 110% zoom)
+# Define the correct Chrome flags (2024 NVIDIA GPU acceleration + 120% zoom)
 # GTX 1650 has 4GB VRAM
-CORRECT_FLAGS='--ignore-gpu-blocklist --enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL,VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs --force-gpu-mem-available-mb=4096 --force-device-scale-factor=1.15 --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost'
+CORRECT_FLAGS='--ignore-gpu-blocklist --enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL,VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs --force-gpu-mem-available-mb=4096 --force-device-scale-factor=1.2 --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble --disable-web-security --disable-features=TranslateUI --noerrdialogs --incognito --no-default-browser-check --password-store=basic --start-maximized --app=http://localhost'
 
 # Check if flags are already correct
 CURRENT_FLAGS=$(grep "ExecStart=" "$USER_SERVICE_FILE" | sed 's/ExecStart=\/usr\/bin\/google-chrome //')
