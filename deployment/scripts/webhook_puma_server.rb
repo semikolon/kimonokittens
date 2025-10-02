@@ -58,6 +58,15 @@ class WebhookHandler
     input.rewind
     payload = input.read
 
+    # Check event type
+    event_type = env['HTTP_X_GITHUB_EVENT']
+
+    # Handle ping events (GitHub webhook test)
+    if event_type == 'ping'
+      $logger.info("✅ Received GitHub webhook ping")
+      return [200, json_headers, [{ status: 'pong', message: 'Webhook configured correctly' }.to_json]]
+    end
+
     # Verify GitHub signature
     signature = env['HTTP_X_HUB_SIGNATURE_256']
     if signature && !verify_signature(payload, signature)
@@ -73,10 +82,10 @@ class WebhookHandler
       return [400, json_headers, [{ error: 'Invalid JSON' }.to_json]]
     end
 
-    # Only process pushes to master
-    unless event_data['ref'] == 'refs/heads/master'
-      $logger.info("ℹ️ Ignoring push to #{event_data['ref']} (not master)")
-      return [200, json_headers, [{ status: 'ignored', message: 'Not master branch' }.to_json]]
+    # Only process push events to master
+    unless event_type == 'push' && event_data['ref'] == 'refs/heads/master'
+      $logger.info("ℹ️ Ignoring #{event_type} event to #{event_data['ref']} (not push to master)")
+      return [200, json_headers, [{ status: 'ignored', message: 'Not a push to master' }.to_json]]
     end
 
     # Analyze and deploy changes
