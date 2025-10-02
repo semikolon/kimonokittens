@@ -33,6 +33,22 @@ lsof -ti :3001 :5175
 
 **Discovered**: Oct 1, 2025 - Commands appeared to "hang for 26 minutes" but actually failed instantly. System reminders showed "running" while BashOutput showed "failed". Cross-verification with `ps` confirmed no processes existed.
 
+### ⚠️ SUDO COMMANDS - CANNOT RUN INTERACTIVELY
+
+**Claude Code cannot run `sudo` commands that require password input.**
+
+**NEVER attempt to run sudo commands directly** - instead:
+- ✅ **Tell the user what to run** - Provide the exact sudo command for them to copy/paste
+- ✅ **Explain what it does** - Brief description of why the command is needed
+- ❌ **Don't try to run it yourself** - Will fail with "a terminal is required to read the password"
+
+**Example:**
+```
+User needs: Restart webhook service
+Wrong: Run sudo systemctl restart kimonokittens-webhook
+Right: "Please run: sudo systemctl restart kimonokittens-webhook"
+```
+
 ### ✅ ALWAYS DO:
 - **ONLY** use these exact commands for ALL process management:
   ```bash
