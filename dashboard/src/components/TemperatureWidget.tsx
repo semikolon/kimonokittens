@@ -33,10 +33,13 @@ export function TemperatureWidget() {
     if (currentSmartStatus && prevSmartStatus && currentSmartStatus !== prevSmartStatus) {
       setIsStatusChanging(true)
       const timer = setTimeout(() => setIsStatusChanging(false), 800) // Match animation duration
+      setPrevSmartStatus(currentSmartStatus)
       return () => clearTimeout(timer)
+    } else if (!prevSmartStatus) {
+      // Initialize on first render
+      setPrevSmartStatus(currentSmartStatus)
     }
-    setPrevSmartStatus(currentSmartStatus)
-  }, [currentSmartStatus, prevSmartStatus])
+  }, [currentSmartStatus])
 
   // Heatpump schedule progress bar logic using schedule_data
   const heatpumpSchedule = useMemo(() => {

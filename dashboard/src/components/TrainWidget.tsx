@@ -573,12 +573,39 @@ export function TrainWidget() {
     const trainsChanged = hasStructuralChange(feasibleTrainsState, feasibleTrainsForHooks, generateTrainId)
     const busesChanged = hasStructuralChange(feasibleBusesState, feasibleBusesForHooks, generateBusId)
 
+    console.log('🔄 ViewTransition Effect Running:', {
+      trainsChanged,
+      busesChanged,
+      feasibleTrainsState_count: feasibleTrainsState.length,
+      feasibleTrainsForHooks_count: feasibleTrainsForHooks.length,
+      feasibleBusesState_count: feasibleBusesState.length,
+      feasibleBusesForHooks_count: feasibleBusesForHooks.length
+    })
+
     if (trainsChanged) {
+      console.log('🚂 TRAIN TRANSITION FIRING:', {
+        oldCount: feasibleTrainsState.length,
+        newCount: feasibleTrainsForHooks.length,
+        oldIds: feasibleTrainsState.map(generateTrainId),
+        newIds: feasibleTrainsForHooks.map(generateTrainId)
+      })
       startListTransition(setFeasibleTrainsState, feasibleTrainsForHooks, true)
+    } else if (feasibleTrainsState.length === 0 && feasibleTrainsForHooks.length === 0) {
+      console.log('ℹ️ No trains to transition (both lists empty)')
+    } else {
+      console.log('ℹ️ No train structural change detected')
     }
 
     if (busesChanged) {
+      console.log('🚌 BUS TRANSITION FIRING:', {
+        oldCount: feasibleBusesState.length,
+        newCount: feasibleBusesForHooks.length
+      })
       startListTransition(setFeasibleBusesState, feasibleBusesForHooks, true)
+    } else if (feasibleBusesState.length === 0 && feasibleBusesForHooks.length === 0) {
+      console.log('ℹ️ No buses to transition (both lists empty)')
+    } else {
+      console.log('ℹ️ No bus structural change detected')
     }
   }, [feasibleTrainsForHooks, feasibleBusesForHooks])
 

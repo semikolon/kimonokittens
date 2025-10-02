@@ -69,14 +69,23 @@ export const startListTransition = <T,>(
   newState: T,
   isStructural: boolean
 ): void => {
+  console.log('📞 startListTransition called:', {
+    isStructural,
+    transitionsDisabled: stats.transitionsDisabled,
+    supportsViewTransition: !!document.startViewTransition,
+    slowTransitions: stats.slowTransitions
+  })
+
   // Skip if transitions disabled or not a structural change
   if (stats.transitionsDisabled || !isStructural) {
+    console.log('⏭️ Skipping transition:', stats.transitionsDisabled ? 'transitions disabled' : 'not structural')
     setState(newState)
     return
   }
 
   // Feature detection
   if (!document.startViewTransition) {
+    console.log('⏭️ Skipping transition: browser does not support ViewTransition API')
     setState(newState)
     return
   }
@@ -84,6 +93,7 @@ export const startListTransition = <T,>(
   // Performance instrumentation
   performance.mark('view-transition-start')
 
+  console.log('✨ Starting ViewTransition...')
   document.startViewTransition(() => {
     flushSync(() => {
       setState(newState)
