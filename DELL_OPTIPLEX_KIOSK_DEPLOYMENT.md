@@ -23,7 +23,7 @@ Transform the Dell Optiplex into a production-ready kiosk server that:
 Internet ──→ GitHub Webhook ──→ Dell Optiplex
                 │
                 ├─ Dashboard Backend (Puma :3001)
-                ├─ Smart Webhook Receiver (:9001)
+                ├─ Smart Webhook Receiver (:49123)
                 ├─ Nginx Frontend (:80)
                 └─ Google Chrome Kiosk Display
 ```
@@ -32,7 +32,7 @@ Internet ──→ GitHub Webhook ──→ Dell Optiplex
 - **Single User**: `kimonokittens` runs all services for security and simplicity
 - **User Services**: systemd `--user` services with persistent linger
 - **Dashboard Process**: Puma server on port 3001 (real-time WebSocket data)
-- **Smart Webhook**: Puma server on port 9001 (unified architecture, concurrent-ready)
+- **Smart Webhook**: Puma server on port 49123 (obscure port for security, unified architecture, concurrent-ready)
 - **Frontend Delivery**: Nginx on port 80 serving React SPA
 - **Kiosk Display**: Google Chrome with user service auto-launch
 - **X11 Permissions**: Proper xhost configuration for display access
@@ -352,8 +352,7 @@ User=kimonokittens
 Group=kimonokittens
 WorkingDirectory=/home/kimonokittens/Projects/kimonokittens
 Environment="PATH=/home/kimonokittens/.rbenv/bin:/home/kimonokittens/.rbenv/shims:/usr/local/bin:/usr/bin:/bin"
-Environment="WEBHOOK_SECRET=your-secret-here"
-Environment="PORT=9001"
+Environment="WEBHOOK_PORT=49123"
 EnvironmentFile=-/home/kimonokittens/.env
 ExecStart=/bin/bash -c 'eval "$(/home/kimonokittens/.rbenv/bin/rbenv init - bash)" && bundle exec ruby deployment/scripts/webhook_puma_server.rb'
 Restart=always
@@ -667,7 +666,7 @@ server {
 
     # Webhook endpoint (external access)
     location /webhook {
-        proxy_pass http://127.0.0.1:9001;
+        proxy_pass http://127.0.0.1:49123;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -886,22 +885,37 @@ sudo -u kimonokittens bash -c 'echo "xhost +SI:localuser:kimonokittens 2>/dev/nu
 
 ### 5. GitHub Webhook Configuration
 
-1. **In GitHub repository settings**:
-   - Go to Settings → Webhooks → Add webhook
-   - Payload URL: `http://your-optiplex-ip:9001/webhook`
-   - Content type: `application/json`
-   - Secret: Set a secure random string
-   - Events: Just the `push` event
-
-2. **Update webhook service with secret**:
+**Automated Setup (Recommended)**:
 ```bash
-sudo systemctl edit kimonokittens-webhook
+# Run automated webhook setup script
+WEBHOOK_PORT=49123 sudo bash deployment/scripts/setup_github_webhook.sh kimonokittens
 ```
 
-Add:
-```ini
-[Service]
-Environment="WEBHOOK_SECRET=your-secret-from-github"
+This script will:
+- Install GitHub CLI (`gh`) if not present
+- Prompt for GitHub authentication
+- Generate secure HMAC-SHA256 webhook secret
+- Update .env with webhook configuration
+- Create GitHub webhook via API
+- Restart webhook service
+
+**Manual Setup (if automated script fails)**:
+1. **In GitHub repository settings**:
+   - Go to Settings → Webhooks → Add webhook
+   - Payload URL: `http://your-optiplex-ip:49123/webhook`
+   - Content type: `application/json`
+   - Secret: Generate with `openssl rand -hex 32`
+   - Events: Just the `push` event
+
+2. **Update .env file**:
+```bash
+echo "WEBHOOK_SECRET=your-generated-secret" | sudo -u kimonokittens tee -a /home/kimonokittens/.env
+echo "WEBHOOK_PORT=49123" | sudo -u kimonokittens tee -a /home/kimonokittens/.env
+```
+
+3. **Restart webhook service**:
+```bash
+sudo systemctl restart kimonokittens-webhook
 ```
 
 ### 6. Start Services
@@ -918,7 +932,7 @@ sudo systemctl status kimonokittens-webhook
 sudo systemctl status nginx
 
 # Test webhook
-curl -X POST http://localhost:9001/health
+curl -X POST http://localhost:49123/health
 ```
 
 ### 7. Install Custom Fonts
@@ -1205,8 +1219,8 @@ sudo ufw allow 22
 # Allow HTTP (for kiosk display)
 sudo ufw allow 80
 
-# Allow webhook (restrict to GitHub IPs if possible)
-sudo ufw allow 9001
+# Allow webhook (obscure port for security)
+sudo ufw allow 49123
 
 # Enable firewall
 sudo ufw enable
@@ -1334,7 +1348,7 @@ journalctl -u kimonokittens-webhook -f
 # Test webhook manually
 curl -X POST -d '{"ref":"refs/heads/master"}' \
      -H "Content-Type: application/json" \
-     http://localhost:9001/webhook
+     http://localhost:49123/webhook
 ```
 
 **4. Browser not refreshing**:

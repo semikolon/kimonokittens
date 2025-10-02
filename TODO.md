@@ -9,16 +9,33 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 **Goal:** Deploy Kimonokittens dashboard as production kiosk on Dell Optiplex
 
-**Status:** Ready for deployment - all infrastructure prepared
+**Status:** Webhook functional, awaiting vite installation fix
+
+### **Current Status** (October 2, 2025)
+- ✅ **Webhook server:** Running on port 49123, receiving GitHub events
+- ✅ **Ping events:** Responding with 200 OK
+- ✅ **Push events:** Accepting both JSON and form-encoded payloads
+- ✅ **Debouncing:** 2-minute delay prevents deployment spam
+- ✅ **Smart analysis:** Only deploys changed components (frontend/backend)
+- ❌ **BLOCKER:** Frontend builds fail - vite not installed despite `npm ci`
+
+### **Critical Issue: NPM Workspace DevDependencies**
+**Problem:** Running `npm ci` from workspace root installs 200 packages but vite is missing
+**Impact:** All frontend deployments fail at build step
+**Investigation:** npm workspaces + devDependencies interaction issue
+**Next Steps:**
+- Research why vite (in `dashboard/package.json` devDependencies) isn't installed
+- Consider adding vite to root package.json devDependencies
+- Test npm install vs npm ci behavior
+- Evaluate Capistrano or modern deployment alternatives
 
 ### **Production Environment Setup**
-- [ ] **CRITICAL: Run production deployment script**
-  ```bash
-  sudo bash deployment/scripts/setup_production.sh
-  ```
-- [ ] **Configure GitHub webhook secret** (post-deployment)
-- [ ] **Test webhook:** `http://DELL_IP/webhook`
+- [x] **Run production deployment script**
+- [x] **Configure GitHub webhook** (ID: 572892196, port 49123)
+- [x] **Test webhook:** Working - `http://DELL_IP:49123/webhook`
+- [ ] **Fix vite installation** - CRITICAL BLOCKER
 - [ ] **Verify services:** `systemctl status kimonokittens-dashboard nginx`
+- [ ] **Test end-to-end deployment:** Push → webhook → build → deploy
 - [ ] **Reboot for kiosk mode:** `sudo reboot`
 
 ### **Production Architecture** (SIMPLIFIED)

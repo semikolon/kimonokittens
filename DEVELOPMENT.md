@@ -149,6 +149,19 @@ See also: [handoff_to_claude_rspec_tests.md](handoff_to_claude_rspec_tests.md) f
 
 This section summarizes non-obvious architectural choices and important lessons from recent development.
 
+### NPM Workspace Critical Warning ⚠️
+
+**CRITICAL:** This project uses npm workspaces (`dashboard`, `handbook/frontend`, `packages/*`). When running npm commands:
+
+- ✅ **CORRECT:** Run `npm ci` from **project root** to install all dependencies including devDependencies
+- ❌ **WRONG:** Running `npm ci` from workspace subdirectories (e.g., `cd dashboard && npm ci`) silently skips workspace-level devDependencies
+
+**Why this matters:** Build tools like `vite` are devDependencies at workspace level. Running npm commands from subdirectories will cause "Cannot find package 'vite'" errors during builds.
+
+**Deployment scripts:** Both `setup_production.sh` and `webhook_puma_server.rb` correctly run `npm ci` from project root.
+
+**See also:** `DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md` for complete webhook deployment architecture.
+
 ### System Architecture Decisions
 
 1.  **Prisma ORM & PostgreSQL for All Financial Data**
