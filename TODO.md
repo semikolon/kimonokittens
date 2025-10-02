@@ -514,6 +514,7 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - Update monthly costs automatically
   - Store historical electricity usage data
   - Alert on unusual changes in consumption
+- [ ] Fill in missing electricity bills history (Nov 2024 - Sept 2025) in `electricity_bills_history.txt`
 
 ### API Integration
 - [x] Expose rent calculator as API for voice/LLM assistants:

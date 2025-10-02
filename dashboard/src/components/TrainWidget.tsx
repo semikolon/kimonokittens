@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useData } from '../context/DataContext'
 import { startListTransition } from './ViewTransition'
 
@@ -195,31 +195,68 @@ const isCriticalDeparture = (train: TrainDeparture): boolean => {
 const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
   const [shineAnimatedTrains, setShineAnimatedTrains] = useState<Set<string>>(new Set())
   const [trainsMarkedForRemoval, setTrainsMarkedForRemoval] = useState<Set<string>>(new Set())
+  const animatedAtMinuteRef = useRef<Map<string, Set<number>>>(new Map())
+  const markedForRemovalRef = useRef<Set<string>>(new Set())
+  const prevTrainsRef = useRef<TrainDeparture[]>([])
+
+  // Detect genuinely new trains (not just time updates within 3-minute window)
+  const genuinelyNewTrains = useMemo(() => {
+    const currentIds = new Set(trains.map(generateTrainId))
+    const prevIds = new Set(prevTrainsRef.current.map(generateTrainId))
+
+    const potentiallyNew = [...currentIds].filter(id => !prevIds.has(id))
+
+    // Filter out time updates: same line/destination within 3 minutes
+    return potentiallyNew.filter(newTrainId => {
+      const newTrain = trains.find(t => generateTrainId(t) === newTrainId)!
+
+      const isTimeUpdate = prevTrainsRef.current.some(prevTrain =>
+        prevTrain.line_number === newTrain.line_number &&
+        prevTrain.destination === newTrain.destination &&
+        Math.abs(prevTrain.departure_timestamp - newTrain.departure_timestamp) <= 180 // 3 min
+      )
+
+      return !isTimeUpdate
+    })
+  }, [trains])
 
   useEffect(() => {
+    // Skip if no genuinely new trains
+    if (genuinelyNewTrains.length === 0 && trains.length === prevTrainsRef.current.length) {
+      return
+    }
+    prevTrainsRef.current = trains
+
     trains.forEach(train => {
       const trainId = generateTrainId(train)
       const adjusted = calculateAdjustedDeparture(train)
       const minutesUntil = adjusted.adjustedMinutesUntil
 
       // Trigger shine swoosh at 9m, 8m, 7m (signals: time to go catch this train!)
-      if ((minutesUntil === 9 || minutesUntil === 8 || minutesUntil === 7) && !shineAnimatedTrains.has(trainId)) {
-        console.log(`Shine swoosh animation for train ${trainId} at ${minutesUntil}m`)
-        setShineAnimatedTrains(prev => new Set([...prev, trainId]))
+      if (minutesUntil === 9 || minutesUntil === 8 || minutesUntil === 7) {
+        const animatedMinutes = animatedAtMinuteRef.current.get(trainId) || new Set()
+        if (!animatedMinutes.has(minutesUntil)) {
+          console.log(`Shine swoosh animation for train ${trainId} at ${minutesUntil}m`)
+          animatedMinutes.add(minutesUntil)
+          animatedAtMinuteRef.current.set(trainId, animatedMinutes)
 
-        // Remove shine class after 2s (animation duration)
-        setTimeout(() => {
-          setShineAnimatedTrains(prev => {
-            const newSet = new Set(prev)
-            newSet.delete(trainId)
-            return newSet
-          })
-        }, 2000)
+          setShineAnimatedTrains(prev => new Set([...prev, trainId]))
+
+          // Remove shine class after 2s (animation duration)
+          setTimeout(() => {
+            setShineAnimatedTrains(prev => {
+              const newSet = new Set(prev)
+              newSet.delete(trainId)
+              return newSet
+            })
+          }, 2000)
+        }
       }
 
       // Pre-emptive removal at exactly 5 minutes (ViewTransition captures "5m" snapshot)
-      if (minutesUntil === 5 && !trainsMarkedForRemoval.has(trainId)) {
+      if (minutesUntil === 5 && !markedForRemovalRef.current.has(trainId)) {
         console.log(`Marking train ${trainId} for removal at 5m (will slide out over 800ms)`)
+        markedForRemovalRef.current.add(trainId)
 
         // Brief delay to ensure snapshot is captured, then remove from list
         setTimeout(() => {
@@ -227,14 +264,17 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
         }, 100)
       }
     })
-  }, [trains, shineAnimatedTrains, trainsMarkedForRemoval])
+  }, [trains, genuinelyNewTrains])
 
   // Clean up removed trains set when they're actually gone from incoming data
   useEffect(() => {
     const currentTrainIds = new Set(trains.map(generateTrainId))
-    setTrainsMarkedForRemoval(prev =>
-      new Set([...prev].filter(id => currentTrainIds.has(id)))
-    )
+    setTrainsMarkedForRemoval(prev => {
+      const filtered = new Set([...prev].filter(id => currentTrainIds.has(id)))
+      // Only update if actually changed
+      if (filtered.size === prev.size) return prev
+      return filtered
+    })
   }, [trains])
 
   return {
@@ -246,35 +286,73 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
 // Bus shine animation at 4m, 3m, 2m
 const useBusDepartureAnimation = (buses: BusDeparture[]) => {
   const [shineAnimatedBuses, setShineAnimatedBuses] = useState<Set<string>>(new Set())
+  const animatedAtMinuteRef = useRef<Map<string, Set<number>>>(new Map())
+  const prevBusesRef = useRef<BusDeparture[]>([])
+
+  // Detect genuinely new buses (not just time updates within 3-minute window)
+  const genuinelyNewBuses = useMemo(() => {
+    const currentIds = new Set(buses.map(generateBusId))
+    const prevIds = new Set(prevBusesRef.current.map(generateBusId))
+
+    const potentiallyNew = [...currentIds].filter(id => !prevIds.has(id))
+
+    // Filter out time updates: same line/destination within 3 minutes
+    return potentiallyNew.filter(newBusId => {
+      const newBus = buses.find(b => generateBusId(b) === newBusId)!
+
+      const isTimeUpdate = prevBusesRef.current.some(prevBus =>
+        prevBus.line_number === newBus.line_number &&
+        prevBus.destination === newBus.destination &&
+        Math.abs(prevBus.departure_timestamp - newBus.departure_timestamp) <= 180 // 3 min
+      )
+
+      return !isTimeUpdate
+    })
+  }, [buses])
 
   useEffect(() => {
+    // Skip if no genuinely new buses
+    if (genuinelyNewBuses.length === 0 && buses.length === prevBusesRef.current.length) {
+      return
+    }
+    prevBusesRef.current = buses
+
     buses.forEach(bus => {
       const busId = generateBusId(bus)
       const minutesUntil = bus.minutes_until
 
       // Trigger shine swoosh at 4m, 3m, 2m (signals: time to go catch this bus!)
-      if ((minutesUntil === 4 || minutesUntil === 3 || minutesUntil === 2) && !shineAnimatedBuses.has(busId)) {
-        console.log(`Shine swoosh animation for bus ${busId} at ${minutesUntil}m`)
-        setShineAnimatedBuses(prev => new Set([...prev, busId]))
+      if (minutesUntil === 4 || minutesUntil === 3 || minutesUntil === 2) {
+        const animatedMinutes = animatedAtMinuteRef.current.get(busId) || new Set()
+        if (!animatedMinutes.has(minutesUntil)) {
+          console.log(`Shine swoosh animation for bus ${busId} at ${minutesUntil}m`)
+          animatedMinutes.add(minutesUntil)
+          animatedAtMinuteRef.current.set(busId, animatedMinutes)
 
-        // Remove shine class after 2s (animation duration)
-        setTimeout(() => {
-          setShineAnimatedBuses(prev => {
-            const newSet = new Set(prev)
-            newSet.delete(busId)
-            return newSet
-          })
-        }, 2000)
+          setShineAnimatedBuses(prev => new Set([...prev, busId]))
+
+          // Remove shine class after 2s (animation duration)
+          setTimeout(() => {
+            setShineAnimatedBuses(prev => {
+              const newSet = new Set(prev)
+              newSet.delete(busId)
+              return newSet
+            })
+          }, 2000)
+        }
       }
     })
-  }, [buses, shineAnimatedBuses])
+  }, [buses, genuinelyNewBuses])
 
   // Clean up animated buses set when they're gone from incoming data
   useEffect(() => {
     const currentBusIds = new Set(buses.map(generateBusId))
-    setShineAnimatedBuses(prev =>
-      new Set([...prev].filter(id => currentBusIds.has(id)))
-    )
+    setShineAnimatedBuses(prev => {
+      const filtered = new Set([...prev].filter(id => currentBusIds.has(id)))
+      // Only update if actually changed
+      if (filtered.size === prev.size) return prev
+      return filtered
+    })
   }, [buses])
 
   return { shineAnimatedBuses }
@@ -328,7 +406,8 @@ const TrainDepartureLine: React.FC<{
   departure: TrainDeparture;
   isUrgentFlashing?: boolean;
   isCriticalFlashing?: boolean;
-}> = ({ departure, isUrgentFlashing = false, isCriticalFlashing = false }) => {
+  hasShineAnimation?: boolean;
+}> = ({ departure, isUrgentFlashing = false, isCriticalFlashing = false, hasShineAnimation = false }) => {
   const adjusted = calculateAdjustedDeparture(departure)
   const opacity = adjusted.adjustedMinutesUntil === 0 ? 1.0 : getTimeOpacity(adjusted.adjustedMinutesUntil)
   const timeDisplay = formatDelayAwareTimeDisplay(departure)
@@ -337,10 +416,12 @@ const TrainDepartureLine: React.FC<{
   const nonDelayNote = adjusted.isDelayed ? '' : departure.summary_deviation_note
 
   const glowClass = isUrgentFlashing ? 'urgent-text-glow' : isCriticalFlashing ? 'critical-text-glow' : ''
+  const shineClass = hasShineAnimation ? 'shine-swoosh' : ''
+  const combinedClasses = [glowClass, shineClass].filter(Boolean).join(' ')
 
   return (
     <div
-      className={glowClass}
+      className={combinedClasses}
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
@@ -360,16 +441,19 @@ const BusDepartureLine: React.FC<{
   departure: BusDeparture;
   isUrgentFlashing?: boolean;
   isCriticalFlashing?: boolean;
-}> = ({ departure, isUrgentFlashing = false, isCriticalFlashing = false }) => {
+  hasShineAnimation?: boolean;
+}> = ({ departure, isUrgentFlashing = false, isCriticalFlashing = false, hasShineAnimation = false }) => {
   const { line_number, destination, minutes_until } = departure
   const opacity = minutes_until === 0 ? 1.0 : getTimeOpacity(minutes_until)
   const timeDisplay = formatTimeDisplay(departure)
 
   const glowClass = isUrgentFlashing ? 'urgent-text-glow' : isCriticalFlashing ? 'critical-text-glow' : ''
+  const shineClass = hasShineAnimation ? 'shine-swoosh' : ''
+  const combinedClasses = [glowClass, shineClass].filter(Boolean).join(' ')
 
   return (
     <div
-      className={glowClass}
+      className={combinedClasses}
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
@@ -518,13 +602,28 @@ export function TrainWidget() {
   const feasibleTrains = feasibleTrainsState.length > 0 ? feasibleTrainsState : feasibleTrainsForHooks
   const feasibleBuses = feasibleBusesState.length > 0 ? feasibleBusesState : feasibleBusesForHooks
 
-  // Debug logging
-  console.log('Bus data debug:', {
-    totalBuses: buses.length,
-    buses: buses.map(b => `${b.line_number} to ${b.destination} at ${b.departure_time} (${b.minutes_until}m)`),
-    feasibleBuses: feasibleBuses.length,
-    generatedAt: structuredData.generated_at
-  })
+  // Debug logging for empty line issue (only when state changes)
+  useEffect(() => {
+    console.log('Train visibility debug:', {
+      feasibleTrainsForHooks: feasibleTrainsForHooks.length,
+      feasibleTrainsState: feasibleTrainsState.length,
+      trainsMarkedForRemoval: Array.from(trainsMarkedForRemoval),
+      firstTrain: feasibleTrainsForHooks[0] ? {
+        time: feasibleTrainsForHooks[0].departure_time,
+        minutes: calculateAdjustedDeparture(feasibleTrainsForHooks[0]).adjustedMinutesUntil,
+        id: generateTrainId(feasibleTrainsForHooks[0])
+      } : null
+    })
+  }, [feasibleTrainsForHooks.length, feasibleTrainsState.length, trainsMarkedForRemoval.size])
+
+  useEffect(() => {
+    console.log('Bus data debug:', {
+      totalBuses: buses.length,
+      buses: buses.map(b => `${b.line_number} to ${b.destination} at ${b.departure_time} (${b.minutes_until}m)`),
+      feasibleBuses: feasibleBuses.length,
+      generatedAt: structuredData.generated_at
+    })
+  }, [buses.length, feasibleBuses.length])
 
   // Only show deviations for feasible departures (accounting for delays)
   const feasibleDeviations = deviations.filter(deviation => {
@@ -590,6 +689,7 @@ export function TrainWidget() {
                           departure={train}
                           isUrgentFlashing={false}
                           isCriticalFlashing={false}
+                          hasShineAnimation={hasShineAnimation}
                         />
                       </div>
                     )
@@ -633,6 +733,7 @@ export function TrainWidget() {
                           departure={bus}
                           isUrgentFlashing={false}
                           isCriticalFlashing={false}
+                          hasShineAnimation={hasShineAnimation}
                         />
                       </div>
                     )
