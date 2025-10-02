@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Testing complete webhook flow - Oct 2, 2025 12:21 */
+/* Testing complete webhook flow with npm fix - Oct 2, 2025 12:30 */
 :root {
   /* Elegant background system */
   --bg-primary: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
