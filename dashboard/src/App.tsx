@@ -1,5 +1,5 @@
 import React from 'react'
-import { DataProvider, useData } from './context/DataContext'
+import { DataProvider, useData } from './context/DataContext' // WebSocket data provider
 import { ClockWidget } from './components/ClockWidget'
 import { WeatherWidget } from './components/WeatherWidget'
 import { TemperatureWidget } from './components/TemperatureWidget'
