@@ -1,36 +1,29 @@
 # Train Departure Animation Requirements
 
-**Last Updated:** October 2, 2025
-**Status:** Revision Required - Replacing Glow with Lens Flare Swoosh
+**Last Updated:** October 2, 2025 (Evening)
+**Status:** ✅ IMPLEMENTED - Shine Swoosh with 3-Minute Window
 
 ---
 
-## Current Issues (October 2, 2025)
+## Implementation Summary (October 2, 2025)
 
-### 1. **Train Visibility Threshold Bug**
-**Problem:** Trains with 4 minutes remaining are visible, but should only show until <5 minutes.
+### ✅ All Issues Resolved
 
-**Root Cause:** Lines 491-502 in `TrainWidget.tsx` keep trains visible during departure sequence:
-```typescript
-return adjusted.adjustedMinutesUntil >= 0 && (
-  isFeasibleTrainDeparture(adjusted.adjustedMinutesUntil) ||  // >= 5 minutes
-  ['warning', 'critical'].includes(departureState)            // ❌ Keeps trains < 5 min
-)
-```
+1. **Train Visibility Threshold** - Fixed
+   - Trains visible when `adjustedMinutesUntil >= 5`
+   - Pre-emptive removal at exactly 5 minutes (ViewTransition captures "5m" snapshot)
+   - Users never see "4m" on screen
 
-**Fix Required:** Remove `|| ['warning', 'critical'].includes(departureState)` - trains should disappear strictly at <5 minutes.
+2. **Shine Swoosh Animation** - Working
+   - Orange gradient sweeps across text glyphs (background-clip: text)
+   - Triggers at 9m, 8m, 7m for trains; 4m, 3m, 2m for buses
+   - Duration: 2 seconds linear animation
+   - Applied to text elements, not container divs
 
-### 2. **Warning/Critical Timing Mismatch**
-**Problem:** Glow triggers at <5 minutes, but should trigger earlier when there's time to dress and walk/run.
-
-**Current Logic:**
-- Line 210: Departure sequence starts at `minutesUntil < 5`
-- Warning: 4 seconds
-- Critical: 3 seconds
-
-**Required Logic:**
-- Trigger at **8-9 minutes** (enough time to put on clothes and run/walk)
-- Single swoosh animation: **1 second** (not multi-phase)
+3. **3-Minute Window for Time Updates** - Prevents False Animations
+   - Delayed trains don't trigger animations (e.g., 08:07 → 08:10 is time update)
+   - Only genuinely new trains trigger animations
+   - Compares line_number, destination, departure_timestamp (within 180 seconds)
 
 ---
 
@@ -47,15 +40,19 @@ return adjusted.adjustedMinutesUntil >= 0 && (
 
 ### Animation Trigger Rules
 
-**Warning Animation Trigger: 8-9 Minutes**
-- Trigger orange gradient swoosh when `minutes_until === 9` OR `minutes_until === 8`
-- This provides enough time to dress quickly and walk/run to station
-- Animation should trigger **once per train** (not on every data refresh)
+**Train Swoosh Trigger: 9, 8, 7 Minutes**
+- Trigger orange gradient swoosh at each threshold (3 separate swooshes per train)
+- Provides time to dress quickly and walk/run to station
+- Animation triggers **once per minute threshold** (tracked via ref to prevent repeats)
 
-**No Multi-Phase Sequence**
-- Remove warning/critical phases (old glow system)
-- Single swoosh animation: **1 second duration**
-- Animation completes, then train stays visible until <5 minutes
+**Bus Swoosh Trigger: 4, 3, 2 Minutes**
+- Same pattern for buses (shorter window due to closer bus stops)
+- 3 separate swooshes as bus approaches
+
+**Single Animation Per Threshold**
+- Duration: **2 seconds** (linear timing function)
+- No multi-phase sequences
+- Animation completes, train/bus stays visible until <5 minutes (trains) or 0 minutes (buses)
 
 ---
 
@@ -65,7 +62,7 @@ return adjusted.adjustedMinutesUntil >= 0 && (
 
 **Effect Description:**
 - Orange gradient sweeps left-to-right across **text glyphs only** (not background)
-- Animation duration: **1 second**
+- Animation duration: **2 seconds**
 - Timing function: **linear** (smooth, continuous movement - no choppy keyframes)
 - Start state: Normal white text
 - End state: Normal white text (returns to original appearance)
@@ -113,16 +110,22 @@ return adjusted.adjustedMinutesUntil >= 0 && (
 
 ### Animation Behavior
 
-**Trigger Once Per Train:**
-- Track which trains have already been animated (use Set with train IDs)
-- When train reaches 8-9 minutes, apply `.warning-shine` class
-- After 1 second, remove class (animation complete)
+**Trigger Once Per Minute Threshold:**
+- Track which trains have been animated at which minutes (Map<trainId, Set<minute>>)
+- When train reaches 9m/8m/7m, check if already animated at that specific minute
+- Apply `.shine-swoosh` class for 2 seconds
 - Train continues showing normally until <5 minutes (feasibility threshold)
 
 **State Management:**
-- Remove `trainStates` Map tracking 'warning'/'critical'/'departing' states
-- Replace with simple `animatedTrains` Set (train IDs that have swooshed)
-- Simpler logic: "Has this train been animated? If not, and it's at 8-9min, animate it."
+- `animatedAtMinuteRef`: Map<string, Set<number>> tracks which minutes triggered animations
+- `shineAnimatedTrains`: Set<string> of currently animating train IDs
+- `trainsMarkedForRemoval`: Set<string> for pre-emptive removal at 5 minutes
+
+**3-Minute Window for Time Updates:**
+- Prevents false animations when trains get delayed
+- Compares line_number, destination, departure_timestamp
+- If within 180 seconds, treats as time update (no animation)
+- Only genuinely new trains trigger animations
 
 ---
 
@@ -132,12 +135,13 @@ return adjusted.adjustedMinutesUntil >= 0 && (
 - `dashboard/src/components/TrainWidget.tsx` - Component logic
 - `dashboard/src/styles/globals.css` - CSS animations
 
-**Changes Required:**
-1. Fix `feasibleTrainsForHooks` filter (line 491-502)
-2. Replace `useDepartureSequence` hook with simpler `useShineAnimation` hook
-3. Update trigger threshold: `minutesUntil < 5` → `minutesUntil === 8 || minutesUntil === 9`
-4. Replace `warning-glow` / `critical-glow` CSS with `shine-swoosh` animation
-5. Remove multi-phase timing (4s warning, 3s critical) - single 1s animation
+**Completed Implementation (October 2, 2025):**
+1. ✅ Fixed `feasibleTrainsForHooks` filter - strict <5 minute threshold
+2. ✅ Replaced `useDepartureSequence` with `useTrainDepartureAnimation` and `useBusDepartureAnimation`
+3. ✅ Updated trigger thresholds: 9/8/7m for trains, 4/3/2m for buses
+4. ✅ Implemented `shine-swoosh` CSS animation (2s linear, background-clip: text)
+5. ✅ Removed multi-phase timing - single animation per minute threshold
+6. ✅ Added 3-minute window to prevent false animations on delays
 
 ---
 
@@ -158,12 +162,13 @@ return adjusted.adjustedMinutesUntil >= 0 && (
 
 After implementation:
 
-- [ ] Trains disappear at exactly <5 minutes (not 4, 3, 2, 1)
-- [ ] Swoosh animation triggers at 8-9 minutes
-- [ ] Animation is smooth (linear, 1 second, no choppy keyframes)
-- [ ] Orange gradient only affects text glyphs (not background)
-- [ ] Animation triggers once per train (no repeats on data refresh)
-- [ ] Text returns to normal white after animation completes
-- [ ] `prefers-reduced-motion: reduce` disables animation
-- [ ] No console errors or React warnings
-- [ ] Works with delayed trains (adjusted time calculations)
+- [x] Trains disappear at exactly <5 minutes (not 4, 3, 2, 1) - ✅ Pre-emptive removal at 5m
+- [x] Swoosh animation triggers at 9/8/7 minutes (trains) and 4/3/2 minutes (buses) - ✅ Implemented
+- [x] Animation is smooth (linear, 2 seconds, no choppy keyframes) - ✅ CSS verified
+- [x] Orange gradient only affects text glyphs (not background) - ✅ background-clip: text
+- [x] Animation triggers once per minute threshold (no repeats) - ✅ animatedAtMinuteRef tracking
+- [x] Text returns to normal white after animation completes - ✅ 2s timeout removes class
+- [ ] `prefers-reduced-motion: reduce` disables animation - ⚠️ TODO in CSS
+- [x] No console errors or React warnings - ✅ Infinite loop fixed
+- [x] Works with delayed trains (adjusted time calculations) - ✅ 3-min window prevents false triggers
+- [ ] ViewTransition slide animations working - ⚠️ NEEDS TESTING (user reports no animations visible)
