@@ -9,6 +9,10 @@ require 'logger'
 require 'fileutils'
 require 'time'
 
+# Enable thread exception reporting (critical for debugging deployment thread failures)
+Thread.report_on_exception = true
+Thread.abort_on_exception = false  # Don't kill entire process, just report
+
 # Configure logging
 if ENV['RACK_ENV'] == 'production'
   log_dir = '/var/log/kimonokittens'
