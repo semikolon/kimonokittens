@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Testing webhook deployment - Oct 2, 2025 */
 :root {
   /* Elegant background system */
   --bg-primary: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
