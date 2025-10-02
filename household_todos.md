@@ -1,5 +1,5 @@
 # Household Todos
 
-- Videoannons?
+- Brottas & meditera
 - Annons i fler grupper
 - Klipp gräsmattan
