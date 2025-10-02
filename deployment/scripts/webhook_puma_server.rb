@@ -466,14 +466,25 @@ class DeploymentHandler
   end
 
   def restart_kiosk
-    $logger.info("🔄 Restarting kiosk browser...")
+    $logger.info("🔄 Triggering frontend reload...")
 
-    # Restart user service (webhook already runs as kimonokittens user)
-    if system('systemctl --user restart kimonokittens-kiosk')
-      $logger.info("✅ Kiosk browser restarted")
-      true
-    else
-      $logger.error("❌ Kiosk browser restart failed")
+    # Trigger reload via dashboard API (broadcasts WebSocket message to all clients)
+    require 'net/http'
+    require 'uri'
+
+    uri = URI('http://localhost:3001/api/reload')
+    begin
+      response = Net::HTTP.post(uri, '', {'Content-Type' => 'application/json'})
+
+      if response.is_a?(Net::HTTPSuccess)
+        $logger.info("✅ Frontend reload triggered")
+        true
+      else
+        $logger.error("❌ Frontend reload failed: #{response.code}")
+        false
+      end
+    rescue => e
+      $logger.error("❌ Frontend reload error: #{e.message}")
       false
     end
   end

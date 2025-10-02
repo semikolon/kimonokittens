@@ -38,6 +38,7 @@ require_relative 'handlers/handbook_handler'
 require_relative 'handlers/weather_handler'
 require_relative 'handlers/temperature_handler'
 require_relative 'handlers/todos_handler'
+require_relative 'handlers/reload_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
@@ -244,6 +245,7 @@ end
 # Initialize global PubSub instance and DataBroadcaster
 $pubsub = PubSub.new
 $data_broadcaster = DataBroadcaster.new($pubsub)
+reload_handler = ReloadHandler.new($pubsub)
 
 # Create Rack application
 app = Rack::Builder.new do
@@ -267,6 +269,10 @@ app = Rack::Builder.new do
 
   map "/api/todos" do
     run todos_handler
+  end
+
+  map "/api/reload" do
+    run reload_handler
   end
 
   # Data routes

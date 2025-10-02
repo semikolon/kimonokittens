@@ -255,6 +255,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           case 'todo_data':
             dispatch({ type: 'SET_TODO_DATA', payload: message.payload })
             break
+          case 'reload':
+            console.log('Reload message received from server, reloading page...')
+            window.location.reload()
+            break
           default:
             console.log('Unknown message type:', message.type)
         }
