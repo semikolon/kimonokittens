@@ -1030,10 +1030,11 @@ Type=simple
 Environment="XDG_RUNTIME_DIR=/run/user/1001"
 ExecStartPre=/bin/sleep 15
 ExecStart=/usr/bin/google-chrome --kiosk --app=http://localhost
-Restart=always
-RestartSec=30
-StartLimitBurst=5
-StartLimitIntervalSec=300
+# Prevent rapid restart loops - only restart on crashes/failures, not manual stops
+Restart=on-failure
+RestartSec=10s
+StartLimitBurst=3
+StartLimitIntervalSec=60s
 
 [Install]
 WantedBy=default.target

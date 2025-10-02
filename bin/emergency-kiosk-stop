@@ -1,0 +1,32 @@
+#!/bin/bash
+# Emergency kiosk stop - use when kiosk is in a bad state
+
+echo "🚨 EMERGENCY KIOSK STOP"
+echo "This will forcefully stop the kiosk browser"
+echo ""
+
+# Method 1: Stop via machinectl (proper user service control)
+echo "1. Stopping kiosk service via machinectl..."
+machinectl shell kimonokittens@.host /usr/bin/systemctl --user stop kimonokittens-kiosk
+
+# Give it 2 seconds
+sleep 2
+
+# Method 2: Kill any remaining Chrome processes
+echo "2. Killing any remaining Chrome processes..."
+pkill -u kimonokittens chrome
+
+# Verify
+echo ""
+echo "Verification:"
+CHROME_COUNT=$(ps aux | grep -c "[c]hrome.*kimonokittens")
+if [ "$CHROME_COUNT" -eq 0 ]; then
+    echo "✅ All kiosk Chrome processes stopped"
+else
+    echo "⚠️  Warning: $CHROME_COUNT Chrome processes still running"
+    echo "   Run: ps aux | grep chrome | grep kimonokittens"
+fi
+
+echo ""
+echo "To restart kiosk:"
+echo "  machinectl shell kimonokittens@.host /usr/bin/systemctl --user start kimonokittens-kiosk"

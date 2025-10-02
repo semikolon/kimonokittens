@@ -270,7 +270,25 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             dispatch({ type: 'SET_TODO_DATA', payload: message.payload })
             break
           case 'reload':
-            console.log('Reload message received from server, reloading page...')
+            console.log('Reload message received from server')
+
+            // Check if we just reloaded recently (deduplication)
+            const LAST_RELOAD_KEY = 'kiosk_last_reload_time'
+            const MIN_RELOAD_INTERVAL = 120000 // 2 minutes (matches webhook debounce)
+
+            const lastReload = localStorage.getItem(LAST_RELOAD_KEY)
+            const now = Date.now()
+
+            if (lastReload && (now - parseInt(lastReload)) < MIN_RELOAD_INTERVAL) {
+              const secondsSince = Math.floor((now - parseInt(lastReload)) / 1000)
+              console.warn(`Reload blocked - last reload was ${secondsSince}s ago (minimum ${MIN_RELOAD_INTERVAL/1000}s)`)
+              break
+            }
+
+            // Record this reload
+            localStorage.setItem(LAST_RELOAD_KEY, now.toString())
+
+            console.log('Reloading page...')
             window.location.reload()
             break
           case 'deployment_status':

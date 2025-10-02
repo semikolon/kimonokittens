@@ -103,6 +103,32 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 ---
 
+## 🚨 RELOAD LOOP PROTECTION (Oct 2, 2025)
+
+**Multi-layer defense system prevents infinite reload loops that crashed the kiosk.**
+
+### Protection Layers (All Implemented ✅)
+
+1. **Server throttling**: `handlers/reload_handler.rb` - Max 1 reload broadcast per 2 minutes
+2. **Client deduplication**: `dashboard/src/context/DataContext.tsx` - Blocks reloads within 2 minutes
+3. **Systemd restart limits**: Kiosk service only restarts 3× in 60s, then stops trying
+4. **Emergency stop**: `bin/emergency-kiosk-stop` script for manual recovery
+
+### Emergency Stop (Run as your user, not kimonokittens)
+
+**⚠️ REQUIRES TTY/SUDO PASSWORD - Run as fredrik, not kimonokittens:**
+
+```bash
+# Emergency kiosk stop (uses machinectl which needs sudo)
+./bin/emergency-kiosk-stop
+```
+
+**Why machinectl?** `sudo systemctl stop kimonokittens-kiosk` FAILS because it's a user service. Only `machinectl shell kimonokittens@.host /usr/bin/systemctl --user stop kimonokittens-kiosk` works from root.
+
+**Full incident analysis**: See `RELOAD_LOOP_INCIDENT.md`
+
+---
+
 ## 🔐 Environment Variables
 
 **Production `.env` file synced with development** - The `/home/kimonokittens/.env` file contains all API keys and secrets from the Mac development environment for smooth deployment across all monorepo features (weather, Strava, bank integration, handbook, etc.).
