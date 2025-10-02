@@ -358,12 +358,20 @@ class DeploymentHandler
     end
     $logger.info("✅ Bundle install successful")
 
-    # Restart backend service
-    unless system('sudo systemctl restart kimonokittens-dashboard')
-      $logger.error("❌ Backend service restart failed")
+    # Reload backend service (graceful restart via USR1 signal to Puma)
+    # Find PID from systemd service
+    pid_output = `systemctl show kimonokittens-dashboard --property=MainPID --value`.strip
+    if pid_output.empty? || pid_output == "0"
+      $logger.error("❌ Could not find dashboard service PID")
       return false
     end
-    $logger.info("✅ Backend service restarted")
+
+    pid = pid_output.to_i
+    unless system("kill -USR1 #{pid}")
+      $logger.error("❌ Backend service reload failed")
+      return false
+    end
+    $logger.info("✅ Backend service reloaded (PID #{pid})")
 
     true
   end
