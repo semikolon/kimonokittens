@@ -252,11 +252,6 @@
   will-change: transform, opacity;
 }
 
-/* Slide up animation for trains moving up */
-.train-departure-item.slide-up {
-  transform: translateY(-100%);
-}
-
 /* Shine swoosh animation for urgent departures (trains: 9-8-7m, buses: 4-3-2m) */
 .train-departure-item.shine-swoosh,
 .bus-departure-item.shine-swoosh {
@@ -305,37 +300,6 @@
 }
 
 /* Framer Motion handles all entry/exit/layout animations */
-
-/* Urgent departure text glow animations */
-@keyframes urgentTextGlow {
-  0%, 90% {
-    filter: drop-shadow(0 0 0 rgba(255, 140, 0, 0));
-    color: white;
-  }
-  50% {
-    filter: drop-shadow(0 0 8px rgba(255, 140, 0, 0.8));
-    color: white;
-  }
-}
-
-@keyframes criticalTextGlow {
-  0%, 90% {
-    filter: drop-shadow(0 0 0 rgba(255, 69, 0, 0));
-    color: white;
-  }
-  50% {
-    filter: drop-shadow(0 0 10px rgba(255, 69, 0, 0.9));
-    color: white;
-  }
-}
-
-.urgent-text-glow {
-  animation: urgentTextGlow 10s ease-in-out 1;
-}
-
-.critical-text-glow {
-  animation: criticalTextGlow 10s ease-in-out 1;
-}
 
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {

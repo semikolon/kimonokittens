@@ -175,10 +175,9 @@ const generateBusId = (bus: BusDeparture): string =>
   `${bus.departure_time}-${bus.line_number}-${bus.destination}`
 
 // NOTE: useTrainListChanges and useBusListChanges removed in Phase 4
-// ViewTransition API handles structural change detection via useEffect in TrainWidget
+// Framer Motion AnimatePresence handles structural change detection automatically
 
-// Urgent departure detection and flashing
-// Shine animation + pre-emptive removal for smooth exit at 5 minutes
+// Shine swoosh animation (9-8-7m trains, 4-3-2m buses) + pre-emptive removal for smooth exit
 const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
   // Map stores trainId -> isRedTinted (true for last swoosh at 7m)
   const [shineAnimatedTrains, setShineAnimatedTrains] = useState<Map<string, boolean>>(new Map())
@@ -395,10 +394,8 @@ const formatTimeDisplay = (departure: TrainDeparture | BusDeparture): string => 
 // Render train departure line
 const TrainDepartureLine: React.FC<{
   departure: TrainDeparture;
-  isUrgentFlashing?: boolean;
-  isCriticalFlashing?: boolean;
   hasShineAnimation?: boolean;
-}> = ({ departure, isUrgentFlashing = false, isCriticalFlashing = false, hasShineAnimation = false }) => {
+}> = ({ departure, hasShineAnimation = false }) => {
   const adjusted = calculateAdjustedDeparture(departure)
   const opacity = adjusted.adjustedMinutesUntil === 0 ? 1.0 : getTimeOpacity(adjusted.adjustedMinutesUntil)
   const timeDisplay = formatDelayAwareTimeDisplay(departure)
@@ -406,13 +403,12 @@ const TrainDepartureLine: React.FC<{
   // Filter out delay info from summary_deviation_note since it's now inline
   const nonDelayNote = adjusted.isDelayed ? '' : departure.summary_deviation_note
 
-  const glowClass = isUrgentFlashing ? 'urgent-text-glow' : isCriticalFlashing ? 'critical-text-glow' : ''
+  // No flashing - shine swoosh takes its place as classier urgency indicator
   const shineClass = hasShineAnimation ? 'shine-swoosh' : ''
-  const combinedClasses = [glowClass, shineClass].filter(Boolean).join(' ')
 
   return (
     <div
-      className={combinedClasses}
+      className={shineClass}
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
@@ -430,21 +426,18 @@ const TrainDepartureLine: React.FC<{
 // Render bus departure line
 const BusDepartureLine: React.FC<{
   departure: BusDeparture;
-  isUrgentFlashing?: boolean;
-  isCriticalFlashing?: boolean;
   hasShineAnimation?: boolean;
-}> = ({ departure, isUrgentFlashing = false, isCriticalFlashing = false, hasShineAnimation = false }) => {
+}> = ({ departure, hasShineAnimation = false }) => {
   const { line_number, destination, minutes_until } = departure
   const opacity = minutes_until === 0 ? 1.0 : getTimeOpacity(minutes_until)
   const timeDisplay = formatTimeDisplay(departure)
 
-  const glowClass = isUrgentFlashing ? 'urgent-text-glow' : isCriticalFlashing ? 'critical-text-glow' : ''
+  // No flashing - shine swoosh takes its place as classier urgency indicator
   const shineClass = hasShineAnimation ? 'shine-swoosh' : ''
-  const combinedClasses = [glowClass, shineClass].filter(Boolean).join(' ')
 
   return (
     <div
-      className={combinedClasses}
+      className={shineClass}
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
@@ -637,8 +630,6 @@ export function TrainWidget() {
                         >
                           <TrainDepartureLine
                             departure={train}
-                            isUrgentFlashing={false}
-                            isCriticalFlashing={false}
                             hasShineAnimation={isRedTinted !== undefined}
                           />
                         </motion.div>
@@ -686,8 +677,6 @@ export function TrainWidget() {
                         >
                           <BusDepartureLine
                             departure={bus}
-                            isUrgentFlashing={false}
-                            isCriticalFlashing={false}
                             hasShineAnimation={isRedTinted !== undefined}
                           />
                         </motion.div>
