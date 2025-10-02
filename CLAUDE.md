@@ -141,7 +141,7 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 sudo systemctl status kimonokittens-dashboard  # Runs: puma_server.rb on port 3001
 
 # Webhook receiver (root systemd)
-sudo systemctl status kimonokittens-webhook    # Runs: webhook_puma_server.rb on port 9001
+sudo systemctl status kimonokittens-webhook    # Runs: webhook_puma_server.rb on port 49123
 
 # Chrome kiosk (user systemd via kimonokittens user)
 sudo -u kimonokittens systemctl --user status kimonokittens-kiosk
@@ -152,7 +152,7 @@ machinectl shell kimonokittens@ /usr/bin/systemctl --user status kimonokittens-k
 ### Webhook Deployment Flow
 **Smart change detection + 2-minute debounce + component-specific deployment**
 
-1. **Push to master** → GitHub webhook → `POST localhost:9001/webhook`
+1. **Push to master** → GitHub webhook → `POST localhost:49123/webhook`
 2. **Analyze changes**:
    - `dashboard/` → Frontend deployment
    - `*.rb`, `Gemfile` → Backend deployment
@@ -197,7 +197,7 @@ sudo systemctl restart kimonokittens-dashboard
 ### Port Architecture
 - **3001**: Backend API + WebSocket (Puma)
 - **5175**: Frontend dev server (Vite, dev only)
-- **9001**: Webhook receiver (Puma)
+- **49123**: Webhook receiver (Puma, obscure port for security)
 - **80/443**: Nginx → serves `/var/www/kimonokittens/dashboard/`
 - **localhost**: Kiosk Chrome points here (nginx proxy)
 
@@ -467,7 +467,7 @@ Train departures use **keyless SL Transport API** (`transport.integration.sl.se`
 
 The kimonokittens project uses a **smart webhook system** with Puma architecture for automated deployments. The system analyzes changed files and only deploys what's necessary, with intelligent debouncing for rapid development workflows.
 
-**Architecture**: Unified Puma + Rack across all services (dashboard port 3001, webhook port 9001)
+**Architecture**: Unified Puma + Rack across all services (dashboard port 3001, webhook port 49123)
 
 ### Key Features
 
