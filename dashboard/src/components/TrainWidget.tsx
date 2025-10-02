@@ -191,75 +191,55 @@ const isCriticalDeparture = (train: TrainDeparture): boolean => {
          train.suffix.includes('spring')
 }
 
-// Simplified departure sequence - only warning/critical glows (ViewTransitions handle departing)
-const useDepartureSequence = (trains: TrainDeparture[]) => {
-  const [trainStates, setTrainStates] = useState<Map<string, DepartureState>>(new Map())
-  const [warningTrains, setWarningTrains] = useState<Set<string>>(new Set())
-  const [criticalTrains, setCriticalTrains] = useState<Set<string>>(new Set())
-  const [processedTransitions, setProcessedTransitions] = useState<Set<string>>(new Set())
+// Shine animation + pre-emptive removal for smooth exit at 5 minutes
+const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
+  const [shineAnimatedTrains, setShineAnimatedTrains] = useState<Set<string>>(new Set())
+  const [trainsMarkedForRemoval, setTrainsMarkedForRemoval] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     trains.forEach(train => {
       const trainId = generateTrainId(train)
       const adjusted = calculateAdjustedDeparture(train)
       const minutesUntil = adjusted.adjustedMinutesUntil
-      const currentState = trainStates.get(trainId) || 'feasible'
-      const transitionKey = `${trainId}-${currentState}`
 
-      // Trigger departure sequence when train becomes infeasible (< 5 minutes)
-      if (currentState === 'feasible' && minutesUntil < 5 && minutesUntil >= 0 && !processedTransitions.has(transitionKey)) {
-        console.log(`Starting departure sequence for train ${trainId} (${minutesUntil}m remaining)`)
-        setProcessedTransitions(prev => new Set([...prev, transitionKey]))
+      // Trigger shine swoosh at 8-9 minutes (enough time to dress and run)
+      if ((minutesUntil === 8 || minutesUntil === 9) && !shineAnimatedTrains.has(trainId)) {
+        console.log(`Shine swoosh animation for train ${trainId} at ${minutesUntil}m`)
+        setShineAnimatedTrains(prev => new Set([...prev, trainId]))
 
-        // Phase 1: Warning (orange glow) - 4 seconds
-        setTrainStates(prev => new Map(prev).set(trainId, 'warning'))
-        setWarningTrains(prev => new Set([...prev, trainId]))
-
+        // Remove shine class after 1s (animation duration)
         setTimeout(() => {
-          // Phase 2: Critical (orange-red glow) - 3 seconds
-          setTrainStates(prev => new Map(prev).set(trainId, 'critical'))
-          setWarningTrains(prev => {
+          setShineAnimatedTrains(prev => {
             const newSet = new Set(prev)
             newSet.delete(trainId)
             return newSet
           })
-          setCriticalTrains(prev => new Set([...prev, trainId]))
+        }, 1000)
+      }
 
-          setTimeout(() => {
-            // Phase 3: Cleanup (ViewTransition API handles exit animation)
-            setCriticalTrains(prev => {
-              const newSet = new Set(prev)
-              newSet.delete(trainId)
-              return newSet
-            })
-          }, 3000)
-        }, 4000)
+      // Pre-emptive removal at exactly 5 minutes (ViewTransition captures "5m" snapshot)
+      if (minutesUntil === 5 && !trainsMarkedForRemoval.has(trainId)) {
+        console.log(`Marking train ${trainId} for removal at 5m (will slide out over 800ms)`)
+
+        // Brief delay to ensure snapshot is captured, then remove from list
+        setTimeout(() => {
+          setTrainsMarkedForRemoval(prev => new Set([...prev, trainId]))
+        }, 100)
       }
     })
-  }, [trains, trainStates, processedTransitions])
+  }, [trains, shineAnimatedTrains, trainsMarkedForRemoval])
 
-  // Clean up states for trains that are no longer in the list
+  // Clean up removed trains set when they're actually gone from incoming data
   useEffect(() => {
     const currentTrainIds = new Set(trains.map(generateTrainId))
-    setTrainStates(prev => {
-      const newMap = new Map(prev)
-      for (const trainId of prev.keys()) {
-        if (!currentTrainIds.has(trainId)) {
-          newMap.delete(trainId)
-        }
-      }
-      return newMap
-    })
-
-    // Clean up flash sets
-    setWarningTrains(prev => new Set([...prev].filter(id => currentTrainIds.has(id))))
-    setCriticalTrains(prev => new Set([...prev].filter(id => currentTrainIds.has(id))))
+    setTrainsMarkedForRemoval(prev =>
+      new Set([...prev].filter(id => currentTrainIds.has(id)))
+    )
   }, [trains])
 
   return {
-    trainStates,
-    urgentFlashingTrains: warningTrains, // Keep same interface for compatibility
-    criticalFlashingTrains: criticalTrains
+    shineAnimatedTrains,
+    trainsMarkedForRemoval
   }
 }
 
@@ -485,20 +465,23 @@ export function TrainWidget() {
   const trainsForHooks = structuredData ?
     mergeDelayInfoIntoTrains(structuredData.trains, structuredData.deviations) : []
 
-  // Include trains in departure sequence (warning, critical states) - ViewTransitions handle exit animations
-  const { trainStates, urgentFlashingTrains, criticalFlashingTrains } = useDepartureSequence(trainsForHooks)
+  // Shine animation at 8-9min + pre-emptive removal at 5min
+  const { shineAnimatedTrains, trainsMarkedForRemoval } = useTrainDepartureAnimation(trainsForHooks)
 
   const feasibleTrainsForHooks = trainsForHooks.filter(train => {
     const trainId = generateTrainId(train)
     const adjusted = calculateAdjustedDeparture(train)
-    const departureState = trainStates.get(trainId) || 'feasible'
 
-    // Include trains that are feasible OR in departure sequence (warning, critical)
-    // Trains are removed from list naturally when no longer feasible; ViewTransitions handle exit animation
-    return adjusted.adjustedMinutesUntil >= 0 && (
-      isFeasibleTrainDeparture(adjusted.adjustedMinutesUntil) ||
-      ['warning', 'critical'].includes(departureState)
-    )
+    // Show trains with > 5 minutes, OR trains at exactly 5m that aren't marked for removal yet
+    // Once marked for removal at 5m, ViewTransition captures snapshot showing "5m"
+    // Then 800ms exit animation plays before next data refresh (30s later)
+    // This ensures users never see "4m" on screen
+    if (adjusted.adjustedMinutesUntil > 5) {
+      return true
+    } else if (adjusted.adjustedMinutesUntil === 5) {
+      return !trainsMarkedForRemoval.has(trainId)
+    }
+    return false
   })
 
   const busesForHooks = structuredData?.buses || []
@@ -607,14 +590,11 @@ export function TrainWidget() {
                 <div className="train-list-container">
                   {feasibleTrains.map((train, index) => {
                     const trainId = generateTrainId(train)
-                    const departureState = trainStates.get(trainId) || 'feasible'
-                    const isUrgentFlashing = urgentFlashingTrains.has(trainId)
-                    const isCriticalFlashing = criticalFlashingTrains.has(trainId)
+                    const hasShineAnimation = shineAnimatedTrains.has(trainId)
 
-                    // Build CSS classes based on departure state (ViewTransitions handle animations)
+                    // Build CSS classes - shine swoosh at 8-9 minutes
                     const cssClasses = ['train-departure-item']
-                    if (departureState === 'warning') cssClasses.push('warning-glow')
-                    if (departureState === 'critical') cssClasses.push('critical-glow')
+                    if (hasShineAnimation) cssClasses.push('shine-swoosh')
 
                     return (
                       <div
@@ -627,8 +607,8 @@ export function TrainWidget() {
                       >
                         <TrainDepartureLine
                           departure={train}
-                          isUrgentFlashing={isUrgentFlashing}
-                          isCriticalFlashing={isCriticalFlashing}
+                          isUrgentFlashing={false}
+                          isCriticalFlashing={false}
                         />
                       </div>
                     )
