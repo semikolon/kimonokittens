@@ -125,7 +125,7 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 **Why machinectl?** `sudo systemctl stop kimonokittens-kiosk` FAILS because it's a user service. Only `machinectl shell kimonokittens@.host /usr/bin/systemctl --user stop kimonokittens-kiosk` works from root.
 
-**Full incident analysis**: See `RELOAD_LOOP_INCIDENT.md`
+**Full incident analysis**: See `docs/archive/RELOAD_LOOP_INCIDENT.md`
 
 ---
 
