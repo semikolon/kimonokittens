@@ -402,8 +402,8 @@ class DeploymentHandler
       $logger.info("✅ #{cmd} successful")
     end
 
-    # Copy built files to nginx directory (matches setup_production.sh approach)
-    unless system('sudo rsync -av dist/ /var/www/kimonokittens/dashboard/')
+    # Copy built files to nginx directory (no sudo needed, kimonokittens owns the directory)
+    unless system('rsync -av dist/ /var/www/kimonokittens/dashboard/')
       $logger.error("❌ Frontend file deployment failed")
       return false
     end
@@ -468,8 +468,8 @@ class DeploymentHandler
   def restart_kiosk
     $logger.info("🔄 Restarting kiosk browser...")
 
-    # Restart user service (modern approach)
-    if system('sudo -u kimonokittens systemctl --user restart kimonokittens-kiosk')
+    # Restart user service (webhook already runs as kimonokittens user)
+    if system('systemctl --user restart kimonokittens-kiosk')
       $logger.info("✅ Kiosk browser restarted")
       true
     else
