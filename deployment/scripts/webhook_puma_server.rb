@@ -389,7 +389,7 @@ class DeploymentHandler
     # NODE_ENV=production in .env would otherwise silently skip devDeps (including vite)
     # devDependencies are REQUIRED for the build process (vite, rollup, etc.)
     # MUST use Ruby hash syntax to actually unset env var (system('NODE_ENV=') doesn't work!)
-    unless system({'NODE_ENV' => nil}, 'npm ci')
+    unless system({'NODE_ENV' => nil}, 'npm ci --legacy-peer-deps')
       $logger.error("❌ npm ci (workspace root) failed")
       return false
     end
