@@ -96,6 +96,26 @@ echo ""
 echo -e "${GREEN}✅ Webhook configuration complete!${NC}"
 echo ""
 
+# Install GitHub CLI if not present
+if ! command -v gh &> /dev/null; then
+    echo "📦 GitHub CLI not found - installing..."
+
+    # Add GitHub CLI repository
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+
+    # Install gh
+    apt update -qq
+    if apt install gh -y -qq; then
+        echo -e "${GREEN}✅ GitHub CLI installed successfully${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Failed to install GitHub CLI - will show manual instructions${NC}"
+    fi
+    echo ""
+fi
+
 # Try GitHub CLI automation
 if command -v gh &> /dev/null; then
     echo "📡 GitHub CLI detected - checking authentication..."
@@ -130,7 +150,48 @@ if command -v gh &> /dev/null; then
         fi
     else
         echo -e "${YELLOW}⚠️  GitHub CLI not authenticated${NC}"
-        echo "   Run: gh auth login"
+        echo ""
+        echo "Authenticating with GitHub..."
+        echo "This will open a browser. Follow the prompts to authenticate."
+        echo ""
+
+        # Run gh auth login as the user running the script (not root)
+        if [ -n "$SUDO_USER" ]; then
+            sudo -u "$SUDO_USER" gh auth login
+        else
+            gh auth login
+        fi
+
+        # Check if auth succeeded
+        if gh auth status &> /dev/null; then
+            echo ""
+            echo -e "${GREEN}✅ GitHub CLI authenticated successfully${NC}"
+            echo ""
+            echo "🚀 Creating webhook..."
+
+            if gh api "repos/$REPO/hooks" \
+                -f name=web \
+                -f config[url]="$PUBLIC_URL" \
+                -f config[secret]="$SECRET" \
+                -f config[content_type]=application/json \
+                -F config[insecure_ssl]=0 \
+                -f events[]=push \
+                -F active=true 2>/dev/null; then
+
+                echo ""
+                echo -e "${GREEN}🎉 Webhook created successfully!${NC}"
+                echo ""
+                echo "✅ GitHub will now trigger deployments on push to master"
+                echo "✅ Webhook URL: $PUBLIC_URL"
+                echo "✅ Secret is configured and verified"
+                echo ""
+                echo -e "${YELLOW}⚠️  IMPORTANT: Ensure port $WEBHOOK_PORT is forwarded in your router${NC}"
+                echo "   Router: Forward external port $WEBHOOK_PORT → $IP:$WEBHOOK_PORT"
+                exit 0
+            fi
+        else
+            echo -e "${YELLOW}⚠️  GitHub authentication failed - will show manual instructions${NC}"
+        fi
         echo ""
     fi
 else
