@@ -244,7 +244,8 @@
   position: relative;
 }
 
-.train-departure-item {
+.train-departure-item,
+.bus-departure-item {
   transform: translateY(0);
   transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   opacity: 1;
@@ -256,8 +257,9 @@
   transform: translateY(-100%);
 }
 
-/* Shine swoosh animation for urgent train departures (8-9 minutes) */
-.train-departure-item.shine-swoosh {
+/* Shine swoosh animation for urgent departures (trains: 9-8-7m, buses: 4-3-2m) */
+.train-departure-item.shine-swoosh,
+.bus-departure-item.shine-swoosh {
   position: relative;
   background: linear-gradient(
     90deg,
@@ -271,7 +273,7 @@
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  animation: shineSwoosh 1s linear;
+  animation: shineSwoosh 2s linear;
 }
 
 @keyframes shineSwoosh {

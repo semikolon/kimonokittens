@@ -202,19 +202,19 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
       const adjusted = calculateAdjustedDeparture(train)
       const minutesUntil = adjusted.adjustedMinutesUntil
 
-      // Trigger shine swoosh at 8-9 minutes (enough time to dress and run)
-      if ((minutesUntil === 8 || minutesUntil === 9) && !shineAnimatedTrains.has(trainId)) {
+      // Trigger shine swoosh at 9m, 8m, 7m (signals: time to go catch this train!)
+      if ((minutesUntil === 9 || minutesUntil === 8 || minutesUntil === 7) && !shineAnimatedTrains.has(trainId)) {
         console.log(`Shine swoosh animation for train ${trainId} at ${minutesUntil}m`)
         setShineAnimatedTrains(prev => new Set([...prev, trainId]))
 
-        // Remove shine class after 1s (animation duration)
+        // Remove shine class after 2s (animation duration)
         setTimeout(() => {
           setShineAnimatedTrains(prev => {
             const newSet = new Set(prev)
             newSet.delete(trainId)
             return newSet
           })
-        }, 1000)
+        }, 2000)
       }
 
       // Pre-emptive removal at exactly 5 minutes (ViewTransition captures "5m" snapshot)
@@ -243,59 +243,41 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
   }
 }
 
-// Bus urgent departure detection and flashing
-const isUrgentBusDeparture = (bus: BusDeparture): boolean => {
-  // Flash when 2 minutes left (orange warning) - allows buses to settle before glowing
-  return bus.minutes_until === 2
-}
-
-const isCriticalBusDeparture = (bus: BusDeparture): boolean => {
-  // Flash when 1 minute left (red-orange critical)
-  return bus.minutes_until === 1
-}
-
-const useUrgentBusFlashing = (buses: BusDeparture[]) => {
-  const [urgentFlashingBuses, setUrgentFlashingBuses] = useState<Set<string>>(new Set())
-  const [criticalFlashingBuses, setCriticalFlashingBuses] = useState<Set<string>>(new Set())
-  const [alreadyFlashed, setAlreadyFlashed] = useState<Set<string>>(new Set())
+// Bus shine animation at 4m, 3m, 2m
+const useBusDepartureAnimation = (buses: BusDeparture[]) => {
+  const [shineAnimatedBuses, setShineAnimatedBuses] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     buses.forEach(bus => {
       const busId = generateBusId(bus)
+      const minutesUntil = bus.minutes_until
 
-      // Check for urgent departures (4 minutes)
-      if (isUrgentBusDeparture(bus) && !alreadyFlashed.has(busId + '-urgent')) {
-        setAlreadyFlashed(prev => new Set([...prev, busId + '-urgent']))
-        setUrgentFlashingBuses(prev => new Set([...prev, busId]))
+      // Trigger shine swoosh at 4m, 3m, 2m (signals: time to go catch this bus!)
+      if ((minutesUntil === 4 || minutesUntil === 3 || minutesUntil === 2) && !shineAnimatedBuses.has(busId)) {
+        console.log(`Shine swoosh animation for bus ${busId} at ${minutesUntil}m`)
+        setShineAnimatedBuses(prev => new Set([...prev, busId]))
 
-        // Stop flashing after 4 flashes × 2.5s = 10s
+        // Remove shine class after 2s (animation duration)
         setTimeout(() => {
-          setUrgentFlashingBuses(prev => {
+          setShineAnimatedBuses(prev => {
             const newSet = new Set(prev)
             newSet.delete(busId)
             return newSet
           })
-        }, 10000)
-      }
-
-      // Check for critical departures (3 minutes)
-      if (isCriticalBusDeparture(bus) && !alreadyFlashed.has(busId + '-critical')) {
-        setAlreadyFlashed(prev => new Set([...prev, busId + '-critical']))
-        setCriticalFlashingBuses(prev => new Set([...prev, busId]))
-
-        // Stop flashing after 2 flashes × 2s = 4s
-        setTimeout(() => {
-          setCriticalFlashingBuses(prev => {
-            const newSet = new Set(prev)
-            newSet.delete(busId)
-            return newSet
-          })
-        }, 4000)
+        }, 2000)
       }
     })
-  }, [buses, alreadyFlashed])
+  }, [buses, shineAnimatedBuses])
 
-  return { urgentFlashingBuses, criticalFlashingBuses }
+  // Clean up animated buses set when they're gone from incoming data
+  useEffect(() => {
+    const currentBusIds = new Set(buses.map(generateBusId))
+    setShineAnimatedBuses(prev =>
+      new Set([...prev].filter(id => currentBusIds.has(id)))
+    )
+  }, [buses])
+
+  return { shineAnimatedBuses }
 }
 
 // Helper functions for time-based styling
@@ -490,8 +472,7 @@ export function TrainWidget() {
   )
 
   // Call all hooks with safe data (React Hooks Rules - must be called in same order every render)
-  // Note: departure sequence for trains is already handled above
-  const { urgentFlashingBuses, criticalFlashingBuses } = useUrgentBusFlashing(feasibleBusesForHooks)
+  const { shineAnimatedBuses } = useBusDepartureAnimation(feasibleBusesForHooks)
 
   // ViewTransition state management - store lists in state to enable transition wrapping
   const [feasibleTrainsState, setFeasibleTrainsState] = useState<TrainDeparture[]>([])
@@ -633,13 +614,16 @@ export function TrainWidget() {
                 <div className="train-list-container">
                   {feasibleBuses.map((bus, index) => {
                     const busId = generateBusId(bus)
-                    const isUrgentFlashing = urgentFlashingBuses.has(busId)
-                    const isCriticalFlashing = criticalFlashingBuses.has(busId)
+                    const hasShineAnimation = shineAnimatedBuses.has(busId)
+
+                    // Build CSS classes - shine swoosh at 4-3-2 minutes
+                    const cssClasses = ['bus-departure-item']
+                    if (hasShineAnimation) cssClasses.push('shine-swoosh')
 
                     return (
                       <div
                         key={busId}
-                        className="train-departure-item"
+                        className={cssClasses.join(' ')}
                         style={{
                           '--item-index': index,
                           viewTransitionName: busId
@@ -647,8 +631,8 @@ export function TrainWidget() {
                       >
                         <BusDepartureLine
                           departure={bus}
-                          isUrgentFlashing={isUrgentFlashing}
-                          isCriticalFlashing={isCriticalFlashing}
+                          isUrgentFlashing={false}
+                          isCriticalFlashing={false}
                         />
                       </div>
                     )
