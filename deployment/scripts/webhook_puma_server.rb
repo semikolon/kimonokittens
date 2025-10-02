@@ -376,8 +376,10 @@ class DeploymentHandler
     return false unless ensure_clean_git_state
 
     # Install workspace dependencies from root (monorepo setup)
-    # Use --include=dev to ensure build tools (vite) are installed even in production
-    unless system('npm ci --include=dev')
+    # CRITICAL: Unset NODE_ENV during install to ensure devDependencies are installed
+    # NODE_ENV=production in .env would otherwise silently skip devDeps (including vite)
+    # devDependencies are REQUIRED for the build process (vite, rollup, etc.)
+    unless system('NODE_ENV= npm ci')
       $logger.error("❌ npm ci (workspace root) failed")
       return false
     end
