@@ -679,6 +679,15 @@ class RentCalculatorHandler
       }
     end
 
+    # If historical lookup failed (returned 0), it's a manual projection
+    if historical_cost == 0
+      return {
+        type: 'projection',
+        electricity_source: 'manual_projection',
+        description_sv: 'Baserad på uppskattad prognos'
+      }
+    end
+
     # Otherwise, assume it's from manually entered current bills
     return {
       type: 'actual',
