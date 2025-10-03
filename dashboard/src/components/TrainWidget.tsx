@@ -506,7 +506,7 @@ export function TrainWidget() {
   const feasibleTrains = feasibleTrainsForHooks
   const feasibleBuses = feasibleBusesForHooks
 
-  // Only show deviations for feasible departures (accounting for delays)
+  // Only show deviations for imminent departures (within next 20 minutes)
   const feasibleDeviations = deviations.filter(deviation => {
     // Check if this is a delay deviation and extract delay minutes
     const isDelayDeviation = /försenad (\d+) min/.test(deviation.reason)
@@ -526,12 +526,13 @@ export function TrainWidget() {
       const now = new Date()
       const minutesUntilActual = Math.round((actualDeparture.getTime() - now.getTime()) / (1000 * 60))
 
-      // Only show if actual departure is in future and feasible
-      return minutesUntilActual >= 6
+      // Only show if within next 20 minutes (relevant to visible departure list)
+      return minutesUntilActual >= 6 && minutesUntilActual <= 20
     }
 
-    // For non-delay deviations, use original time
-    return isFeasibleTrainDeparture(getMinutesUntilFromTime(deviation.time))
+    // For non-delay deviations, limit to next 20 minutes (not just "feasible")
+    const minutesUntil = getMinutesUntilFromTime(deviation.time)
+    return minutesUntil >= 6 && minutesUntil <= 20
   })
 
   return (
