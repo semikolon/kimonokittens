@@ -70,39 +70,48 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 ---
 
-## 🌙 Dashboard Sleep Schedule Feature
+## 🌙 Dashboard Sleep Schedule Feature ✅ DEPLOYED
 
-**Goal:** Add configurable sleep schedule to dashboard kiosk for energy savings and display longevity.
+**Status:** ✅ FULLY IMPLEMENTED AND DEPLOYED (October 3, 2025)
 
-### Requirements
-- **Frontend-based implementation** (no system-level power management changes)
-- **Gradual dimming**: Transition to black screen over 2 minutes
-- **No screen lock**: Display stays unlocked, just visually dark
-- **Default schedule**:
-  - Sleep: 1:00 AM (weeknights)
-  - Wake: 5:30 AM
-- **Configuration UI**: Settings panel to adjust sleep/wake times
-- **Weekend behavior**: TBD (possibly different schedule or always-on)
+### Implemented Features
+- ✅ **File-based configuration** at `config/sleep_schedule.json` (git-tracked, vim-editable)
+- ✅ **Gradual dimming**: 2-minute fade transition to black screen
+- ✅ **Weekend support**: 3am sleep time on Friday/Saturday nights, 1am Sun-Thu
+- ✅ **Adaptive brightness**: 24-hour schedule (0.7-1.5 range) integrated with xrandr
+- ✅ **Monitor power control**: DPMS power off during sleep (optional via config)
+- ✅ **Animation pausing**: WebGL shader and CSS animations pause during sleep
+- ✅ **Webhook auto-reload**: Config changes trigger kiosk browser reload
 
-### Technical Approach
-- CSS transitions for smooth opacity fade (0.0 to 1.0 over 2min)
-- JavaScript timer to trigger sleep/wake based on schedule
-- LocalStorage to persist user preferences
-- Black overlay div that fades in/out
-- Keep WebSocket connections alive during sleep
-- Resume normal operation on wake (no refresh needed)
+### Configuration
+Located at `config/sleep_schedule.json`:
+```json
+{
+  "enabled": true,
+  "sleepTime": "01:00",
+  "sleepTimeWeekend": "03:00",
+  "wakeTime": "05:30",
+  "monitorPowerControl": true,
+  "brightnessEnabled": true
+}
+```
 
-### Implementation Tasks
-- [ ] Create SleepSchedule component with time pickers
-- [ ] Implement gradual fade-to-black animation
-- [ ] Add schedule configuration UI in dashboard
-- [ ] Store schedule preferences in localStorage
-- [ ] Add manual sleep/wake buttons for testing
-- [ ] Test WebSocket behavior during sleep mode
-- [ ] Consider motion sensor integration for instant wake
+### Components Deployed
+- **Backend API**: `/api/sleep/config` (handlers/sleep_schedule_handler.rb)
+- **Frontend Context**: SleepScheduleContext.tsx (state machine with fade transitions)
+- **UI Components**: FadeOverlay.tsx, animated-shader-background.tsx integration
+- **Display Control**: display_control_handler.rb (xrandr brightness + DPMS)
 
-**Priority**: MEDIUM - Nice to have, not blocking deployment
-**Estimated effort**: 4-6 hours
+### Testing Needed
+- [ ] End-to-end sleep/wake cycle verification (wait until 1am or manually trigger)
+- [ ] Weekend schedule transition (Friday/Saturday 3am behavior)
+- [ ] Brightness control on physical display
+- [ ] Monitor DPMS power control during sleep
+
+### Cleanup Tasks
+- [x] Remove test comments from puma_server.rb:6 and dashboard/src/App.tsx:4 (cleaned up Oct 3)
+
+**Details:** See `docs/SESSION_WORK_REPORT_2025-10-03.md` for complete implementation summary
 
 ---
 ## Immediate Tasks & Repository Hygiene

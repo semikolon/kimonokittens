@@ -126,19 +126,19 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
   const calculateBrightness = (hour: number, minute: number): number => {
     const time = hour + minute / 60;
 
-    // Morning: 6am-12pm (1.0 → 1.4)
+    // Morning: 6am-12pm (1.0 → 1.2)
     if (time >= 6 && time < 12) {
-      return 1.0 + ((time - 6) / 6) * 0.4;
+      return 1.0 + ((time - 6) / 6) * 0.2;
     }
 
-    // Afternoon: 12pm-6pm (1.4 → 1.2)
+    // Afternoon: 12pm-6pm (1.2 → 1.0)
     if (time >= 12 && time < 18) {
-      return 1.4 - ((time - 12) / 6) * 0.2;
+      return 1.2 - ((time - 12) / 6) * 0.2;
     }
 
-    // Evening: 6pm-10pm (1.2 → 0.9)
+    // Evening: 6pm-10pm (1.0 → 0.9)
     if (time >= 18 && time < 22) {
-      return 1.2 - ((time - 18) / 4) * 0.3;
+      return 1.0 - ((time - 18) / 4) * 0.1;
     }
 
     // Night: 10pm-1am (0.9 → 0.7)

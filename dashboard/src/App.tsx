@@ -1,7 +1,6 @@
 import React from 'react'
 import { DataProvider, useData } from './context/DataContext' // WebSocket data provider
 import { SleepScheduleProvider, useSleepSchedule } from './contexts/SleepScheduleContext'
-// Test deployment verification
 import { FadeOverlay } from './components/SleepSchedule/FadeOverlay'
 import { ClockWidget } from './components/ClockWidget'
 import { WeatherWidget } from './components/WeatherWidget'
