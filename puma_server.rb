@@ -3,6 +3,7 @@ require 'puma'
 require 'faraday'
 require 'oj'
 require 'awesome_print'
+# Test deployment verification
 require 'active_support/all'
 require 'fileutils'
 require 'digest/sha1'
