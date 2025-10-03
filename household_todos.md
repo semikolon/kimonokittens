@@ -1,5 +1,5 @@
 # Household Todos
 
 - Brottas & meditera
-- Annons i fler grupper
+- Hitta vår nya crew
 - Klipp gräsmattan
