@@ -54,8 +54,5 @@ node_modules/
 
 tmp/
 
-# Process manager runtime files
-.process_manager.pid
-
 # Claude Code personal settings
 .claude/settings.local.json
