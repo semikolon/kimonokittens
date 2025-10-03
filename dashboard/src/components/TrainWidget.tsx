@@ -211,6 +211,28 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
     // Update prevTrainsRef to track changes (removed early return that blocked time-based animations)
     prevTrainsRef.current = trains
 
+    // 🧪 TEST MODE: Trigger swoosh every 5s to verify CSS animation works
+    const testInterval = setInterval(() => {
+      trains.forEach(train => {
+        const trainId = generateTrainId(train)
+        const isRed = Math.random() > 0.5 // Randomly alternate orange/red
+        console.log(`🧪 TEST: Swoosh animation for train ${trainId} ${isRed ? '(RED)' : '(ORANGE)'}`)
+
+        setShineAnimatedTrains(prev => new Map(prev).set(trainId, isRed))
+
+        setTimeout(() => {
+          setShineAnimatedTrains(prev => {
+            const newMap = new Map(prev)
+            newMap.delete(trainId)
+            return newMap
+          })
+        }, 2000)
+      })
+    }, 5000)
+
+    return () => clearInterval(testInterval)
+
+    /* ORIGINAL LOGIC - COMMENTED FOR TESTING
     trains.forEach(train => {
       const trainId = generateTrainId(train)
       const adjusted = calculateAdjustedDeparture(train)
@@ -237,6 +259,7 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
           }, 2000)
         }
       }
+      }
 
       // Pre-emptive removal at exactly 5 minutes (train slides out before showing 4m)
       if (minutesUntil === 5 && !markedForRemovalRef.current.has(trainId)) {
@@ -249,7 +272,8 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
         }, 100)
       }
     })
-  }, [trains, genuinelyNewTrains])
+    */
+  }, [trains])
 
   // Clean up removed trains set when they're actually gone from incoming data
   useEffect(() => {
@@ -300,6 +324,28 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
     // Update prevBusesRef to track changes (removed early return that blocked time-based animations)
     prevBusesRef.current = buses
 
+    // 🧪 TEST MODE: Trigger swoosh every 5s to verify CSS animation works
+    const testInterval = setInterval(() => {
+      buses.forEach(bus => {
+        const busId = generateBusId(bus)
+        const isRed = Math.random() > 0.5 // Randomly alternate orange/red
+        console.log(`🧪 TEST: Swoosh animation for bus ${busId} ${isRed ? '(RED)' : '(ORANGE)'}`)
+
+        setShineAnimatedBuses(prev => new Map(prev).set(busId, isRed))
+
+        setTimeout(() => {
+          setShineAnimatedBuses(prev => {
+            const newMap = new Map(prev)
+            newMap.delete(busId)
+            return newMap
+          })
+        }, 2000)
+      })
+    }, 5000)
+
+    return () => clearInterval(testInterval)
+
+    /* ORIGINAL LOGIC - COMMENTED FOR TESTING
     buses.forEach(bus => {
       const busId = generateBusId(bus)
       const minutesUntil = bus.minutes_until
@@ -326,7 +372,8 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
         }
       }
     })
-  }, [buses, genuinelyNewBuses])
+    */
+  }, [buses])
 
   // Clean up animated buses map when they're gone from incoming data
   useEffect(() => {
