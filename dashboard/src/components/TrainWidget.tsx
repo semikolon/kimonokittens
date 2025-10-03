@@ -190,7 +190,29 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
   const animatedAtMinuteRef = useRef<Map<string, Set<number>>>(new Map())
   const markedForRemovalRef = useRef<Set<string>>(new Set())
 
+  // Cleanup function to remove shine animation after it completes
+  const cleanupShineAnimation = (trainId: string) => {
+    setShineAnimatedTrains(prev => {
+      const newMap = new Map(prev)
+      newMap.delete(trainId)
+      return newMap
+    })
+  }
+
   useEffect(() => {
+    // 🧪 TEST MODE: Trigger swoosh every 5s to debug animation
+    const testInterval = setInterval(() => {
+      trains.forEach(train => {
+        const trainId = generateTrainId(train)
+        const isRed = Math.random() > 0.5
+        console.log(`🧪 TEST: Swoosh for train ${trainId} ${isRed ? '(RED)' : '(ORANGE)'}`)
+        setShineAnimatedTrains(prev => new Map(prev).set(trainId, isRed))
+      })
+    }, 5000)
+
+    return () => clearInterval(testInterval)
+
+    /* PRODUCTION LOGIC - DISABLED FOR TESTING
     trains.forEach(train => {
       const trainId = generateTrainId(train)
       const adjusted = calculateAdjustedDeparture(train)
@@ -206,18 +228,9 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
           animatedAtMinuteRef.current.set(trainId, animatedMinutes)
 
           setShineAnimatedTrains(prev => new Map(prev).set(trainId, isLastSwoosh))
-
-          // Remove shine class after 3s (animation duration)
-          setTimeout(() => {
-            setShineAnimatedTrains(prev => {
-              const newMap = new Map(prev)
-              newMap.delete(trainId)
-              return newMap
-            })
-          }, 3000)
+          // Cleanup happens via onAnimationEnd callback, not setTimeout
         }
       }
-
       // Pre-emptive removal at exactly 5 minutes (train slides out before showing 4m)
       if (minutesUntil === 5 && !markedForRemovalRef.current.has(trainId)) {
         console.log(`Marking train ${trainId} for removal at 5m (will slide out over 1s)`)
@@ -229,6 +242,7 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
         }, 100)
       }
     })
+    */
   }, [trains])
 
   // Clean up removed trains set when they're actually gone from incoming data
@@ -244,7 +258,8 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
 
   return {
     shineAnimatedTrains,
-    trainsMarkedForRemoval
+    trainsMarkedForRemoval,
+    cleanupShineAnimation
   }
 }
 
@@ -254,7 +269,29 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
   const [shineAnimatedBuses, setShineAnimatedBuses] = useState<Map<string, boolean>>(new Map())
   const animatedAtMinuteRef = useRef<Map<string, Set<number>>>(new Map())
 
+  // Cleanup function to remove shine animation after it completes
+  const cleanupShineAnimation = (busId: string) => {
+    setShineAnimatedBuses(prev => {
+      const newMap = new Map(prev)
+      newMap.delete(busId)
+      return newMap
+    })
+  }
+
   useEffect(() => {
+    // 🧪 TEST MODE: Trigger swoosh every 5s to debug animation
+    const testInterval = setInterval(() => {
+      buses.forEach(bus => {
+        const busId = generateBusId(bus)
+        const isRed = Math.random() > 0.5
+        console.log(`🧪 TEST: Swoosh for bus ${busId} ${isRed ? '(RED)' : '(ORANGE)'}`)
+        setShineAnimatedBuses(prev => new Map(prev).set(busId, isRed))
+      })
+    }, 5000)
+
+    return () => clearInterval(testInterval)
+
+    /* PRODUCTION LOGIC - DISABLED FOR TESTING
     buses.forEach(bus => {
       const busId = generateBusId(bus)
       const minutesUntil = bus.minutes_until
@@ -269,18 +306,11 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
           animatedAtMinuteRef.current.set(busId, animatedMinutes)
 
           setShineAnimatedBuses(prev => new Map(prev).set(busId, isLastSwoosh))
-
-          // Remove shine class after 3s (animation duration)
-          setTimeout(() => {
-            setShineAnimatedBuses(prev => {
-              const newMap = new Map(prev)
-              newMap.delete(busId)
-              return newMap
-            })
-          }, 3000)
+          // Cleanup happens via onAnimationEnd callback, not setTimeout
         }
       }
     })
+    */
   }, [buses])
 
   // Clean up animated buses map when they're gone from incoming data
@@ -294,7 +324,7 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
     })
   }, [buses])
 
-  return { shineAnimatedBuses }
+  return { shineAnimatedBuses, cleanupShineAnimation }
 }
 
 // Helper functions for time-based styling
@@ -344,7 +374,8 @@ const formatTimeDisplay = (departure: TrainDeparture | BusDeparture): string => 
 const TrainDepartureLine: React.FC<{
   departure: TrainDeparture;
   shineAnimation?: 'orange' | 'red' | null;
-}> = ({ departure, shineAnimation = null }) => {
+  onAnimationEnd?: () => void;
+}> = ({ departure, shineAnimation = null, onAnimationEnd }) => {
   const adjusted = calculateAdjustedDeparture(departure)
   const opacity = adjusted.adjustedMinutesUntil === 0 ? 1.0 : getTimeOpacity(adjusted.adjustedMinutesUntil)
   const timeDisplay = formatDelayAwareTimeDisplay(departure)
@@ -364,7 +395,10 @@ const TrainDepartureLine: React.FC<{
         alignItems: 'flex-start'
       }}
     >
-      <span className={textClass}>
+      <span
+        className={textClass}
+        onAnimationEnd={shineAnimation ? onAnimationEnd : undefined}
+      >
         <strong>{timeDisplay}</strong>
         {nonDelayNote && `\u00A0${nonDelayNote}`}
         {departure.suffix && `\u00A0- ${departure.suffix}`}
@@ -377,7 +411,8 @@ const TrainDepartureLine: React.FC<{
 const BusDepartureLine: React.FC<{
   departure: BusDeparture;
   shineAnimation?: 'orange' | 'red' | null;
-}> = ({ departure, shineAnimation = null }) => {
+  onAnimationEnd?: () => void;
+}> = ({ departure, shineAnimation = null, onAnimationEnd }) => {
   const { line_number, destination, minutes_until } = departure
   const opacity = minutes_until === 0 ? 1.0 : getTimeOpacity(minutes_until)
   const timeDisplay = formatTimeDisplay(departure)
@@ -394,7 +429,10 @@ const BusDepartureLine: React.FC<{
         alignItems: 'flex-start'
       }}
     >
-      <span className={textClass}>
+      <span
+        className={textClass}
+        onAnimationEnd={shineAnimation ? onAnimationEnd : undefined}
+      >
         {line_number} till {destination}:{'\u00A0'}<strong>{timeDisplay}</strong>
       </span>
     </div>
@@ -467,7 +505,7 @@ export function TrainWidget() {
     mergeDelayInfoIntoTrains(structuredData.trains, structuredData.deviations) : []
 
   // Shine animation at 8-9min + pre-emptive removal at 5min
-  const { shineAnimatedTrains, trainsMarkedForRemoval } = useTrainDepartureAnimation(trainsForHooks)
+  const { shineAnimatedTrains, trainsMarkedForRemoval, cleanupShineAnimation: cleanupTrainAnimation } = useTrainDepartureAnimation(trainsForHooks)
 
   const feasibleTrainsForHooks = trainsForHooks.filter(train => {
     const trainId = generateTrainId(train)
@@ -491,7 +529,7 @@ export function TrainWidget() {
   )
 
   // Call all hooks with safe data (React Hooks Rules - must be called in same order every render)
-  const { shineAnimatedBuses } = useBusDepartureAnimation(feasibleBusesForHooks)
+  const { shineAnimatedBuses, cleanupShineAnimation: cleanupBusAnimation } = useBusDepartureAnimation(feasibleBusesForHooks)
 
   // Framer Motion will handle all structural changes and animations automatically
 
@@ -579,6 +617,7 @@ export function TrainWidget() {
                           <TrainDepartureLine
                             departure={train}
                             shineAnimation={shineAnimation}
+                            onAnimationEnd={() => cleanupTrainAnimation(trainId)}
                           />
                         </motion.div>
                       )
@@ -623,6 +662,7 @@ export function TrainWidget() {
                           <BusDepartureLine
                             departure={bus}
                             shineAnimation={shineAnimation}
+                            onAnimationEnd={() => cleanupBusAnimation(busId)}
                           />
                         </motion.div>
                       )
