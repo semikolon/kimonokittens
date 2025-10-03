@@ -199,12 +199,23 @@ class DeploymentHandler
   end
 
   def process_webhook(event_data)
+    # ALWAYS pull latest code first (including data files like household_todos.md)
+    unless pull_latest_code
+      return {
+        success: false,
+        message: 'Git pull failed - deployment aborted'
+      }
+    end
+
+    # Analyze what changed to determine if deployment is needed
     changes = analyze_changes(event_data['commits'] || [])
 
-    unless changes[:any_changes]
+    # If only data files changed (no code), git pull is enough
+    unless changes[:frontend] || changes[:backend] || changes[:deployment]
+      $logger.info("✅ Data files updated via git pull, no deployment needed")
       return {
         success: true,
-        message: 'No deployment needed - only docs/config changes detected'
+        message: 'Data files updated (household_todos.md, electricity_bills_history.txt, etc)'
       }
     end
 
@@ -301,6 +312,24 @@ class DeploymentHandler
 
   private
 
+  def pull_latest_code
+    $logger.info("🔄 Pulling latest code from git...")
+
+    # Change to project directory
+    Dir.chdir(@project_dir)
+
+    # Ensure git working tree is clean before pulling
+    return false unless ensure_clean_git_state
+
+    # Pull latest changes
+    unless system('git pull origin master')
+      $logger.error("❌ Git pull failed")
+      return false
+    end
+    $logger.info("✅ Git pull successful - all files updated on disk")
+    true
+  end
+
   def analyze_changes(commits)
     frontend_changed = false
     backend_changed = false
@@ -349,15 +378,7 @@ class DeploymentHandler
     # Change to project directory
     Dir.chdir(@project_dir)
 
-    # Ensure git working tree is clean before pulling
-    return false unless ensure_clean_git_state
-
-    # Pull latest changes
-    unless system('git pull origin master')
-      $logger.error("❌ Git pull failed")
-      return false
-    end
-    $logger.info("✅ Git pull successful")
+    # Note: Git pull already done in pull_latest_code() before deployment
 
     # Install Ruby dependencies
     unless system('bundle install --deployment --quiet')
@@ -392,15 +413,7 @@ class DeploymentHandler
     # Change to project directory
     Dir.chdir(@project_dir)
 
-    # Ensure git working tree is clean before pulling
-    return false unless ensure_clean_git_state
-
-    # Pull latest changes (same as backend deployment)
-    unless system('git pull origin master')
-      $logger.error("❌ Git pull failed")
-      return false
-    end
-    $logger.info("✅ Git pull successful")
+    # Note: Git pull already done in pull_latest_code() before deployment
 
     # Install workspace dependencies from root (monorepo setup)
     # CRITICAL: Unset NODE_ENV during install to ensure devDependencies are installed
