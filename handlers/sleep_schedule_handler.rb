@@ -6,8 +6,8 @@ class SleepScheduleHandler
   def self.get_config
     unless File.exist?(CONFIG_PATH)
       return {
-        success: false,
-        error: 'Sleep schedule config not found'
+        'success' => false,
+        'error' => 'Sleep schedule config not found'
       }
     end
 
@@ -16,14 +16,14 @@ class SleepScheduleHandler
       config = Oj.load(content)
 
       {
-        success: true,
-        config: config,
-        timestamp: Time.now.to_i
+        'success' => true,
+        'config' => config,
+        'timestamp' => Time.now.to_i
       }
     rescue => e
       {
-        success: false,
-        error: "Failed to read config: #{e.message}"
+        'success' => false,
+        'error' => "Failed to read config: #{e.message}"
       }
     end
   end
