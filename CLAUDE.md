@@ -577,6 +577,28 @@ journalctl -u kimonokittens-webhook --since "5 minutes ago" | grep "Backend chan
 - `kimonokittens-dashboard`: Auto-reloads via USR1 signal ✅
 - `kimonokittens-webhook`: **Manual restart required** ⚠️
 
+### ⚠️ CRITICAL: Ruby Logger Buffering Mystery
+
+**The deployment logs would appear to "stop" after rsync, but execution continued successfully.**
+
+**What happened (Oct 2-3, 2025 debugging marathon):**
+- Logs showed deployment starting, git pull, npm ci, vite build, rsync output
+- Then **complete silence** - no "✅ Frontend files deployed", no completion message
+- Looked like the thread died after rsync
+- Actually: **logs were buffered for 60 seconds** before appearing in journald
+
+**Root cause:** Ruby `Logger.new(STDOUT)` buffers output. rsync generates lots of output (filling buffer → flush), then subsequent log lines sit in buffer until it fills again or something forces flush.
+
+**Fix applied (commit `4a458ca`):**
+```ruby
+$stdout.sync = true
+$stderr.sync = true
+```
+
+**Now logs appear instantly** - no more phantom "deployment hangs" that were actually just buffered logs.
+
+**Never debug without checking wider time windows** - if logs "stop", check if they appear 30-120 seconds later.
+
 ### Monitoring Deployments
 
 ```bash
