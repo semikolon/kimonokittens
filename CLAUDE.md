@@ -84,6 +84,8 @@ Right: "Please run: sudo systemctl restart kimonokittens-webhook"
 
 **Defense in depth**: Graceful → Aggressive → Nuclear cleanup strategies ensure processes NEVER survive.
 
+---
+
 ### 🧹 Cache Cleanup After Major Changes
 
 **CRITICAL: After major dependency changes (React version jumps, etc.), always clean build caches:**

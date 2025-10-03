@@ -95,11 +95,14 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const loadConfig = async () => {
       try {
+        console.log('[SleepSchedule] Loading config from API...');
         const response = await fetch('/api/sleep/config');
         const result = await response.json();
+        console.log('[SleepSchedule] API response:', result);
 
         if (result.success && result.config) {
           const config = result.config;
+          console.log('[SleepSchedule] Config loaded successfully:', config);
           if (config.sleepTime) dispatch({ type: 'SET_SLEEP_TIME', time: config.sleepTime });
           if (config.sleepTimeWeekend) dispatch({ type: 'SET_SLEEP_TIME_WEEKEND', time: config.sleepTimeWeekend });
           if (config.wakeTime) dispatch({ type: 'SET_WAKE_TIME', time: config.wakeTime });
@@ -112,9 +115,11 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
           if (typeof config.brightnessEnabled === 'boolean' && !config.brightnessEnabled) {
             dispatch({ type: 'TOGGLE_BRIGHTNESS' }); // Toggle if disabled in config
           }
+        } else {
+          console.warn('[SleepSchedule] API response invalid:', result);
         }
       } catch (error) {
-        console.error('Failed to load sleep schedule config:', error);
+        console.error('[SleepSchedule] Failed to load config:', error);
         // Continue with DEFAULT_STATE
       }
     };
@@ -126,19 +131,19 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
   const calculateBrightness = (hour: number, minute: number): number => {
     const time = hour + minute / 60;
 
-    // Morning: 6am-12pm (1.0 → 1.4)
+    // Morning: 6am-12pm (1.0 → 1.2)
     if (time >= 6 && time < 12) {
-      return 1.0 + ((time - 6) / 6) * 0.4;
+      return 1.0 + ((time - 6) / 6) * 0.2;
     }
 
-    // Afternoon: 12pm-6pm (1.4 → 1.2)
+    // Afternoon: 12pm-6pm (1.2 → 1.0)
     if (time >= 12 && time < 18) {
-      return 1.4 - ((time - 12) / 6) * 0.2;
+      return 1.2 - ((time - 12) / 6) * 0.2;
     }
 
-    // Evening: 6pm-10pm (1.2 → 0.9)
+    // Evening: 6pm-10pm (1.0 → 0.9)
     if (time >= 18 && time < 22) {
-      return 1.2 - ((time - 18) / 4) * 0.3;
+      return 1.0 - ((time - 18) / 4) * 0.1;
     }
 
     // Night: 10pm-1am (0.9 → 0.7)
@@ -182,7 +187,7 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     updateBrightness();
-    const interval = setInterval(updateBrightness, 60000); // Every minute
+    const interval = setInterval(updateBrightness, 30000); // Every 30 seconds for smooth transitions
 
     return () => clearInterval(interval);
   }, [state.enabled, state.brightnessEnabled, state.currentState, state.brightness]);
@@ -267,17 +272,29 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
       const isWeekendNight = dayOfWeek === 5 || dayOfWeek === 6;
       const effectiveSleepTime = isWeekendNight ? state.sleepTimeWeekend : state.sleepTime;
 
+      console.log('[SleepSchedule] Check:', {
+        currentTime,
+        effectiveSleepTime,
+        wakeTime: state.wakeTime,
+        currentState: state.currentState,
+        enabled: state.enabled,
+        sleepMatch: currentTime === effectiveSleepTime,
+        wakeMatch: currentTime === state.wakeTime
+      });
+
       if (currentTime === effectiveSleepTime && state.currentState === 'awake') {
+        console.log('[SleepSchedule] 🌙 Starting fade-out!');
         startFadeOut();
       }
 
       if (currentTime === state.wakeTime && state.currentState === 'sleeping') {
+        console.log('[SleepSchedule] ☀️ Starting fade-in!');
         startFadeIn();
       }
     };
 
     checkSchedule();
-    const interval = setInterval(checkSchedule, 60000);
+    const interval = setInterval(checkSchedule, 10000); // Check every 10s to never miss minute boundary
 
     return () => clearInterval(interval);
   }, [state.enabled, state.sleepTime, state.sleepTimeWeekend, state.wakeTime, state.currentState, state.manualOverride]);
