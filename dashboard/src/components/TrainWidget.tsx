@@ -168,11 +168,16 @@ const formatDelayAwareTimeDisplay = (departure: TrainDeparture): string => {
 }
 
 // Train identity tracking for animations
-const generateTrainId = (train: TrainDeparture): string =>
-  `${train.departure_time}-${train.line_number}-${train.destination}`
+// Round timestamp to 3-minute buckets to prevent false animations when API shifts times by 1-2 min
+const generateTrainId = (train: TrainDeparture): string => {
+  const roundedTimestamp = Math.floor(train.departure_timestamp / 180) * 180
+  return `${roundedTimestamp}-${train.line_number}-${train.destination}`
+}
 
-const generateBusId = (bus: BusDeparture): string =>
-  `${bus.departure_time}-${bus.line_number}-${bus.destination}`
+const generateBusId = (bus: BusDeparture): string => {
+  const roundedTimestamp = Math.floor(bus.departure_timestamp / 180) * 180
+  return `${roundedTimestamp}-${bus.line_number}-${bus.destination}`
+}
 
 // NOTE: useTrainListChanges and useBusListChanges removed in Phase 4
 // Framer Motion AnimatePresence handles structural change detection automatically
@@ -184,55 +189,8 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
   const [trainsMarkedForRemoval, setTrainsMarkedForRemoval] = useState<Set<string>>(new Set())
   const animatedAtMinuteRef = useRef<Map<string, Set<number>>>(new Map())
   const markedForRemovalRef = useRef<Set<string>>(new Set())
-  const prevTrainsRef = useRef<TrainDeparture[]>([])
-
-  // Detect genuinely new trains (not just time updates within 3-minute window)
-  const genuinelyNewTrains = useMemo(() => {
-    const currentIds = new Set(trains.map(generateTrainId))
-    const prevIds = new Set(prevTrainsRef.current.map(generateTrainId))
-
-    const potentiallyNew = [...currentIds].filter(id => !prevIds.has(id))
-
-    // Filter out time updates: same line/destination within 3 minutes
-    return potentiallyNew.filter(newTrainId => {
-      const newTrain = trains.find(t => generateTrainId(t) === newTrainId)!
-
-      const isTimeUpdate = prevTrainsRef.current.some(prevTrain =>
-        prevTrain.line_number === newTrain.line_number &&
-        prevTrain.destination === newTrain.destination &&
-        Math.abs(prevTrain.departure_timestamp - newTrain.departure_timestamp) <= 180 // 3 min
-      )
-
-      return !isTimeUpdate
-    })
-  }, [trains])
 
   useEffect(() => {
-    // Update prevTrainsRef to track changes (removed early return that blocked time-based animations)
-    prevTrainsRef.current = trains
-
-    // 🧪 TEST MODE: Trigger swoosh every 5s to verify CSS animation works
-    const testInterval = setInterval(() => {
-      trains.forEach(train => {
-        const trainId = generateTrainId(train)
-        const isRed = Math.random() > 0.5 // Randomly alternate orange/red
-        console.log(`🧪 TEST: Swoosh animation for train ${trainId} ${isRed ? '(RED)' : '(ORANGE)'}`)
-
-        setShineAnimatedTrains(prev => new Map(prev).set(trainId, isRed))
-
-        setTimeout(() => {
-          setShineAnimatedTrains(prev => {
-            const newMap = new Map(prev)
-            newMap.delete(trainId)
-            return newMap
-          })
-        }, 2000)
-      })
-    }, 5000)
-
-    return () => clearInterval(testInterval)
-
-    /* ORIGINAL LOGIC - COMMENTED FOR TESTING
     trains.forEach(train => {
       const trainId = generateTrainId(train)
       const adjusted = calculateAdjustedDeparture(train)
@@ -259,7 +217,6 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
           }, 2000)
         }
       }
-      }
 
       // Pre-emptive removal at exactly 5 minutes (train slides out before showing 4m)
       if (minutesUntil === 5 && !markedForRemovalRef.current.has(trainId)) {
@@ -272,7 +229,6 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
         }, 100)
       }
     })
-    */
   }, [trains])
 
   // Clean up removed trains set when they're actually gone from incoming data
@@ -297,55 +253,8 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
   // Map stores busId -> isRedTinted (true for last swoosh at 2m)
   const [shineAnimatedBuses, setShineAnimatedBuses] = useState<Map<string, boolean>>(new Map())
   const animatedAtMinuteRef = useRef<Map<string, Set<number>>>(new Map())
-  const prevBusesRef = useRef<BusDeparture[]>([])
-
-  // Detect genuinely new buses (not just time updates within 3-minute window)
-  const genuinelyNewBuses = useMemo(() => {
-    const currentIds = new Set(buses.map(generateBusId))
-    const prevIds = new Set(prevBusesRef.current.map(generateBusId))
-
-    const potentiallyNew = [...currentIds].filter(id => !prevIds.has(id))
-
-    // Filter out time updates: same line/destination within 3 minutes
-    return potentiallyNew.filter(newBusId => {
-      const newBus = buses.find(b => generateBusId(b) === newBusId)!
-
-      const isTimeUpdate = prevBusesRef.current.some(prevBus =>
-        prevBus.line_number === newBus.line_number &&
-        prevBus.destination === newBus.destination &&
-        Math.abs(prevBus.departure_timestamp - newBus.departure_timestamp) <= 180 // 3 min
-      )
-
-      return !isTimeUpdate
-    })
-  }, [buses])
 
   useEffect(() => {
-    // Update prevBusesRef to track changes (removed early return that blocked time-based animations)
-    prevBusesRef.current = buses
-
-    // 🧪 TEST MODE: Trigger swoosh every 5s to verify CSS animation works
-    const testInterval = setInterval(() => {
-      buses.forEach(bus => {
-        const busId = generateBusId(bus)
-        const isRed = Math.random() > 0.5 // Randomly alternate orange/red
-        console.log(`🧪 TEST: Swoosh animation for bus ${busId} ${isRed ? '(RED)' : '(ORANGE)'}`)
-
-        setShineAnimatedBuses(prev => new Map(prev).set(busId, isRed))
-
-        setTimeout(() => {
-          setShineAnimatedBuses(prev => {
-            const newMap = new Map(prev)
-            newMap.delete(busId)
-            return newMap
-          })
-        }, 2000)
-      })
-    }, 5000)
-
-    return () => clearInterval(testInterval)
-
-    /* ORIGINAL LOGIC - COMMENTED FOR TESTING
     buses.forEach(bus => {
       const busId = generateBusId(bus)
       const minutesUntil = bus.minutes_until
@@ -372,7 +281,6 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
         }
       }
     })
-    */
   }, [buses])
 
   // Clean up animated buses map when they're gone from incoming data
@@ -435,8 +343,8 @@ const formatTimeDisplay = (departure: TrainDeparture | BusDeparture): string => 
 // Render train departure line
 const TrainDepartureLine: React.FC<{
   departure: TrainDeparture;
-  hasShineAnimation?: boolean;
-}> = ({ departure, hasShineAnimation = false }) => {
+  shineAnimation?: 'orange' | 'red' | null;
+}> = ({ departure, shineAnimation = null }) => {
   const adjusted = calculateAdjustedDeparture(departure)
   const opacity = adjusted.adjustedMinutesUntil === 0 ? 1.0 : getTimeOpacity(adjusted.adjustedMinutesUntil)
   const timeDisplay = formatDelayAwareTimeDisplay(departure)
@@ -444,12 +352,11 @@ const TrainDepartureLine: React.FC<{
   // Filter out delay info from summary_deviation_note since it's now inline
   const nonDelayNote = adjusted.isDelayed ? '' : departure.summary_deviation_note
 
-  // No flashing - shine swoosh takes its place as classier urgency indicator
-  const shineClass = hasShineAnimation ? 'shine-swoosh' : ''
+  // Apply shine swoosh gradient to entire line
+  const textClass = shineAnimation === 'red' ? 'shine-swoosh-red' : shineAnimation === 'orange' ? 'shine-swoosh' : ''
 
   return (
     <div
-      className={shineClass}
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
@@ -457,9 +364,11 @@ const TrainDepartureLine: React.FC<{
         alignItems: 'flex-start'
       }}
     >
-      <strong>{timeDisplay}</strong>
-      {nonDelayNote && `\u00A0${nonDelayNote}`}
-      {departure.suffix && `\u00A0- ${departure.suffix}`}
+      <span className={textClass}>
+        <strong>{timeDisplay}</strong>
+        {nonDelayNote && `\u00A0${nonDelayNote}`}
+        {departure.suffix && `\u00A0- ${departure.suffix}`}
+      </span>
     </div>
   )
 }
@@ -467,18 +376,17 @@ const TrainDepartureLine: React.FC<{
 // Render bus departure line
 const BusDepartureLine: React.FC<{
   departure: BusDeparture;
-  hasShineAnimation?: boolean;
-}> = ({ departure, hasShineAnimation = false }) => {
+  shineAnimation?: 'orange' | 'red' | null;
+}> = ({ departure, shineAnimation = null }) => {
   const { line_number, destination, minutes_until } = departure
   const opacity = minutes_until === 0 ? 1.0 : getTimeOpacity(minutes_until)
   const timeDisplay = formatTimeDisplay(departure)
 
-  // No flashing - shine swoosh takes its place as classier urgency indicator
-  const shineClass = hasShineAnimation ? 'shine-swoosh' : ''
+  // Apply shine swoosh gradient to entire line
+  const textClass = shineAnimation === 'red' ? 'shine-swoosh-red' : shineAnimation === 'orange' ? 'shine-swoosh' : ''
 
   return (
     <div
-      className={shineClass}
       style={{
         opacity,
         mixBlendMode: 'hard-light' as const,
@@ -486,7 +394,9 @@ const BusDepartureLine: React.FC<{
         alignItems: 'flex-start'
       }}
     >
-      {line_number} till {destination}:{'\u00A0'}<strong>{timeDisplay}</strong>
+      <span className={textClass}>
+        {line_number} till {destination}:{'\u00A0'}<strong>{timeDisplay}</strong>
+      </span>
     </div>
   )
 }
@@ -653,11 +563,8 @@ export function TrainWidget() {
                       const trainId = generateTrainId(train)
                       const isRedTinted = shineAnimatedTrains.get(trainId) // undefined if not animating, true if red, false if orange
 
-                      // Build CSS classes - shine swoosh at 9-8-7 minutes (red at 7m)
-                      const cssClasses = ['train-departure-item']
-                      if (isRedTinted !== undefined) {
-                        cssClasses.push(isRedTinted ? 'shine-swoosh-red' : 'shine-swoosh')
-                      }
+                      // Determine shine animation state (applied to text element, not container)
+                      const shineAnimation = isRedTinted === true ? 'red' : isRedTinted === false ? 'orange' : null
 
                       return (
                         <motion.div
@@ -667,11 +574,11 @@ export function TrainWidget() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
                           transition={{ duration: 1 }}
-                          className={cssClasses.join(' ')}
+                          className="train-departure-item"
                         >
                           <TrainDepartureLine
                             departure={train}
-                            hasShineAnimation={isRedTinted !== undefined}
+                            shineAnimation={shineAnimation}
                           />
                         </motion.div>
                       )
@@ -700,11 +607,8 @@ export function TrainWidget() {
                       const busId = generateBusId(bus)
                       const isRedTinted = shineAnimatedBuses.get(busId) // undefined if not animating, true if red, false if orange
 
-                      // Build CSS classes - shine swoosh at 4-3-2 minutes (red at 2m)
-                      const cssClasses = ['bus-departure-item']
-                      if (isRedTinted !== undefined) {
-                        cssClasses.push(isRedTinted ? 'shine-swoosh-red' : 'shine-swoosh')
-                      }
+                      // Determine shine animation state (applied to text element, not container)
+                      const shineAnimation = isRedTinted === true ? 'red' : isRedTinted === false ? 'orange' : null
 
                       return (
                         <motion.div
@@ -714,11 +618,11 @@ export function TrainWidget() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
                           transition={{ duration: 1 }}
-                          className={cssClasses.join(' ')}
+                          className="bus-departure-item"
                         >
                           <BusDepartureLine
                             departure={bus}
-                            hasShineAnimation={isRedTinted !== undefined}
+                            shineAnimation={shineAnimation}
                           />
                         </motion.div>
                       )

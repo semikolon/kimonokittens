@@ -254,14 +254,15 @@
 }
 
 /* Shine swoosh animation for urgent departures (trains: 9-8-7m, buses: 4-3-2m) */
-.train-departure-item.shine-swoosh,
-.bus-departure-item.shine-swoosh {
+/* Entire departure line swooshes with orange → purple gradient trail */
+.shine-swoosh {
   position: relative;
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 1) 0%,
-    rgba(255, 255, 255, 1) 30%,
-    rgba(255, 140, 0, 1) 50%, /* Orange center */
+    rgba(255, 255, 255, 1) 25%,
+    rgba(255, 165, 0, 0.85) 40%,      /* Softer orange peak */
+    rgba(150, 100, 200, 0.6) 55%,     /* Purple trailing the orange */
     rgba(255, 255, 255, 1) 70%,
     rgba(255, 255, 255, 1) 100%
   );
@@ -269,18 +270,17 @@
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  animation: shineSwoosh 2s linear;
+  animation: shineSwoosh 2s ease-in-out;
 }
 
-/* Red-tinted swoosh for last urgency warning (trains: 7m, buses: 2m) */
-.train-departure-item.shine-swoosh-red,
-.bus-departure-item.shine-swoosh-red {
+/* Red-orange swoosh for last urgency warning (trains: 7m, buses: 2m) - no purple */
+.shine-swoosh-red {
   position: relative;
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 1) 0%,
     rgba(255, 255, 255, 1) 30%,
-    rgba(255, 69, 0, 1) 50%, /* Red-orange center (#FF4500) */
+    rgba(255, 100, 50, 0.9) 50%,      /* Toned down red-orange */
     rgba(255, 255, 255, 1) 70%,
     rgba(255, 255, 255, 1) 100%
   );
@@ -288,7 +288,7 @@
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  animation: shineSwoosh 2s linear;
+  animation: shineSwoosh 2s ease-in-out;
 }
 
 @keyframes shineSwoosh {
@@ -308,13 +308,15 @@
   .schedule-cursor,
   .heatpump-status,
   .train-departure-item,
-  .shine-swoosh {
+  .shine-swoosh,
+  .shine-swoosh-red {
     animation: none !important;
     transition: none !important;
   }
 
   /* Ensure text stays visible when animations are disabled */
-  .shine-swoosh {
+  .shine-swoosh,
+  .shine-swoosh-red {
     background: none !important;
     color: white !important;
   }
