@@ -207,14 +207,14 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
 
           setShineAnimatedTrains(prev => new Map(prev).set(trainId, isLastSwoosh))
 
-          // Remove shine class after 2s (animation duration)
+          // Remove shine class after 3s (animation duration)
           setTimeout(() => {
             setShineAnimatedTrains(prev => {
               const newMap = new Map(prev)
               newMap.delete(trainId)
               return newMap
             })
-          }, 2000)
+          }, 3000)
         }
       }
 
@@ -270,14 +270,14 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
 
           setShineAnimatedBuses(prev => new Map(prev).set(busId, isLastSwoosh))
 
-          // Remove shine class after 2s (animation duration)
+          // Remove shine class after 3s (animation duration)
           setTimeout(() => {
             setShineAnimatedBuses(prev => {
               const newMap = new Map(prev)
               newMap.delete(busId)
               return newMap
             })
-          }, 2000)
+          }, 3000)
         }
       }
     })

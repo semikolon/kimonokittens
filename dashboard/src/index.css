@@ -270,7 +270,7 @@
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  animation: shineSwoosh 2s ease-in-out;
+  animation: shineSwoosh 3s ease-in-out;
 }
 
 /* Red-orange swoosh for last urgency warning (trains: 7m, buses: 2m) - no purple */
@@ -288,7 +288,7 @@
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  animation: shineSwoosh 2s ease-in-out;
+  animation: shineSwoosh 3s ease-in-out;
 }
 
 @keyframes shineSwoosh {
