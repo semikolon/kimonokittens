@@ -1,5 +1,7 @@
 import React from 'react'
 import { DataProvider, useData } from './context/DataContext' // WebSocket data provider
+import { SleepScheduleProvider, useSleepSchedule } from './contexts/SleepScheduleContext'
+import { FadeOverlay } from './components/SleepSchedule/FadeOverlay'
 import { ClockWidget } from './components/ClockWidget'
 import { WeatherWidget } from './components/WeatherWidget'
 import { TemperatureWidget } from './components/TemperatureWidget'
@@ -133,16 +135,31 @@ function BackendDataWidgets() {
 }
 
 function DashboardContent() {
+  const { state: sleepState } = useSleepSchedule();
+
+  // Pause CSS animations ONLY when fully asleep
+  const shouldPauseAnimations = sleepState.currentState === 'sleeping';
+
   return (
     <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(25,20,30)_0%,_rgb(25,18,32)_100%)] overflow-x-clip relative">
       <DeploymentBanner />
+
+      {/* Sleep overlay - highest z-index */}
+      <FadeOverlay />
+
       {/* Animated shader background */}
       <div className="fixed inset-0 w-full h-full opacity-30 mix-blend-screen" style={{ zIndex: 1 }}>
         <AnoAI />
       </div>
 
       {/* Magic animated background */}
-      <div className="gradients-container fixed inset-0 h-full w-full opacity-20 blur-[60px]" style={{ zIndex: 2 }}>
+      <div
+        className="gradients-container fixed inset-0 h-full w-full opacity-20 blur-[60px]"
+        style={{
+          zIndex: 2,
+          animationPlayState: shouldPauseAnimations ? 'paused' : 'running'
+        }}
+      >
         <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(48,12,80,0.18)_0%,_rgba(48,12,80,0)_65%)] mix-blend-multiply animate-dashboard-first" />
         <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(68,25,150,0.15)_0%,_rgba(68,25,150,0)_65%)] mix-blend-multiply animate-dashboard-second transform-origin-[calc(50%-300px)]" />
         <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(89,45,170,0.13)_0%,_rgba(89,45,170,0)_65%)] mix-blend-multiply animate-dashboard-third transform-origin-[calc(50%+300px)]" />
@@ -175,9 +192,11 @@ function DashboardContent() {
 
 function App() {
   return (
-    <DataProvider>
-      <DashboardContent />
-    </DataProvider>
+    <SleepScheduleProvider>
+      <DataProvider>
+        <DashboardContent />
+      </DataProvider>
+    </SleepScheduleProvider>
   )
 }
 

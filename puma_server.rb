@@ -39,6 +39,7 @@ require_relative 'handlers/weather_handler'
 require_relative 'handlers/temperature_handler'
 require_relative 'handlers/todos_handler'
 require_relative 'handlers/reload_handler'
+require_relative 'handlers/display_control_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
@@ -273,6 +274,36 @@ app = Rack::Builder.new do
 
   map "/api/reload" do
     run reload_handler
+  end
+
+  # Display control routes
+  map "/api/display" do
+    run lambda { |env|
+      req = Rack::Request.new(env)
+      path = req.path_info
+
+      # Route based on full path
+      case path
+      when '/power'
+        if req.post?
+          params = Oj.load(req.body.read) rescue {}
+          result = DisplayControlHandler.handle_display_power(params)
+          [200, {'Content-Type' => 'application/json'}, [Oj.dump(result)]]
+        else
+          [405, {'Content-Type' => 'application/json'}, [Oj.dump({ error: 'Method not allowed' })]]
+        end
+      when '/brightness'
+        if req.post?
+          params = Oj.load(req.body.read) rescue {}
+          result = DisplayControlHandler.handle_brightness(params)
+          [200, {'Content-Type' => 'application/json'}, [Oj.dump(result)]]
+        else
+          [405, {'Content-Type' => 'application/json'}, [Oj.dump({ error: 'Method not allowed' })]]
+        end
+      else
+        [404, {'Content-Type' => 'application/json'}, [Oj.dump({ error: 'Not found' })]]
+      end
+    }
   end
 
   # Data routes

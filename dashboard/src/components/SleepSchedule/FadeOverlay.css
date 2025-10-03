@@ -1,0 +1,21 @@
+.sleep-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000000;
+  z-index: 9999;
+  will-change: opacity;
+
+  /* GPU acceleration */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Respect accessibility preferences */
+@media (prefers-reduced-motion: reduce) {
+  .sleep-overlay {
+    transition: opacity 2s ease-in-out !important;
+  }
+}

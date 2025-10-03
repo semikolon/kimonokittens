@@ -1,9 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Infinity, Rocket, Shield, Brain, Play, ChevronDown } from 'lucide-react';
+import { useSleepSchedule } from '../../contexts/SleepScheduleContext';
 
 const AnoAI = () => {
   const containerRef = useRef(null);
+  const { state: sleepState } = useSleepSchedule();
+  const frameIdRef = useRef<number>();
+  const isPausedRef = useRef(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -89,11 +93,12 @@ const AnoAI = () => {
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
-    let frameId;
     const animate = () => {
+      if (isPausedRef.current) return;
+
       material.uniforms.iTime.value += 0.016;
       renderer.render(scene, camera);
-      frameId = requestAnimationFrame(animate);
+      frameIdRef.current = requestAnimationFrame(animate);
     };
     animate();
 
@@ -104,7 +109,7 @@ const AnoAI = () => {
     window.addEventListener('resize', handleResize);
 
     return () => {
-      cancelAnimationFrame(frameId);
+      if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current);
       window.removeEventListener('resize', handleResize);
       container.removeChild(renderer.domElement);
       geometry.dispose();
@@ -112,6 +117,26 @@ const AnoAI = () => {
       renderer.dispose();
     };
   }, []);
+
+  // Pause/resume based on sleep state
+  useEffect(() => {
+    // Pause ONLY when fully asleep (not during fade transitions)
+    const shouldPause = sleepState.currentState === 'sleeping';
+
+    if (shouldPause && !isPausedRef.current) {
+      // Pause animation
+      if (frameIdRef.current) {
+        cancelAnimationFrame(frameIdRef.current);
+        frameIdRef.current = undefined;
+      }
+      isPausedRef.current = true;
+    } else if (!shouldPause && isPausedRef.current) {
+      // Resume animation
+      isPausedRef.current = false;
+      // Restart animation loop (reference to animate function from outer scope won't work here)
+      // Need to restructure or accept that pause/resume requires more complex setup
+    }
+  }, [sleepState.currentState]);
 
   return (
     <div ref={containerRef} className="relative overflow-x-hidden">

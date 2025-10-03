@@ -487,6 +487,63 @@ Train departures use **keyless SL Transport API** (`transport.integration.sl.se`
 
 **Remember: When in doubt about rent timing, the dashboard request month determines the config period, not the rent month shown in the message.**
 
+---
+
+## 🖥️ DEVELOPMENT WORKFLOW & ENVIRONMENT
+
+### Checkout Structure
+
+**Production Checkout**: `/home/kimonokittens/Projects/kimonokittens/`
+- Runs as `kimonokittens` user
+- Physical display (Dell OptiPlex kiosk) in hallway downstairs
+- Backend: Port 3001 (puma_server.rb)
+- Frontend: Served via nginx at production URL
+- **Not for development** - deploy-only via webhook
+
+**Development Checkout**: `/home/fredrik/Projects/kimonokittens/`
+- Where code changes are made and pushed to GitHub
+- Runs as `fredrik` user (you are here when using Claude Code)
+- **No direct browser access** - display is in hallway, not visible from desk
+- Backend: Port 3001 (when running locally)
+- Frontend: Port 5175 (Vite dev server when running)
+
+### Frontend Development Workflow
+
+**Problem**: Can't see frontend changes visually - display is downstairs, SSH session has no browser.
+
+**Solution**: SSH port forwarding from Mac (where user types) to Linux dev machine.
+
+**Setup** (one-time, user does this on Mac):
+```bash
+# ~/.ssh/config on Mac
+Host kimonokittens
+  HostName <linux-ip>
+  User fredrik
+  LocalForward 5175 localhost:5175  # Vite dev server
+  LocalForward 3001 localhost:3001  # Ruby backend API
+```
+
+**Workflow**:
+1. SSH from Mac with forwarding: `ssh kimonokittens` (or manual: `ssh -L 5175:localhost:5175 -L 3001:localhost:3001 fredrik@<ip>`)
+2. Start dev servers in Linux terminal: `cd ~/Projects/kimonokittens && bin/dev start`
+3. Open browser on Mac: `http://localhost:5175`
+4. Edit code in Claude Code (Linux side)
+5. Vite HMR auto-reloads browser on Mac
+6. Push changes when ready → webhook deploys to production
+
+**Dependencies** (in fredrik dev checkout):
+- Ruby: Via rbenv (same as kimonokittens user)
+- Bundle: `bundle install` in project root
+- Node/npm: `npm install` in dashboard/ subdirectory
+- Verify: `bin/dev status` should show clean state
+
+**Production Deployment**:
+- Push to GitHub → webhook auto-deploys → production kiosk updates
+- Never edit production checkout directly
+- Always develop in fredrik checkout, deploy via git
+
+---
+
 ## 🔄 SMART WEBHOOK DEPLOYMENT SYSTEM
 
 ### Overview: Modern Event-Driven Deployment
