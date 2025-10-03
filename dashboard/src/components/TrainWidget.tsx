@@ -208,10 +208,7 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
   }, [trains])
 
   useEffect(() => {
-    // Skip if no genuinely new trains
-    if (genuinelyNewTrains.length === 0 && trains.length === prevTrainsRef.current.length) {
-      return
-    }
+    // Update prevTrainsRef to track changes (removed early return that blocked time-based animations)
     prevTrainsRef.current = trains
 
     trains.forEach(train => {
@@ -300,10 +297,7 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
   }, [buses])
 
   useEffect(() => {
-    // Skip if no genuinely new buses
-    if (genuinelyNewBuses.length === 0 && buses.length === prevBusesRef.current.length) {
-      return
-    }
+    // Update prevBusesRef to track changes (removed early return that blocked time-based animations)
     prevBusesRef.current = buses
 
     buses.forEach(bus => {
