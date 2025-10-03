@@ -182,7 +182,7 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     updateBrightness();
-    const interval = setInterval(updateBrightness, 60000); // Every minute
+    const interval = setInterval(updateBrightness, 30000); // Every 30 seconds for smooth transitions
 
     return () => clearInterval(interval);
   }, [state.enabled, state.brightnessEnabled, state.currentState, state.brightness]);
@@ -277,7 +277,7 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     checkSchedule();
-    const interval = setInterval(checkSchedule, 60000);
+    const interval = setInterval(checkSchedule, 10000); // Check every 10s to never miss minute boundary
 
     return () => clearInterval(interval);
   }, [state.enabled, state.sleepTime, state.sleepTimeWeekend, state.wakeTime, state.currentState, state.manualOverride]);
