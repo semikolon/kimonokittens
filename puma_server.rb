@@ -40,6 +40,7 @@ require_relative 'handlers/temperature_handler'
 require_relative 'handlers/todos_handler'
 require_relative 'handlers/reload_handler'
 require_relative 'handlers/display_control_handler'
+require_relative 'handlers/sleep_schedule_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
@@ -302,6 +303,20 @@ app = Rack::Builder.new do
         end
       else
         [404, {'Content-Type' => 'application/json'}, [Oj.dump({ error: 'Not found' })]]
+      end
+    }
+  end
+
+  # Sleep schedule config
+  map "/api/sleep/config" do
+    run lambda { |env|
+      req = Rack::Request.new(env)
+
+      if req.get?
+        result = SleepScheduleHandler.get_config
+        [200, {'Content-Type' => 'application/json'}, [Oj.dump(result)]]
+      else
+        [405, {'Content-Type' => 'application/json'}, [Oj.dump({ error: 'Method not allowed' })]]
       end
     }
   end

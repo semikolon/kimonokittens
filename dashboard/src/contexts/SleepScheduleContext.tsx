@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useReducer, useRef } from 
 interface SleepScheduleState {
   enabled: boolean;
   sleepTime: string;
+  sleepTimeWeekend: string;
   wakeTime: string;
   currentState: 'awake' | 'sleeping' | 'fading-out' | 'fading-in';
   fadeProgress: number;
@@ -15,6 +16,7 @@ interface SleepScheduleState {
 
 type SleepScheduleAction =
   | { type: 'SET_SLEEP_TIME'; time: string }
+  | { type: 'SET_SLEEP_TIME_WEEKEND'; time: string }
   | { type: 'SET_WAKE_TIME'; time: string }
   | { type: 'TOGGLE_ENABLED' }
   | { type: 'SET_STATE'; state: SleepScheduleState['currentState'] }
@@ -41,6 +43,7 @@ interface SleepScheduleContextValue {
 const DEFAULT_STATE: SleepScheduleState = {
   enabled: true,
   sleepTime: '01:00',
+  sleepTimeWeekend: '03:00',
   wakeTime: '05:30',
   currentState: 'awake',
   fadeProgress: 0,
@@ -51,43 +54,12 @@ const DEFAULT_STATE: SleepScheduleState = {
   brightnessEnabled: true,
 };
 
-const STORAGE_KEY = 'sleepSchedule';
-
-// Load from localStorage
-const loadState = (): SleepScheduleState => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return { ...DEFAULT_STATE, ...parsed };
-    }
-  } catch (error) {
-    console.error('Failed to load sleep schedule state:', error);
-  }
-  return DEFAULT_STATE;
-};
-
-// Save to localStorage
-const saveState = (state: SleepScheduleState) => {
-  try {
-    const toSave = {
-      enabled: state.enabled,
-      sleepTime: state.sleepTime,
-      wakeTime: state.wakeTime,
-      manualOverride: state.manualOverride,
-      monitorPowerControl: state.monitorPowerControl,
-      brightnessEnabled: state.brightnessEnabled,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-  } catch (error) {
-    console.error('Failed to save sleep schedule state:', error);
-  }
-};
-
 const reducer = (state: SleepScheduleState, action: SleepScheduleAction): SleepScheduleState => {
   switch (action.type) {
     case 'SET_SLEEP_TIME':
       return { ...state, sleepTime: action.time };
+    case 'SET_SLEEP_TIME_WEEKEND':
+      return { ...state, sleepTimeWeekend: action.time };
     case 'SET_WAKE_TIME':
       return { ...state, wakeTime: action.time };
     case 'TOGGLE_ENABLED':
@@ -116,13 +88,39 @@ const reducer = (state: SleepScheduleState, action: SleepScheduleAction): SleepS
 const SleepScheduleContext = createContext<SleepScheduleContextValue | undefined>(undefined);
 
 export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(reducer, DEFAULT_STATE, loadState);
+  const [state, dispatch] = useReducer(reducer, DEFAULT_STATE);
   const fadeAnimationRef = useRef<number>();
 
-  // Save to localStorage on state changes
+  // Load config from API on mount
   useEffect(() => {
-    saveState(state);
-  }, [state.enabled, state.sleepTime, state.wakeTime, state.manualOverride, state.monitorPowerControl, state.brightnessEnabled]);
+    const loadConfig = async () => {
+      try {
+        const response = await fetch('/api/sleep/config');
+        const result = await response.json();
+
+        if (result.success && result.config) {
+          const config = result.config;
+          if (config.sleepTime) dispatch({ type: 'SET_SLEEP_TIME', time: config.sleepTime });
+          if (config.sleepTimeWeekend) dispatch({ type: 'SET_SLEEP_TIME_WEEKEND', time: config.sleepTimeWeekend });
+          if (config.wakeTime) dispatch({ type: 'SET_WAKE_TIME', time: config.wakeTime });
+          if (typeof config.enabled === 'boolean' && !config.enabled) {
+            dispatch({ type: 'TOGGLE_ENABLED' }); // Toggle if disabled in config
+          }
+          if (typeof config.monitorPowerControl === 'boolean' && !config.monitorPowerControl) {
+            dispatch({ type: 'TOGGLE_MONITOR_CONTROL' }); // Toggle if disabled in config
+          }
+          if (typeof config.brightnessEnabled === 'boolean' && !config.brightnessEnabled) {
+            dispatch({ type: 'TOGGLE_BRIGHTNESS' }); // Toggle if disabled in config
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load sleep schedule config:', error);
+        // Continue with DEFAULT_STATE
+      }
+    };
+
+    loadConfig();
+  }, []);
 
   // Calculate adaptive brightness based on time of day
   const calculateBrightness = (hour: number, minute: number): number => {
@@ -263,8 +261,13 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
     const checkSchedule = () => {
       const now = new Date();
       const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      const dayOfWeek = now.getDay(); // 0=Sunday, 5=Friday, 6=Saturday
 
-      if (currentTime === state.sleepTime && state.currentState === 'awake') {
+      // Use weekend sleep time on Friday and Saturday nights
+      const isWeekendNight = dayOfWeek === 5 || dayOfWeek === 6;
+      const effectiveSleepTime = isWeekendNight ? state.sleepTimeWeekend : state.sleepTime;
+
+      if (currentTime === effectiveSleepTime && state.currentState === 'awake') {
         startFadeOut();
       }
 
@@ -277,7 +280,7 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
     const interval = setInterval(checkSchedule, 60000);
 
     return () => clearInterval(interval);
-  }, [state.enabled, state.sleepTime, state.wakeTime, state.currentState, state.manualOverride]);
+  }, [state.enabled, state.sleepTime, state.sleepTimeWeekend, state.wakeTime, state.currentState, state.manualOverride]);
 
   // Cleanup animation on unmount
   useEffect(() => {

@@ -219,7 +219,7 @@ class DeploymentHandler
       }
     end
 
-    $logger.info("📝 Change summary: Frontend=#{changes[:frontend]}, Backend=#{changes[:backend]}, Deployment=#{changes[:deployment]}")
+    $logger.info("📝 Change summary: Frontend=#{changes[:frontend]}, Backend=#{changes[:backend]}, Deployment=#{changes[:deployment]}, Config=#{changes[:config]}")
 
     # Store the latest event data and changes for debounced deployment
     @deployment_mutex.synchronize do
@@ -301,9 +301,12 @@ class DeploymentHandler
       end
     end
 
-    # Restart kiosk if frontend changed (to reload the page)
-    if changes[:frontend] && deployment_success
+    # Restart kiosk if frontend or config changed (to reload the page and fetch new config)
+    if (changes[:frontend] || changes[:config]) && deployment_success
       restart_kiosk
+      if changes[:config]
+        $logger.info("🔄 Kiosk restarted to load new sleep schedule config")
+      end
     end
 
     $logger.info("🎉 Deployment completed: #{deployed_components.join(', ')}")
@@ -334,6 +337,7 @@ class DeploymentHandler
     frontend_changed = false
     backend_changed = false
     deployment_changed = false
+    config_changed = false
 
     commits.each do |commit|
       # Check modified files
@@ -348,6 +352,9 @@ class DeploymentHandler
         when /^deployment\//
           deployment_changed = true
           $logger.info("Deployment config change detected: #{file}")
+        when /^config\/sleep_schedule\.json$/
+          config_changed = true
+          $logger.info("Sleep schedule config change detected: #{file}")
         end
       end
 
@@ -360,6 +367,9 @@ class DeploymentHandler
         when /\.(rb|ru|gemspec|Gemfile)$/
           backend_changed = true
           $logger.info("Backend addition detected: #{file}")
+        when /^config\/sleep_schedule\.json$/
+          config_changed = true
+          $logger.info("Sleep schedule config added: #{file}")
         end
       end
     end
@@ -368,7 +378,8 @@ class DeploymentHandler
       frontend: frontend_changed,
       backend: backend_changed,
       deployment: deployment_changed,
-      any_changes: frontend_changed || backend_changed || deployment_changed
+      config: config_changed,
+      any_changes: frontend_changed || backend_changed || deployment_changed || config_changed
     }
   end
 

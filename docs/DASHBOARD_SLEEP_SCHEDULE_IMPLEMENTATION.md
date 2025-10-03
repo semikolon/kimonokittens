@@ -1,9 +1,9 @@
 # Dashboard Sleep Schedule - Detailed Implementation Plan
 
-**Status**: Ready for Implementation
+**Status**: ✅ COMPLETED - October 3, 2025
 **Created**: October 3, 2025
-**Updated**: October 3, 2025 - Added adaptive brightness + monitor DPMS control
-**Target**: Frontend + Backend implementation with smooth transitions
+**Updated**: October 3, 2025 - Implementation complete with adaptive brightness + monitor DPMS control
+**Implementation**: Frontend + Backend complete with smooth transitions
 
 ---
 
@@ -58,6 +58,7 @@ interface SleepScheduleState {
   manualOverride: boolean;             // User forced sleep/wake
   lastTransitionTime: number;          // Unix timestamp
   monitorPowerControl: boolean;        // Enable DPMS display off/on
+  brightnessEnabled: boolean;          // Enable adaptive brightness curve
 }
 ```
 
@@ -74,6 +75,69 @@ interface SleepScheduleState {
   }
 }
 ```
+
+---
+
+## Complete Daily Schedule Timeline
+
+**Typical 24-Hour Cycle** with sleep schedule (01:00-05:30) and adaptive brightness:
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ TIME     │ STATE        │ BRIGHTNESS │ ANIMATIONS │ MONITOR          │
+├──────────────────────────────────────────────────────────────────────┤
+│ 00:00    │ Awake        │ 0.7        │ Running    │ On               │
+│ 00:30    │ Awake        │ 0.7        │ Running    │ On               │
+│ 01:00    │ Fade-out     │ 0.7        │ Running    │ On               │
+│          │ (0→100%)     │            │ (visible!) │                  │
+│ 01:02    │ Sleeping     │ -          │ PAUSED     │ OFF (DPMS)       │
+│ 02:00    │ Sleeping     │ -          │ PAUSED     │ OFF              │
+│ 03:00    │ Sleeping     │ -          │ PAUSED     │ OFF              │
+│ 04:00    │ Sleeping     │ -          │ PAUSED     │ OFF              │
+│ 05:00    │ Sleeping     │ -          │ PAUSED     │ OFF              │
+│ 05:30    │ Fade-in      │ -          │ Running    │ ON (DPMS)        │
+│          │ (100→0%)     │            │ (visible!) │ (+500ms delay)   │
+│ 05:32    │ Awake        │ 0.7        │ Running    │ On               │
+│ 06:00    │ Awake        │ 1.0        │ Running    │ On               │
+│ 08:00    │ Awake        │ 1.26       │ Running    │ On               │
+│ 10:00    │ Awake        │ 1.39       │ Running    │ On               │
+│ 12:00    │ Awake        │ 1.4        │ Running    │ On (Peak)        │
+│ 14:00    │ Awake        │ 1.33       │ Running    │ On               │
+│ 16:00    │ Awake        │ 1.26       │ Running    │ On               │
+│ 18:00    │ Awake        │ 1.2        │ Running    │ On               │
+│ 20:00    │ Awake        │ 1.05       │ Running    │ On               │
+│ 22:00    │ Awake        │ 0.9        │ Running    │ On               │
+│ 23:00    │ Awake        │ 0.83       │ Running    │ On               │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+**Key Behavioral Notes**:
+
+1. **Fade Transitions Are Visible**: Animations run during ENTIRE 2-minute fade (both in/out)
+   - `01:00-01:02`: Fade-out with animations running, opacity 0→1 over 120s
+   - `05:30-05:32`: Fade-in with animations running, opacity 1→0 over 120s
+
+2. **Animation Pause ONLY When Fully Asleep**:
+   - Pause condition: `currentState === 'sleeping'`
+   - NOT paused during: `'fading-out'` or `'fading-in'`
+   - Ensures beautiful visual experience during transitions
+
+3. **Monitor Control Timing**:
+   - DPMS OFF: Triggered AFTER 2-minute fade-out completes
+   - DPMS ON: Triggered BEFORE 2-minute fade-in begins (+500ms delay for monitor wake)
+
+4. **Brightness Updates**:
+   - Check interval: Every 60 seconds
+   - Update threshold: ±0.01 (prevents unnecessary API calls)
+   - Disabled during: `currentState === 'sleeping'`
+   - Range: 0.7 (night) → 1.5 (bright day)
+
+5. **Sleep Period Power Savings**:
+   - Duration: 4.5 hours (01:00-05:30)
+   - WebGL shader: Paused (0% GPU)
+   - CSS gradients: Paused (`animationPlayState: 'paused'`)
+   - Monitor: Physical OFF (~11.5W saved)
+   - Total savings: ~52 Wh/night, 19 kWh/year
 
 ---
 

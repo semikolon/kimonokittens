@@ -8,6 +8,7 @@ const AnoAI = () => {
   const { state: sleepState } = useSleepSchedule();
   const frameIdRef = useRef<number>();
   const isPausedRef = useRef(false);
+  const animateFnRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -100,6 +101,10 @@ const AnoAI = () => {
       renderer.render(scene, camera);
       frameIdRef.current = requestAnimationFrame(animate);
     };
+
+    // Store animate function in ref so pause/resume effect can access it
+    animateFnRef.current = animate;
+
     animate();
 
     const handleResize = () => {
@@ -115,6 +120,7 @@ const AnoAI = () => {
       geometry.dispose();
       material.dispose();
       renderer.dispose();
+      animateFnRef.current = null;
     };
   }, []);
 
@@ -133,8 +139,9 @@ const AnoAI = () => {
     } else if (!shouldPause && isPausedRef.current) {
       // Resume animation
       isPausedRef.current = false;
-      // Restart animation loop (reference to animate function from outer scope won't work here)
-      // Need to restructure or accept that pause/resume requires more complex setup
+      if (animateFnRef.current) {
+        animateFnRef.current(); // Restart animation loop
+      }
     }
   }, [sleepState.currentState]);
 
