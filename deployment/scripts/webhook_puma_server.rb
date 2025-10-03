@@ -13,6 +13,10 @@ require 'time'
 Thread.report_on_exception = true
 Thread.abort_on_exception = false  # Don't kill entire process, just report
 
+# Disable IO buffering for immediate log visibility (critical for debugging)
+$stdout.sync = true
+$stderr.sync = true
+
 # Configure logging
 if ENV['RACK_ENV'] == 'production'
   log_dir = '/var/log/kimonokittens'
