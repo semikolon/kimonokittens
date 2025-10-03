@@ -200,29 +200,16 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
   }
 
   useEffect(() => {
-    // 🧪 TEST MODE: Trigger swoosh every 5s to debug animation
-    const testInterval = setInterval(() => {
-      trains.forEach(train => {
-        const trainId = generateTrainId(train)
-        const isRed = Math.random() > 0.5
-        console.log(`🧪 TEST: Swoosh for train ${trainId} ${isRed ? '(RED)' : '(ORANGE)'}`)
-        setShineAnimatedTrains(prev => new Map(prev).set(trainId, isRed))
-      })
-    }, 5000)
-
-    return () => clearInterval(testInterval)
-
-    /* PRODUCTION LOGIC - DISABLED FOR TESTING
     trains.forEach(train => {
       const trainId = generateTrainId(train)
       const adjusted = calculateAdjustedDeparture(train)
       const minutesUntil = adjusted.adjustedMinutesUntil
 
-      // Trigger shine swoosh at 9m, 8m, 7m (signals: time to go catch this train!)
-      if (minutesUntil === 9 || minutesUntil === 8 || minutesUntil === 7) {
+      // Trigger shine swoosh at 10m, 9m, 8m, 7m, 6m (signals: time to go catch this train!)
+      if (minutesUntil === 10 || minutesUntil === 9 || minutesUntil === 8 || minutesUntil === 7 || minutesUntil === 6) {
         const animatedMinutes = animatedAtMinuteRef.current.get(trainId) || new Set()
         if (!animatedMinutes.has(minutesUntil)) {
-          const isLastSwoosh = minutesUntil === 7 // Red-tinted at 7m (last before removal at 5m)
+          const isLastSwoosh = minutesUntil === 6 // Red-tinted at 6m (final warning before removal)
           console.log(`Shine swoosh animation for train ${trainId} at ${minutesUntil}m${isLastSwoosh ? ' (RED)' : ''}`)
           animatedMinutes.add(minutesUntil)
           animatedAtMinuteRef.current.set(trainId, animatedMinutes)
@@ -231,18 +218,8 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
           // Cleanup happens via onAnimationEnd callback, not setTimeout
         }
       }
-      // Pre-emptive removal at exactly 5 minutes (train slides out before showing 4m)
-      if (minutesUntil === 5 && !markedForRemovalRef.current.has(trainId)) {
-        console.log(`Marking train ${trainId} for removal at 5m (will slide out over 1s)`)
-        markedForRemovalRef.current.add(trainId)
-
-        // Brief delay to ensure Framer Motion captures "5m" snapshot, then remove from list
-        setTimeout(() => {
-          setTrainsMarkedForRemoval(prev => new Set([...prev, trainId]))
-        }, 100)
-      }
+      // Natural feasibility filtering handles removal at 6m → triggers Framer Motion exit animation
     })
-    */
   }, [trains])
 
   // Clean up removed trains set when they're actually gone from incoming data
@@ -279,28 +256,15 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
   }
 
   useEffect(() => {
-    // 🧪 TEST MODE: Trigger swoosh every 5s to debug animation
-    const testInterval = setInterval(() => {
-      buses.forEach(bus => {
-        const busId = generateBusId(bus)
-        const isRed = Math.random() > 0.5
-        console.log(`🧪 TEST: Swoosh for bus ${busId} ${isRed ? '(RED)' : '(ORANGE)'}`)
-        setShineAnimatedBuses(prev => new Map(prev).set(busId, isRed))
-      })
-    }, 5000)
-
-    return () => clearInterval(testInterval)
-
-    /* PRODUCTION LOGIC - DISABLED FOR TESTING
     buses.forEach(bus => {
       const busId = generateBusId(bus)
       const minutesUntil = bus.minutes_until
 
-      // Trigger shine swoosh at 4m, 3m, 2m (signals: time to go catch this bus!)
-      if (minutesUntil === 4 || minutesUntil === 3 || minutesUntil === 2) {
+      // Trigger shine swoosh at 3m, 2m, 1m, 0m (signals: time to go catch this bus!)
+      if (minutesUntil === 3 || minutesUntil === 2 || minutesUntil === 1 || minutesUntil === 0) {
         const animatedMinutes = animatedAtMinuteRef.current.get(busId) || new Set()
         if (!animatedMinutes.has(minutesUntil)) {
-          const isLastSwoosh = minutesUntil === 2 // Red-tinted at 2m (last before removal at 0m)
+          const isLastSwoosh = minutesUntil === 0 // Red-tinted at 0m (final urgent warning!)
           console.log(`Shine swoosh animation for bus ${busId} at ${minutesUntil}m${isLastSwoosh ? ' (RED)' : ''}`)
           animatedMinutes.add(minutesUntil)
           animatedAtMinuteRef.current.set(busId, animatedMinutes)
@@ -310,7 +274,6 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
         }
       }
     })
-    */
   }, [buses])
 
   // Clean up animated buses map when they're gone from incoming data
@@ -330,16 +293,16 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
 // Helper functions for time-based styling
 const getTimeOpacity = (minutesUntil: number): number => {
   if (minutesUntil < 0) return 0.3 // Past times very faded
-  if (minutesUntil <= 20) return 1.0 // Next 20m fully visible
+  if (minutesUntil <= 15) return 1.0 // Next 15m fully visible
   if (minutesUntil >= 50) return 0.15 // 50m+ very faded
 
-  // Smooth gradual fade from 20m (1.0) to 50m (0.15)
-  const progress = (minutesUntil - 20) / (50 - 20)
+  // Smooth gradual fade from 15m (1.0) to 50m (0.15)
+  const progress = (minutesUntil - 15) / (50 - 15)
   return 1.0 - (progress * 0.85)
 }
 
 const isFeasibleTrainDeparture = (minutesUntil: number): boolean => {
-  return minutesUntil >= 5 // Can bike/run to station in 5 minutes (matches backend RUN_TIME)
+  return minutesUntil >= 6 // Trains leaving in <6 minutes are too hard to catch
 }
 
 // Enhanced departure sequence states
@@ -508,19 +471,9 @@ export function TrainWidget() {
   const { shineAnimatedTrains, trainsMarkedForRemoval, cleanupShineAnimation: cleanupTrainAnimation } = useTrainDepartureAnimation(trainsForHooks)
 
   const feasibleTrainsForHooks = trainsForHooks.filter(train => {
-    const trainId = generateTrainId(train)
     const adjusted = calculateAdjustedDeparture(train)
-
-    // Show trains with > 5 minutes, OR trains at exactly 5m that aren't marked for removal yet
-    // Once marked for removal at 5m, ViewTransition captures snapshot showing "5m"
-    // Then 800ms exit animation plays before next data refresh (30s later)
-    // This ensures users never see "4m" on screen
-    if (adjusted.adjustedMinutesUntil > 5) {
-      return true
-    } else if (adjusted.adjustedMinutesUntil === 5) {
-      return !trainsMarkedForRemoval.has(trainId)
-    }
-    return false
+    // Simple feasibility check - Framer Motion will animate exit when train drops below 6m
+    return adjusted.adjustedMinutesUntil >= 6
   })
 
   const busesForHooks = structuredData?.buses || []
@@ -597,7 +550,9 @@ export function TrainWidget() {
               {feasibleTrains.length > 0 ? (
                 <LayoutGroup>
                   <AnimatePresence mode="popLayout">
-                    {feasibleTrains.map((train, index) => {
+                    {feasibleTrains
+                      .slice(0, 4)
+                      .map((train, index) => {
                       const trainId = generateTrainId(train)
                       const isRedTinted = shineAnimatedTrains.get(trainId) // undefined if not animating, true if red, false if orange
 
@@ -642,7 +597,7 @@ export function TrainWidget() {
               {feasibleBuses.length > 0 ? (
                 <LayoutGroup>
                   <AnimatePresence mode="popLayout">
-                    {feasibleBuses.map((bus, index) => {
+                    {feasibleBuses.slice(0, 4).map((bus, index) => {
                       const busId = generateBusId(bus)
                       const isRedTinted = shineAnimatedBuses.get(busId) // undefined if not animating, true if red, false if orange
 

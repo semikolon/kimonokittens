@@ -459,6 +459,14 @@ const generateTrainId = (train: TrainDeparture): string =>
 - **Consistent timing**: 5s introduction, 400ms departure, 0.1s stagger per item
 - **Memory management**: Proper cleanup of animation states and timeouts
 
+### CSS Gradient Animation Gotchas (Oct 3, 2025)
+**Hard-won lessons from shine swoosh implementation:**
+- **`background` shorthand resets all properties** → Use `background-image` when composing with `background-clip: text`
+- **Animations snap back by default** → Always add `animation-fill-mode: forwards` to prevent color flash at end
+- **Test intervals matching animation duration = race conditions** → Add gap (e.g., 4s animation + 8s interval)
+- **`background-repeat: repeat-x` solves transparency bugs** → Gradient tiles infinitely, prevents gaps during animation
+- **Background-position math**: `offset = (container_width - gradient_width) × position%` (200% gradient needs careful positioning)
+
 ## WebSocket Architecture ⚡
 
 ### DataBroadcaster URLs - FIXED ✅
