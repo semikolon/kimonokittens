@@ -95,11 +95,14 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const loadConfig = async () => {
       try {
+        console.log('[SleepSchedule] Loading config from API...');
         const response = await fetch('/api/sleep/config');
         const result = await response.json();
+        console.log('[SleepSchedule] API response:', result);
 
         if (result.success && result.config) {
           const config = result.config;
+          console.log('[SleepSchedule] Config loaded successfully:', config);
           if (config.sleepTime) dispatch({ type: 'SET_SLEEP_TIME', time: config.sleepTime });
           if (config.sleepTimeWeekend) dispatch({ type: 'SET_SLEEP_TIME_WEEKEND', time: config.sleepTimeWeekend });
           if (config.wakeTime) dispatch({ type: 'SET_WAKE_TIME', time: config.wakeTime });
@@ -112,9 +115,11 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
           if (typeof config.brightnessEnabled === 'boolean' && !config.brightnessEnabled) {
             dispatch({ type: 'TOGGLE_BRIGHTNESS' }); // Toggle if disabled in config
           }
+        } else {
+          console.warn('[SleepSchedule] API response invalid:', result);
         }
       } catch (error) {
-        console.error('Failed to load sleep schedule config:', error);
+        console.error('[SleepSchedule] Failed to load config:', error);
         // Continue with DEFAULT_STATE
       }
     };
@@ -267,11 +272,23 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
       const isWeekendNight = dayOfWeek === 5 || dayOfWeek === 6;
       const effectiveSleepTime = isWeekendNight ? state.sleepTimeWeekend : state.sleepTime;
 
+      console.log('[SleepSchedule] Check:', {
+        currentTime,
+        effectiveSleepTime,
+        wakeTime: state.wakeTime,
+        currentState: state.currentState,
+        enabled: state.enabled,
+        sleepMatch: currentTime === effectiveSleepTime,
+        wakeMatch: currentTime === state.wakeTime
+      });
+
       if (currentTime === effectiveSleepTime && state.currentState === 'awake') {
+        console.log('[SleepSchedule] 🌙 Starting fade-out!');
         startFadeOut();
       }
 
       if (currentTime === state.wakeTime && state.currentState === 'sleeping') {
+        console.log('[SleepSchedule] ☀️ Starting fade-in!');
         startFadeIn();
       }
     };
