@@ -223,6 +223,18 @@ class DeploymentHandler
 
     # Store the latest event data and changes for debounced deployment
     @deployment_mutex.synchronize do
+      # Accumulate changes from cancelled deployments (OR logic)
+      # If previous push had frontend=true and new one has config=true, deploy BOTH
+      if @pending_event
+        changes = {
+          frontend: changes[:frontend] || @pending_event[:changes][:frontend],
+          backend: changes[:backend] || @pending_event[:changes][:backend],
+          deployment: changes[:deployment] || @pending_event[:changes][:deployment],
+          config: changes[:config] || @pending_event[:changes][:config]
+        }
+        $logger.info("🔄 Accumulated changes from cancelled deployment: Frontend=#{changes[:frontend]}, Backend=#{changes[:backend]}, Deployment=#{changes[:deployment]}, Config=#{changes[:config]}")
+      end
+
       @pending_event = { event_data: event_data, changes: changes }
 
       # Cancel existing timer if running
