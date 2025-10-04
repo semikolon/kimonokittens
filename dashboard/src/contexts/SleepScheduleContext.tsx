@@ -157,15 +157,15 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
       return 1.0 - ((time - 18) / 4) * 0.1;
     }
 
-    // Night: 10pm-1am (0.9 → 0.7)
+    // Night: 10pm-1am (0.9 → 0.5)
     if (time >= 22 || time < 1) {
       const nightTime = time >= 22 ? time - 22 : time + 2;
-      return 0.9 - (nightTime / 3) * 0.2;
+      return 0.9 - (nightTime / 3) * 0.4;
     }
 
-    // Dawn: 5:30am-6am (0.7 → 1.0)
+    // Dawn: 5:30am-6am (0.5 → 1.0)
     if (time >= 5.5 && time < 6) {
-      return 0.7 + ((time - 5.5) / 0.5) * 0.3;
+      return 0.5 + ((time - 5.5) / 0.5) * 0.5;
     }
 
     // Default
