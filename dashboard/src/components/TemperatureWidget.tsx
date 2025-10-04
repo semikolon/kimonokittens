@@ -95,10 +95,24 @@ export function TemperatureWidget() {
       }
     })
 
-    // Create 16-hour timeline: prev 3 + current/next 12 hours
+    // Dynamic timeline: cursor slides from left (morning) to right (evening)
     const currentMinutes = now.getMinutes()
     const hours = []
-    for (let i = -3; i <= 12; i++) {
+
+    // Calculate sliding window based on time of day
+    let hoursBefore, hoursAfter
+    if (currentHour >= 7 && currentHour <= 23) {
+      // 7am-11pm: cursor gradually moves from index 3 to index 13
+      const progressThroughDay = (currentHour - 7) / 16 // 0.0 at 7am, 1.0 at 11pm
+      hoursBefore = 3 + Math.round(progressThroughDay * 10) // 3→13
+      hoursAfter = 12 - Math.round(progressThroughDay * 10)  // 12→2
+    } else {
+      // Midnight-6am: reset to morning view (show future)
+      hoursBefore = 3
+      hoursAfter = 12
+    }
+
+    for (let i = -hoursBefore; i <= hoursAfter; i++) {
       const timelineHour = new Date(now.getTime() + (i * 60 * 60 * 1000))
       const hour = timelineHour.getHours()
       const isCurrentHour = i === 0
@@ -183,7 +197,7 @@ export function TemperatureWidget() {
           className={`text-purple-200 mb-2 heatpump-status ${isStatusChanging ? 'changing' : ''}`}
           style={{ textTransform: 'uppercase', fontSize: '0.8em' }}
         >
-          {currentSmartStatus}
+          {currentSmartStatus}{isActivelyHeating && ` - ${temperatureData.supplyline_temperature} i elementen`}
         </div>
         <div
           className="relative h-5 rounded-lg overflow-visible"

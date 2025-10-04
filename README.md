@@ -53,6 +53,8 @@ const THERMIQ_TIME_OFFSET_HOURS = -1
 
 This ensures the heatpump schedule visualization displays correctly relative to the device's actual operational state. Remove this offset when the device clock is corrected.
 
+**Schedule Bar Time Cursor**: The 16-hour schedule bar features a sliding time cursor that moves from left (18% at 7am) to right (81% at 11pm) throughout the day, providing a visual sense of day progression. At night (midnight-6am), it resets to the morning view showing future heating schedules.
+
 ---
 
 ## Rent Calculator System
