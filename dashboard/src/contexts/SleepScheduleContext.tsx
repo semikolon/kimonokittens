@@ -89,11 +89,12 @@ const SleepScheduleContext = createContext<SleepScheduleContextValue | undefined
 
 // Remote logging helper (outside component to avoid stale closures)
 const log = (message: string) => {
-  console.log(message);
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}]`, message);
   fetch('/api/log', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message })
+    body: JSON.stringify({ message: `[${timestamp}] ${message}` })
   }).catch(() => {}); // Ignore errors
 };
 
