@@ -321,6 +321,25 @@ app = Rack::Builder.new do
     }
   end
 
+  # Frontend logging endpoint (for debugging)
+  map "/api/log" do
+    run lambda { |env|
+      req = Rack::Request.new(env)
+      if req.post?
+        begin
+          data = Oj.load(req.body.read)
+          log_file = ENV['RACK_ENV'] == 'production' ? '/var/log/kimonokittens/frontend.log' : File.expand_path('log/frontend.log', __dir__)
+          File.open(log_file, 'a') { |f| f.puts "[#{Time.now.strftime('%H:%M:%S')}] #{data['message']}" }
+          [200, {'Content-Type' => 'application/json'}, ['{}']]
+        rescue
+          [500, {'Content-Type' => 'application/json'}, ['{"error":"failed"}']]
+        end
+      else
+        [405, {'Content-Type' => 'text/plain'}, ['Method Not Allowed']]
+      end
+    }
+  end
+
   # Data routes
   map "/data/train_departures" do
     run train_departure_handler

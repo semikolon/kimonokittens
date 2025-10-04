@@ -87,6 +87,16 @@ const reducer = (state: SleepScheduleState, action: SleepScheduleAction): SleepS
 
 const SleepScheduleContext = createContext<SleepScheduleContextValue | undefined>(undefined);
 
+// Remote logging helper (outside component to avoid stale closures)
+const log = (message: string) => {
+  console.log(message);
+  fetch('/api/log', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message })
+  }).catch(() => {}); // Ignore errors
+};
+
 export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, DEFAULT_STATE);
   const fadeAnimationRef = useRef<number>();
@@ -95,14 +105,14 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        console.log('[SleepSchedule] Loading config from API...');
+        log('[SleepSchedule] Loading config from API...');
         const response = await fetch('/api/sleep/config');
         const result = await response.json();
-        console.log('[SleepSchedule] API response:', result);
+        log(`[SleepSchedule] API response: ${JSON.stringify(result)}`);
 
         if (result.success && result.config) {
           const config = result.config;
-          console.log('[SleepSchedule] Config loaded successfully:', config);
+          log(`[SleepSchedule] Config loaded: sleep=${config.sleepTime} wake=${config.wakeTime} enabled=${config.enabled}`);
           if (config.sleepTime) dispatch({ type: 'SET_SLEEP_TIME', time: config.sleepTime });
           if (config.sleepTimeWeekend) dispatch({ type: 'SET_SLEEP_TIME_WEEKEND', time: config.sleepTimeWeekend });
           if (config.wakeTime) dispatch({ type: 'SET_WAKE_TIME', time: config.wakeTime });
@@ -116,10 +126,10 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
             dispatch({ type: 'TOGGLE_BRIGHTNESS' }); // Toggle if disabled in config
           }
         } else {
-          console.warn('[SleepSchedule] API response invalid:', result);
+          log(`[SleepSchedule] API response invalid: ${JSON.stringify(result)}`);
         }
       } catch (error) {
-        console.error('[SleepSchedule] Failed to load config:', error);
+        log(`[SleepSchedule] Failed to load config: ${error}`);
         // Continue with DEFAULT_STATE
       }
     };
@@ -272,23 +282,18 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
       const isWeekendNight = dayOfWeek === 5 || dayOfWeek === 6;
       const effectiveSleepTime = isWeekendNight ? state.sleepTimeWeekend : state.sleepTime;
 
-      console.log('[SleepSchedule] Check:', {
-        currentTime,
-        effectiveSleepTime,
-        wakeTime: state.wakeTime,
-        currentState: state.currentState,
-        enabled: state.enabled,
-        sleepMatch: currentTime === effectiveSleepTime,
-        wakeMatch: currentTime === state.wakeTime
-      });
+      const sleepMatch = currentTime === effectiveSleepTime;
+      const wakeMatch = currentTime === state.wakeTime;
 
-      if (currentTime === effectiveSleepTime && state.currentState === 'awake') {
-        console.log('[SleepSchedule] 🌙 Starting fade-out!');
+      log(`[SleepSchedule] Check: time=${currentTime} sleep=${effectiveSleepTime} wake=${state.wakeTime} state=${state.currentState} enabled=${state.enabled} sleepMatch=${sleepMatch} wakeMatch=${wakeMatch}`);
+
+      if (sleepMatch && state.currentState === 'awake') {
+        log('[SleepSchedule] 🌙 TRIGGERING FADE-OUT!');
         startFadeOut();
       }
 
-      if (currentTime === state.wakeTime && state.currentState === 'sleeping') {
-        console.log('[SleepSchedule] ☀️ Starting fade-in!');
+      if (wakeMatch && state.currentState === 'sleeping') {
+        log('[SleepSchedule] ☀️ TRIGGERING FADE-IN!');
         startFadeIn();
       }
     };
