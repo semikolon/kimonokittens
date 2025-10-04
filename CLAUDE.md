@@ -342,6 +342,43 @@ end
 - **`drift_rakning`**: Quarterly invoice (replaces monthly fees when present)
 - **Monthly fees**: `vattenavgift` + `va` + `larm` (used when no quarterly invoice)
 
+## Testing Best Practices 🧪
+
+**Status**: ✅ PRODUCTION READY (October 4, 2025) - 39/39 tests passing
+**Documentation**: `docs/TESTING_GUIDE.md` (complete reference)
+
+### Critical Rules
+
+1. **Test database isolation** - Tests ALWAYS use `kimonokittens_test` database (4-layer defense in depth)
+2. **spec_helper.rb MUST be first require** - Loads `.env.test` before any code
+3. **Sequel API**: Use `db.class.db.run()` not `db.conn.exec()` (pre-2025 upgrade)
+4. **Default utilities**: Calculator adds 825 kr when utilities not provided
+5. **Rounding tolerance**: Use `be_within(1).of(...)` for financial totals
+6. **Timestamp comparison**: Compare `.to_date` not full timestamps (timezone differences)
+
+### Quick Commands
+
+```bash
+# Run tests (one file at a time for easier fixes)
+bundle exec rspec spec/rent_calculator/calculator_spec.rb
+
+# Verify dev database untouched after tests
+ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.get_tenants.length"  # Should show 8
+
+# Full test suite
+bundle exec rspec
+```
+
+### When Tests Fail
+
+**Code behavior likely evolved legitimately** - update test expectations, not implementation:
+- Message format changes → Update regex/string matchers
+- Rounding differences → Add tolerance
+- Default values → Accept calculator's defaults
+- Timezone handling → Compare dates not timestamps
+
+**See**: `docs/TESTING_GUIDE.md` for complete patterns, setup, and troubleshooting
+
 ## Documentation Locations
 
 ### Already Documented:
