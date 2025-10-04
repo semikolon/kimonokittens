@@ -155,7 +155,7 @@ const calculateSuffix = (adjusted: AdjustedDeparture): string => {
   const MARGIN_TIME = 5    // alarm margin to get ready
 
   if (adjusted.adjustedMinutesUntil < WALK_TIME) {
-    return "spring eller cykla!"
+    return "spring/cykla!"
   } else if (adjusted.adjustedMinutesUntil > WALK_TIME + MARGIN_TIME + 5) {
     // Calculate alarm time: adjusted departure - (walk + margin)
     const [hours, minutes] = adjusted.adjustedTime.split(':').map(Number)
