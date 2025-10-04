@@ -1,8 +1,8 @@
 {
   "enabled": true,
-  "sleepTime": "23:28",
-  "sleepTimeWeekend": "23:43",
-  "wakeTime": "23:46",
+  "sleepTime": "01:00",
+  "sleepTimeWeekend": "03:00",
+  "wakeTime": "05:30",
   "monitorPowerControl": true,
   "brightnessEnabled": true
 }

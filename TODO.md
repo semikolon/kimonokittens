@@ -88,9 +88,9 @@ Located at `config/sleep_schedule.json`:
 ```json
 {
   "enabled": true,
-  "sleepTime": "00:00",           // Weekday: midnight
-  "sleepTimeWeekend": "02:00",    // Fri/Sat: 2am
-  "wakeTime": "06:00",            // Every day: 6am
+  "sleepTime": "01:00",           // Weekday: 1am
+  "sleepTimeWeekend": "03:00",    // Fri/Sat: 3am
+  "wakeTime": "05:30",            // Every day: 5:30am
   "monitorPowerControl": true,
   "brightnessEnabled": true
 }
@@ -112,8 +112,8 @@ Located at `config/sleep_schedule.json`:
 - [x] CSS fade-in works smoothly (2-minute transition)
 - [x] Weekend schedule uses correct sleep time
 - [x] Time check interval catches minute boundaries
-- [ ] End-to-end overnight sleep/wake cycle
-- [ ] Monitor DPMS power control verification
+- [x] End-to-end overnight sleep/wake cycle (Verified Oct 4, 2025)
+- [x] Monitor DPMS power control verification (Verified Oct 4, 2025)
 
 **Details:** See `docs/DASHBOARD_SLEEP_SCHEDULE_IMPLEMENTATION.md` for architecture
 
