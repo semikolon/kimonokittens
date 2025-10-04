@@ -53,6 +53,7 @@ tink-accounts.json
 node_modules/
 
 tmp/
+log/
 
 # Claude Code personal settings
 .claude/settings.local.json
