@@ -1,3 +1,4 @@
+require_relative '../spec_helper'
 require_relative 'support/test_helpers'
 
 RSpec.describe RentCalculator::Config do

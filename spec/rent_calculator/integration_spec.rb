@@ -1,3 +1,4 @@
+require_relative '../spec_helper'
 require_relative 'support/test_helpers'
 require_relative '../../handlers/rent_calculator_handler'
 require 'rack/test'

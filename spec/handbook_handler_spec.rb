@@ -1,3 +1,4 @@
+require_relative 'spec_helper'
 require 'rspec'
 require_relative '../handlers/handbook_handler'
 require_relative 'support/api_test_helpers'

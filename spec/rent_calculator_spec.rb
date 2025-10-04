@@ -1,3 +1,4 @@
+require_relative 'spec_helper'
 require_relative 'rent_calculator/support/test_helpers'
 require_relative 'rent_calculator/config_spec'
 require_relative 'rent_calculator/weight_calculator_spec'

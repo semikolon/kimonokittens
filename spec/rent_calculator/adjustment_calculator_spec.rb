@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative '../spec_helper'
 require_relative 'support/test_helpers'
 require_relative '../../rent'
 

@@ -1,3 +1,4 @@
+require_relative 'spec_helper'
 require 'rspec'
 require 'faraday'
 require_relative '../handlers/strava_workouts_handler'
