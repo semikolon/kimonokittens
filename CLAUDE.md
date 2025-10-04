@@ -49,6 +49,28 @@ Wrong: Run sudo systemctl restart kimonokittens-webhook
 Right: "Please run: sudo systemctl restart kimonokittens-webhook"
 ```
 
+### 🚨 NEVER MANUALLY DEPLOY TO PRODUCTION
+
+**CRITICAL RULE: Webhook deployments are MANDATORY - never work around them!**
+
+- ❌ **NEVER** run `git pull` in `/home/kimonokittens/Projects/kimonokittens`
+- ❌ **NEVER** manually copy files to production
+- ❌ **NEVER** edit files directly in production checkout
+- ✅ **ALWAYS** commit changes to dev checkout and push to trigger webhook
+- ✅ **IF webhook doesn't deploy** → Fix the webhook, don't work around it
+
+**Why this matters:**
+1. Manual deploys bypass the smart debouncing and change detection
+2. They create inconsistencies between git state and deployed state
+3. They hide webhook configuration problems that need to be fixed
+4. The webhook is the single source of truth for production state
+
+**If webhook isn't working:**
+1. Check GitHub webhook configuration at repository settings
+2. Verify webhook secret matches `WEBHOOK_SECRET` in `.env`
+3. Check webhook service logs: `journalctl -u kimonokittens-webhook -f`
+4. **Fix the root cause** - don't bypass with manual git pull
+
 ### ✅ ALWAYS DO:
 - **ONLY** use these exact commands for ALL process management:
   ```bash
