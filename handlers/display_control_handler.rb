@@ -33,9 +33,9 @@ class DisplayControlHandler
   def self.handle_brightness(params)
     level = params['level'].to_f
 
-    # Validate brightness range (0.7-1.5 for our use case)
-    unless level >= 0.7 && level <= 1.5
-      return { success: false, error: 'Brightness must be 0.7-1.5' }
+    # Validate brightness range (0.3-1.5 for our use case)
+    unless level >= 0.3 && level <= 1.5
+      return { success: false, error: 'Brightness must be 0.3-1.5' }
     end
 
     # Execute xrandr brightness command
