@@ -4,6 +4,7 @@ require 'singleton'
 require_relative 'lib/rent_config_store'
 require_relative 'lib/roommate_store'
 require_relative 'lib/rent_history'
+require_relative 'lib/rent_db'
 require 'awesome_print'
 
 # RentCalculator handles fair distribution of rent and costs among roommates.
@@ -386,6 +387,88 @@ module RentCalculator
       config = Config.new(config) unless config.is_a?(Config)
       breakdown = rent_breakdown(roommates: roommates, config: config)
 
+      # NEW: Save to database (single source of truth)
+      unless history_options.fetch(:test_mode, false)
+        db = RentDb.instance
+
+        # Calculate periods
+        config_period = Time.utc(config.year, config.month, 1)
+        rent_month = config.month + 1
+        rent_year = config.year
+        if rent_month > 12
+          rent_month = 1
+          rent_year += 1
+        end
+        rent_period = Time.utc(rent_year, rent_month, 1)
+
+        # 1. Save to RentConfig (input values for this config period)
+        config.to_h.each do |key, value|
+          next if value.nil? || value == 0
+
+          existing = db.class.rent_configs.where(key: key.to_s, period: config_period).first
+          if existing
+            db.class.rent_configs.where(id: existing[:id]).update(
+              value: value.to_s,
+              updatedAt: Time.now.utc
+            )
+          else
+            db.class.rent_configs.insert(
+              id: Cuid.generate,
+              key: key.to_s,
+              value: value.to_s,
+              period: config_period,
+              createdAt: Time.now.utc,
+              updatedAt: Time.now.utc
+            )
+          end
+        end
+
+        # 2. Save to RentLedger (per-tenant amounts + audit trail)
+        tenant_map = {}
+        db.class.tenants.all.each { |t| tenant_map[t[:name]] = t[:id] }
+
+        base_monthly_rent = config.kallhyra / roommates.size.to_f
+
+        breakdown['Rent per Roommate'].each do |tenant_name, amount|
+          tenant_id = tenant_map[tenant_name]
+          next unless tenant_id
+
+          roommate_config = roommates[tenant_name] || {}
+          days_stayed = roommate_config[:days]
+          room_adjustment = roommate_config[:room_adjustment] || 0
+
+          existing = db.class.rent_ledger.where(tenantId: tenant_id, period: rent_period).first
+          if existing
+            db.class.rent_ledger.where(id: existing[:id]).update(
+              amountDue: amount,
+              daysStayed: days_stayed,
+              roomAdjustment: room_adjustment,
+              baseMonthlyRent: base_monthly_rent,
+              calculationTitle: history_options[:title],
+              calculationDate: Time.now.utc
+            )
+          else
+            db.class.rent_ledger.insert(
+              id: Cuid.generate,
+              tenantId: tenant_id,
+              period: rent_period,
+              amountDue: amount,
+              amountPaid: 0,  # Not yet paid
+              paymentDate: nil,
+              createdAt: Time.now.utc,
+              daysStayed: days_stayed,
+              roomAdjustment: room_adjustment,
+              baseMonthlyRent: base_monthly_rent,
+              calculationTitle: history_options[:title],
+              calculationDate: Time.now.utc
+            )
+          end
+        end
+      end
+
+      # OLD: JSON file saving (DEPRECATED - database is now source of truth)
+      # Keeping this code for compatibility during transition period
+      # TODO: Remove after verifying database auto-save works in production
       history = RentHistory::Month.new(
         year: config.year, month: config.month,
         version: history_options[:version],
@@ -397,7 +480,7 @@ module RentCalculator
       history.roommates = roommates
       # Record only the roommate amounts, not the entire breakdown
       history.record_results(breakdown['Rent per Roommate'])
-      history.save(force: history_options.fetch(:force, false))
+      # history.save(force: history_options.fetch(:force, false))  # DISABLED: Using database now
 
       breakdown
     end
