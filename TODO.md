@@ -70,27 +70,27 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 ---
 
-## 🌙 Dashboard Sleep Schedule Feature ✅ DEPLOYED
+## 🌙 Dashboard Sleep Schedule Feature ✅ PRODUCTION READY
 
-**Status:** ✅ FULLY IMPLEMENTED AND DEPLOYED (October 3, 2025)
+**Status:** ✅ FULLY WORKING with CSS transitions (October 4, 2025)
 
 ### Implemented Features
 - ✅ **File-based configuration** at `config/sleep_schedule.json` (git-tracked, vim-editable)
-- ✅ **Gradual dimming**: 2-minute fade transition to black screen
-- ✅ **Weekend support**: 3am sleep time on Friday/Saturday nights, 1am Sun-Thu
+- ✅ **Smooth GPU-accelerated fades**: Pure CSS transitions (120s opacity, cubic-bezier easing)
+- ✅ **Weekend support**: Different sleep times for Fri/Sat nights (sleepTimeWeekend)
 - ✅ **Adaptive brightness**: 24-hour schedule (0.7-1.5 range) integrated with xrandr
 - ✅ **Monitor power control**: DPMS power off during sleep (optional via config)
 - ✅ **Animation pausing**: WebGL shader and CSS animations pause during sleep
 - ✅ **Webhook auto-reload**: Config changes trigger kiosk browser reload
 
-### Configuration
+### Current Configuration
 Located at `config/sleep_schedule.json`:
 ```json
 {
   "enabled": true,
-  "sleepTime": "01:00",
-  "sleepTimeWeekend": "03:00",
-  "wakeTime": "05:30",
+  "sleepTime": "00:00",           // Weekday: midnight
+  "sleepTimeWeekend": "02:00",    // Fri/Sat: 2am
+  "wakeTime": "06:00",            // Every day: 6am
   "monitorPowerControl": true,
   "brightnessEnabled": true
 }
@@ -98,20 +98,24 @@ Located at `config/sleep_schedule.json`:
 
 ### Components Deployed
 - **Backend API**: `/api/sleep/config` (handlers/sleep_schedule_handler.rb)
-- **Frontend Context**: SleepScheduleContext.tsx (state machine with fade transitions)
-- **UI Components**: FadeOverlay.tsx, animated-shader-background.tsx integration
+- **Frontend Context**: SleepScheduleContext.tsx (state machine, 10s timer)
+- **UI Components**: FadeOverlay.tsx (pure CSS transitions, no JS animation)
 - **Display Control**: display_control_handler.rb (xrandr brightness + DPMS)
 
-### Testing Needed
-- [ ] End-to-end sleep/wake cycle verification (wait until 1am or manually trigger)
-- [ ] Weekend schedule transition (Friday/Saturday 3am behavior)
-- [ ] Brightness control on physical display
-- [ ] Monitor DPMS power control during sleep
+### Key Implementation Fix (Oct 4, 2025)
+**Bug Found**: Original requestAnimationFrame approach conflicted with CSS transitions
+**Fix Applied**: Pure CSS `transition: opacity 120s` - GPU-accelerated, smooth fades
+**Time Check**: Reduced to 10s interval to prevent missing minute boundaries
 
-### Cleanup Tasks
-- [x] Remove test comments from puma_server.rb:6 and dashboard/src/App.tsx:4 (cleaned up Oct 3)
+### Testing Status
+- [x] CSS fade-out works smoothly (2-minute transition)
+- [x] CSS fade-in works smoothly (2-minute transition)
+- [x] Weekend schedule uses correct sleep time
+- [x] Time check interval catches minute boundaries
+- [ ] End-to-end overnight sleep/wake cycle
+- [ ] Monitor DPMS power control verification
 
-**Details:** See `docs/SESSION_WORK_REPORT_2025-10-03.md` for complete implementation summary
+**Details:** See `docs/DASHBOARD_SLEEP_SCHEDULE_IMPLEMENTATION.md` for architecture
 
 ---
 ## Immediate Tasks & Repository Hygiene

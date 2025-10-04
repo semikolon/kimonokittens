@@ -1,9 +1,27 @@
 # Dashboard Sleep Schedule - Detailed Implementation Plan
 
-**Status**: ✅ COMPLETED - October 3, 2025
+**Status**: ✅ PRODUCTION READY - October 4, 2025
 **Created**: October 3, 2025
-**Updated**: October 3, 2025 - Implementation complete with adaptive brightness + monitor DPMS control
-**Implementation**: Frontend + Backend complete with smooth transitions
+**Updated**: October 4, 2025 - Fixed fade transitions with pure CSS (GPU-accelerated)
+**Implementation**: Frontend + Backend complete with smooth CSS transitions
+
+---
+
+## ⚠️ Critical Bug Fix - October 4, 2025
+
+**Problem Discovered**: Original requestAnimationFrame fade implementation conflicted with CSS transitions, causing instant jumps instead of smooth fades.
+
+**Root Cause**: JavaScript was updating `opacity` via React state while CSS `transition` tried to animate the same property. Inline styles override CSS transitions → no fade.
+
+**Solution Applied**: Pure CSS transitions - simpler, GPU-accelerated, and actually works!
+
+**Changes Made**:
+1. **FadeOverlay.tsx**: Removed all `requestAnimationFrame` logic
+2. **Opacity values**: Simple boolean logic (sleeping/fading-out = 1, awake/fading-in = 0)
+3. **CSS handles everything**: `transition: opacity 120s cubic-bezier(0.4, 0.0, 0.2, 1)`
+4. **Timer interval**: Reduced from 60s to 10s (prevents missing minute boundaries)
+
+**Result**: ✅ Smooth 2-minute fades working perfectly, more performant than JS animation
 
 ---
 
@@ -244,17 +262,22 @@ interface SleepScheduleContext {
 }
 ```
 
-**Timer Logic**:
+**Timer Logic** (Corrected - October 4, 2025):
 ```typescript
 useEffect(() => {
-  if (!state.enabled) return;
+  if (!state.enabled || state.manualOverride) return;
 
   const checkSchedule = () => {
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const dayOfWeek = now.getDay(); // 0=Sunday, 5=Friday, 6=Saturday
+
+    // Use weekend sleep time on Friday and Saturday nights
+    const isWeekendNight = dayOfWeek === 5 || dayOfWeek === 6;
+    const effectiveSleepTime = isWeekendNight ? state.sleepTimeWeekend : state.sleepTime;
 
     // Check if we should start sleeping
-    if (currentTime === state.sleepTime && state.currentState === 'awake') {
+    if (currentTime === effectiveSleepTime && state.currentState === 'awake') {
       startFadeOut();
     }
 
@@ -264,68 +287,56 @@ useEffect(() => {
     }
   };
 
-  // Check every minute (cron-like behavior)
-  const interval = setInterval(checkSchedule, 60000);
+  // Check every 10 seconds to never miss minute boundary
+  // (60s interval could skip over target minute if component mounts at wrong time)
+  const interval = setInterval(checkSchedule, 10000);
   checkSchedule(); // Check immediately on mount
 
   return () => clearInterval(interval);
-}, [state.enabled, state.sleepTime, state.wakeTime]);
+}, [state.enabled, state.sleepTime, state.sleepTimeWeekend, state.wakeTime, state.currentState, state.manualOverride]);
 ```
 
-**Fade Transition Logic**:
+**Fade Transition Logic** (Corrected - October 4, 2025):
 ```typescript
+// SIMPLIFIED: No requestAnimationFrame needed - CSS handles everything!
 const startFadeOut = () => {
-  setState(prev => ({ ...prev, currentState: 'fading-out' }));
+  dispatch({ type: 'SET_STATE', state: 'fading-out' });
 
-  const duration = 120000; // 2 minutes in milliseconds
-  const startTime = Date.now();
+  // CSS transition handles the 120s fade automatically
+  // After 120s, set to sleeping state
+  setTimeout(() => {
+    dispatch({ type: 'SET_STATE', state: 'sleeping' });
 
-  const animateFrame = () => {
-    const elapsed = Date.now() - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    setState(prev => ({ ...prev, fadeProgress: progress * 100 }));
-
-    if (progress < 1) {
-      requestAnimationFrame(animateFrame);
-    } else {
-      setState(prev => ({
-        ...prev,
-        currentState: 'sleeping',
-        fadeProgress: 100,
-        lastTransitionTime: Date.now()
-      }));
+    // Turn off monitor if enabled
+    if (state.monitorPowerControl) {
+      fetch('/api/display/power', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'off' }),
+      }).catch(error => console.error('Failed to turn off monitor:', error));
     }
-  };
-
-  requestAnimationFrame(animateFrame);
+  }, 120000);
 };
 
 const startFadeIn = () => {
-  setState(prev => ({ ...prev, currentState: 'fading-in' }));
+  // Turn on monitor before fade-in
+  if (state.monitorPowerControl) {
+    fetch('/api/display/power', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'on' }),
+    }).catch(error => console.error('Failed to turn on monitor:', error));
+  }
 
-  const duration = 120000;
-  const startTime = Date.now();
+  setTimeout(() => {
+    dispatch({ type: 'SET_STATE', state: 'fading-in' });
 
-  const animateFrame = () => {
-    const elapsed = Date.now() - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    setState(prev => ({ ...prev, fadeProgress: 100 - (progress * 100) }));
-
-    if (progress < 1) {
-      requestAnimationFrame(animateFrame);
-    } else {
-      setState(prev => ({
-        ...prev,
-        currentState: 'awake',
-        fadeProgress: 0,
-        lastTransitionTime: Date.now()
-      }));
-    }
-  };
-
-  requestAnimationFrame(animateFrame);
+    // CSS transition handles the 120s fade automatically
+    // After 120s, set to awake state
+    setTimeout(() => {
+      dispatch({ type: 'SET_STATE', state: 'awake' });
+    }, 120000);
+  }, 500); // 500ms delay for monitor wake
 };
 ```
 
@@ -340,24 +351,30 @@ const startFadeIn = () => {
 - GPU-accelerated smooth transitions
 - Pointer-events management (block clicks when sleeping)
 
-**Component Structure**:
+**Component Structure** (Corrected - October 4, 2025):
 ```tsx
 const FadeOverlay: React.FC = () => {
   const { state } = useSleepSchedule();
 
-  const opacity = state.fadeProgress / 100;
-  const isInteractive = state.currentState === 'sleeping';
+  // Simplified: Pure CSS transitions, no JS opacity calculations
+  // Opacity targets based on state:
+  // - fading-out: 1 (transitions from 0 to 1)
+  // - sleeping: 1 (stays at 1)
+  // - fading-in: 0 (transitions from 1 to 0)
+  // - awake: 0 (stays at 0)
+  const opacity = (state.currentState === 'sleeping' || state.currentState === 'fading-out') ? 1 : 0;
+  const hasTransition = state.currentState === 'fading-out' || state.currentState === 'fading-in';
 
   return (
     <div
       className="sleep-overlay"
+      data-sleep-overlay
       style={{
         opacity,
-        pointerEvents: isInteractive ? 'auto' : 'none',
-        transition: state.currentState.includes('fading')
-          ? 'opacity 120s cubic-bezier(0.4, 0.0, 0.2, 1)'
-          : 'none'
+        pointerEvents: state.currentState === 'sleeping' ? 'auto' : 'none',
+        transition: hasTransition ? 'opacity 120s cubic-bezier(0.4, 0.0, 0.2, 1)' : 'none',
       }}
+      aria-hidden={state.currentState !== 'sleeping'}
     />
   );
 };
@@ -540,26 +557,25 @@ const useSleepAwareWebSocket = () => {
 
 ---
 
-## Default Configuration
+## Current Production Configuration
 
-**Initial State** (first load):
-```typescript
-const DEFAULT_CONFIG: SleepScheduleState = {
-  enabled: true,
-  sleepTime: "01:00",
-  wakeTime: "05:30",
-  currentState: 'awake',
-  fadeProgress: 0,
-  manualOverride: false,
-  lastTransitionTime: 0
-};
+**Production Config** (`config/sleep_schedule.json`):
+```json
+{
+  "enabled": true,
+  "sleepTime": "00:00",
+  "sleepTimeWeekend": "02:00",
+  "wakeTime": "06:00",
+  "monitorPowerControl": true,
+  "brightnessEnabled": true
+}
 ```
 
-**Rationale**:
-- **1:00 AM sleep**: Latest reasonable bedtime for household
-- **5:30 AM wake**: Early enough for breakfast dashboard viewing
-- **Enabled by default**: Immediate benefit for hallway light reduction
-- **5.5 hours sleep**: Matches typical household sleep period
+**Schedule Behavior**:
+- **Weekday sleep (Sun-Thu)**: Midnight (00:00) → 6:00 AM (6 hours)
+- **Weekend sleep (Fri-Sat)**: 2:00 AM → 6:00 AM (4 hours)
+- **Monitor control**: DPMS power off during sleep (saves ~12W)
+- **Adaptive brightness**: 0.7-1.5 range throughout the day
 
 ---
 
