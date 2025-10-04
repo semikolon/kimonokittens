@@ -47,6 +47,7 @@
 require 'rack'
 require_relative '../rent'
 require_relative '../lib/rent_db'
+require_relative '../lib/electricity_projector'
 require 'json'
 require 'date'
 
@@ -414,53 +415,23 @@ class RentCalculatorHandler
   end
 
   def get_historical_electricity_cost(year:, month:)
-    # This helper parses the electricity_bills_history.txt file to find the
-    # total electricity cost for a given consumption month.
-    # It assumes the bill for month M is paid in month M+1, so to find the
-    # cost for July 2024 consumption, it looks for bills dated August 2024.
-    history_file = File.expand_path('../../electricity_bills_history.txt', __FILE__)
-    return 0 unless File.exist?(history_file)
-    
-    lines = File.readlines(history_file)
-    
-    # To find the cost for 'month', we look at bills from 'month + 1'.
-    forecast_month = month + 1
-    forecast_year = year - 1
-    if forecast_month > 12
-      forecast_month = 1
-      forecast_year += 1
-    end
-
-    target_month_str = "#{forecast_year}-#{format('%02d', forecast_month)}"
-    
-    vattenfall_cost = 0
-    fortum_cost = 0
-    in_fortum_section = false
-    
-    lines.each do |line|
-      next if line.strip.empty?
-      
-      if line.include?('Fortum')
-        in_fortum_section = true
-        next
-      elsif line.include?('Vattenfall')
-        in_fortum_section = false
-        next
-      end
-
-      next unless line.start_with?(target_month_str)
-      
-      cost = line.split('kr').first.split.last.to_f
-      
-      if in_fortum_section
-        fortum_cost = cost if fortum_cost == 0 # Take the first match
-      else
-        vattenfall_cost = cost if vattenfall_cost == 0 # Take the first match
-      end
-    end
-    
-    # Return the sum of the two costs
-    (vattenfall_cost + fortum_cost).round
+    # REPLACED with intelligent ElectricityProjector (see lib/electricity_projector.rb)
+    #
+    # Old implementation had critical flaws:
+    # - Always used year-1 (ignored current year actual data)
+    # - Added +1 to month incorrectly
+    # - Returned 0 on failure (triggered bad defaults)
+    # - Only used text file (ignored RentConfig and historical JSON files)
+    #
+    # New implementation:
+    # - Uses trailing 12 months for baseline (captures current price trends)
+    # - Applies multi-year seasonal patterns
+    # - Sources from RentConfig + JSON files + text file (comprehensive)
+    # - Never returns 0 (always provides intelligent projection)
+    #
+    # See lib/electricity_projector.rb for full algorithm documentation.
+    projector = ElectricityProjector.new
+    projector.project(config_year: year, config_month: month)
   end
 
   # Extracts roommate information for a specific CONFIGURATION PERIOD
