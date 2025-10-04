@@ -3,19 +3,20 @@
 **Date:** October 4, 2025
 **Status:** Ready for execution
 **Dev Migration:** ✅ Complete and verified
-**Estimated Time:** 15-20 minutes
-**Risk Level:** Low (full backup + rollback plan)
+**Estimated Time:** 15-20 minutes (can be done hours after code deploy)
+**Risk Level:** 🟢 VERY LOW (no urgency, display works before/during/after migration)
 
 ---
 
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Pre-Migration Checklist](#pre-migration-checklist)
-3. [Migration Steps](#migration-steps)
-4. [Verification](#verification)
-5. [Rollback Plan](#rollback-plan)
-6. [Post-Migration](#post-migration)
+2. [Critical Understanding](#critical-understanding) ⭐ NEW
+3. [Pre-Migration Checklist](#pre-migration-checklist)
+4. [Migration Steps](#migration-steps)
+5. [Verification](#verification)
+6. [Rollback Plan](#rollback-plan)
+7. [Post-Migration](#post-migration)
 
 ---
 
@@ -53,6 +54,61 @@
 3. **File Cleanup:**
    - Delete JSON files (preserved in git)
    - Delete text file (preserved in git)
+
+---
+
+## Critical Understanding
+
+### Why This Migration Is Low-Stress
+
+**IMPORTANT: Production kiosk only DISPLAYS data, it never runs calculations automatically.**
+
+#### What Production Actually Does
+
+1. **RentWidget** (frontend) → Displays pre-calculated rent from WebSocket
+2. **GET /api/rent/friendly_message** (backend) → Reads existing RentConfig + Tenant tables
+3. **POST /api/rent** (calculation endpoint) → Only you know about this, manual only
+
+#### What The New Schema Adds
+
+- **New RentLedger columns:** `daysStayed`, `baseMonthlyRent`, `calculationTitle`, `calculationDate`
+- **New table:** `ElectricityBill`
+
+#### Why Order Doesn't Matter
+
+**Display endpoint only reads:**
+- `RentConfig.key`, `RentConfig.value`, `RentConfig.period` ✅ Existing columns
+- `Tenant.name`, `Tenant.startDate`, `Tenant.departureDate`, `Tenant.roomAdjustment` ✅ Existing columns
+- **Never queries new columns or new table** ✅
+
+**This means:**
+- ✅ Push code first → webhook auto-deploys → kiosk keeps working
+- ✅ Run migrations hours/days later → no rush
+- ✅ New code + old schema = display works fine
+- ✅ Old code + new schema = display works fine
+- ✅ Only you manually trigger calculations (POST /api/rent)
+
+### Deployment Timeline Options
+
+#### Option A: Relaxed (Recommended)
+```
+Friday evening: git push origin master (webhook auto-deploys)
+                Kiosk keeps showing rent data ✅
+
+Saturday morning: SSH to production
+                  Run migrations at your leisure
+                  Test over weekend
+
+Monday: Show roommates the updated kiosk
+```
+
+#### Option B: All At Once
+```
+Same session: Push code → SSH immediately → Run migrations
+              (No advantage over Option A, just more rushed)
+```
+
+**Recommendation:** Use Option A. No urgency means less stress and more time to verify.
 
 ---
 
@@ -152,18 +208,14 @@ These are **two separate operations** that must be run **in sequence**:
 
 ## Pre-Migration Checklist
 
-### ☑️ Verify Prerequisites
+### Phase 1: Push Code (Low Risk, Can Do Anytime)
 
 **On your local machine (Mac):**
 ```bash
-# 1. Verify dev migration complete
+# 1. Verify all migration commits exist
 cd ~/Projects/kimonokittens
-git log --oneline -5
-# Should show:
-# d5eaae1 feat: electricity bill migration - text file to database
-# a3e0ac3 refactor: migrate to database-only rent data - delete JSON files
-# df6a8b8 feat: complete rent data migration - JSON to RentLedger audit trail
-# 7cdf304 feat: extend RentLedger with audit trail fields and fix Prisma drift
+git log --oneline master ^origin/master | head -20
+# Should show ~18 commits including migration work
 
 # 2. Verify migration scripts exist
 ls -la deployment/*migration*.rb
@@ -172,33 +224,40 @@ ls -la deployment/*migration*.rb
 # electricity_bill_migration.rb
 # historical_config_migration.rb
 
-# 3. Push to origin (if not already)
+# 3. Push to origin (webhook will auto-deploy)
 git push origin master
+
+# 4. Wait for webhook to complete (2-3 minutes)
+# Kiosk will auto-update and keep showing rent data ✅
+# No rush to run migrations - display works fine without them!
 ```
 
-**On production kiosk:**
+**What happens after push:**
+- Webhook detects push
+- Frontend rebuilds (dashboard/dist/)
+- Backend restarts with new code
+- Kiosk display keeps working (uses existing schema)
+- **You can run migrations hours/days later when convenient**
+
+---
+
+### Phase 2: Run Migrations (When Convenient)
+
+**On production kiosk (SSH when ready):**
 ```bash
 # SSH as kimonokittens user
 ssh kimonokittens@<kiosk-ip>
 
-# 1. Verify you're in correct directory
+# 1. Verify webhook deployment completed
 cd ~/Projects/kimonokittens
-pwd
-# Should show: /home/kimonokittens/Projects/kimonokittens
-
-# 2. Check current git state
-git status
 git log --oneline -3
+# Should show recent commits from your push
 
-# 3. Verify database connection
-ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts 'Connected: ' + RentDb.instance.class.tenants.count.to_s + ' tenants'"
-# Should show: Connected: 8 tenants
-```
+# 2. Verify kiosk is displaying data normally
+curl -s http://localhost:3001/api/rent/friendly_message | jq .message
+# Should show rent message ✅
 
-### ☑️ Create Backup Directory
-
-```bash
-# On production kiosk as kimonokittens user
+# 3. Create backup directory
 mkdir -p ~/backups/migration_20251004
 cd ~/backups/migration_20251004
 ```
@@ -206,6 +265,8 @@ cd ~/backups/migration_20251004
 ---
 
 ## Migration Steps
+
+**NOTE:** Code is already deployed via webhook. These steps only run database migrations.
 
 ### Step 1: Full Database Backup (CRITICAL)
 
@@ -232,31 +293,7 @@ head -20 prod_db_backup_*.sql
 
 ---
 
-### Step 2: Pull Latest Code
-
-**Time: ~10 seconds**
-
-```bash
-# On production kiosk as kimonokittens user
-cd ~/Projects/kimonokittens
-
-# Pull latest changes (includes migrations)
-git pull origin master
-
-# Verify migrations exist
-ls -la deployment/*migration*.rb
-ls -la prisma/migrations/20251004112744_remove_generated_column_extend_ledger/
-
-# Verify JSON and text files are gone
-ls data/rent_history/*.json 2>/dev/null || echo "✅ JSON files deleted (as expected)"
-ls electricity_bills_history.txt 2>/dev/null || echo "✅ Text file deleted (as expected)"
-```
-
-**✅ Checkpoint:** Code updated, migrations present, files deleted
-
----
-
-### Step 3: Schema Migration (Database Structure)
+### Step 2: Schema Migration (Database Structure)
 
 **Time: ~5 seconds**
 
@@ -303,33 +340,7 @@ schema.each { |col| puts \"  #{col[0]}\" }
 
 ---
 
-### Step 4: Archive Source Files (Before Migration Deletes Them)
-
-**Time: ~5 seconds**
-
-**IMPORTANT:** Production still has JSON and text files in git history. Archive them locally before data migration processes them.
-
-```bash
-# On production kiosk as kimonokittens user
-cd ~/backups/migration_20251004
-
-# Archive files from git history (they're deleted from working tree)
-git show HEAD~3:electricity_bills_history.txt > electricity_bills_history.txt
-mkdir json_files
-for file in $(git ls-tree -r --name-only HEAD~3 data/rent_history/ | grep '\.json$'); do
-  git show "HEAD~3:$file" > "json_files/$(basename $file)"
-done
-
-# Verify archives
-ls -la json_files/
-cat electricity_bills_history.txt | head -3
-```
-
-**✅ Checkpoint:** Files archived for reference
-
----
-
-### Step 5: Run RentLedger Data Migration
+### Step 3: Run RentLedger Data Migration
 
 **Time: ~10 seconds**
 
@@ -364,7 +375,7 @@ ruby deployment/complete_rent_data_migration.rb
 
 ---
 
-### Step 6: Run ElectricityBill Data Migration
+### Step 4: Run ElectricityBill Data Migration
 
 **Time: ~5 seconds**
 
@@ -496,18 +507,21 @@ puts \"  daysStayed: #{with_days}/#{total} (rest implied full month)\"
 # daysStayed: 15/31 (rest are full months)
 ```
 
-**✅ All Checks Pass?** Proceed to Step 7. **❌ Any Failures?** See [Rollback Plan](#rollback-plan).
+**✅ All Checks Pass?** Migration complete! **❌ Any Failures?** See [Rollback Plan](#rollback-plan).
+
+**NOTE:** Services already restarted during webhook deploy. No need to restart again unless troubleshooting.
 
 ---
 
-### Step 7: Restart Services
+### Step 5: Optional - Restart Services
 
 **Time: ~10 seconds**
+**Only needed if:** Backend didn't auto-restart during webhook deploy, or if troubleshooting
 
 ```bash
-# On production kiosk
+# On production kiosk (only if needed)
 
-# Restart backend (picks up schema changes)
+# Restart backend
 sudo systemctl restart kimonokittens-dashboard
 
 # Wait 3 seconds
@@ -526,7 +540,7 @@ curl -s http://localhost:3001/api/rent/friendly_message | jq .
 
 ---
 
-### Step 8: Final Production Verification
+### Step 6: Final Production Verification
 
 ```bash
 # On production kiosk
@@ -594,6 +608,50 @@ PRODUCTION MIGRATION - FINAL VERIFICATION
 ================================================================================
 ✅ PRODUCTION MIGRATION COMPLETE
 ================================================================================
+```
+
+---
+
+### Step 7: Cleanup Source Files
+
+**Time: ~30 seconds**
+**Only run this AFTER Step 6 verification passes!**
+
+The migration is complete and verified. Now clean up the source files that were only needed for migration.
+
+```bash
+# On production kiosk as kimonokittens user
+cd ~/Projects/kimonokittens
+
+# Remove source files (data is now in database)
+git rm electricity_bills_history.txt
+git rm -r data/rent_history/
+
+# Commit cleanup
+git commit -m "chore: remove source files after successful migration
+
+Migration complete and verified:
+- RentLedger: 31 entries ✅
+- ElectricityBill: 62 entries ✅
+- All checks passing ✅
+
+Source files no longer needed (data now in PostgreSQL).
+Original files preserved in git history at commit 65ef3e6.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# Push cleanup commit
+git push origin master
+```
+
+**✅ Checkpoint:** Source files removed, migration fully complete
+
+**Note:** Files are preserved in git history. To restore if needed:
+```bash
+git show 65ef3e6:electricity_bills_history.txt
+git show 65ef3e6:data/rent_history/2025_08_v1.json
 ```
 
 ---
