@@ -87,6 +87,19 @@ const reducer = (state: SleepScheduleState, action: SleepScheduleAction): SleepS
 
 const SleepScheduleContext = createContext<SleepScheduleContextValue | undefined>(undefined);
 
+// Helper: Parse "HH:MM" to decimal hours
+const parseTimeString = (timeStr: string): number => {
+  const [h, m] = timeStr.split(':').map(Number);
+  return h + m / 60;
+};
+
+// Helper: Get effective sleep time (weekend vs weekday)
+const getEffectiveSleepTime = (state: SleepScheduleState): string => {
+  const dayOfWeek = new Date().getDay();
+  const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Friday or Saturday
+  return isWeekend ? state.sleepTimeWeekend : state.sleepTime;
+};
+
 // Remote logging helper (outside component to avoid stale closures)
 const log = (message: string) => {
   const timestamp = new Date().toISOString();
@@ -142,20 +155,10 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
   const calculateBrightness = (hour: number, minute: number): number => {
     const time = hour + minute / 60;
 
-    // Parse sleep/wake times from state
-    const parseTime = (timeStr: string): number => {
-      const [h, m] = timeStr.split(':').map(Number);
-      return h + m / 60;
-    };
-
-    // Determine which sleep time to use (weekend or weekday)
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Friday or Saturday
-    const sleepTimeStr = isWeekend ? state.sleepTimeWeekend : state.sleepTime;
-
-    const wakeTime = parseTime(state.wakeTime);
-    const sleepTime = parseTime(sleepTimeStr);
+    // Get effective sleep time and parse to decimal hours
+    const sleepTimeStr = getEffectiveSleepTime(state);
+    const wakeTime = parseTimeString(state.wakeTime);
+    const sleepTime = parseTimeString(sleepTimeStr);
     const oneHourBeforeSleep = sleepTime - 1;
 
     // Wake → 9am: Fade 0.5 → 1.2
@@ -347,11 +350,9 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
     const checkSchedule = () => {
       const now = new Date();
       const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-      const dayOfWeek = now.getDay(); // 0=Sunday, 5=Friday, 6=Saturday
 
-      // Use weekend sleep time on Friday and Saturday nights
-      const isWeekendNight = dayOfWeek === 5 || dayOfWeek === 6;
-      const effectiveSleepTime = isWeekendNight ? state.sleepTimeWeekend : state.sleepTime;
+      // Get effective sleep time (weekend vs weekday)
+      const effectiveSleepTime = getEffectiveSleepTime(state);
 
       const sleepMatch = currentTime === effectiveSleepTime;
       const wakeMatch = currentTime === state.wakeTime;
