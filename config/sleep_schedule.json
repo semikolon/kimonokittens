@@ -2,7 +2,7 @@
   "enabled": true,
   "sleepTime": "00:00",
   "sleepTimeWeekend": "02:00",
-  "wakeTime": "06:00",
+  "wakeTime": "05:00",
   "monitorPowerControl": true,
   "brightnessEnabled": true
 }
