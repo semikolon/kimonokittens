@@ -211,7 +211,7 @@ class DeploymentHandler
     changes = analyze_changes(event_data['commits'] || [])
 
     # If only data files changed (no code), git pull is enough
-    unless changes[:frontend] || changes[:backend] || changes[:deployment]
+    unless changes[:frontend] || changes[:backend] || changes[:deployment] || changes[:config]
       $logger.info("✅ Data files updated via git pull, no deployment needed")
       return {
         success: true,
