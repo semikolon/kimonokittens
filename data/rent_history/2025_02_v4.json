@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "calculation_date": "2025-01-17T16:14:38+01:00",
+    "version": 4,
+    "title": "Averaged Monthly Rent (Based on 23-month Average)",
+    "ruby_version": "3.3.6"
+  },
+  "constants": {
+    "year": 2025,
+    "month": 2,
+    "kallhyra": 24530,
+    "el": 2723,
+    "bredband": 380,
+    "vattenavgift": 375,
+    "drift_rakning": null
+  },
+  "roommates": {
+    "Fredrik": {},
+    "Rasmus": {},
+    "Frans-Lukas": {},
+    "Elvira": {}
+  },
+  "final_results": {
+    "Fredrik": 7115,
+    "Rasmus": 7115,
+    "Frans-Lukas": 7115,
+    "Elvira": 7115
+  }
+}

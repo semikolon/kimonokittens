@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "calculation_date": "2025-01-24T10:41:05+01:00",
+    "version": 6,
+    "title": "March 2025 - Based on January's Bills (Both Actual)",
+    "ruby_version": "3.3.6"
+  },
+  "constants": {
+    "year": 2025,
+    "month": 2,
+    "kallhyra": 24530,
+    "el": 4763,
+    "bredband": 380,
+    "drift_rakning": null,
+    "saldo_innan": 0,
+    "extra_in": 0,
+    "vattenavgift": 375
+  },
+  "roommates": {
+    "Fredrik": {},
+    "Rasmus": {},
+    "Frans-Lukas": {},
+    "Elvira": {}
+  },
+  "final_results": {
+    "Fredrik": 7625,
+    "Rasmus": 7625,
+    "Frans-Lukas": 7625,
+    "Elvira": 7625
+  }
+}
