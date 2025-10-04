@@ -56,6 +56,100 @@
 
 ---
 
+## Understanding Migration Types (For Rails Developers)
+
+### Rails vs Prisma: Key Differences
+
+If you're coming from Rails, the migration workflow here will feel different.
+
+**In Rails (what you might be used to):**
+```ruby
+class AddAuditFieldsToRentLedger < ActiveRecord::Migration[7.0]
+  def change
+    # Schema changes
+    add_column :rent_ledger, :days_stayed, :float
+    add_column :rent_ledger, :room_adjustment, :float
+
+    # Data changes (same file!)
+    RentLedger.where(days_stayed: nil).each do |ledger|
+      ledger.update(days_stayed: 30)
+    end
+  end
+end
+```
+
+**One migration file** handles both schema AND data changes.
+**One command** (`rails db:migrate`) runs everything.
+
+**In Prisma/Node Ecosystem (what this project uses):**
+
+Two completely separate systems:
+
+#### 1. Prisma Migrations = Schema Only
+
+- **Location:** `prisma/migrations/`
+- **Purpose:** Database structure changes (CREATE TABLE, ADD COLUMN, etc.)
+- **Language:** SQL
+- **Applied via:** `npx prisma migrate deploy` (or manual `psql`)
+- **Example:** `prisma/migrations/20251004112744_remove_generated_column_extend_ledger/migration.sql`
+
+```sql
+-- Prisma migration file (schema only)
+ALTER TABLE "RentConfig" DROP COLUMN "period_month";
+ALTER TABLE "RentLedger" ADD COLUMN "daysStayed" DOUBLE PRECISION;
+CREATE TABLE "ElectricityBill" ( ... );
+```
+
+#### 2. Data Migration Scripts = Data Only
+
+- **Location:** `deployment/` (we chose this, could be anywhere)
+- **Purpose:** Populate/transform data after schema exists
+- **Language:** Ruby (could be any language)
+- **Applied via:** Manual execution (`ruby deployment/script_name.rb`)
+- **Example:** `deployment/complete_rent_data_migration.rb`
+
+```ruby
+# Data migration script (data only)
+json_files.each do |file|
+  data = JSON.parse(File.read(file))
+  db.class.rent_ledger.insert(...)  # Populate tables
+end
+```
+
+### Why The Separation?
+
+**Prisma philosophy:** Schema and data are separate concerns
+- Schema migrations: Declarative, auto-generated from `schema.prisma`, versioned
+- Data migrations: Imperative, custom business logic, run-once scripts
+
+**Rails philosophy:** Migrations are a unified concept (schema + data in one file)
+
+### In This Project's Migration Steps
+
+When you see:
+
+- **Step 3: Apply Schema Migration** → Changes database structure (Prisma SQL)
+- **Steps 5-6: Run Data Migration Scripts** → Populates tables (Ruby scripts)
+
+These are **two separate operations** that must be run **in sequence**:
+1. First: Schema migration creates tables/columns
+2. Then: Data migration scripts populate those tables
+
+**Mental model:** Think of Prisma migrations like `rails db:migrate` but schema-only, and data migration scripts like rake tasks that populate data.
+
+### Quick Reference Table
+
+| Aspect | Rails Migration | Prisma Migration | Data Migration Script |
+|--------|----------------|------------------|----------------------|
+| **Purpose** | Schema + Data | Schema Only | Data Only |
+| **Language** | Ruby | SQL | Ruby (or any) |
+| **Location** | `db/migrate/` | `prisma/migrations/` | `deployment/` |
+| **Applied via** | `rails db:migrate` | `npx prisma migrate deploy` | `ruby script.rb` |
+| **Versioned** | Yes (timestamp) | Yes (timestamp) | No (run-once) |
+| **Idempotent** | Should be | Should be | Should be |
+
+---
+
 ## Pre-Migration Checklist
 
 ### ☑️ Verify Prerequisites
