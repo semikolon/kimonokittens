@@ -13,9 +13,28 @@ module RentCalculatorSpec
     def clean_database
       # A simple, direct way to clean the database for tests.
       db = RentDb.instance
+
+      # ============================================================================
+      # CRITICAL SAFETY CHECK: Verify we're in test database before truncating
+      # ============================================================================
+      current_db = db.class.db.opts[:database]
+
+      unless current_db&.include?('test')
+        raise "FATAL: Attempted to clean non-test database: #{current_db}\n" \
+              "This would have destroyed your development data!\n" \
+              "Tests should ONLY run against databases with '_test' suffix."
+      end
+
+      # Safe to truncate test database
       # TRUNCATE is fast and resets auto-incrementing counters.
       # CASCADE is needed to also truncate related tables (like _ItemOwners).
       db.conn.exec('TRUNCATE TABLE "Tenant", "RentConfig", "RentLedger" RESTART IDENTITY CASCADE;')
+
+      # Also truncate ElectricityBill if it exists
+      db.conn.exec('TRUNCATE TABLE "ElectricityBill" RESTART IDENTITY CASCADE;')
+    rescue Sequel::DatabaseError => e
+      # Table might not exist yet (e.g., ElectricityBill), that's okay
+      raise unless e.message.include?('does not exist')
     end
 
     def test_config_with_drift(year: nil, month: nil)
