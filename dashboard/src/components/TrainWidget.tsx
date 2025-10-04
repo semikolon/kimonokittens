@@ -7,12 +7,12 @@ interface TrainDeparture {
   departure_time: string
   departure_timestamp: number
   minutes_until: number
-  can_walk: boolean
+  can_walk?: boolean  // Deprecated: no longer used
   line_number: string
   destination: string
   deviation_note: string
   summary_deviation_note: string
-  suffix: string
+  suffix?: string  // Deprecated: calculated in frontend from adjusted time
 }
 
 interface BusDeparture {
@@ -146,6 +146,25 @@ const calculateAdjustedDeparture = (departure: TrainDeparture): AdjustedDepartur
     adjustedMinutesUntil,
     delayMinutes: delayInfo.delayMinutes,
     isDelayed: true
+  }
+}
+
+// Calculate urgency suffix based on delay-adjusted departure time
+const calculateSuffix = (adjusted: AdjustedDeparture): string => {
+  const WALK_TIME = 8      // minutes to walk to station
+  const MARGIN_TIME = 5    // alarm margin to get ready
+
+  if (adjusted.adjustedMinutesUntil < WALK_TIME) {
+    return "spring eller cykla!"
+  } else if (adjusted.adjustedMinutesUntil > WALK_TIME + MARGIN_TIME + 5) {
+    // Calculate alarm time: adjusted departure - (walk + margin)
+    const [hours, minutes] = adjusted.adjustedTime.split(':').map(Number)
+    const adjustedDeparture = new Date()
+    adjustedDeparture.setHours(hours, minutes, 0, 0)
+    const alarmTime = new Date(adjustedDeparture.getTime() - (WALK_TIME + MARGIN_TIME) * 60 * 1000)
+    return `var redo ${alarmTime.getHours().toString().padStart(2, '0')}:${alarmTime.getMinutes().toString().padStart(2, '0')}`
+  } else {
+    return "du hinner gå"
   }
 }
 
@@ -346,6 +365,9 @@ const TrainDepartureLine: React.FC<{
   // Filter out delay info from summary_deviation_note since it's now inline
   const nonDelayNote = adjusted.isDelayed ? '' : departure.summary_deviation_note
 
+  // Calculate delay-aware suffix
+  const suffix = calculateSuffix(adjusted)
+
   // Apply shine swoosh gradient to entire line
   const textClass = shineAnimation === 'red' ? 'shine-swoosh-red' : shineAnimation === 'orange' ? 'shine-swoosh' : ''
 
@@ -364,7 +386,7 @@ const TrainDepartureLine: React.FC<{
       >
         <strong>{timeDisplay}</strong>
         {nonDelayNote && `\u00A0${nonDelayNote}`}
-        {departure.suffix && `\u00A0- ${departure.suffix}`}
+        {suffix && `\u00A0- ${suffix}`}
       </span>
     </div>
   )

@@ -28,9 +28,6 @@ class TrainDepartureHandler
   
   DIRECTION_NORTH = 2
   TIME_WINDOW = 60 # time in minutes to fetch departures for, max 60
-  WALK_TIME = 8 # time in minutes to walk to the station
-  RUN_TIME = 5 # time in minutes to cycle or run to the station
-  MARGIN_TIME = 5 # time in minutes for alarm margin to get ready
   CACHE_THRESHOLD = 10 # time in seconds to keep data in cache (10 seconds for real-time data)
 
   def initialize
@@ -149,27 +146,14 @@ class TrainDepartureHandler
     structured_trains = departures.map do |d|
       departure_timestamp = d[:departure_time].to_i  # Time object to Unix timestamp
 
-      # Determine action suffix
-      late = d[:minutes_until_departure] < WALK_TIME
-      suffix = if late
-        "spring eller cykla!"
-      elsif d[:minutes_until_departure] > (WALK_TIME + MARGIN_TIME + 5)
-        alarm_time = d[:departure_time] - (WALK_TIME + MARGIN_TIME)*60
-        "var redo #{alarm_time.strftime('%H:%M')}"
-      else
-        "du hinner gå"
-      end
-
       {
         'departure_time' => d[:departure_time].strftime('%H:%M'),
         'departure_timestamp' => departure_timestamp,
         'minutes_until' => d[:minutes_until_departure],
-        'can_walk' => !late,
         'line_number' => d[:line_number],
         'destination' => d[:destination],
         'deviation_note' => d[:deviation_note],
-        'summary_deviation_note' => d[:summary_deviation_note],
-        'suffix' => suffix
+        'summary_deviation_note' => d[:summary_deviation_note]
       }
     end
 
