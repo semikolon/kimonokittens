@@ -54,3 +54,16 @@ model RentConfig {
   @@unique([key, period_month], map: "rentconfig_key_period_month_uniq")
   @@index([key, period(sort: Desc)], map: "rentconfig_key_period_desc_idx")
 }
+
+model ElectricityBill {
+  id          String   @id @default(cuid())
+  provider    String   // "fortum" or "vattenfall"
+  billDate    DateTime // Date the bill was issued
+  amount      Float    // Amount in SEK
+  billPeriod  DateTime // Start of the billing period (month)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([provider, billPeriod(sort: Desc)])
+  @@index([billDate(sort: Desc)])
+}

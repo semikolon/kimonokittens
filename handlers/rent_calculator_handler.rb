@@ -581,6 +581,12 @@ class RentCalculatorHandler
       config = extract_config(year: year, month: month)
       roommates = extract_roommates(year: year, month: month)
 
+      # Override electricity cost with projection if not set
+      if config[:el].to_i == 0
+        historical_el = get_historical_electricity_cost(year: year, month: month)
+        config[:el] = historical_el if historical_el > 0
+      end
+
       # Determine electricity data source for transparency
       data_source = determine_electricity_data_source(config, year, month)
 
