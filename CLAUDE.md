@@ -86,6 +86,29 @@ Right: "Please run: sudo systemctl restart kimonokittens-webhook"
 
 ---
 
+## ⚠️ CRITICAL: GIT SAFETY PROTOCOL
+
+**🔥 NEVER AMEND OR FORCE PUSH - THESE DESTROY HISTORY! 🔥**
+
+### ❌ FORBIDDEN OPERATIONS:
+- **NEVER** use `git commit --amend` unless **explicitly requested by user**
+- **NEVER** use `git push --force` or `git push -f` (especially to main/master)
+- **NEVER** use `git reset --hard` on shared branches
+
+### ✅ CORRECT WORKFLOW:
+- **Always create new commits** for changes, even small config tweaks
+- **Always use normal push**: `git push origin master`
+- **If you need to change something after commit**: Make a NEW commit, don't amend
+
+### 🚨 WHY THIS MATTERS:
+- **Amending pushed commits** creates divergent branches → deployment failures
+- **Force push** can destroy other developers' work → data loss
+- **Linear history** is sacred → webhook relies on fast-forward pulls
+
+**Lesson learned**: Oct 4, 2025 - Force push caused "divergent branches" error, breaking webhook deployment. Always use new commits.
+
+---
+
 ### 🧹 Cache Cleanup After Major Changes
 
 **CRITICAL: After major dependency changes (React version jumps, etc.), always clean build caches:**
