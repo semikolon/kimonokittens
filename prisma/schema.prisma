@@ -7,21 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Tenant {
-  id             String        @id @default(cuid())
-  facebookId     String?       @unique
-  name           String
-  email          String        @unique
-  avatarUrl      String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  roomAdjustment Float?
-  departureDate  DateTime?
-  startDate      DateTime?
-  rentLedger     RentLedger[]
-  coOwnedItems   CoOwnedItem[] @relation("ItemOwners")
-}
-
 model CoOwnedItem {
   id           String   @id @default(cuid())
   name         String
@@ -31,39 +16,58 @@ model CoOwnedItem {
   owners       Tenant[] @relation("ItemOwners")
 }
 
-model RentLedger {
-  id          String    @id @default(cuid())
-  tenantId    String
-  period      DateTime
-  amountDue   Float
-  amountPaid  Float
-  paymentDate DateTime?
-  createdAt   DateTime  @default(now())
-  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+model ElectricityBill {
+  id         String   @id @default(cuid())
+  provider   String
+  billDate   DateTime
+  amount     Float
+  billPeriod DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([billDate(sort: Desc)])
+  @@index([provider, billPeriod(sort: Desc)])
 }
 
 model RentConfig {
-  id           String    @id @default(cuid())
-  key          String
-  value        String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  period       DateTime  @default(now())
-  period_month DateTime? @db.Date
+  id        String   @id @default(cuid())
+  key       String
+  value     String
+  period    DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@unique([key, period_month], map: "rentconfig_key_period_month_uniq")
-  @@index([key, period(sort: Desc)], map: "rentconfig_key_period_desc_idx")
+  @@unique([key, period])
+  @@index([key, period(sort: Desc)])
 }
 
-model ElectricityBill {
-  id          String   @id @default(cuid())
-  provider    String   // "fortum" or "vattenfall"
-  billDate    DateTime // Date the bill was issued
-  amount      Float    // Amount in SEK
-  billPeriod  DateTime // Start of the billing period (month)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model RentLedger {
+  id               String    @id
+  tenantId         String
+  period           DateTime
+  amountDue        Float
+  amountPaid       Float
+  paymentDate      DateTime?
+  createdAt        DateTime  @default(now())
+  daysStayed       Float?
+  roomAdjustment   Float?
+  baseMonthlyRent  Float?
+  calculationTitle String?
+  calculationDate  DateTime?
+  Tenant           Tenant    @relation(fields: [tenantId], references: [id])
+}
 
-  @@index([provider, billPeriod(sort: Desc)])
-  @@index([billDate(sort: Desc)])
+model Tenant {
+  id             String        @id
+  facebookId     String?       @unique
+  name           String
+  email          String        @unique
+  avatarUrl      String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime
+  roomAdjustment Float?
+  departureDate  DateTime?
+  startDate      DateTime?
+  RentLedger     RentLedger[]
+  CoOwnedItem    CoOwnedItem[] @relation("ItemOwners")
 }
