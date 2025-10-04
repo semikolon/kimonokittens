@@ -272,6 +272,47 @@ db.set_config('el', 2424, Time.new(2025, 9, 1))  # September period
 **Arrears Payments**:
 - **Electricity** (`el`): September consumption bills
 
+### Electricity Bill Due Date Timing ⚡
+
+**CRITICAL: Bills have variable due dates that determine WHICH CONFIG PERIOD uses them.**
+
+The key question is: **When did the bill ARRIVE and become available for rent calculation?**
+
+**Two patterns based on due date day:**
+
+1. **End-of-month bills** (day 25-31):
+   - Due: Sept 30 → Bill arrived **September** → **Config period: September**
+   - Example: Due July 31 → arrived July → July config → August rent
+
+2. **Start-of-month bills** (day 1-10):
+   - Due: Oct 1 → Bill arrived **September** (late Sept) → **Config period: September**
+   - Example: Due Aug 1 → arrived July → July config → August rent
+
+**Concrete example: August 2025 consumption**
+- Bills arrive mid-September
+- **Vattenfall** due Sept 30 (day 30): Config = **Sept** (due month)
+- **Fortum** due Oct 1 (day 1): Config = **Sept** (due month - 1)
+- Both bills total 2424 kr in **September config** → Used for **October rent**
+
+**The rule (for migration scripts):**
+```ruby
+if due_day >= 25
+  config_month = due_month        # Bill arrived same month as due
+else
+  config_month = due_month - 1    # Bill arrived month before due
+end
+```
+
+**Why this matters:**
+- **Don't think "consumption month"** - think "when did bill arrive?"
+- **Config period** = month when bills became available
+- **Complete flow**: Aug consumption → Sept bills arrive → Sept config → Oct rent
+
+**Historical data files:**
+- `electricity_bills_history.txt` contains actual due dates
+- Must interpret day-of-month (25-31 vs 1-10) to determine consumption period
+- See `deployment/historical_config_migration.rb` for implementation
+
 **Quarterly Bill Savings System**:
 - **Monthly utilities**: 375 + 300 + 150 = **825 kr/month**
 - **Purpose**: Internal "savings account" for quarterly building costs
@@ -488,7 +529,9 @@ const generateTrainId = (train: TrainDeparture): string =>
 **Never let integration tests write to production DB!** Previous issue: `drift_rakning: 2612` written by specs, causing incorrect 7,492 kr calculations.
 
 ### Electricity Bill Timeline Complexity
-**3-month lag**: January consumption → February bills arrive → March rent includes January costs (due Feb 27)
+**2-month lag**: January consumption → bills arrive mid-February → February config → March rent (due Feb 27)
+
+**Important:** The config month represents when bills became available, not when electricity was consumed. See "Electricity Bill Due Date Timing" section above for complete details.
 
 ### SL Transport API - WORKING ✅
 Train departures use **keyless SL Transport API** (`transport.integration.sl.se`) - no access tokens needed. Previous "fallback mode" references are outdated from old ResRobot migration.
