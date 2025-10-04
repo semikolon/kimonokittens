@@ -142,33 +142,103 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
   const calculateBrightness = (hour: number, minute: number): number => {
     const time = hour + minute / 60;
 
-    // Morning: 6am-12pm (1.0 → 1.2)
-    if (time >= 6 && time < 12) {
-      return 1.0 + ((time - 6) / 6) * 0.2;
+    // Parse sleep/wake times from state
+    const parseTime = (timeStr: string): number => {
+      const [h, m] = timeStr.split(':').map(Number);
+      return h + m / 60;
+    };
+
+    // Determine which sleep time to use (weekend or weekday)
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Friday or Saturday
+    const sleepTimeStr = isWeekend ? state.sleepTimeWeekend : state.sleepTime;
+
+    const wakeTime = parseTime(state.wakeTime);
+    const sleepTime = parseTime(sleepTimeStr);
+    const oneHourBeforeSleep = sleepTime - 1;
+
+    // Wake → 9am: Fade 0.5 → 1.2
+    if (wakeTime <= 9) {
+      if (time >= wakeTime && time < 9) {
+        const duration = 9 - wakeTime;
+        return 0.5 + ((time - wakeTime) / duration) * 0.7;
+      }
     }
 
-    // Afternoon: 12pm-6pm (1.2 → 1.0)
-    if (time >= 12 && time < 18) {
-      return 1.2 - ((time - 12) / 6) * 0.2;
+    // 9am → 5pm: Stay at 1.2 (peak brightness)
+    if (time >= 9 && time < 17) {
+      return 1.2;
     }
 
-    // Evening: 6pm-10pm (1.0 → 0.9)
-    if (time >= 18 && time < 22) {
-      return 1.0 - ((time - 18) / 4) * 0.1;
+    // 5pm → 7pm: Fade 1.2 → 1.0
+    if (time >= 17 && time < 19) {
+      return 1.2 - ((time - 17) / 2) * 0.2;
     }
 
-    // Night: 10pm-1am (0.9 → 0.5)
-    if (time >= 22 || time < 1) {
-      const nightTime = time >= 22 ? time - 22 : time + 2;
-      return 0.9 - (nightTime / 3) * 0.4;
+    // 7pm → 1hr before sleep: Fade 1.0 → 0.5
+    if (sleepTime >= 20) { // Sleep after 8pm (normal case)
+      if (time >= 19 && time < oneHourBeforeSleep) {
+        const duration = oneHourBeforeSleep - 19;
+        return 1.0 - ((time - 19) / duration) * 0.5;
+      }
+
+      // 1hr before sleep → sleep: Stay at 0.5
+      if (time >= oneHourBeforeSleep && time < sleepTime) {
+        return 0.5;
+      }
     }
 
-    // Dawn: 5:30am-6am (0.5 → 1.0)
-    if (time >= 5.5 && time < 6) {
-      return 0.5 + ((time - 5.5) / 0.5) * 0.5;
+    // Handle early morning hours (after midnight, before wake)
+    if (sleepTime < 12) { // Sleep is early morning (like 1am, 2am, etc)
+      // Handle crossing midnight: 7pm → midnight
+      if (time >= 19) {
+        const midnightTime = 24;
+        const effectiveOneHourBeforeSleep = sleepTime + 24 - 1;
+
+        if (time < effectiveOneHourBeforeSleep - 24) {
+          // Still in fade period 7pm → 1hr before sleep
+          const duration = (effectiveOneHourBeforeSleep - 24) - 19;
+          return 1.0 - ((time - 19) / duration) * 0.5;
+        } else {
+          // Last hour before sleep
+          return 0.5;
+        }
+      }
+
+      // Handle early morning: midnight → sleep
+      if (time < sleepTime) {
+        const effectiveOneHourBeforeSleep = sleepTime - 1;
+        if (effectiveOneHourBeforeSleep < 0) {
+          // One hour before sleep is yesterday (unusual but handle it)
+          return 0.5;
+        } else if (time >= effectiveOneHourBeforeSleep) {
+          // Last hour before sleep
+          return 0.5;
+        } else {
+          // Between midnight and 1hr before sleep, continue fade
+          const fadeStart = 19;
+          const totalDuration = (24 - fadeStart) + effectiveOneHourBeforeSleep;
+          const elapsed = (24 - fadeStart) + time;
+          return 1.0 - (elapsed / totalDuration) * 0.5;
+        }
+      }
     }
 
-    // Default
+    // During sleep time or between sleep and wake: 0.5
+    if (sleepTime < wakeTime) {
+      // Normal case: sleep at night, wake in morning (e.g., sleep 1am, wake 5:30am)
+      if (time >= sleepTime && time < wakeTime) {
+        return 0.5;
+      }
+    } else {
+      // Unusual case: sleep during day, wake at night
+      if (time >= sleepTime || time < wakeTime) {
+        return 0.5;
+      }
+    }
+
+    // Default fallback
     return 1.0;
   };
 
