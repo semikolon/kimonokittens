@@ -293,8 +293,10 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
 
+    // Check immediately, then sync to minute boundaries by checking every 30s
+    // This guarantees we hit the target minute at least twice regardless of start time
     checkSchedule();
-    const interval = setInterval(checkSchedule, 10000); // Check every 10s to never miss minute boundary
+    const interval = setInterval(checkSchedule, 30000);
 
     return () => clearInterval(interval);
   }, [state.enabled, state.sleepTime, state.sleepTimeWeekend, state.wakeTime, state.currentState, state.manualOverride]);
