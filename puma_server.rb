@@ -41,9 +41,11 @@ require_relative 'handlers/todos_handler'
 require_relative 'handlers/reload_handler'
 require_relative 'handlers/display_control_handler'
 require_relative 'handlers/sleep_schedule_handler'
+require_relative 'handlers/heating_cost_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
+heating_cost_handler = HeatingCostHandler.new
 proxy_handler = ProxyHandler.new
 static_handler = StaticHandler.new
 train_departure_handler = TrainDepartureHandler.new
@@ -275,6 +277,10 @@ app = Rack::Builder.new do
 
   map "/api/reload" do
     run reload_handler
+  end
+
+  map "/api/heating/cost_per_degree" do
+    run heating_cost_handler
   end
 
   # Display control routes
