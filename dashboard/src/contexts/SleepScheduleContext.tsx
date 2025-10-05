@@ -196,12 +196,12 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
     if (sleepTime < 12) { // Sleep is early morning (like 1am, 2am, etc)
       // Handle crossing midnight: 7pm → midnight
       if (time >= 19) {
-        const midnightTime = 24;
-        const effectiveOneHourBeforeSleep = sleepTime + 24 - 1;
+        const oneHourBeforeSleep = sleepTime - 1; // Could be 0 or negative for very early sleep
+        const fadeEndSameDay = oneHourBeforeSleep <= 0 ? 24 : oneHourBeforeSleep + 24;
 
-        if (time < effectiveOneHourBeforeSleep - 24) {
-          // Still in fade period 7pm → 1hr before sleep
-          const duration = (effectiveOneHourBeforeSleep - 24) - 19;
+        if (time < fadeEndSameDay) {
+          // Still in fade period 7pm → 1hr before sleep (or midnight if sleep <= 01:00)
+          const duration = fadeEndSameDay - 19;
           return 1.0 - ((time - 19) / duration) * 0.5;
         } else {
           // Last hour before sleep
