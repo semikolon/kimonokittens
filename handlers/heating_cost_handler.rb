@@ -43,12 +43,34 @@ class HeatingCostHandler
     # Add source info to details
     result[:details][:source] = "ElectricityProjector (#{current_year}-#{sprintf('%02d', current_month)})"
 
-    [200, { 'Content-Type' => 'application/json' }, [Oj.dump(result)]]
+    # Convert symbol keys to string keys for JSON
+    response = {
+      'line' => result[:line],
+      'details' => {
+        'base_monthly_cost' => result[:details][:base_monthly_cost],
+        'heating_cost' => result[:details][:heating_cost],
+        'active_roommates' => result[:details][:active_roommates],
+        'source' => result[:details][:source],
+        'config' => {
+          'heating_fraction' => result[:details][:config][:heating_fraction],
+          'degrees' => result[:details][:config][:degrees]
+        },
+        'degree_costs' => result[:details][:degree_costs].map do |dc|
+          {
+            'degrees' => dc[:degrees],
+            'total' => dc[:total],
+            'per_person' => dc[:per_person]
+          }
+        end
+      }
+    }
+
+    [200, { 'Content-Type' => 'application/json' }, [response.to_json]]
   rescue => e
     error_response = {
-      error: e.message,
-      line: "Kunde inte beräkna värmekostnad (#{e.message})"
+      'error' => e.message,
+      'line' => "Kunde inte beräkna värmekostnad (#{e.message})"
     }
-    [500, { 'Content-Type' => 'application/json' }, [Oj.dump(error_response)]]
+    [500, { 'Content-Type' => 'application/json' }, [error_response.to_json]]
   end
 end
