@@ -293,6 +293,12 @@ class DeploymentHandler
     deployment_success = true
     deployed_components = []
 
+    # Warn if deployment files changed (requires manual restart)
+    if changes[:deployment]
+      $logger.warn("⚠️  Webhook deployment files changed - MANUAL RESTART REQUIRED!")
+      $logger.warn("⚠️  Run: sudo systemctl restart kimonokittens-webhook")
+    end
+
     # Deploy backend if needed
     if changes[:backend]
       if deploy_backend
