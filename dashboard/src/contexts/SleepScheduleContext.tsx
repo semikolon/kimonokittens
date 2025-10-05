@@ -179,11 +179,19 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
       return 1.2 - ((time - 17) / 2) * 0.2;
     }
 
-    // 7pm → 1hr before sleep: Fade 1.0 → 0.5
+    // 7pm → 1hr before sleep: Multi-segment fade (1.0 → 0.85 → 0.8 → 0.5)
     if (sleepTime >= 20) { // Sleep after 8pm (normal case)
       if (time >= 19 && time < oneHourBeforeSleep) {
-        const duration = oneHourBeforeSleep - 19;
-        return 1.0 - ((time - 19) / duration) * 0.5;
+        // 19:00 → 22:00: Gentle fade 1.0 → 0.85
+        if (time < 22) {
+          return 1.0 - ((time - 19) / 3) * 0.15;
+        }
+        // 22:00 → 23:00: Slow fade 0.85 → 0.8
+        if (time < 23) {
+          return 0.85 - ((time - 22) / 1) * 0.05;
+        }
+        // 23:00 → midnight: Steeper fade 0.8 → 0.5
+        return 0.8 - ((time - 23) / 1) * 0.3;
       }
 
       // 1hr before sleep → sleep: Stay at 0.5
@@ -194,19 +202,28 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Handle early morning hours (after midnight, before wake)
     if (sleepTime < 12) { // Sleep is early morning (like 1am, 2am, etc)
-      // Handle crossing midnight: 7pm → midnight
+      // Handle crossing midnight: 7pm → midnight with multi-segment fade
       if (time >= 19) {
         const oneHourBeforeSleep = sleepTime - 1; // Could be 0 or negative for very early sleep
         const fadeEndSameDay = oneHourBeforeSleep <= 0 ? 24 : oneHourBeforeSleep + 24;
 
         if (time < fadeEndSameDay) {
-          // Still in fade period 7pm → 1hr before sleep (or midnight if sleep <= 01:00)
-          const duration = fadeEndSameDay - 19;
-          return 1.0 - ((time - 19) / duration) * 0.5;
-        } else {
-          // Last hour before sleep
-          return 0.5;
+          // Multi-segment fade: 19:00 → 22:00 → 23:00 → midnight
+          // 19:00 → 22:00: Gentle fade 1.0 → 0.85
+          if (time < 22) {
+            return 1.0 - ((time - 19) / 3) * 0.15;
+          }
+          // 22:00 → 23:00: Slow fade 0.85 → 0.8
+          if (time < 23) {
+            return 0.85 - ((time - 22) / 1) * 0.05;
+          }
+          // 23:00 → midnight: Steeper fade 0.8 → 0.5
+          if (time < 24) {
+            return 0.8 - ((time - 23) / 1) * 0.3;
+          }
         }
+        // Last hour before sleep (midnight → 01:00)
+        return 0.5;
       }
 
       // Handle early morning: midnight → sleep
