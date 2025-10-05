@@ -360,6 +360,67 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
     }, 500); // 500ms delay for monitor wake
   };
 
+  // Startup state detection - check if we should be sleeping on mount
+  useEffect(() => {
+    if (!state.enabled || state.manualOverride) return;
+
+    const detectInitialState = () => {
+      const now = new Date();
+      const currentHour = now.getHours() + now.getMinutes() / 60;
+
+      const sleepTimeStr = getEffectiveSleepTime(state);
+      const sleepHour = parseTimeString(sleepTimeStr);
+      const wakeHour = parseTimeString(state.wakeTime);
+
+      // Check if we're currently in sleep period
+      const isInSleepPeriod = sleepHour < wakeHour
+        ? (currentHour >= sleepHour && currentHour < wakeHour)
+        : (currentHour >= sleepHour || currentHour < wakeHour);
+
+      log(`[SleepSchedule] Startup detection: time=${currentHour.toFixed(2)} sleep=${sleepHour} wake=${wakeHour} inSleepPeriod=${isInSleepPeriod} currentState=${state.currentState}`);
+
+      if (isInSleepPeriod && state.currentState !== 'sleeping') {
+        log('[SleepSchedule] 🌙 STARTUP: In sleep period, setting sleeping state immediately');
+        dispatch({ type: 'SET_STATE', state: 'sleeping' });
+
+        // Set brightness immediately
+        const sleepBrightness = 0.5;
+        fetch('/api/display/brightness', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ level: sleepBrightness }),
+        }).then(() => {
+          dispatch({ type: 'SET_BRIGHTNESS', brightness: sleepBrightness });
+        }).catch(error => log(`[SleepSchedule] Failed to set sleep brightness: ${error}`));
+
+        // Turn off monitor immediately if enabled
+        if (state.monitorPowerControl) {
+          fetch('/api/display/power', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'off' }),
+          }).catch(error => log(`[SleepSchedule] Failed to turn off monitor: ${error}`));
+        }
+      } else if (!isInSleepPeriod && state.currentState === 'sleeping') {
+        log('[SleepSchedule] ☀️ STARTUP: Should be awake, setting awake state immediately');
+        dispatch({ type: 'SET_STATE', state: 'awake' });
+
+        // Turn on monitor if enabled
+        if (state.monitorPowerControl) {
+          fetch('/api/display/power', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'on' }),
+          }).catch(error => log(`[SleepSchedule] Failed to turn on monitor: ${error}`));
+        }
+      }
+    };
+
+    // Run after config loads (small delay to ensure sleep/wake times are loaded)
+    const timer = setTimeout(detectInitialState, 1000);
+    return () => clearTimeout(timer);
+  }, []); // Only run once on mount
+
   // Schedule checker
   useEffect(() => {
     if (!state.enabled || state.manualOverride) return;
