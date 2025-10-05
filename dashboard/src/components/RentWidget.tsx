@@ -101,6 +101,13 @@ export function RentWidget() {
           }
         </div>
       )}
+
+      {/* Heating cost impact line */}
+      {rentData.heating_cost_line && (
+        <div className="text-purple-300 text-xs mt-2" style={{ opacity: 0.5 }}>
+          {rentData.heating_cost_line}
+        </div>
+      )}
     </div>
   )
 }

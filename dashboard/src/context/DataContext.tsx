@@ -78,6 +78,7 @@ interface RentData {
   generated_at: string
   electricity_amount?: number
   electricity_month?: string
+  heating_cost_line?: string
   data_source?: {
     type: 'actual' | 'historical' | 'defaults'
     electricity_source: 'current_bills' | 'historical_lookup' | 'fallback_defaults'

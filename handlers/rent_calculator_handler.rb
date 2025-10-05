@@ -48,6 +48,7 @@ require 'rack'
 require_relative '../rent'
 require_relative '../lib/rent_db'
 require_relative '../lib/electricity_projector'
+require_relative '../lib/heating_cost_calculator'
 require 'json'
 require 'date'
 
@@ -612,6 +613,13 @@ class RentCalculatorHandler
       ]
       target_month_name = swedish_months[target_month]
 
+      # Calculate heating cost impact using shared module
+      heating_cost_data = calculate_heating_cost_for_period(
+        config_year: year,
+        config_month: month,
+        roommates: roommates
+      )
+
       result = {
         message: friendly_text,
         year: year,
@@ -619,7 +627,8 @@ class RentCalculatorHandler
         generated_at: Time.now.utc.iso8601,
         data_source: data_source,
         electricity_amount: electricity_amount,
-        electricity_month: target_month_name
+        electricity_month: target_month_name,
+        heating_cost_line: heating_cost_data[:line]
       }
 
       [200, { 'Content-Type' => 'application/json' }, [result.to_json]]
@@ -671,5 +680,29 @@ class RentCalculatorHandler
       electricity_source: 'current_bills',
       description_sv: 'Baserad på aktuella elräkningar'
     }
+  end
+
+  # Calculate heating cost impact for the given period
+  #
+  # @param config_year [Integer] Configuration year
+  # @param config_month [Integer] Configuration month
+  # @param roommates [Hash] Roommates hash from extract_roommates
+  # @return [Hash] Heating cost data with :line key
+  def calculate_heating_cost_for_period(config_year:, config_month:, roommates:)
+    # Get electricity projection for the period
+    monthly_cost = HeatingCostCalculator.get_electricity_projection(
+      year: config_year,
+      month: config_month
+    )
+
+    # Count active roommates
+    active_roommates = roommates.keys.count
+    active_roommates = 4 if active_roommates == 0 # Fallback
+
+    # Calculate heating costs
+    HeatingCostCalculator.calculate(
+      base_monthly_cost: monthly_cost,
+      active_roommates: active_roommates
+    )
   end
 end 
