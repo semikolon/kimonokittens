@@ -212,7 +212,15 @@ class TrainDepartureHandler
         # Extract deviation/delay information
         deviation_note = ''
         if departure['deviations'].any?
-          deviation_note = departure['deviations'].map { |dev| dev['message'] }.compact.join(', ')
+          # Filter out elevator/accessibility disruptions (irrelevant for departure decisions)
+          relevant_deviations = departure['deviations'].reject { |dev|
+            message = dev['message']&.downcase || ''
+            # Skip elevator, escalator, and accessibility-only disruptions
+            message.include?('hiss') ||         # elevator
+            message.include?('rulltrapp') ||    # escalator
+            message.include?('tillgänglighet')  # accessibility
+          }
+          deviation_note = relevant_deviations.map { |dev| dev['message'] }.compact.join(', ')
         elsif departure['expected'] && departure['scheduled']
           # Calculate delay from expected vs scheduled with safe parsing
           begin
