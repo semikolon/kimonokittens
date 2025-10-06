@@ -542,7 +542,9 @@ Successfully configured hardware GPU acceleration for WebGL shader animations on
 - ✅ Fan noise acceptable, display stays cool
 
 **WebGL Shader Background Impact** (Oct 6, 2025):
-The `animated-shader-background.tsx` component adds visual appeal but increases resource usage: **GPU +8% utilization, +21°C temperature (54°C → 75°C), +24W power draw (19W → 43W), audible fan noise**. Disabling the shader (comment out `<AnoAI />` in `App.tsx`) reduces GPU load significantly while maintaining smooth UI. Optional tradeoff between aesthetics and efficiency.
+The `animated-shader-background.tsx` component adds visual appeal but can increase resource usage. Testing showed approximately **+7-8% GPU utilization, +16-21°C temperature increase (typically 54°C → 70-75°C), +23-24W power draw (19W → 42-43W), with increased fan activity**. Actual impact varies by time of day and ambient temperature. Disabling the shader (comment out `<AnoAI />` in `App.tsx`) reduces GPU load while maintaining smooth UI. Optional tradeoff between aesthetics and efficiency.
+
+**Recommendation for 24/7 hallway display**: Disable shader to reduce GPU wear, power consumption (~200 kWh/year), and fan noise. While 70°C is safe for continuous operation, the decorative animation provides minimal utility for a passive display. GPU lifespan at constant 70°C: 5-8+ years vs 10+ years at lower temps.
 
 **Architecture**: DRY pattern - `setup_production.sh` creates basic service, then calls `configure_chrome_kiosk.sh` to apply optimized flags. Single source of truth for Chrome configuration.
 
