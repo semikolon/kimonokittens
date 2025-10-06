@@ -147,10 +147,10 @@ function DashboardContent() {
       {/* Sleep overlay - highest z-index */}
       <FadeOverlay />
 
-      {/* Animated shader background - TEMPORARILY DISABLED FOR GPU LOAD TESTING */}
-      {/* <div className="fixed inset-0 w-full h-full opacity-30 mix-blend-screen" style={{ zIndex: 1 }}>
+      {/* Animated shader background */}
+      <div className="fixed inset-0 w-full h-full opacity-30 mix-blend-screen" style={{ zIndex: 1 }}>
         <AnoAI />
-      </div> */}
+      </div>
 
       {/* Magic animated background */}
       <div
