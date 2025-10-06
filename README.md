@@ -2,7 +2,7 @@
 
 > **Note:** For all recent technical decisions, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
-This repo is a **multi-project monorepo** for various home-automation and finance tools running on the Raspberry Pi at _kimonokittens.com_.
+This repo is a **multi-project monorepo** for home-automation and finance tools. The dashboard runs on a **Dell Optiplex 7010 kiosk in the hallway**. Additional services (Node-RED, MQTT) are transitioning from the Raspberry Pi 3B+.
 
 Active sub-projects:
 

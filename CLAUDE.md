@@ -188,6 +188,11 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 ## 🚀 DEPLOYMENT ARCHITECTURE
 
+> **✅ KIOSK DEPLOYED**: Dell Optiplex 7010 live in hallway (October 6, 2025)
+> - Dashboard display operational 24/7
+> - GPU acceleration + webhook auto-deployment active
+> - Migration from Pi 3B+ ongoing (Node-RED, MQTT, cron jobs)
+
 ### Production Paths & Services
 ```
 /home/kimonokittens/                          # Service user home
@@ -517,9 +522,9 @@ npm run dev:logs     # Attach to live process logs
 5. **Verify results**: Test API and check dashboard
 6. **Clean up**: Remove any test data from production DB
 
-## 🖥️ Kiosk GPU Acceleration (Oct 2, 2025) **COMPLETED ✅**
+## 🖥️ Kiosk GPU Acceleration (Oct 2, 2025) **DEPLOYED ✅**
 
-**Status**: Production-ready with NVIDIA GTX 1650 on PopOS Linux
+**Status**: Live - Dell Optiplex in hallway (Oct 6, 2025), NVIDIA GTX 1650
 
 ### Achievement Summary
 Successfully configured hardware GPU acceleration for WebGL shader animations on Dell Optiplex 7010 kiosk after resolving crash-loop issues caused by outdated Chrome flags.

@@ -1,5 +1,9 @@
 # Dell Optiplex 7010 Kiosk Dashboard Deployment Guide
 
+> **🎉 KIOSK DEPLOYED: ✅ LIVE** (October 6, 2025)
+>
+> Dell Optiplex installed in hallway displaying dashboard 24/7 with GPU acceleration and webhook auto-deployment. Migration from Raspberry Pi 3B+ ongoing (Node-RED, MQTT, cron jobs in progress).
+
 **Target Hardware**: Dell Optiplex 7010 running PopOS Linux
 **Purpose**: Dedicated kiosk server hosting real-time dashboard
 **Display**: Chromium fullscreen kiosk with GPU acceleration and auto-updates
