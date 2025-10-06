@@ -541,6 +541,9 @@ Successfully configured hardware GPU acceleration for WebGL shader animations on
 - ✅ Smooth 60fps animations, no crashes
 - ✅ Fan noise acceptable, display stays cool
 
+**WebGL Shader Background Impact** (Oct 6, 2025):
+The `animated-shader-background.tsx` component adds visual appeal but increases resource usage: **GPU +8% utilization, +21°C temperature (54°C → 75°C), +24W power draw (19W → 43W), audible fan noise**. Disabling the shader (comment out `<AnoAI />` in `App.tsx`) reduces GPU load significantly while maintaining smooth UI. Optional tradeoff between aesthetics and efficiency.
+
 **Architecture**: DRY pattern - `setup_production.sh` creates basic service, then calls `configure_chrome_kiosk.sh` to apply optimized flags. Single source of truth for Chrome configuration.
 
 **Documentation**: `DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md` section "Browser Performance" documents flag choices and VRAM verification.
