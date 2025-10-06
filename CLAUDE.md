@@ -610,6 +610,22 @@ const generateTrainId = (train: TrainDeparture): string =>
 3. **React Context** manages centralized state with useReducer
 4. **Widgets** consume via `useData()` hook
 
+### Heating Cost Display (RentWidget) 🌡️
+**Location**: Displayed below electricity source line in RentWidget
+
+**Calculation**: Uses ElectricityProjector (trailing 12-month baseline + seasonal patterns)
+- **Current (Oct 2025)**: "2 °C varmare skulle kosta 143 kr/mån (36 kr/person); 2 °C kallare skulle spara 130 kr/mån (33 kr/person)"
+- **February 2026 (predicted)**: "2 °C varmare skulle kosta 451 kr/mån (113 kr/person); 2 °C kallare skulle spara 409 kr/mån (102 kr/person)"
+
+**Why February costs 3.5× more**:
+- Seasonal multiplier: Feb = 2.04x vs Sep = 0.56x (winter vs fall)
+- More heating usage = larger impact per degree adjustment
+
+**Architecture**:
+- Shared module: `lib/heating_cost_calculator.rb`
+- Sent via `/api/rent/friendly_message` in `heating_cost_line` field
+- Auto-updates monthly as ElectricityProjector recalculates
+
 ## Project Quirks & Technical Debt 🔧
 
 ### Test Database Contamination
