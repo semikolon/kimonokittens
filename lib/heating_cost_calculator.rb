@@ -7,7 +7,7 @@ require_relative 'rent_db'
 module HeatingCostCalculator
   # Configuration with defaults
   HEATING_FRACTION = (ENV['HEATING_FRACTION'] || 0.75).to_f
-  DEGREES = (ENV['HEATING_DEGREES'] || '-2,-1,1,2').split(',').map(&:to_i)
+  DEGREES = (ENV['HEATING_DEGREES'] || '2,-2').split(',').map(&:to_i)
 
   # Calculate heating cost impact for temperature adjustments
   #
@@ -31,11 +31,15 @@ module HeatingCostCalculator
       }
     end
 
-    # Generate Swedish one-liner (use ± for positive/negative)
+    # Generate Swedish one-liner with pedagogical language
     parts = degree_costs.map do |dc|
-      sign = dc[:total] >= 0 ? '+' : ''
-      sign_pp = dc[:per_person] >= 0 ? '+' : ''
-      "#{sign}#{dc[:degrees]} °C ≈ #{sign}#{dc[:total]} kr/mån (≈ #{sign_pp}#{dc[:per_person]} kr/person)"
+      if dc[:degrees] > 0
+        # Positive = cost increase
+        "#{dc[:degrees]} °C varmare skulle kosta #{dc[:total]} kr/mån (#{dc[:per_person]} kr/person)"
+      else
+        # Negative = savings
+        "#{dc[:degrees].abs} °C kallare skulle spara #{dc[:total].abs} kr/mån (#{dc[:per_person].abs} kr/person)"
+      end
     end
     line = parts.join('; ')
 
