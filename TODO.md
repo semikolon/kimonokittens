@@ -523,11 +523,13 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - Partial reimbursements
 
 ### Automation
-- [ ] Automate electricity bill retrieval:
-  - Scrape from supplier websites (Vattenfall, etc.)
-  - Update monthly costs automatically
-  - Store historical electricity usage data
-  - Alert on unusual changes in consumption
+- [ ] **Automate electricity bill invoice fetching** (extends existing `vattenfall.rb` scraper):
+  - **Vattenfall elnät invoice**: Extend `vattenfall.rb` to also scrape latest monthly invoice PDF/amount from Vattenfall portal
+  - **Fortum elhandel invoice**: Create similar scraper for Fortum to fetch elhandel invoice amount
+  - **Goal**: Eliminate manual input of monthly electricity bills into rent calculator
+  - **Benefit**: Full automation of electricity cost tracking (consumption data already automated via existing cron)
+  - **Technical approach**: Use Ferrum browser automation (same as current Vattenfall consumption scraper)
+  - **Data target**: Write invoice amounts to RentConfig database (key='el') automatically when bills arrive
 - [ ] Fill in missing electricity bills history (Nov 2024 - Sept 2025) in `electricity_bills_history.txt`
 
 ### API Integration

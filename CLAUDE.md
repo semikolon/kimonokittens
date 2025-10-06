@@ -193,6 +193,25 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 > - GPU acceleration + webhook auto-deployment active
 > - Migration from Pi 3B+ ongoing (Node-RED, MQTT, cron jobs)
 
+### 🔄 Pi Migration Strategy (October 6, 2025)
+
+**Network**: `kimonokittens.com` bound to home IP via DDClient dynamic DNS
+
+**Services Staying on Pi** (infrastructure/automation):
+- **DDClient**: Dynamic DNS updates for kimonokittens.com
+- **Pycalima**: Bluetooth-based bathroom fan control (hardware proximity required)
+- **Node-RED**: Temperature sensor aggregation, heatpump schedule generation (port 1880)
+- **Mosquitto MQTT**: Message broker for ThermIQ heatpump data (port 1883)
+
+**Services Migrating to Dell** (dashboard-relevant data):
+- **Electricity data cron jobs**: `vattenfall.rb` + `tibber.rb` (every 2 hours)
+- **Electricity JSON files**: `electricity_usage.json`, `tibber_price_data.json`
+- **Dashboard data generation**: All data consumed by widgets or useful for online handbook
+
+**Rationale**: Keep infrastructure services (DNS, MQTT, sensors) on Pi where hardware lives. Migrate dashboard-related data generation to Dell for consolidation and future handbook features (which is part of monorepo but not yet deployed).
+
+**Documentation**: See `docs/PI_MIGRATION_MAP.md` and `docs/PI_VS_DELL_ELECTRICITY_ANALYSIS.md` for complete analysis.
+
 ### Production Paths & Services
 ```
 /home/kimonokittens/                          # Service user home
