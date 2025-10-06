@@ -26,11 +26,11 @@ export default {
         'mono': ['JetBrains Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
       },
       animation: {
-        'dashboard-first': 'dashboard-first 8s ease-in-out infinite',
-        'dashboard-second': 'dashboard-second 10s ease-in-out infinite',
-        'dashboard-third': 'dashboard-third 12s ease-in-out infinite reverse',
-        'dashboard-fourth': 'dashboard-fourth 9s ease-in-out infinite',
-        'dashboard-fifth': 'dashboard-fifth 11s ease-in-out infinite',
+        'dashboard-first': 'dashboard-first 18s ease-in-out infinite',
+        'dashboard-second': 'dashboard-second 22s ease-in-out infinite',
+        'dashboard-third': 'dashboard-third 20s ease-in-out infinite reverse',
+        'dashboard-fourth': 'dashboard-fourth 16s ease-in-out infinite',
+        'dashboard-fifth': 'dashboard-fifth 24s ease-in-out infinite',
       }
     },
   },
