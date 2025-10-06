@@ -24,6 +24,13 @@ export default {
       fontFamily: {
         'sans': ['Galvji', 'sans-serif'],
         'mono': ['JetBrains Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+      },
+      animation: {
+        'dashboard-first': 'dashboard-first 8s ease-in-out infinite',
+        'dashboard-second': 'dashboard-second 10s ease-in-out infinite',
+        'dashboard-third': 'dashboard-third 12s ease-in-out infinite reverse',
+        'dashboard-fourth': 'dashboard-fourth 9s ease-in-out infinite',
+        'dashboard-fifth': 'dashboard-fifth 11s ease-in-out infinite',
       }
     },
   },

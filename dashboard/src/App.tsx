@@ -141,7 +141,7 @@ function DashboardContent() {
   const shouldPauseAnimations = sleepState.currentState === 'sleeping';
 
   return (
-    <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(25,20,30)_0%,_rgb(25,18,32)_100%)] overflow-x-clip relative">
+    <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(26,20,32)_0%,_rgb(25,18,32)_100%)] overflow-x-clip relative">
       <DeploymentBanner />
 
       {/* Sleep overlay - highest z-index */}
@@ -152,19 +152,24 @@ function DashboardContent() {
         <AnoAI />
       </div> */}
 
-      {/* Magic animated background */}
+      {/* Magic animated background - elliptical gradients that move around */}
       <div
-        className="gradients-container fixed inset-0 h-full w-full opacity-20 blur-[60px]"
+        className="gradients-container fixed inset-0 h-full w-full opacity-40 blur-[50px]"
         style={{
           zIndex: 2,
           animationPlayState: shouldPauseAnimations ? 'paused' : 'running'
         }}
       >
-        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(48,12,80,0.18)_0%,_rgba(48,12,80,0)_65%)] mix-blend-multiply animate-dashboard-first" />
-        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(68,25,150,0.15)_0%,_rgba(68,25,150,0)_65%)] mix-blend-multiply animate-dashboard-second transform-origin-[calc(50%-300px)]" />
-        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(89,45,170,0.13)_0%,_rgba(89,45,170,0)_65%)] mix-blend-multiply animate-dashboard-third transform-origin-[calc(50%+300px)]" />
-        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(110,35,160,0.11)_0%,_rgba(110,35,160,0)_65%)] mix-blend-multiply animate-dashboard-fourth transform-origin-[calc(50%-150px)]" />
-        <div className="absolute w-[120%] h-[120%] top-[calc(50%-60%)] left-[calc(50%-60%)] bg-[radial-gradient(circle_at_center,_rgba(130,90,200,0.09)_0%,_rgba(130,90,200,0)_65%)] mix-blend-multiply animate-dashboard-fifth transform-origin-[calc(50%-600px)_calc(50%+600px)]" />
+        {/* Top-left blob - moves in circular orbit */}
+        <div className="absolute w-[60%] h-[60%] top-[10%] left-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(68,25,150,0.4)_0%,_rgba(68,25,150,0)_70%)] mix-blend-screen animate-dashboard-first" />
+        {/* Top-right blob - drifts horizontally */}
+        <div className="absolute w-[50%] h-[70%] top-[15%] right-[5%] bg-[radial-gradient(ellipse_at_center,_rgba(89,45,170,0.35)_0%,_rgba(89,45,170,0)_70%)] mix-blend-screen animate-dashboard-second" />
+        {/* Center blob - pulses and rotates */}
+        <div className="absolute w-[70%] h-[50%] top-[35%] left-[20%] bg-[radial-gradient(ellipse_at_center,_rgba(110,35,160,0.3)_0%,_rgba(110,35,160,0)_70%)] mix-blend-screen animate-dashboard-third" />
+        {/* Bottom-left blob - diagonal movement */}
+        <div className="absolute w-[55%] h-[65%] bottom-[10%] left-[15%] bg-[radial-gradient(ellipse_at_center,_rgba(48,12,80,0.35)_0%,_rgba(48,12,80,0)_70%)] mix-blend-screen animate-dashboard-fourth" />
+        {/* Bottom-right blob - slow orbit */}
+        <div className="absolute w-[65%] h-[55%] bottom-[15%] right-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(130,90,200,0.25)_0%,_rgba(130,90,200,0)_70%)] mix-blend-screen animate-dashboard-fifth" />
       </div>
 
 
