@@ -20,10 +20,11 @@
    - Duration: 2 seconds linear animation
    - Applied to text elements, not container divs
 
-3. **3-Minute Window for Time Updates** - Prevents False Animations
-   - Delayed trains don't trigger animations (e.g., 08:07 → 08:10 is time update)
-   - Only genuinely new trains trigger animations
-   - Compares line_number, destination, departure_timestamp (within 180 seconds)
+3. **Identity Tracking** - Updated for Framer Motion (Oct 6, 2025)
+   - **Old approach**: Rounded timestamps to 180-second buckets to prevent animation on minor time updates
+   - **Problem**: Caused ID collisions → bus accumulation bug (>4 buses shown over time)
+   - **New approach**: Use exact timestamps - Framer Motion handles time updates with smooth exit/enter
+   - Compares line_number, destination, exact departure_timestamp
 
 ---
 
