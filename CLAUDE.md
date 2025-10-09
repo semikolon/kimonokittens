@@ -761,6 +761,30 @@ Host kimonokittens
 - Never edit production checkout directly
 - Always develop in fredrik checkout, deploy via git
 
+### Playwright Testing & Screenshot Workflow
+
+**CRITICAL**: When using Playwright on pages with WebSocket connections or real-time data:
+
+1. **Initial "no connection" states are NORMAL** - WebSocket handshakes take 1-3 seconds
+2. **Trust console logs over UI snapshots** - Check for "connected" or "connection established" messages
+3. **Wait before screenshot/analysis** - Use `browser_wait_for` with `time: 3` after navigation
+4. **Don't interpret transient states as errors** - The first snapshot often shows loading/disconnected state
+
+**Example workflow**:
+```
+1. browser_navigate to localhost:5175
+2. browser_wait_for with time: 3  # Let WebSocket establish
+3. browser_take_screenshot        # Now UI shows connected state
+4. Analyze console logs for "connected" confirmation
+```
+
+**Red flags that indicate REAL problems** (not timing):
+- Console errors (not just "connecting..." logs)
+- "Failed to connect" after 5+ seconds
+- Console shows connection refused/network errors
+
+**Common mistake**: Seeing "Ingen anslutning till servern" immediately after page load and interpreting it as a data problem. This is just the initial state before WebSocket handshake completes. The console logs will show `Dashboard WebSocket connection established` when ready.
+
 ---
 
 ## 🔄 SMART WEBHOOK DEPLOYMENT SYSTEM
