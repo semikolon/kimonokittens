@@ -63,7 +63,10 @@ const ElectricityPriceSparkline: React.FC<ElectricityPriceSparklineProps> = ({ h
       className="absolute inset-0 w-full h-full pointer-events-none"
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
-      style={{ zIndex: 5 }}
+      style={{
+        zIndex: 5,
+        clipPath: 'inset(0 round 0.5rem)' // Clip to match rounded-lg of parent container
+      }}
     >
       <path
         d={pathData}
@@ -274,7 +277,7 @@ export function TemperatureWidget() {
           {currentSmartStatus}{isActivelyHeating && ` - ${temperatureData.supplyline_temperature} i elementen`}
         </div>
         <div
-          className="relative h-5 rounded-lg overflow-hidden"
+          className="relative h-5 rounded-lg overflow-visible"
           style={{
             opacity: barOpacity,
             background: 'rgba(255, 255, 255, 0.1)',
