@@ -958,3 +958,7 @@ curl http://localhost:3001/api/rent/friendly_message
 # WebSocket connection
 # Check browser console for WebSocket at ws://localhost:3001
 ```
+
+## 🔧 System Upgrade History
+
+**Oct 9, 2025**: Pop!_OS 22.04 system upgrade completed successfully - PostgreSQL 14→18, NVIDIA 550→580, kernel 6.16.3, 552 packages total. Database schema intact (kimonokittens_production), all DKMS modules compiled.

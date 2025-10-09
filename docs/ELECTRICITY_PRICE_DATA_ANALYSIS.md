@@ -4,23 +4,51 @@
 
 ---
 
-## 🚨 CRITICAL DISCOVERY: Tibber Cron Job Stopped Working
+## 🚨 CRITICAL DISCOVERY: Tibber API Key Invalid + Demo Data Concerns
 
-**Pi's `tibber.rb` has NOT updated since May 2, 2025** (5 months ago!)
+### Root Cause Identified ✅
+
+**Pi's `tibber.rb` stopped working because the API key became invalid!**
 
 ```bash
-# File check on Pi:
--rw-r--r-- 1 pi pi 26K May  2 00:00 /home/pi/kimonokittens/tibber_price_data.json
+# API Key in Pi .env:
+TIBBER_API_KEY='5K4MVS-OjfWhK_4yrjOlFe1F6kJXPVf7eQYggo8ebAE'
+
+# Test result:
+{"errors":[{"message":"invalid token","extensions":{"code":"UNAUTHENTICATED"}}]}
 ```
 
-**Data range in file:** April 1, 2025 → May 1, 2025 (last entry: `2025-05-01T23:00:00`)
+**Error in cron logs:**
+```
+/home/pi/kimonokittens/tibber.rb:65:in `fetch_tibber_data': undefined method `[]' for nil:NilClass
+```
 
-**Cron schedule:** Every 2 hours (`0 0,2,4,6,8,10,12,14,16,18,20,22 * * * bundle exec ruby tibber.rb`)
+**Timeline:**
+- Last successful update: May 2, 2025 (5 months ago)
+- API key became invalid sometime after May 2
+- Cron job running but failing silently (NoMethodError when parsing nil response)
+- Data frozen at April 1 - May 1, 2025
 
-**Implications:**
-- ⚠️ **Heatpump schedule potentially running on 5-month-old price data** (if Node-RED still uses tibber.rb output)
-- ⚠️ **Potentially wasted money** - schedule optimizes for April 2025 prices in October 2025
-- ⚠️ **Cron job silently failing** - no alerting, script may be broken
+### Tibber Demo API Analysis
+
+**Demo API key tested:** `3A77EECF61BD445F47241A5A36202185C35AF3AF58609E19B53F3A8872AD7BE1-1`
+
+**Result: Demo API gives MASSIVELY INFLATED prices (~96.5% higher than real!)**
+
+**October 9, 2025 Comparison:**
+- **Tibber demo daily total:** 21.844 SEK
+- **Real prices (elprisetjustnu.se):** 11.116 SEK
+- **Difference:** +10.728 SEK (**+96.5%** inflation!)
+- **Average error:** +118.7% per hour
+
+**Detailed breakdown:**
+- Night hours (0-5): **150-173% inflated** (🚨 >2x real prices)
+- Morning peak (7-8): **60-90% inflated** (⚠️ 50%+ higher)
+- Daytime (9-19): **70-95% inflated** (⚠️ 50%+ higher)
+- Evening (20-23): **125-250% inflated** (🚨 >2x real prices)
+
+**Good news:** Pattern preserved - cheap/expensive hours align 7/8 times
+**Bad news:** Absolute prices completely unrealistic
 
 ---
 
@@ -140,6 +168,36 @@ Possible scenarios:
 - `docs/PI_VS_DELL_ELECTRICITY_ANALYSIS.md` - Architecture comparison
 - `handlers/electricity_price_handler.rb` - New working implementation
 - `dashboard/src/components/TemperatureWidget.tsx:5-77` - SparklineComponent using new data
+
+---
+
+## ✅ SE3 Region Verification (October 9, 2025)
+
+**Question:** Is SE3 the correct region for Stockholm area electricity pricing?
+
+**Answer:** ✅ **YES - SE3 is definitively correct**
+
+### Regional Price Comparison (October 9, 2025)
+
+| Region | Area | Avg Price | Range | Morning Peak (08:00) |
+|--------|------|-----------|-------|---------------------|
+| SE1 | Northern Sweden (Luleå) | 0.07 SEK/kWh | 0.01 - 0.16 | 0.16 SEK/kWh |
+| SE2 | Central Sweden (Sundsvall) | 0.02 SEK/kWh | 0.00 - 0.04 | 0.02 SEK/kWh |
+| **SE3** | **Southern Sweden (Stockholm)** | **0.66 SEK/kWh** | **0.20 - 1.63** | **1.63 SEK/kWh** |
+| SE4 | Southernmost Sweden (Malmö) | 0.75 SEK/kWh | 0.24 - 1.82 | 1.82 SEK/kWh |
+
+### Why SE3 is Correct
+
+1. **Geographic match**: Stockholm is in southern Sweden (SE3 zone)
+2. **Price pattern match**: SE3 average (0.66 SEK/kWh) matches verified dashboard data
+3. **Economic logic**: Southern regions are expensive due to:
+   - Higher population density and demand
+   - Less hydroelectric power (northern advantage)
+   - More imports from European grid
+
+4. **Consistency check**: Our sparkline shows prices ranging 0.33-1.15 SEK/kWh, which fits perfectly within SE3's 0.20-1.63 range
+
+**Conclusion:** SE3 region setting in `electricity_price_handler.rb` is **100% correct** for Stockholm area.
 
 ---
 

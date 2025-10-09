@@ -1,0 +1,35 @@
+#!/bin/bash
+# Quick screenshot of kiosk display via API
+# Usage: ./bin/kiosk-screenshot [--save-only]
+
+set -e
+
+API_URL="http://pop:3001"
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+SAVE_PATH="$HOME/Desktop/kiosk-$TIMESTAMP.png"
+
+echo "📸 Capturing kiosk screenshot..."
+CAPTURE_RESPONSE=$(curl -s "$API_URL/api/screenshot/capture")
+
+# Check if capture succeeded
+if echo "$CAPTURE_RESPONSE" | grep -q '"success":true'; then
+    echo "✅ Screenshot captured"
+
+    echo "⬇️  Downloading screenshot..."
+    curl -s "$API_URL/api/screenshot/latest" > "$SAVE_PATH"
+
+    FILE_SIZE=$(ls -lh "$SAVE_PATH" | awk '{print $5}')
+    echo "💾 Saved to: $SAVE_PATH ($FILE_SIZE)"
+
+    # Open unless --save-only flag is present
+    if [ "$1" != "--save-only" ]; then
+        echo "👁️  Opening screenshot..."
+        open "$SAVE_PATH"
+    fi
+else
+    echo "❌ Screenshot failed:"
+    echo "$CAPTURE_RESPONSE" | jq . 2>/dev/null || echo "$CAPTURE_RESPONSE"
+    echo ""
+    echo "Is scrot installed? Run: ssh pop 'sudo apt-get install -y scrot'"
+    exit 1
+fi
