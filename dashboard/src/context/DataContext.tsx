@@ -91,6 +91,17 @@ interface TodoData {
   id: string
 }
 
+interface ElectricityPriceData {
+  region: string
+  prices: Array<{
+    time_start: string
+    time_end: string
+    price_sek: number
+    price_eur: number
+  }>
+  generated_at?: string
+}
+
 // Define the state shape
 interface DeploymentStatus {
   pending: boolean
@@ -105,6 +116,7 @@ interface DashboardState {
   stravaData: StravaData | null
   rentData: RentData | null
   todoData: TodoData[] | null
+  electricityPriceData: ElectricityPriceData | null
   deploymentStatus: DeploymentStatus | null
   connectionStatus: 'connecting' | 'open' | 'closed'
   lastUpdated: {
@@ -114,6 +126,7 @@ interface DashboardState {
     strava: number | null
     rent: number | null
     todo: number | null
+    electricity: number | null
   }
 }
 
@@ -125,6 +138,7 @@ type DashboardAction =
   | { type: 'SET_STRAVA_DATA'; payload: StravaData }
   | { type: 'SET_RENT_DATA'; payload: RentData }
   | { type: 'SET_TODO_DATA'; payload: TodoData[] }
+  | { type: 'SET_ELECTRICITY_PRICE_DATA'; payload: ElectricityPriceData }
   | { type: 'SET_DEPLOYMENT_STATUS'; payload: DeploymentStatus }
   | { type: 'SET_CONNECTION_STATUS'; payload: 'connecting' | 'open' | 'closed' }
 
@@ -136,6 +150,7 @@ const initialState: DashboardState = {
   stravaData: null,
   rentData: null,
   todoData: null,
+  electricityPriceData: null,
   deploymentStatus: null,
   connectionStatus: 'connecting',
   lastUpdated: {
@@ -144,7 +159,8 @@ const initialState: DashboardState = {
     weather: null,
     strava: null,
     rent: null,
-    todo: null
+    todo: null,
+    electricity: null
   }
 }
 
@@ -186,6 +202,12 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         ...state,
         todoData: action.payload,
         lastUpdated: { ...state.lastUpdated, todo: Date.now() }
+      }
+    case 'SET_ELECTRICITY_PRICE_DATA':
+      return {
+        ...state,
+        electricityPriceData: action.payload,
+        lastUpdated: { ...state.lastUpdated, electricity: Date.now() }
       }
     case 'SET_DEPLOYMENT_STATUS':
       return {
@@ -269,6 +291,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             break
           case 'todo_data':
             dispatch({ type: 'SET_TODO_DATA', payload: message.payload })
+            break
+          case 'electricity_price_data':
+            dispatch({ type: 'SET_ELECTRICITY_PRICE_DATA', payload: message.payload })
             break
           case 'reload':
             console.log('Reload message received from server')

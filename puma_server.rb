@@ -42,10 +42,12 @@ require_relative 'handlers/reload_handler'
 require_relative 'handlers/display_control_handler'
 require_relative 'handlers/sleep_schedule_handler'
 require_relative 'handlers/heating_cost_handler'
+require_relative 'handlers/electricity_price_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
 heating_cost_handler = HeatingCostHandler.new
+electricity_price_handler = ElectricityPriceHandler.new
 proxy_handler = ProxyHandler.new
 static_handler = StaticHandler.new
 train_departure_handler = TrainDepartureHandler.new
@@ -361,6 +363,10 @@ app = Rack::Builder.new do
 
   map "/data/temperature" do
     run temperature_handler
+  end
+
+  map "/data/electricity_prices" do
+    run electricity_price_handler
   end
 
   map "/data" do
