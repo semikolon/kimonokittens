@@ -68,7 +68,7 @@ const ElectricityPriceSparkline: React.FC<ElectricityPriceSparklineProps> = ({ h
       <path
         d={pathData}
         fill="none"
-        stroke="rgba(255, 255, 255, 0.4)"
+        stroke="rgba(255, 255, 255, 0.1)"
         strokeWidth="2"
         vectorEffect="non-scaling-stroke"
       />
@@ -274,7 +274,7 @@ export function TemperatureWidget() {
           {currentSmartStatus}{isActivelyHeating && ` - ${temperatureData.supplyline_temperature} i elementen`}
         </div>
         <div
-          className="relative h-5 rounded-lg overflow-visible"
+          className="relative h-5 rounded-lg overflow-hidden"
           style={{
             opacity: barOpacity,
             background: 'rgba(255, 255, 255, 0.1)',
