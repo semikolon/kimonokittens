@@ -67,7 +67,7 @@ log_dest file /var/log/mosquitto/mosquitto.log
 
 ---
 
-### 3. Ruby JSON Server (Legacy) ⚠️ REVIEW NEEDED
+### 3. Ruby JSON Server (Legacy) ✅ DECISION MADE
 **Status:** Running (PID varies)
 **Service:** `json_server_daemon.service` (systemd, enabled)
 **File:** `/home/pi/kimonokittens/json_server.rb` (19KB, May 31 2024)
@@ -75,18 +75,20 @@ log_dest file /var/log/mosquitto/mosquitto.log
 
 **What it does:**
 - Agoo-based web server
-- Serves electricity stats, train departures, Strava data
+- Hosts simple public homepage at kimonokittens.com (logo + Swish donation)
+- Proxies some requests to Node-RED (temperature, etc.)
 - SSL certificates: `/etc/letsencrypt/live/kimonokittens.com/`
-- Proxies some requests to Node-RED
 
 **Dependencies:**
 - Ruby 3.1.0 (via rbenv)
 - Gems: agoo, faraday, oj, awesome_print, pry, pry-nav, dotenv
 
-**Migration Decision Needed:**
-- ❓ Is this still needed? Dell runs Puma server at `puma_server.rb`
-- ❓ Are there unique endpoints not in Dell version?
-- ⚠️ SSL certificates will need renewal/transfer
+**Migration Decision: SUNSET AFTER BRF-AUTO**
+- ✅ **Dell has own handlers** - no functional dependency on Pi Agoo
+- ✅ **Public homepage** - only remaining purpose (simple static page)
+- ⏳ **Postpone migration** until BRF-Auto income secured (~1-2 weeks)
+- 🎯 **Future plan:** nginx on Dell serves handbook + dashboard publicly at kimonokittens.com
+- 🔒 **SSL certificates** will need renewal/transfer when migrating domain
 
 ---
 
@@ -97,10 +99,10 @@ log_dest file /var/log/mosquitto/mosquitto.log
 **Active Jobs:**
 ```bash
 # Every 2 hours: Vattenfall scraper
-0 0,2,4,6,8,10,12,14,16,18,20,22 * * * bundle exec ruby vattenfall.rb
+0 0,2,4,6,8,10,12,14,16,18,20,22 * * * bundle exec ruby vattenfall.rb  # ✅ WORKING
 
 # Every 2 hours: Tibber API
-0 0,2,4,6,8,10,12,14,16,18,20,22 * * * bundle exec ruby tibber.rb
+0 0,2,4,6,8,10,12,14,16,18,20,22 * * * bundle exec ruby tibber.rb  # ❌ BROKEN (see below)
 
 # Every 30 minutes: Autohotspot (WiFi fallback)
 */30 * * * * sudo /usr/bin/autohotspot
@@ -109,14 +111,21 @@ log_dest file /var/log/mosquitto/mosquitto.log
 0 * * * * python3 /home/pi/pycalima/cmdline.py --hourlyschedule
 ```
 
+**🚨 CRITICAL: Tibber Cron Job Stopped Working**
+- **Last successful run:** May 2, 2025 (5 months ago!)
+- **File state:** `tibber_price_data.json` frozen at April 1 - May 1, 2025 data
+- **Impact:** Potentially wasted money if heatpump schedule uses stale prices
+- **See:** `docs/ELECTRICITY_PRICE_DATA_ANALYSIS.md` for complete analysis
+
 **Scripts to migrate:**
-- `/home/pi/kimonokittens/vattenfall.rb` (9.4KB, Jan 16 2024)
-- `/home/pi/kimonokittens/tibber.rb` (2.3KB, Aug 11 2023)
+- `/home/pi/kimonokittens/vattenfall.rb` (9.4KB, Jan 16 2024) - ✅ Working
+- `/home/pi/kimonokittens/tibber.rb` (2.3KB, Aug 11 2023) - ❌ Broken or deprecated
 
 **Migration Notes:**
-- Update Ruby paths (rbenv on Dell vs Pi)
-- Verify database/file write locations
-- Check if Dell already has these scripts (likely yes, based on repo)
+- **Dell already has working alternative:** `handlers/electricity_price_handler.rb` (elprisetjustnu.se)
+- Recommendation: Migrate to elprisetjustnu.se, deprecate Tibber entirely
+- Update Node-RED to fetch from Dell's `/data/electricity_prices` endpoint
+- Verify heatpump schedule data source before migration
 
 ---
 
@@ -295,11 +304,16 @@ log_dest file /var/log/mosquitto/mosquitto.log
 
 ## 🔍 Open Questions for User
 
-1. **json_server.rb:** Is the Agoo server on Pi still serving any unique endpoints not covered by Dell's Puma server?
-2. **DDClient:** Should dynamic DNS updates move to Dell?
-3. **Pycalima fan control:** Does Dell need this, or should Pi keep it due to Bluetooth hardware location?
-4. **DakBoard/lighttpd:** Can we safely ignore this? (Appears to be legacy dashboard system)
-5. **TV-cast project:** Still in use or archive?
+1. ~~**json_server.rb:**~~ ✅ **ANSWERED** - Only serves public homepage, no unique endpoints. Sunset after BRF-Auto.
+2. **DDClient:** Should dynamic DNS updates move to Dell? (Likely yes, after domain migration)
+3. **Pycalima fan control:** Does Dell need this, or should Pi keep it due to Bluetooth hardware location? (Likely stays on Pi)
+4. 🚨 **CRITICAL: Heatpump schedule data source** - What does Node-RED actually use?
+   - Stale Tibber data (5 months old)?
+   - Dell's elprisetjustnu.se endpoint?
+   - Hardcoded schedule?
+   - **Action needed:** SSH to Pi, examine `/home/pi/.node-red/flows.json`
+5. **DakBoard/lighttpd:** Can we safely ignore this? (Appears to be legacy dashboard system)
+6. **TV-cast project:** Still in use or archive?
 
 ---
 

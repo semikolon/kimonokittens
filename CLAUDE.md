@@ -208,9 +208,17 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 - **Electricity JSON files**: `electricity_usage.json`, `tibber_price_data.json`
 - **Dashboard data generation**: All data consumed by widgets or useful for online handbook
 
+**Services to Sunset** (after BRF-Auto income secured):
+- **Pi Agoo server** (`json_server.rb`):
+  - Currently hosts simple public homepage at kimonokittens.com
+  - Dell has own handlers - no functional dependency
+  - Will be replaced by nginx on Dell serving handbook + dashboard publicly
+
 **Rationale**: Keep infrastructure services (DNS, MQTT, sensors) on Pi where hardware lives. Migrate dashboard-related data generation to Dell for consolidation and future handbook features (which is part of monorepo but not yet deployed).
 
-**Documentation**: See `docs/PI_MIGRATION_MAP.md` and `docs/PI_VS_DELL_ELECTRICITY_ANALYSIS.md` for complete analysis.
+**Public Deployment Postponed**: Domain migration + handbook public hosting delayed until BRF-Auto project income secured (~1-2 weeks).
+
+**Documentation**: See `docs/PI_MIGRATION_MAP.md`, `docs/PI_VS_DELL_ELECTRICITY_ANALYSIS.md`, and `docs/ELECTRICITY_PRICE_DATA_ANALYSIS.md` for complete analysis.
 
 ### Production Paths & Services
 ```
@@ -686,6 +694,37 @@ Train departures use **keyless SL Transport API** (`transport.integration.sl.se`
 - **No direct browser access** - display is in hallway, not visible from desk
 - Backend: Port 3001 (when running locally)
 - Frontend: Port 5175 (Vite dev server when running)
+
+### SSH Access to Kiosk
+
+**IMPORTANT**: The kiosk hostname is `pop` (not `kimonokittens.com` - that points to Pi)
+
+**SSH Commands**:
+```bash
+# Connect as fredrik user (default)
+ssh pop
+
+# Connect as kimonokittens user
+ssh kimonokittens@pop
+# or
+ssh pop -l kimonokittens
+```
+
+**Key Facts**:
+- `kimonokittens.com` DNS points to home WAN IP (via DDClient on Pi)
+- **Pi Agoo server** hosts simple public homepage at that domain:
+  - Port 6464 (HTTP), 6465 (HTTPS)
+  - Static landing page: logo + Swish donation message
+  - Proxies some endpoints to Node-RED (temperature, etc.)
+  - **NOT needed by Dell dashboard** (Dell has own handlers)
+- **Dell dashboard** only serves on localhost (not publicly accessible yet)
+  - Production deployment via webhook (port 3001)
+  - Backend handlers: rent, weather, temperature, electricity prices
+  - No dependency on Pi Agoo server for functionality
+- **Public migration postponed** until BRF-Auto income secured:
+  - Move kimonokittens.com → Dell nginx
+  - Deploy handbook publicly under domain
+  - Sunset Pi Agoo server (keep Node-RED/MQTT)
 
 ### Frontend Development Workflow
 
