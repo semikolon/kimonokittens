@@ -1,6 +1,6 @@
 require 'date'
 require_relative 'electricity_projector'
-require_relative 'rent_db'
+require_relative 'persistence'
 
 # HeatingCostCalculator provides reusable heating cost calculation logic
 # Used by both HeatingCostHandler (API endpoint) and RentCalculatorHandler (friendly message)
@@ -60,17 +60,13 @@ module HeatingCostCalculator
 
   # Get active roommate count from database
   #
-  # @param db [RentDb] Database instance (optional, defaults to RentDb.instance)
+  # @param repo [TenantRepository] Repository (optional, defaults to Persistence.tenants)
   # @param date [Date] Reference date for active check (optional, defaults to today)
   # @return [Integer] Number of active roommates (minimum 1)
-  def self.get_active_roommate_count(db: RentDb.instance, date: Date.today)
-    tenants = db.get_tenants
+  def self.get_active_roommate_count(repo: Persistence.tenants, date: Date.today)
+    tenants = repo.all
 
-    # Count active tenants (no departure date or future departure)
-    active_roommates = tenants.count do |t|
-      departure_date = t['departureDate']
-      departure_date.nil? || Date.parse(departure_date.to_s) >= date
-    end
+    active_roommates = tenants.count { |tenant| tenant.active_on?(date) }
 
     # Fallback to default if no active tenants found
     active_roommates == 0 ? 4 : active_roommates

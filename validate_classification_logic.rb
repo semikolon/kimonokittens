@@ -2,6 +2,7 @@
 
 require 'dotenv/load'
 require_relative 'lib/rent_db'
+require_relative 'lib/models/rent_config'
 require_relative 'rent'
 
 puts '='*60
@@ -27,13 +28,13 @@ end
 # Test the key classification constants
 puts "\nKey Classification:"
 puts "Period-specific keys (exact match only):"
-RentDb::PERIOD_SPECIFIC_KEYS.each { |key| puts "  - #{key}" }
+RentConfig::PERIOD_SPECIFIC_KEYS.each { |key| puts "  - #{key}" }
 
 puts "\nPersistent keys (carry-forward until changed):"
-RentDb::PERSISTENT_KEYS.each { |key| puts "  - #{key}" }
+RentConfig::PERSISTENT_KEYS.each { |key| puts "  - #{key}" }
 
 puts "\nDefaults for persistent keys:"
-RentDb::DEFAULTS.each { |key, value| puts "  - #{key}: #{value} kr" }
+RentConfig::DEFAULTS.each { |key, value| puts "  - #{key}: #{value} kr" }
 
 # Test with current database state
 test_case("Current October 2025 configuration")
@@ -46,7 +47,7 @@ end
 
 puts "Retrieved configuration:"
 config_hash.each do |key, value|
-  key_type = RentDb::PERIOD_SPECIFIC_KEYS.include?(key.to_s) ? "period-specific" : "persistent"
+  key_type = RentConfig::PERIOD_SPECIFIC_KEYS.include?(key.to_s) ? "period-specific" : "persistent"
   puts "  #{key}: #{value} kr (#{key_type})"
 end
 
@@ -62,8 +63,8 @@ puts "    drift_rakning: #{drift_value} kr"
 test_case("Persistent key behavior validation")
 # For persistent keys, check if they use most-recent-value logic
 persistent_values = {}
-RentDb::PERSISTENT_KEYS.each do |key|
-  persistent_values[key] = config_hash[key.to_sym] || RentDb::DEFAULTS[key.to_sym] || 0
+RentConfig::PERSISTENT_KEYS.each do |key|
+  persistent_values[key] = config_hash[key.to_sym] || RentConfig::DEFAULTS[key.to_sym] || 0
 end
 
 puts "  Persistent keys (carry-forward or defaults):"

@@ -46,7 +46,7 @@
 
 require 'rack'
 require_relative '../rent'
-require_relative '../lib/rent_db'
+require_relative '../lib/persistence'
 require_relative '../lib/electricity_projector'
 require_relative '../lib/heating_cost_calculator'
 require 'json'
@@ -136,7 +136,7 @@ class RentCalculatorHandler
     year = query['year']&.to_i || Time.now.year
     month = query['month']&.to_i || Time.now.month
 
-    history_data = RentDb.instance.get_rent_history(year: year, month: month)
+    history_data = Persistence.rent_ledger.get_rent_history(year: year, month: month)
 
     [200, { 'Content-Type' => 'application/json' }, [history_data.to_json]]
   end
@@ -280,10 +280,19 @@ class RentCalculatorHandler
       return [400, { 'Content-Type' => 'application/json' }, [{ error: 'The "updates" key must be a JSON object.' }.to_json]]
     end
 
-    db = RentDb.instance
-    updates.each do |key, value|
-      db.set_config(key, value.to_s)
+    period = if body['year'] && body['month']
+      Time.utc(body['year'].to_i, body['month'].to_i, 1)
+    else
+      Time.now.utc
     end
+
+    repo = Persistence.rent_configs
+
+    updates.each do |key, value|
+      repo.create_config(key, value.to_s, period)
+    end
+
+    $pubsub&.publish('rent_data_updated')
 
     [200, { 'Content-Type' => 'application/json' }, [{ status: 'success', updated: updates.keys }.to_json]]
   end
@@ -295,27 +304,53 @@ class RentCalculatorHandler
     action = body['action']
     name = body['name']
 
-    db = RentDb.instance
+    repo = Persistence.tenants
     response = { status: 'success' }
 
     case action
     when 'add_permanent'
       start_date = body['start_date']
-      new_tenant = db.add_tenant(name: name, start_date: start_date)
-      response[:new_tenant] = new_tenant
+      email = body['email'] || "#{name.downcase.gsub(/\s+/, '.')}@kimonokittens.com"
+      room_adjustment = body['room_adjustment']
+      departure_date = body['departure_date']
+
+      new_tenant = Tenant.new(
+        name: name,
+        email: email,
+        start_date: start_date,
+        departure_date: departure_date,
+        room_adjustment: room_adjustment
+      )
+
+      created = repo.create(new_tenant)
+      $pubsub&.publish('rent_data_updated')
+      response[:new_tenant] = created.id
+      response[:tenant] = created.to_h
     when 'set_departure'
       end_date = body['end_date']
       unless end_date
         return [400, { 'Content-Type' => 'application/json' }, [{ error: 'end_date is required for set_departure action' }.to_json]]
       end
-      db.set_departure_date(name: name, date: end_date)
+      tenant = repo.find_by_name(name)
+      unless tenant
+        return [404, { 'Content-Type' => 'application/json' }, [{ error: "Tenant not found: #{name}" }.to_json]]
+      end
+
+      repo.set_departure_date(tenant.id, end_date)
+      $pubsub&.publish('rent_data_updated')
       response[:message] = "Set departure date for #{name} to #{end_date}"
     when 'update_adjustment'
       room_adjustment = body['room_adjustment']
       unless room_adjustment
         return [400, { 'Content-Type' => 'application/json' }, [{ error: 'room_adjustment is required for update_adjustment action' }.to_json]]
       end
-      db.set_room_adjustment(name: name, adjustment: room_adjustment)
+      tenant = repo.find_by_name(name)
+      unless tenant
+        return [404, { 'Content-Type' => 'application/json' }, [{ error: "Tenant not found: #{name}" }.to_json]]
+      end
+
+      repo.set_room_adjustment(tenant.id, room_adjustment)
+      $pubsub&.publish('rent_data_updated')
       response[:message] = "Updated room adjustment for #{name} to #{room_adjustment}"
     when 'set_temporary'
       # TODO: Implement temporary stay logic - this would require more complex logic
@@ -331,7 +366,7 @@ class RentCalculatorHandler
   def handle_roommate_list(req)
     # TODO: Add support for querying by year/month to handle temporary stays.
     # For now, this just returns all current tenants.
-    tenants = RentDb.instance.get_tenants
+    tenants = Persistence.tenants.all.map(&:to_h)
     [200, { 'Content-Type' => 'application/json' }, [tenants.to_json]]
   end
 
@@ -350,60 +385,34 @@ class RentCalculatorHandler
   #
   # @return [Hash] Configuration hash with symbolized keys for RentCalculator
   def extract_config(year:, month:)
-    # Fetches the active configuration for a specific configuration period.
-    # If a quarterly invoice (drift_rakning) is present for the period,
-    # it takes precedence over regular monthly fees.
-    begin
-      # Wrap PG query in additional safety to prevent segfaults
-      config = begin
-        RentDb.instance.get_rent_config(year: year, month: month)
-      rescue => e
-        puts "WARNING: PostgreSQL query failed: #{e.message}"
-        puts "Falling back to defaults for #{year}-#{month}"
-        nil
-      end
+    repo = Persistence.rent_configs
 
-      # Defensive processing to prevent segfaults
-      config_hash = if config && !config.to_a.empty?
-        config.to_a.map do |row|
-          # Safely access columns, checking they exist first
-          next unless row.respond_to?(:[]) && row.respond_to?(:has_key?)
-
-          key = row.has_key?('key') ? row['key'] : nil
-          value = row.has_key?('value') ? row['value'] : nil
-
-          next unless key && value
-          [key.to_sym, value.to_f]
-        end.compact.to_h
-      else
-        {}
-      end
-    rescue PG::Error => e
-      puts "PostgreSQL error in extract_config: #{e.message}"
-      puts "Backtrace: #{e.backtrace&.first(3)&.join(', ')}"
-      config_hash = {}
-    rescue => e
-      puts "Unexpected error in extract_config: #{e.class} - #{e.message}"
-      puts "Backtrace: #{e.backtrace&.first(3)&.join(', ')}"
-      config_hash = {}
+    config_hash = begin
+      RentConfig.for_period(year: year, month: month, repository: repo)
+        .transform_keys(&:to_sym)
+    rescue StandardError => e
+      warn "WARNING: RentConfig lookup failed for #{year}-#{month}: #{e.message}"
+      {}
     end
 
-    # If drift_rakning is present and non-zero, it replaces monthly fees
-    if config_hash[:drift_rakning] && config_hash[:drift_rakning] > 0
+    # If drift_rakning is present and non-zero, it replaces monthly fees.
+    if config_hash[:drift_rakning] && config_hash[:drift_rakning].to_f > 0
       config_hash.delete(:vattenavgift)
-      config_hash.delete(:va) # Assuming 'va' is another monthly fee
+      config_hash.delete(:va)
       config_hash.delete(:larm)
     end
-    
-    # Provide safe defaults if values are missing, to prevent crashes.
+
+    numeric_config = config_hash.transform_values do |value|
+      value.respond_to?(:to_f) ? value.to_f : value
+    end
+
     defaults = RentCalculator::Config::DEFAULTS.merge({
       year: year,
       month: month
     })
 
-    merged = defaults.merge(config_hash)
+    merged = defaults.merge(numeric_config)
 
-    # Ensure correct types by creating a new hash
     final_config = {}
     merged.each do |key, value|
       final_config[key] = if [:year, :month].include?(key)
@@ -412,6 +421,7 @@ class RentCalculatorHandler
         value
       end
     end
+
     final_config
   end
 
@@ -449,60 +459,20 @@ class RentCalculatorHandler
   #
   # @return [Hash] Roommate hash with days stayed and room adjustments
   def extract_roommates(year:, month:)
-    begin
-      db = RentDb.instance
-      tenants = db.get_tenants
-    rescue => e
-      puts "ERROR: Failed to fetch tenants from database: #{e.message}"
-      raise "Cannot calculate rent - database connection failed: #{e.message}"
-    end
+    tenants = Persistence.tenants.all
 
-    if tenants.empty?
-      raise "Cannot calculate rent - no tenants found in database"
-    end
+    raise "Cannot calculate rent - no tenants found in database" if tenants.empty?
 
-    puts "DEBUG: Found #{tenants.size} tenants in database"
-    
-    # The calculator expects a hash like:
-    # { 'Fredrik' => { days: 30, room_adjustment: 0 } }
-    # For now, we assume full month stays. Partial stays would require more logic.
-    total_days = RentCalculator::Helpers.days_in_month(year, month)
-    
     period_start = Date.new(year, month, 1)
-    period_end   = Date.new(year, month, RentCalculator::Helpers.days_in_month(year, month))
+    period_end = Date.new(year, month, RentCalculator::Helpers.days_in_month(year, month))
 
     tenants.each_with_object({}) do |tenant, hash|
-      # Parse dates; handle both ISO strings like "2025-03-01" and Time objects
-      start_date_raw = tenant['startDate']
-      start_date = if start_date_raw.is_a?(String)
-        Date.parse(start_date_raw)
-      elsif start_date_raw.respond_to?(:to_date)
-        start_date_raw.to_date
-      else
-        start_date_raw
-      end
+      days_stayed = tenant.days_stayed_in_period(period_start, period_end)
+      next if days_stayed <= 0
 
-      departure_date_raw = tenant['departureDate']
-      departure_date = if departure_date_raw.is_a?(String)
-        Date.parse(departure_date_raw)
-      elsif departure_date_raw&.respond_to?(:to_date)
-        departure_date_raw.to_date
-      else
-        departure_date_raw
-      end
-
-      # Exclude if departed before the period starts or not yet arrived
-      next if departure_date && departure_date < period_start
-      next if start_date && start_date > period_end
-
-      # Calculate the actual days stayed within the period
-      actual_start = [start_date, period_start].compact.max
-      actual_end = [departure_date, period_end].compact.min
-      days_stayed = (actual_end - actual_start).to_i + 1
-
-      hash[tenant['name']] = {
+      hash[tenant.name] = {
         days: days_stayed,
-        room_adjustment: (tenant['roomAdjustment'] || 0).to_i
+        room_adjustment: (tenant.room_adjustment || 0).to_i
       }
     end
   end

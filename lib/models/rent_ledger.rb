@@ -107,6 +107,25 @@ class RentLedger
     "#{period_swedish}: #{amount_due} kr (#{payment_status})"
   end
 
+  # Serialize ledger entry to hash for API responses. Matches the historical
+  # structure (snake_case keys) returned by RentDb#get_rent_history.
+  def to_h
+    {
+      id: id,
+      tenantId: tenant_id,
+      period: period,
+      amountDue: amount_due,
+      amountPaid: amount_paid,
+      paymentDate: payment_date,
+      daysStayed: days_stayed,
+      roomAdjustment: room_adjustment,
+      baseMonthlyRent: base_monthly_rent,
+      calculationTitle: calculation_title,
+      calculationDate: calculation_date,
+      createdAt: created_at
+    }
+  end
+
   private
 
   # Normalize period to month start (UTC Time)

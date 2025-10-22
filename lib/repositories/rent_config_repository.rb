@@ -21,7 +21,8 @@ class RentConfigRepository < BaseRepository
   # @param period [Time] Period (normalized to month start)
   # @return [RentConfig, nil]
   def find_by_key_and_period(key, period)
-    row = dataset.where(key: key, period: period).first
+    normalized_period = normalize_period(period)
+    row = dataset.where(key: key, period: normalized_period).first
     row && hydrate(row)
   end
 
@@ -44,8 +45,9 @@ class RentConfigRepository < BaseRepository
   # @param period [Time] Period to query
   # @return [Array<RentConfig>]
   def find_by_period(period)
+    normalized_period = normalize_period(period)
     dataset
-      .where(period: period)
+      .where(period: normalized_period)
       .order(:key)
       .map { |row| hydrate(row) }
   end
@@ -61,6 +63,16 @@ class RentConfigRepository < BaseRepository
   # @return [Integer]
   def count_for_key(key)
     dataset.where(key: key).count
+  end
+
+  # Retrieve all configurations for a given key ordered by period
+  # @param key [String]
+  # @return [Array<RentConfig>]
+  def all_for_key(key)
+    dataset
+      .where(key: key)
+      .order(:period)
+      .map { |row| hydrate(row) }
   end
 
   # Create new configuration record
@@ -103,6 +115,34 @@ class RentConfigRepository < BaseRepository
     )
   end
 
+  # Upsert configuration value for a period (creates or updates existing record)
+  # @param key [String] Configuration key
+  # @param value [String, Numeric] Configuration value
+  # @param period [Time, Date, String] Configuration period
+  # @return [RentConfig]
+  def upsert(key:, value:, period: Time.now.utc)
+    normalized_period = normalize_period(period)
+
+    existing = dataset.where(key: key, period: normalized_period).first
+
+    if existing
+      dataset.where(id: existing[:id]).update(
+        value: value.to_s,
+        updatedAt: now_utc
+      )
+
+      hydrate(dataset.where(id: existing[:id]).first)
+    else
+      create(
+        RentConfig.new(
+          key: key,
+          value: value,
+          period: normalized_period
+        )
+      )
+    end
+  end
+
   # Update existing config
   # @param config [RentConfig] Configuration to update
   # @return [RentConfig] Updated config
@@ -127,6 +167,20 @@ class RentConfigRepository < BaseRepository
   end
 
   private
+
+  def normalize_period(period)
+    case period
+    when Time
+      Time.utc(period.year, period.month, 1)
+    when Date
+      Time.utc(period.year, period.month, 1)
+    when String
+      date = Date.parse(period)
+      Time.utc(date.year, date.month, 1)
+    else
+      raise ArgumentError, "Invalid period type: #{period.class}"
+    end
+  end
 
   # Convert database row to domain object
   # @param row [Hash] Database row

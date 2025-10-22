@@ -69,7 +69,7 @@ class RentLedgerRepository < BaseRepository
     dataset
       .where(period: start_date...end_date)
       .order(:createdAt)
-      .map { |row| hydrate(row) }
+      .map { |row| hydrate(row).to_h }
   end
 
   # Find unpaid entries for a tenant
@@ -115,6 +115,52 @@ class RentLedgerRepository < BaseRepository
       calculation_date: ledger_entry.calculation_date,
       created_at: ledger_entry.created_at
     )
+  end
+
+  # Upsert ledger entry for tenant/period (create or update amount + audit trail)
+  # @param tenant_id [String]
+  # @param period [Time, Date]
+  # @param amount_due [Numeric]
+  # @param days_stayed [Numeric]
+  # @param room_adjustment [Numeric]
+  # @param base_monthly_rent [Numeric]
+  # @param calculation_title [String]
+  # @param calculation_date [Time]
+  # @return [RentLedger]
+  def upsert_entry(tenant_id:, period:, amount_due:, days_stayed:, room_adjustment: 0,
+                   base_monthly_rent: nil, calculation_title: nil,
+                   calculation_date: Time.now.utc)
+    normalized_period = normalize_period(period)
+
+    existing = dataset.where(tenantId: tenant_id, period: normalized_period).first
+
+    if existing
+      dataset.where(id: existing[:id]).update(
+        amountDue: amount_due,
+        daysStayed: days_stayed,
+        roomAdjustment: room_adjustment,
+        baseMonthlyRent: base_monthly_rent,
+        calculationTitle: calculation_title,
+        calculationDate: calculation_date
+      )
+
+      hydrate(dataset.where(id: existing[:id]).first)
+    else
+      create(
+        RentLedger.new(
+          tenant_id: tenant_id,
+          period: normalized_period,
+          amount_due: amount_due,
+          amount_paid: 0,
+          days_stayed: days_stayed,
+          room_adjustment: room_adjustment,
+          base_monthly_rent: base_monthly_rent,
+          calculation_title: calculation_title,
+          calculation_date: calculation_date,
+          created_at: now_utc
+        )
+      )
+    end
   end
 
   # Update payment information (only allowed field to change)

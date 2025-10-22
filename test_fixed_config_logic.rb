@@ -2,6 +2,7 @@
 
 require 'dotenv/load'
 require_relative 'lib/rent_db'
+require_relative 'lib/models/rent_config'
 require_relative 'rent'
 require 'awesome_print'
 
@@ -242,13 +243,13 @@ begin
 
   puts "\nKey classification summary:"
   puts "Period-specific keys (exact match only):"
-  RentDb::PERIOD_SPECIFIC_KEYS.each { |key| puts "  - #{key}" }
+  RentConfig::PERIOD_SPECIFIC_KEYS.each { |key| puts "  - #{key}" }
 
   puts "\nPersistent keys (carry-forward until changed):"
-  RentDb::PERSISTENT_KEYS.each { |key| puts "  - #{key}" }
+  RentConfig::PERSISTENT_KEYS.each { |key| puts "  - #{key}" }
 
   puts "\nDefaults for persistent keys:"
-  RentDb::DEFAULTS.each { |key, value| puts "  - #{key}: #{value} kr" }
+  RentConfig::DEFAULTS.each { |key, value| puts "  - #{key}: #{value} kr" }
 
   puts "\n" + "="*60
   puts "✅ ALL TESTS COMPLETED"

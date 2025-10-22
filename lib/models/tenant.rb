@@ -131,6 +131,23 @@ class Tenant
     "#{name} <#{email}> (#{status})"
   end
 
+  # Serialize tenant to hash for API responses / JSON serialization.
+  # Matches the historical structure returned by RentDb#get_tenants.
+  def to_h
+    {
+      id: id,
+      name: name,
+      email: email,
+      facebookId: facebook_id,
+      avatarUrl: avatar_url,
+      roomAdjustment: room_adjustment,
+      startDate: start_date,
+      departureDate: departure_date,
+      createdAt: created_at,
+      updatedAt: updated_at
+    }
+  end
+
   private
 
   # Parse date from various input types

@@ -1,4 +1,5 @@
 require 'date'
+require_relative 'persistence'
 
 # ElectricityProjector provides intelligent electricity cost forecasting for rent calculations.
 #
@@ -43,11 +44,11 @@ require 'date'
 #   # 3. Seasonal: all_oct_ever.avg / all_months_ever.avg = 0.85
 #   # 4. Projection: 2200 × 0.85 = 1870 kr
 class ElectricityProjector
-  # Database reference for querying RentConfig
-  attr_reader :db
+  # Repository reference for querying RentConfig
+  attr_reader :repo
 
-  def initialize(db: RentDb.instance)
-    @db = db
+  def initialize(repo: Persistence.rent_configs)
+    @repo = repo
   end
 
   # Projects electricity cost for a given configuration period
@@ -106,16 +107,15 @@ class ElectricityProjector
   #
   # See deployment/historical_config_migration.rb for migration process.
   def get_all_historical_data
-    db.class.rent_configs
-      .where(key: 'el')
-      .where { Sequel.~(value: '0') }  # Exclude zeros (not set)
-      .order(:period)
-      .all
+    repo
+      .all_for_key('el')
+      .reject { |config| config.value.to_s == '0' }
       .map do |config|
+        period = config.period # Time UTC month start
         {
-          year: config[:period].year,
-          month: config[:period].month,
-          cost: config[:value].to_f.round,
+          year: period.year,
+          month: period.month,
+          cost: config.value.to_f.round
         }
       end
   end
