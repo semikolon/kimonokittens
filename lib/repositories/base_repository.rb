@@ -1,5 +1,3 @@
-require_relative '../rent_db'
-
 # Base repository class providing common persistence operations
 #
 # All repositories inherit from this and implement:
@@ -23,9 +21,9 @@ require_relative '../rent_db'
 class BaseRepository
   attr_reader :db, :dataset
 
-  def initialize(db: RentDb.db)
-    @db = db
-    @dataset = db[table_name]
+  def initialize(db: nil)
+    @db = db || default_db
+    @dataset = @db[table_name]
   end
 
   # Override in subclass to specify table name
@@ -69,5 +67,12 @@ class BaseRepository
   # @return [Time] Current time in UTC
   def now_utc
     Time.now.utc
+  end
+
+  def default_db
+    unless defined?(RentDb)
+      require_relative '../rent_db'
+    end
+    RentDb.db
   end
 end

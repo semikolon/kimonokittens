@@ -1,6 +1,7 @@
 require_relative 'base_repository'
 require_relative '../models/electricity_bill'
 require 'cuid'
+require 'date'
 
 # ElectricityBillRepository handles persistence for electricity bills
 #
@@ -160,9 +161,9 @@ class ElectricityBillRepository < BaseRepository
     ElectricityBill.new(
       id: row[:id],
       provider: row[:provider],
-      bill_date: row[:billDate],
+      bill_date: normalize_date(row[:billDate]),
       amount: row[:amount],
-      bill_period: row[:billPeriod],
+      bill_period: normalize_date(row[:billPeriod]),
       created_at: row[:createdAt],
       updated_at: row[:updatedAt]
     )
@@ -181,5 +182,18 @@ class ElectricityBillRepository < BaseRepository
       createdAt: bill.created_at || now_utc,
       updatedAt: bill.updated_at || now_utc
     }
+  end
+
+  def normalize_date(value)
+    case value
+    when Date
+      value
+    when Time
+      value.to_date
+    when String
+      Date.parse(value)
+    else
+      value
+    end
   end
 end

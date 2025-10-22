@@ -5,9 +5,7 @@ require_relative 'period'
 #
 # Encapsulates business logic for:
 # - Days stayed calculations (partial months, move-in/out)
-# - Room adjustment prorat
-
-ion
+# - Room adjustment proration
 # - Active status determination
 #
 # PRESERVED LOGIC from rent.rb (room adjustment calculations)
