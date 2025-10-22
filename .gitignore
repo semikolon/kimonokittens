@@ -8,6 +8,7 @@ backups/
 *.har
 
 electricity_usage.json
+electricity_invoices.json
 
 tibber_price_data.json
 
@@ -57,3 +58,4 @@ log/
 
 # Claude Code personal settings
 .claude/settings.local.json
+.claude/tier2_analyses/
