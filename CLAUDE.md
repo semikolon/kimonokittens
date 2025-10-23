@@ -176,6 +176,73 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 ---
 
+## 🏗️ Repository Architecture Pattern
+
+**Status**: ✅ **PRODUCTION READY** (October 2025) - Full domain model migration complete
+
+### Current Architecture
+
+The codebase uses **clean architecture** with domain models, repositories, and services:
+
+```
+Handlers → Services → Domain Models + Repositories → Database
+         ↓
+    Persistence (centralized access)
+```
+
+### Quick Reference
+
+**Access repositories:**
+```ruby
+require_relative 'lib/persistence'
+
+Persistence.tenants           # TenantRepository
+Persistence.rent_configs      # RentConfigRepository
+Persistence.rent_ledger       # RentLedgerRepository
+Persistence.electricity_bills # ElectricityBillRepository
+```
+
+**Domain model methods:**
+```ruby
+# Electricity billing period calculation:
+ElectricityBill.calculate_bill_period(due_date)  # → consumption period Date
+
+# Rent configuration with carry-forward logic:
+RentConfig.for_period(year: 2025, month: 10, repository: Persistence.rent_configs)
+
+# Tenant days stayed calculation:
+tenant.days_stayed_in_period(period_start, period_end)
+```
+
+**Services for transactions:**
+```ruby
+# Store electricity bill + auto-aggregate + update RentConfig:
+ApplyElectricityBill.call(
+  provider: 'Vattenfall',
+  amount: 1685.69,
+  due_date: Date.new(2025, 11, 3)
+)
+# Automatically: stores bill → aggregates period → updates RentConfig → notifies WebSocket
+```
+
+### Architecture Layers
+
+1. **Domain Models** (`lib/models/`) - Business logic, NO database access
+2. **Repositories** (`lib/repositories/`) - Persistence only, NO business rules
+3. **Services** (`lib/services/`) - Multi-table transactions
+4. **Persistence** (`lib/persistence.rb`) - Singleton repository access
+5. **RentDb** (`lib/rent_db.rb`) - Thin compatibility wrapper (deprecated for new code)
+
+### Documentation
+
+For LLM assistants and future developers:
+- **Complete API guide**: `docs/MODEL_ARCHITECTURE.md` (800+ lines)
+- **Migration commits**: d96d76f (models), d7b75ec (handlers), 7df8296 (tests)
+- **Business logic preservation**: Verified in test suite (spec/models/, spec/repositories/, spec/services/)
+- **Test coverage**: 37 tests for domain layer (all passing)
+
+---
+
 ## 🔐 Environment Variables
 
 **Production `.env` file synced with development** - The `/home/kimonokittens/.env` file contains all API keys and secrets from the Mac development environment for smooth deployment across all monorepo features (weather, Strava, bank integration, handbook, etc.).
