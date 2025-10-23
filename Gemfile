@@ -40,6 +40,7 @@ gem 'ruby-openai', '~> 6.4'
 group :test, :development do
   gem 'rspec', '~> 3.13'
   gem 'rack-test', '~> 2.1'
+  gem 'webmock', '~> 3.24'
   gem 'pry'
   gem 'listen', '~> 3.8'
   gem 'foreman', '~> 0.90' # Process management for development
