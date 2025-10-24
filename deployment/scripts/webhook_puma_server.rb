@@ -411,12 +411,16 @@ class DeploymentHandler
 
     # Install Ruby dependencies (self-healing: handles Gemfile changes automatically)
     # Try deployment mode first (fast path when gems unchanged)
-    unless system('bundle install --deployment --without development test --quiet 2>&1')
+    output = `bundle install --deployment --without development test --quiet 2>&1`
+    unless $?.success?
       $logger.warn("⚠️  Deployment mode failed (likely Gemfile changed), retrying with regular install...")
+      $logger.debug("Deployment mode error: #{output.lines.first(5).join}")
 
       # Fall back to regular install (updates vendor/bundle when Gemfile changes)
-      unless system('bundle install --without development test')
+      output = `bundle install --without development test 2>&1`
+      unless $?.success?
         $logger.error("❌ Bundle install failed")
+        $logger.error("Error output: #{output.lines.last(10).join}")
         return false
       end
       $logger.info("✅ Bundle install successful (Gemfile updated)")
