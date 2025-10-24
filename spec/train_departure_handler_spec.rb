@@ -154,15 +154,15 @@ RSpec.describe TrainDepartureHandler do
           .to_return(status: 500, body: 'Internal Server Error')
       end
 
-      it 'uses fallback data when API fails' do
+      it 'returns empty data when API fails' do
         expect { handler.call(nil) }.to output(/WARNING: SL Transport API failed/).to_stdout
 
         status, headers, body = handler.call(nil)
         expect(status).to eq(200)
 
         parsed_body = JSON.parse(body.first)
-        expect(parsed_body['trains']).not_to be_empty
-        expect(parsed_body['buses']).not_to be_empty
+        expect(parsed_body['trains']).to be_empty
+        expect(parsed_body['buses']).to be_empty
       end
     end
 
@@ -175,14 +175,15 @@ RSpec.describe TrainDepartureHandler do
           .to_raise(Net::ReadTimeout.new('execution expired'))
       end
 
-      it 'uses fallback data when timeout occurs' do
+      it 'returns empty data when timeout occurs' do
         expect { handler.call(nil) }.to output(/ERROR: Exception calling SL Transport API/).to_stdout
 
         status, headers, body = handler.call(nil)
         expect(status).to eq(200)
 
         parsed_body = JSON.parse(body.first)
-        expect(parsed_body['trains']).not_to be_empty
+        expect(parsed_body['trains']).to be_empty
+        expect(parsed_body['buses']).to be_empty
       end
     end
 
@@ -195,14 +196,15 @@ RSpec.describe TrainDepartureHandler do
           .to_raise(SocketError.new('Connection refused'))
       end
 
-      it 'uses fallback data when connection fails' do
+      it 'returns empty data when connection fails' do
         expect { handler.call(nil) }.to output(/ERROR: Exception calling SL Transport API/).to_stdout
 
         status, headers, body = handler.call(nil)
         expect(status).to eq(200)
 
         parsed_body = JSON.parse(body.first)
-        expect(parsed_body['trains']).not_to be_empty
+        expect(parsed_body['trains']).to be_empty
+        expect(parsed_body['buses']).to be_empty
       end
     end
   end
@@ -240,35 +242,6 @@ RSpec.describe TrainDepartureHandler do
 
       # Should only include trains
       expect(transformed.all? { |train| %w[41].include?(train['line_number']) }).to be true
-    end
-  end
-
-  describe '#get_fallback_train_data' do
-    it 'generates reasonable fallback departures' do
-      fallback_data = handler.send(:get_fallback_train_data)
-
-      expect(fallback_data).to be_an(Array)
-      expect(fallback_data.length).to eq(4) # Every 15 minutes for next hour
-
-      fallback_data.each do |train|
-        expect(train['destination']).to eq('Stockholm Central')
-        expect(train['line_number']).to eq('41')
-        expect(train['direction']).to eq('north')
-        expect(train['cancelled']).to be_falsey
-        expect(train['deviation_note']).to eq('')
-      end
-    end
-
-    it 'generates departures at 15-minute intervals' do
-      fallback_data = handler.send(:get_fallback_train_data)
-
-      departure_times = fallback_data.map { |train| Time.parse(train['departure_time']) }
-
-      # Check that each departure is about 15 minutes after the previous one
-      (1...departure_times.length).each do |i|
-        time_diff = departure_times[i] - departure_times[i-1]
-        expect(time_diff).to be_within(60).of(15 * 60) # Within 1 minute of 15 minutes
-      end
     end
   end
 
