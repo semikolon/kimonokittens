@@ -20,7 +20,8 @@ RSpec.describe ElectricityBillRepository do
       expect(result[:inserted]).to be true
       expect(result[:bill]).to be_a(ElectricityBill)
       expect(result[:bill].amount).to eq(amount)
-      expect(result[:bill_period]).to eq(Date.new(2025, 9, 1))
+      # Nov 3 (day 3 < 25) → arrived Oct → config period Oct
+      expect(result[:bill_period]).to eq(Date.new(2025, 10, 1))
     end
 
     it 'skips duplicates based on provider/date/amount' do
@@ -32,12 +33,16 @@ RSpec.describe ElectricityBillRepository do
   end
 
   describe '#find_by_period' do
-    it 'returns bills for a specific consumption period' do
+    it 'returns bills for a specific config period' do
+      # Nov 3 (day 3) → Oct period
       repo.store_with_deduplication(provider: 'Vattenfall', amount: 1000, due_date: Date.new(2025, 11, 3))
+      # Nov 5 (day 5) → Oct period
       repo.store_with_deduplication(provider: 'Fortum', amount: 800, due_date: Date.new(2025, 11, 5))
+      # Oct 15 (day 15) → Sept period
       repo.store_with_deduplication(provider: 'Vattenfall', amount: 900, due_date: Date.new(2025, 10, 15))
 
-      bills = repo.find_by_period(Date.new(2025, 9, 1))
+      # Query for Oct period should return Nov 3 and Nov 5 bills
+      bills = repo.find_by_period(Date.new(2025, 10, 1))
       expect(bills.map(&:amount)).to contain_exactly(1000.0, 800.0)
     end
   end

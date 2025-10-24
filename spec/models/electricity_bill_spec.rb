@@ -3,14 +3,16 @@ require_relative '../../lib/models/electricity_bill'
 
 RSpec.describe ElectricityBill do
   describe '.calculate_bill_period' do
-    it 'returns same-month consumption for end-of-month due dates' do
+    it 'returns arrival month for end-of-month due dates (day >= 25)' do
+      # Sept 30 due → arrived Sept → config period Sept
       period = described_class.calculate_bill_period(Date.new(2025, 9, 30))
-      expect(period).to eq(Date.new(2025, 8, 1))
+      expect(period).to eq(Date.new(2025, 9, 1))
     end
 
-    it 'returns one-month-back consumption for start-of-month due dates' do
+    it 'returns arrival month for start-of-month due dates (day < 25)' do
+      # Nov 3 due → arrived Oct → config period Oct
       period = described_class.calculate_bill_period(Date.new(2025, 11, 3))
-      expect(period).to eq(Date.new(2025, 9, 1))
+      expect(period).to eq(Date.new(2025, 10, 1))
     end
   end
 

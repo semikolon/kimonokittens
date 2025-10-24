@@ -24,7 +24,8 @@ RSpec.describe ApplyElectricityBill do
     expect(result[:inserted]).to be true
     expect(result[:aggregated_total]).to eq(1685)
 
-    config = config_repo.find_by_key_and_period('el', Time.utc(2025, 9, 1))
+    # Nov 3 (day 3 < 25) → arrived Oct → config period Oct
+    config = config_repo.find_by_key_and_period('el', Time.utc(2025, 10, 1))
     expect(config.value).to eq('1685')
   end
 

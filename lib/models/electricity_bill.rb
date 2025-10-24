@@ -45,27 +45,34 @@ class ElectricityBill
 
   # Calculate billing period from invoice due date
   #
-  # PRESERVED LOGIC from rent_db.rb:57-74 (CRITICAL - DO NOT MODIFY)
+  # PRESERVED LOGIC from CLAUDE.md "Electricity Bill Due Date Timing" (CRITICAL - DO NOT MODIFY)
   #
-  # Based on CLAUDE.md documentation ("Electricity Bill Due Date Timing"):
+  # Returns the CONFIG PERIOD (arrival month), not consumption month.
+  # This is the RentConfig period that should be updated with this bill.
+  #
+  # Based on CLAUDE.md documentation:
   #   - End-of-month bills (day 25-31): Bill arrived same month as due
   #   - Start-of-month bills (day 1-24): Bill arrived month before due
-  #   - Consumption period is 1 month before arrival
+  #   - billPeriod = ARRIVAL MONTH (which config period to update)
   #
   # @param due_date [Date] The invoice due date
-  # @return [Date] First day of the consumption/billing period month
+  # @return [Date] First day of the config/arrival period month
   #
   # @example November 3 due date (Vattenfall)
   #   ElectricityBill.calculate_bill_period(Date.new(2025, 11, 3))
-  #   # => 2025-09-01 (day 3 → arrived Oct → consumption Sept)
+  #   # => 2025-10-01 (day 3 → arrived Oct → config period Oct)
   #
   # @example September 30 due date (Vattenfall)
   #   ElectricityBill.calculate_bill_period(Date.new(2025, 9, 30))
-  #   # => 2025-08-01 (day 30 → arrived Sept → consumption Aug)
+  #   # => 2025-09-01 (day 30 → arrived Sept → config period Sept)
+  #
+  # @example October 1 due date (Vattenfall/Fortum)
+  #   ElectricityBill.calculate_bill_period(Date.new(2025, 10, 1))
+  #   # => 2025-09-01 (day 1 → arrived Sept → config period Sept)
   def self.calculate_bill_period(due_date)
     day = due_date.day
 
-    # Determine when bill arrived based on due date day-of-month
+    # Determine when bill arrived (config period) based on due date day-of-month
     if day >= 25
       # End-of-month bill: arrived same month as due
       arrival_month = due_date
@@ -74,11 +81,8 @@ class ElectricityBill
       arrival_month = due_date << 1  # Subtract 1 month
     end
 
-    # Consumption period is 1 month before arrival
-    consumption_month = arrival_month << 1  # Subtract 1 month
-
-    # Return first day of consumption month
-    Date.new(consumption_month.year, consumption_month.month, 1)
+    # Return first day of arrival/config period month
+    Date.new(arrival_month.year, arrival_month.month, 1)
   end
 
   # Aggregate bills for a specific period
