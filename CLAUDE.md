@@ -800,14 +800,19 @@ $stderr.sync = true
 
 ```bash
 # Check if deployment is pending
-curl http://localhost:9001/status | jq .deployment
+curl http://localhost:49123/status | jq .deployment
 
-# View webhook logs
+# View webhook application logs (deployment details, bundle install, etc)
+tail -f /var/log/kimonokittens/webhook.log
+
+# View webhook service status (systemd start/stop only)
 journalctl -u kimonokittens-webhook -f
 
 # View deployment timer status
-curl http://localhost:9001/status | jq '{pending: .deployment.pending, time_remaining: .deployment.time_remaining}'
+curl http://localhost:49123/status | jq '{pending: .deployment.pending, time_remaining: .deployment.time_remaining}'
 ```
+
+**Note**: Webhook logs application output to `/var/log/kimonokittens/webhook.log`, not systemd journal. Use `tail -f` on the log file to see deployment progress, bundle install status, and errors.
 
 ### Future-Proofing
 
