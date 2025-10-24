@@ -1,4 +1,6 @@
 require 'date'
+require 'json'
+require 'httparty'
 require_relative 'persistence'
 
 # ElectricityProjector provides intelligent electricity cost forecasting for rent calculations.
@@ -44,6 +46,32 @@ require_relative 'persistence'
 #   # 3. Seasonal: all_oct_ever.avg / all_months_ever.avg = 0.85
 #   # 4. Projection: 2200 × 0.85 = 1870 kr
 class ElectricityProjector
+  # 2025 Electricity Rate Constants
+  # Updated: October 24, 2025
+  # Review annually: https://www.vattenfalleldistribution.se/kund-i-elnatet/elnatspriser/energiskatt/
+
+  # Energy tax (energiskatt) - verified from Skatteverket
+  ENERGY_TAX_EXCL_VAT = 0.439  # kr/kWh (43.9 öre/kWh)
+  ENERGY_TAX_INCL_VAT = 0.54875  # kr/kWh (54.875 öre/kWh) = 0.439 × 1.25
+
+  # Grid transfer (elöverföring) - estimated from Vattenfall pricing
+  # TODO: Verify exact rate for customer tier when next bill arrives
+  GRID_TRANSFER_EXCL_VAT = 0.34  # kr/kWh (34 öre/kWh) estimated
+
+  # Combined variable rate (transfer + tax, excluding VAT, then apply VAT)
+  KWH_TRANSFER_PRICE = (GRID_TRANSFER_EXCL_VAT + ENERGY_TAX_EXCL_VAT) * 1.25
+  # = (0.34 + 0.439) × 1.25 = 0.974 kr/kWh
+
+  # Fixed monthly fees
+  # TODO: Verify these haven't changed for 2025
+  VATTENFALL_MONTHLY_FEE = 467  # Grid connection fee
+  FORTUM_MONTHLY_FEE = 39       # Trading service fee
+  MONTHLY_FEE = VATTENFALL_MONTHLY_FEE + FORTUM_MONTHLY_FEE  # 506 kr
+
+  # API endpoint for spot prices (SE3 region - Stockholm)
+  ELPRISET_API_BASE = 'https://www.elprisetjustnu.se/api/v1/prices'
+  REGION = 'SE3'  # Stockholm area
+
   # Repository reference for querying RentConfig
   attr_reader :repo
 
@@ -64,6 +92,32 @@ class ElectricityProjector
   #   project(config_year: 2025, config_month: 10)
   #   # Projects Oct consumption for Nov rent (config period = Oct)
   def project(config_year:, config_month:)
+    # First check if actual bills have arrived for this period
+    bills = Persistence.electricity_bills.find_by_period(
+      Date.new(config_year, config_month, 1)
+    )
+
+    if bills.any?
+      # Use actual aggregated bills (both Vattenfall + Fortum)
+      actual_total = bills.sum(&:amount).round
+      puts "DEBUG Using actual bills for #{config_year}-#{sprintf('%02d', config_month)}: #{actual_total} kr"
+      return actual_total
+    end
+
+    # No bills yet - fall back to smart projection
+    puts "DEBUG No bills found for #{config_year}-#{sprintf('%02d', config_month)}, using smart projection..."
+
+    # Try consumption × pricing projection first
+    begin
+      projection = project_from_consumption_and_pricing(config_year, config_month)
+      puts "  Smart projection (consumption × pricing): #{projection} kr"
+      return projection
+    rescue => e
+      puts "  ⚠️  Smart projection failed: #{e.message}"
+      puts "  Falling back to seasonal baseline projection..."
+    end
+
+    # Fallback to original seasonal baseline method
     # Config month N includes consumption from month N-1 (bills lag by 1-2 months)
     target_month = config_month - 1
     target_year = config_year
@@ -84,7 +138,6 @@ class ElectricityProjector
     # Apply seasonality to baseline
     projection = (baseline * seasonal_multiplier).round
 
-    puts "DEBUG Projection for #{target_year}-#{target_month}:"
     puts "  Baseline (trailing 12mo avg): #{baseline.round} kr"
     puts "  Seasonal multiplier: #{seasonal_multiplier.round(3)}"
     puts "  Final projection: #{projection} kr"
@@ -181,5 +234,143 @@ class ElectricityProjector
     return 1.0 if overall_avg == 0
 
     target_month_avg / overall_avg
+  end
+
+  # Smart projection using actual consumption × actual pricing
+  #
+  # @param config_year [Integer] Configuration period year
+  # @param config_month [Integer] Configuration period month
+  # @return [Integer] Projected electricity cost in SEK
+  #
+  # Formula: Σ(consumption[hour] × (spot_price[hour] + transfer_rate)) + monthly_fees
+  def project_from_consumption_and_pricing(config_year, config_month)
+    # Calculate consumption month (config month - 1)
+    consumption_month = config_month - 1
+    consumption_year = config_year
+    if consumption_month < 1
+      consumption_month = 12
+      consumption_year -= 1
+    end
+
+    puts "    → Loading consumption data for #{consumption_year}-#{sprintf('%02d', consumption_month)}..."
+
+    # Load hourly consumption data
+    consumption_data = load_consumption_for_month(consumption_year, consumption_month)
+    total_kwh = consumption_data.sum { |h| h[:kwh] }
+    puts "      Found #{consumption_data.size} hours, total #{total_kwh.round(1)} kWh"
+
+    # Load spot prices for the same period
+    puts "    → Loading spot prices for #{consumption_year}-#{sprintf('%02d', consumption_month)}..."
+    spot_prices = load_spot_prices_for_month(consumption_year, consumption_month)
+    puts "      Found #{spot_prices.size} hourly prices"
+
+    # Calculate variable cost (consumption × pricing for each hour)
+    variable_cost = 0.0
+    hours_calculated = 0
+
+    consumption_data.each do |hour|
+      timestamp = hour[:timestamp]
+      consumption_kwh = hour[:kwh]
+
+      # Get spot price for this hour (already includes VAT from API)
+      spot_price = spot_prices[timestamp]
+
+      if spot_price.nil?
+        # No spot price data for this hour - skip it
+        next
+      end
+
+      # Calculate total price per kWh: spot + (transfer + tax)
+      price_per_kwh = spot_price + KWH_TRANSFER_PRICE
+
+      # Calculate cost for this hour
+      hour_cost = consumption_kwh * price_per_kwh
+      variable_cost += hour_cost
+      hours_calculated += 1
+    end
+
+    puts "      Calculated costs for #{hours_calculated}/#{consumption_data.size} hours"
+    puts "      Variable cost: #{variable_cost.round(2)} kr"
+    puts "      Fixed fees: #{MONTHLY_FEE} kr"
+
+    # Add fixed monthly fees
+    total_cost = variable_cost + MONTHLY_FEE
+
+    puts "      Total projected: #{total_cost.round} kr"
+
+    total_cost.round
+  end
+
+  # Load hourly consumption data for a specific month
+  #
+  # @param year [Integer] Year
+  # @param month [Integer] Month (1-12)
+  # @return [Array<Hash>] Array of {timestamp: String, kwh: Float}
+  def load_consumption_for_month(year, month)
+    # Load electricity_usage.json
+    unless File.exist?('electricity_usage.json')
+      raise "electricity_usage.json not found - run vattenfall.rb first"
+    end
+
+    data = JSON.parse(File.read('electricity_usage.json'))
+
+    # Filter for the target month
+    # Data format: [{"date": "2024-10-01T00:00:00+02:00", "consumption": 0.123, "status": "012"}, ...]
+    month_data = data.select do |hour|
+      date = DateTime.parse(hour['date'])
+      date.year == year && date.month == month
+    end
+
+    # Convert to our format
+    month_data.map do |hour|
+      {
+        timestamp: DateTime.parse(hour['date']).iso8601,
+        kwh: hour['consumption'].to_f
+      }
+    end
+  end
+
+  # Load spot prices for a specific month from elprisetjustnu.se API
+  #
+  # @param year [Integer] Year
+  # @param month [Integer] Month (1-12)
+  # @return [Hash<String, Float>] Hash of timestamp => price_kr_per_kwh (incl VAT)
+  def load_spot_prices_for_month(year, month)
+    prices = {}
+
+    # Calculate date range for the month
+    start_date = Date.new(year, month, 1)
+    end_date = Date.new(year, month, -1)  # Last day of month
+
+    # Fetch prices for each day in the month
+    (start_date..end_date).each do |date|
+      date_str = date.strftime('%Y/%m-%d')  # Format: 2025/10-24
+      url = "#{ELPRISET_API_BASE}/#{date_str}_#{REGION}.json"
+
+      begin
+        response = HTTParty.get(url, timeout: 10)
+
+        if response.code == 200
+          day_prices = JSON.parse(response.body)
+
+          # API returns: [{"time_start": "2025-10-24T00:00:00+02:00", "SEK_per_kWh": 0.542}, ...]
+          day_prices.each do |hour_data|
+            timestamp = DateTime.parse(hour_data['time_start']).iso8601
+            price = hour_data['SEK_per_kWh'].to_f  # Already includes VAT
+            prices[timestamp] = price
+          end
+        else
+          puts "      ⚠️  Failed to fetch prices for #{date_str}: HTTP #{response.code}"
+        end
+      rescue => e
+        puts "      ⚠️  Error fetching prices for #{date_str}: #{e.message}"
+      end
+    end
+
+    if prices.empty?
+      raise "No spot price data available for #{year}-#{sprintf('%02d', month)}"
+    end
+
+    prices
   end
 end
