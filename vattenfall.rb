@@ -23,7 +23,6 @@
 # Migrated: October 21, 2025 (Pure Ferrum)
 
 require 'dotenv/load'
-require 'awesome_print'
 require 'json'
 require 'ferrum'
 require 'oj'
