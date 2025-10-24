@@ -413,17 +413,21 @@ class DeploymentHandler
     # Try deployment mode first (fast path when gems unchanged)
     output = `bundle install --deployment --without development test --quiet 2>&1`
     unless $?.success?
-      $logger.warn("⚠️  Deployment mode failed (likely Gemfile changed), retrying with regular install...")
+      $logger.warn("⚠️  Deployment mode failed (likely Gemfile changed), retrying with clean install...")
       $logger.debug("Deployment mode error: #{output.lines.first(5).join}")
 
-      # Fall back to regular install (updates vendor/bundle when Gemfile changes)
-      output = `bundle install --without development test 2>&1`
+      # Fall back to clean install (nuke vendor/bundle and reinstall from scratch)
+      # This handles Gemfile.lock/vendor mismatch that prevents bundler from even starting
+      $logger.info("🧹 Removing vendor/bundle for clean install...")
+      FileUtils.rm_rf('vendor/bundle')
+
+      output = `bundle install --deployment --without development test 2>&1`
       unless $?.success?
         $logger.error("❌ Bundle install failed")
-        $logger.error("Error output: #{output.lines.last(10).join}")
+        $logger.error("Error output: #{output.lines.last(15).join}")
         return false
       end
-      $logger.info("✅ Bundle install successful (Gemfile updated)")
+      $logger.info("✅ Bundle install successful (clean reinstall)")
     else
       $logger.info("✅ Bundle install successful (no changes)")
     end
