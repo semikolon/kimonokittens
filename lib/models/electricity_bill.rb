@@ -50,9 +50,10 @@ class ElectricityBill
   # Returns the CONFIG PERIOD (arrival month), not consumption month.
   # This is the RentConfig period that should be updated with this bill.
   #
-  # Based on CLAUDE.md documentation:
+  # Based on CLAUDE.md documentation and real-world bill patterns:
   #   - End-of-month bills (day 25-31): Bill arrived same month as due
-  #   - Start-of-month bills (day 1-24): Bill arrived month before due
+  #   - Start-of-month bills (day 1-15): Bill arrived month before due
+  #   - Valid range for config period: 25th of month → 15th of next month
   #   - billPeriod = ARRIVAL MONTH (which config period to update)
   #
   # @param due_date [Date] The invoice due date
