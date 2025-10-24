@@ -443,8 +443,10 @@ class FortumScraper
         amount_numeric = parse_swedish_amount(amount_text)
         next unless amount_numeric
 
-        # Calculate due date (last day of month)
-        due_date = Date.new(year, month_num.to_i, -1).strftime('%Y-%m-%d')
+        # Assume end-of-month due date (reasonable assumption when not visible in list view)
+        # ElectricityBill.calculate_bill_period will handle period calculation based on day-of-month
+        last_day = Date.new(year, month_num.to_i, -1)  # -1 gives last day of month
+        due_date = last_day.strftime('%Y-%m-%d')
 
         # Skip duplicates
         next if invoices.any? { |inv| inv['due_date'] == due_date }
@@ -454,7 +456,7 @@ class FortumScraper
           'amount_formatted' => amount_text,
           'due_date' => due_date,
           'status' => status,
-          'provider' => 'Fortum'
+          'provider' => 'fortum'  # Lowercase for consistency with historical data
         }
 
         invoices << invoice_data_hash

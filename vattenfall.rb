@@ -427,7 +427,7 @@ class VattenfallScraper
           'amount_formatted' => amount_text,
           'due_date' => due_date,
           'status' => status,
-          'provider' => 'Vattenfall'
+          'provider' => 'vattenfall'  # Lowercase for consistency with historical data
         }
 
         invoices << invoice_data

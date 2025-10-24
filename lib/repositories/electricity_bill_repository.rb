@@ -73,22 +73,33 @@ class ElectricityBillRepository < BaseRepository
     # Calculate billing period using domain model logic
     bill_period = ElectricityBill.calculate_bill_period(due_date)
 
-    # Check for duplicate (same provider, due date, and amount)
+    # Check for duplicate (same provider + period)
+    # Only ONE bill per provider per config period allowed
     existing = dataset
       .where(
         provider: provider,
-        billDate: due_date,
-        amount: amount
+        billPeriod: bill_period
       )
       .first
 
     if existing
-      # Already exists, skip insertion
+      # Update existing bill with new due_date and amount
+      # (handles corrections or due date variations like Sept 30 vs Oct 1)
+      dataset
+        .where(id: existing[:id])
+        .update(
+          billDate: due_date,
+          amount: amount,
+          updatedAt: Time.now.utc
+        )
+
+      updated_bill = hydrate(dataset.where(id: existing[:id]).first)
+
       {
         inserted: false,
-        bill: hydrate(existing),
+        bill: updated_bill,
         bill_period: bill_period,
-        reason: 'duplicate'
+        reason: 'updated'
       }
     else
       # Create new bill
