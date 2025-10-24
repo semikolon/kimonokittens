@@ -1,26 +1,24 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Vattenfall Electricity Data Scraper (Pure Ferrum)
+# Fortum Electricity Invoice Scraper (Pure Ferrum)
 #
-# Purpose: Automated fetching of electricity consumption data and invoices
-#          from Vattenfall Eldistribution customer portal.
+# Purpose: Automated fetching of electricity invoices from Fortum elhandel portal.
 #
-# Architecture: Pure Ferrum (browser automation) - no dependencies on
-#               abandoned Vessel gem.
+# Architecture: Pure Ferrum (browser automation) - cloned from vattenfall.rb
 #
 # Usage:
-#   ruby vattenfall.rb                    # Fetch consumption data
-#   DEBUG=1 ruby vattenfall.rb            # Run with debug logging
+#   ruby fortum.rb                        # Fetch and store invoices
+#   DEBUG=1 ruby fortum.rb                # Run with debug logging
+#   COMPARE_HISTORY=1 ruby fortum.rb      # Compare scraped vs historical/database
 #
 # Output:
-#   - electricity_usage.json (hourly consumption data)
-#   - Future: ElectricityBill database records
+#   - ElectricityBill database records (via ApplyElectricityBill service)
+#   - RentConfig updates (aggregated period totals)
 #
-# Schedule: Run daily at 3am via cron
+# Schedule: Run daily at 4am via cron (1 hour after Vattenfall)
 #
-# Created: Original (with Vessel)
-# Migrated: October 21, 2025 (Pure Ferrum)
+# Created: October 24, 2025 (cloned from vattenfall.rb)
 
 require 'dotenv/load'
 require 'awesome_print'
@@ -33,16 +31,16 @@ require_relative 'lib/persistence'
 require_relative 'lib/services/apply_electricity_bill'
 
 # Credentials from environment
-ID = ENV['VATTENFALL_ID']
-PW = ENV['VATTENFALL_PW']
+ID = ENV['FORTUM_ID']
+PW = ENV['FORTUM_PW']
 
 if ID.nil? || ID.empty?
-  abort '❌ ERROR: VATTENFALL_ID environment variable required'
+  abort '❌ ERROR: FORTUM_ID environment variable required'
 elsif PW.nil? || PW.empty?
-  abort '❌ ERROR: VATTENFALL_PW environment variable required'
+  abort '❌ ERROR: FORTUM_PW environment variable required'
 end
 
-class VattenfallScraper
+class FortumScraper
   BROWSER_OPTIONS = {
     'no-default-browser-check': true,
     'disable-extensions': true,
@@ -53,10 +51,8 @@ class VattenfallScraper
 
   TIMEOUT = 10
   PROCESS_TIMEOUT = 120
-  LOGIN_URL = 'https://www.vattenfalleldistribution.se/logga-in?pageId=6'
-
-  # Hardcoded meter ID (from original script)
-  METER_ID = 'HDG735999100004995459'
+  LOGIN_URL = 'https://sso.fortum.com/am/XUI/?realm=/alpha&locale=sv&authIndexType=service&authIndexValue=SeB2COGWLogin#/'
+  INVOICES_URL = 'https://www.fortum.com/se/el/inloggad/fakturor'
 
   attr_reader :browser, :page, :logger
 
@@ -65,7 +61,7 @@ class VattenfallScraper
     @debug = debug
 
     @logger.info "=" * 80
-    @logger.info "Vattenfall Scraper (Pure Ferrum)"
+    @logger.info "Fortum Scraper (Pure Ferrum)"
     @logger.info "Started: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
     @logger.info "Debug mode: #{@debug ? 'ENABLED' : 'disabled'}"
     @logger.info "=" * 80
@@ -77,22 +73,18 @@ class VattenfallScraper
     @logger.info "🚀 Starting scraping session..."
 
     begin
-      # Login first (common for both operations)
+      # Login first
       perform_login
 
       # Navigate to invoices and inspect (DEBUG/INSPECT mode only)
       inspect_invoice_page if @debug || ENV['INSPECT_INVOICES']
 
-      # Fetch invoice data (Phase 3 - NEW)
+      # Fetch invoice data (Fortum is invoice-only, no consumption data)
       invoice_data = scrape_invoices unless ENV['SKIP_INVOICES']
 
-      # Fetch consumption data (existing functionality)
-      consumption_data = scrape_consumption_data
-
-      # Combine results
+      # Results
       results = {
-        invoices: invoice_data,
-        consumption: consumption_data
+        invoices: invoice_data
       }
 
       yield results if block_given?
@@ -115,43 +107,107 @@ class VattenfallScraper
 
   def perform_login
     @logger.info ""
-    @logger.info "🔐 LOGIN PHASE"
+    @logger.info "🔐 LOGIN PHASE (Fortum SSO)"
     @logger.info "=" * 40
 
-    # Step 1: Navigate to login page
-    @logger.info "→ Navigating to login page..."
+    # Step 1: Navigate to Fortum SSO login page
+    @logger.info "→ Navigating to Fortum SSO login page..."
     page.go_to(LOGIN_URL)
     wait_for_network_idle(timeout: PROCESS_TIMEOUT)
-    @logger.info "  ✓ Login page loaded"
 
-    # Step 2: Click login method button
-    @logger.info "→ Selecting login method..."
-    login_btn = page.at_css("button[variant='outline-secondary']")
-    raise "Login button not found" unless login_btn
-    login_btn.click
-    @logger.info "  ✓ Login method selected"
+    # Give JavaScript time to render (SSO portals often use client-side rendering)
+    sleep 3
 
-    # Step 3: Enter credentials
-    @logger.info "→ Entering credentials..."
-    form = page.at_css('form')
-    raise "Login form not found" unless form
-
-    customer_number_field = form.at_css('input[id=customerNumber]')
-    customer_number_field.focus
-    customer_number_field.type(ID, :enter)
-    @logger.info "  ✓ Customer number entered"
-
-    customer_pw_field = form.at_css('input[id=password]')
-    customer_pw_field.focus
-    customer_pw_field.type(PW, :enter)
-    @logger.info "  ✓ Password entered"
-
-    wait_for_network_idle(timeout: PROCESS_TIMEOUT)
-    @logger.info "  ✓ Login successful"
+    @logger.info "  ✓ SSO login page loaded"
     @logger.info "  Current URL: #{page.current_url}"
 
-    # Step 4: Handle cookie consent if present
+    # Save HTML for debugging if needed
+    if @debug
+      html_path = "tmp/screenshots/login_page_#{Time.now.to_i}.html"
+      Dir.mkdir('tmp') unless Dir.exist?('tmp')
+      Dir.mkdir('tmp/screenshots') unless Dir.exist?('tmp/screenshots')
+      File.write(html_path, page.body)
+      @logger.debug "  💾 Login page HTML saved: #{html_path}"
+    end
+
+    # Step 2: Enter credentials
+    # Fortum SSO typically uses standard input fields (not custom components like Vattenfall)
+    @logger.info "→ Entering credentials..."
+
+    begin
+      # Try common SSO input patterns
+      # Pattern 1: Look for username/email field (common names: username, email, IDToken1)
+      username_field = page.at_css('input[name="IDToken1"]') ||
+                       page.at_css('input[type="text"]') ||
+                       page.at_css('input[type="email"]') ||
+                       page.at_css('input[name="username"]')
+
+      raise "Username field not found" unless username_field
+
+      username_field.focus
+      username_field.type(ID)
+      @logger.info "  ✓ Email/username entered"
+
+      # Pattern 2: Look for password field (common names: password, IDToken2)
+      password_field = page.at_css('input[name="IDToken2"]') ||
+                       page.at_css('input[type="password"]')
+
+      raise "Password field not found" unless password_field
+
+      password_field.focus
+      password_field.type(PW)
+      @logger.info "  ✓ Password entered"
+
+      # Step 3: Submit form
+      # Try to find submit button
+      @logger.info "→ Submitting login form..."
+      submit_btn = page.at_css('button[type="submit"]') ||
+                   page.at_css('input[type="submit"]') ||
+                   page.css('button').find { |btn| btn.text.match?(/logga in|sign in|fortsätt|continue/i) }
+
+      if submit_btn
+        submit_btn.click
+        @logger.info "  ✓ Submit button clicked"
+      else
+        # Fallback: press Enter on password field
+        password_field.type(:enter)
+        @logger.info "  ✓ Login submitted via Enter key"
+      end
+
+    rescue => e
+      @logger.error "  ❌ Login field interaction failed: #{e.message}"
+
+      # Take screenshot for debugging
+      if @debug
+        screenshot_path = "tmp/screenshots/login_error_#{Time.now.to_i}.png"
+        Dir.mkdir('tmp') unless Dir.exist?('tmp')
+        Dir.mkdir('tmp/screenshots') unless Dir.exist?('tmp/screenshots')
+        page.screenshot(path: screenshot_path)
+        @logger.info "  📸 Debug screenshot: #{screenshot_path}"
+      end
+
+      raise
+    end
+
+    # Step 4: Wait for authentication and redirect
+    @logger.info "→ Waiting for authentication..."
+    wait_for_network_idle(timeout: PROCESS_TIMEOUT)
+
+    # Check if we're redirected (successful login usually changes URL)
+    current_url = page.current_url
+    @logger.info "  ✓ Authentication complete"
+    @logger.info "  Current URL: #{current_url}"
+
+    # Step 5: Handle cookie consent if present
     handle_cookie_consent
+
+    # Verify we're logged in (should NOT still be on SSO login page)
+    if current_url.include?('sso.fortum.com')
+      @logger.warn "  ⚠️  Still on SSO page - login may have failed"
+      @logger.warn "  Check for 2FA requirements or incorrect credentials"
+    else
+      @logger.info "  ✓ Redirected away from SSO - login likely successful"
+    end
   end
 
   def handle_cookie_consent
@@ -178,15 +234,17 @@ class VattenfallScraper
 
   def inspect_invoice_page
     @logger.info ""
-    @logger.info "📄 INVOICE INSPECTION PHASE"
+    @logger.info "📄 INVOICE INSPECTION PHASE (Fortum)"
     @logger.info "=" * 40
 
-    # Navigate directly to invoice page URL
-    @logger.info "→ Navigating to invoice page..."
-    invoice_url = 'https://www.vattenfalleldistribution.se/mina-sidor/fakturor/'
-    page.go_to(invoice_url)
+    # Navigate to Fortum invoice page
+    @logger.info "→ Navigating to Fortum invoice page..."
+    page.go_to(INVOICES_URL)
     wait_for_network_idle(timeout: 30)
     @logger.info "  ✓ Navigated to: #{page.current_url}"
+
+    # Handle cookie consent if present (appears on invoice page)
+    handle_cookie_consent
 
     # Take screenshot for analysis
     screenshot_path = "tmp/screenshots/invoice_page_#{Time.now.to_i}.png"
@@ -256,190 +314,172 @@ class VattenfallScraper
     @logger.info "  💾 HTML saved: #{html_path}"
   end
 
-  def scrape_consumption_data
-    @logger.info ""
-    @logger.info "📊 CONSUMPTION DATA PHASE"
-    @logger.info "=" * 40
-
-    # Step 1: Set API headers
-    @logger.info "→ Configuring API headers..."
-    page.headers.set({
-      "accept" => 'application/json, text/plain, */*',
-      "ocp-apim-subscription-key" => ENV['AZURE_SUBSCRIPTION_KEY']
-    })
-    @logger.info "  ✓ Headers configured"
-
-    # Step 2: Calculate date range
-    today = Date.today
-    if today.month == 1
-      start_date = Date.new(today.year, 1, 1).strftime("%Y-%m-%d")
-    else
-      start_date = Date.new(today.year - 1, today.month - 1, [28, today.day].min).strftime("%Y-%m-%d")
-    end
-    end_date = Date.new(today.year, today.month, -1).strftime("%Y-%m-%d")
-
-    @logger.info "→ Fetching data for period:"
-    @logger.info "  Start: #{start_date}"
-    @logger.info "  End:   #{end_date}"
-
-    # Step 3: Fetch consumption API
-    api_url = "https://services.vattenfalleldistribution.se/consumption/consumption/#{METER_ID}/#{start_date}/#{end_date}/Hourly/Measured?skipDts=true"
-    @logger.info "→ Requesting consumption API..."
-    @logger.debug "  URL: #{api_url}" if @debug
-
-    page.go_to(api_url)
-
-    begin
-      wait_for_network_idle(timeout: 10)
-    rescue Ferrum::TimeoutError
-      @logger.warn "  ⚠️  Network timeout (may not affect data retrieval)"
-    end
-
-    # Step 4: Extract data
-    @logger.info "→ Extracting consumption data..."
-    measured = page.at_css('pre')&.text
-    raise 'No data found in API response' if measured.nil?
-
-    data = Oj.safe_load(measured)
-
-    # Step 5: Process and validate
-    stats = data['consumption'].map(&:compact)
-    stats.each { |s| s['date'] = DateTime.parse(s['date']).new_offset('+02:00').iso8601 }
-
-    days = (stats.size / 24.0).round(1)
-    @logger.info "✅ Successfully fetched #{stats.size} hours (#{days} days)"
-    @logger.info "   Last data point: #{DateTime.parse(stats.last['date']).strftime('%b %-d, %H:%M')}"
-
-    # Step 6: Save to file
-    @logger.info "→ Saving to electricity_usage.json..."
-    Oj.to_file('electricity_usage.json', stats)
-    @logger.info "  ✓ File saved"
-
-    data
-  end
-
   def scrape_invoices
     @logger.info ""
-    @logger.info "📄 INVOICE SCRAPING PHASE"
+    @logger.info "📄 INVOICE SCRAPING PHASE (Fortum)"
     @logger.info "=" * 40
 
-    # Navigate to invoice page
-    @logger.info "→ Navigating to invoice page..."
-    invoice_url = 'https://www.vattenfalleldistribution.se/mina-sidor/fakturor/'
-    page.go_to(invoice_url)
+    # Navigate to Fortum invoice page
+    @logger.info "→ Navigating to Fortum invoice page..."
+    page.go_to(INVOICES_URL)
     wait_for_network_idle(timeout: 30)
     @logger.info "  ✓ Navigated to: #{page.current_url}"
 
-    # Click "Alla perioder" (All periods) filter to show ALL historical invoices
-    @logger.info "→ Setting period filter to 'Alla perioder'..."
-    begin
-      # Find and click the Period dropdown button
-      period_button = page.at_css('vfdso-drop-down-list[label="Period"] button.ds-dropdown-label')
-      if period_button
-        period_button.click
-        sleep 0.5  # Wait for dropdown to open
+    # Handle cookie consent if present (appears on invoice page)
+    handle_cookie_consent
 
-        # Find and click "Alla perioder" option
-        all_periods_option = page.css('vfdso-drop-down-list-option').find do |opt|
-          opt.text.include?('Alla perioder')
-        end
+    # Give page time to load dynamic content
+    sleep 2
 
-        if all_periods_option
-          all_periods_option.click
-          wait_for_network_idle(timeout: 10)
-          @logger.info "  ✓ Period filter set to 'Alla perioder'"
-        else
-          @logger.warn "  ⚠️  Could not find 'Alla perioder' option"
-        end
-      else
-        @logger.warn "  ⚠️  Could not find period dropdown"
-      end
-    rescue => e
-      @logger.warn "  ⚠️  Failed to set period filter: #{e.message}"
+    # Scroll down to load all invoices (lazy loading)
+    @logger.info "→ Scrolling to load all invoices..."
+    3.times do
+      page.execute('window.scrollTo(0, document.body.scrollHeight)')
+      sleep 1
     end
 
-    # Increase page size to 100 rows per page to get more invoices
-    @logger.info "→ Setting page size to 100 rows..."
-    begin
-      page_size_select = page.at_css('vfdso-pagination select[data-automation-id="paging-dropdown"]')
-      if page_size_select
-        # Select the 100 option
-        page_size_select.evaluate("el => { el.value = '100'; el.dispatchEvent(new Event('change', { bubbles: true })); }")
-        wait_for_network_idle(timeout: 10)
-        @logger.info "  ✓ Page size set to 100"
-      else
-        @logger.warn "  ⚠️  Could not find page size dropdown"
-      end
-    rescue => e
-      @logger.warn "  ⚠️  Failed to set page size: #{e.message}"
-    end
-
-    # Extract invoices from mobile view components in search results section
-    # The search results section (.vfdso-invoices__list) contains ALL historical invoices,
-    # not just unpaid ones
-    @logger.info "→ Extracting invoice data from search results..."
-
-    # Find the search results container
-    search_list = page.at_css('.vfdso-invoices__list')
-    unless search_list
-      @logger.warn "  ⚠️  No search results list found"
-      return []
-    end
-
-    # Extract all mobile invoice items
-    invoice_items = search_list.css('vfdso-invoice-list-item-mobile')
-    unless invoice_items.any?
-      @logger.warn "  ⚠️  No invoice items found"
-      return []
-    end
+    # Extract invoices using JavaScript evaluation to inspect DOM properly
+    @logger.info "→ Inspecting DOM structure with JavaScript..."
 
     invoices = []
 
-    invoice_items.each_with_index do |item, index|
-      begin
-        # Extract amount from collapsed details header
-        amount_elem = item.at_css('.vfdso-invoice-list-item-mobile__collapsed__details__header__amount')
-        amount_text = amount_elem&.text&.strip
+    begin
+      # Use JavaScript to find invoice containers in the React/Next.js app
+      invoice_data = page.evaluate(<<~JS)
+        (() => {
+          // Swedish months to search for
+          const months = ['januari', 'februari', 'mars', 'april', 'maj', 'juni',
+                          'juli', 'augusti', 'september', 'oktober', 'november', 'december'];
 
-        # Extract due date from collapsed details
-        date_elem = item.at_css('.vfdso-invoice-list-item-mobile__collapsed__details__header__dueDate')
-        due_date = date_elem&.text&.strip
+          // Find all elements containing month names
+          const monthElements = [];
 
-        # Extract status from badge
-        status_badge = item.at_css('vfdso-badge div.vfdso-badge span')
-        status = status_badge&.text&.strip
+          // Find all elements with exactly 5 children that contain invoice-like data
+          const allElements = Array.from(document.querySelectorAll('*')).filter(el => {
+            const text = el.innerText || '';
+            return el.children.length === 5 &&
+                   text.length > 10 &&
+                   text.length < 150 &&
+                   text.match(/\\d{4}/) && // Contains year
+                   text.match(/kr/i) &&      // Contains "kr"
+                   text.match(/betald|obetald/i); // Contains status
+          });
 
-        # Convert amount string to numeric
-        # Swedish format: "1 685,69 kr" → 1685.69
-        # Remove all spaces (including non-breaking spaces U+00A0)
-        # Convert comma to decimal point, remove "kr" suffix
-        amount_numeric = nil
-        if amount_text
-          # Remove all whitespace and "kr" suffix
-          clean_amount = amount_text.gsub(/[\s\u00A0]+/, '').gsub(/kr$/i, '')
-          # Convert comma to decimal point
-          clean_amount = clean_amount.gsub(',', '.')
-          amount_numeric = clean_amount.to_f
+          allElements.forEach(el => {
+            monthElements.push({
+              tagName: el.tagName.toLowerCase(),
+              text: el.innerText,
+              children: el.children.length,
+              classList: Array.from(el.classList),
+              parentTag: el.parentElement ? el.parentElement.tagName.toLowerCase() : null,
+              parentClasses: el.parentElement ? Array.from(el.parentElement.classList) : []
+            });
+          });
+
+          return monthElements; // Return all matches
+        })();
+      JS
+
+      @logger.info "  Found #{invoice_data.size} invoice-like elements"
+
+      # Swedish month mapping
+      month_map = {
+        'januari' => '01', 'februari' => '02', 'mars' => '03', 'april' => '04',
+        'maj' => '05', 'juni' => '06', 'juli' => '07', 'augusti' => '08',
+        'september' => '09', 'oktober' => '10', 'november' => '11', 'december' => '12'
+      }
+
+      # Process invoice elements (use the one with 5 children - that's the invoice row container)
+      @logger.debug "  Processing #{invoice_data.size} elements (all have 5 children)" if @debug
+
+      invoice_data.each_with_index do |elem, idx|
+        text = elem['text']
+        lines = text.split("\n").map(&:strip).reject(&:empty?)
+
+        # Handle two formats:
+        # Format 1 (2025): "Januari 2025\nBetald\n1 845,00 kr" (3 lines)
+        # Format 2 (2024): "december 2024BetaldVisa PDF1 757,00 krBetald" (1 line, concatenated)
+
+        month_name = nil
+        year = nil
+        status = nil
+        amount_text = nil
+
+        if lines.size >= 3
+          # Format 1: Proper newlines (2025 invoices)
+          month_year_match = lines[0].match(/(\w+)\s+(\d{4})/i)
+          if month_year_match
+            month_name = month_year_match[1].downcase
+            year = month_year_match[2].to_i
+            status = lines[1].match?(/betald/i) ? 'Betald' : 'Obetald'
+            amount_text = lines[2]
+          end
+        elsif lines.size == 1
+          # Format 2: Concatenated (2024 invoices)
+          # Pattern: "december 2024BetaldVisa PDF1 757,00 krBetald"
+          match = text.match(/(\w+)\s+(\d{4})(Betald|Obetald).*?([\d\s,]+)\s*kr/i)
+          @logger.debug "  [#{idx}] Format 2 match: #{match ? 'YES' : 'NO'} | Text: #{text[0..60]}" if @debug
+          if match
+            month_name = match[1].downcase
+            year = match[2].to_i
+            status = match[3].match?(/betald/i) ? 'Betald' : 'Obetald'
+            amount_text = match[4].strip + ' kr'
+            @logger.debug "  [#{idx}] Parsed: #{month_name} #{year} #{status} #{amount_text}" if @debug
+          end
         end
 
-        invoice_data = {
+        # Skip if we couldn't parse
+        if !month_name || !year || !status || !amount_text
+          @logger.debug "  [#{idx}] Skipped: Could not parse (#{lines.size} lines): #{text[0..80]}" if @debug
+          next
+        end
+
+        # Validate month
+        month_num = month_map[month_name]
+        if !month_num
+          @logger.debug "  [#{idx}] Skipped: Unknown month '#{month_name}'" if @debug
+          next
+        end
+        amount_numeric = parse_swedish_amount(amount_text)
+        next unless amount_numeric
+
+        # Calculate due date (last day of month)
+        due_date = Date.new(year, month_num.to_i, -1).strftime('%Y-%m-%d')
+
+        # Skip duplicates
+        next if invoices.any? { |inv| inv['due_date'] == due_date }
+
+        invoice_data_hash = {
           'amount' => amount_numeric,
           'amount_formatted' => amount_text,
           'due_date' => due_date,
           'status' => status,
-          'provider' => 'Vattenfall'
+          'provider' => 'Fortum'
         }
 
-        invoices << invoice_data
-
-        @logger.info "  ✓ Invoice #{index + 1}: #{amount_text} due #{due_date} (#{status})"
-      rescue => e
-        @logger.warn "  ⚠️  Failed to extract invoice #{index + 1}: #{e.message}"
+        invoices << invoice_data_hash
+        @logger.info "  ✓ Invoice #{invoices.size}: #{amount_text} (#{month_name.capitalize} #{year}) - #{status}"
       end
+
+    rescue => e
+      @logger.error "  ❌ Invoice extraction failed: #{e.message}"
+      @logger.error "  #{e.backtrace.first(3).join("\n  ")}"
     end
 
-    @logger.info "✅ Extracted #{invoices.size} invoices from search results"
+    @logger.info "✅ Extracted #{invoices.size} invoices"
     invoices
+  end
+
+  # Helper method to parse Swedish currency format
+  def parse_swedish_amount(amount_text)
+    return nil unless amount_text
+
+    # Swedish format: "1 685,69 kr" → 1685.69
+    # Remove all spaces (including non-breaking spaces U+00A0)
+    clean_amount = amount_text.gsub(/[\s\u00A0]+/, '').gsub(/kr$/i, '')
+    # Convert comma to decimal point
+    clean_amount = clean_amount.gsub(',', '.')
+    clean_amount.to_f
   end
 
   private
@@ -530,7 +570,7 @@ if __FILE__ == $PROGRAM_NAME
     # Vessel not installed - this is expected and fine
   end
 
-  scraper = VattenfallScraper.new(
+  scraper = FortumScraper.new(
     debug: ENV['DEBUG'],
     headless: !ENV['SHOW_BROWSER']  # Headless by default, SHOW_BROWSER=1 to see browser
   )
@@ -584,17 +624,17 @@ if __FILE__ == $PROGRAM_NAME
                 provider: current_provider,
                 due_date: Date.parse(date_str),
                 amount: amount_str.to_f
-              } if current_provider == 'vattenfall'
+              } if current_provider == 'fortum'
             end
           end
         end
 
         # Load database bills
         db_bills = Persistence.electricity_bills.all.select { |b|
-          b.provider.downcase.include?('vattenfall')
+          b.provider.downcase.include?('fortum')
         }.map { |b|
           {
-            provider: 'vattenfall',
+            provider: 'fortum',
             due_date: b.bill_date,
             amount: b.amount,
             period: b.bill_period
@@ -633,8 +673,8 @@ if __FILE__ == $PROGRAM_NAME
 
         puts "\n📊 Summary:"
         puts "  Scraped: #{results[:invoices].size} invoices"
-        puts "  Historical file: #{historical_bills.size} Vattenfall bills"
-        puts "  Database: #{db_bills.size} Vattenfall bills"
+        puts "  Historical file: #{historical_bills.size} Fortum bills"
+        puts "  Database: #{db_bills.size} Fortum bills"
 
         # Exit after comparison (don't store in DB)
         puts "\nℹ️  Comparison complete - skipping database storage"
