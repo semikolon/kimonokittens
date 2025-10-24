@@ -83,24 +83,37 @@ class ElectricityBillRepository < BaseRepository
       .first
 
     if existing
-      # Update existing bill with new due_date and amount
-      # (handles corrections or due date variations like Sept 30 vs Oct 1)
-      dataset
-        .where(id: existing[:id])
-        .update(
-          billDate: due_date,
-          amount: amount,
-          updatedAt: Time.now.utc
-        )
+      # Only update bills for current or future months (preserve historical rent calculations)
+      current_month = Date.new(Date.today.year, Date.today.month, 1)
 
-      updated_bill = hydrate(dataset.where(id: existing[:id]).first)
+      if bill_period >= current_month
+        # Update existing bill with new due_date and amount
+        # (handles corrections or due date variations like Sept 30 vs Oct 1)
+        dataset
+          .where(id: existing[:id])
+          .update(
+            billDate: due_date,
+            amount: amount,
+            updatedAt: Time.now.utc
+          )
 
-      {
-        inserted: false,
-        bill: updated_bill,
-        bill_period: bill_period,
-        reason: 'updated'
-      }
+        updated_bill = hydrate(dataset.where(id: existing[:id]).first)
+
+        {
+          inserted: false,
+          bill: updated_bill,
+          bill_period: bill_period,
+          reason: 'updated'
+        }
+      else
+        # Past bill - preserve historical data, don't update
+        {
+          inserted: false,
+          bill: hydrate(existing),
+          bill_period: bill_period,
+          reason: 'historical_preserved'
+        }
+      end
     else
       # Create new bill
       bill = ElectricityBill.new(
