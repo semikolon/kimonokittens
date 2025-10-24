@@ -176,6 +176,73 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 ---
 
+## 🏗️ Repository Architecture Pattern
+
+**Status**: ✅ **PRODUCTION READY** (October 2025) - Full domain model migration complete
+
+### Current Architecture
+
+The codebase uses **clean architecture** with domain models, repositories, and services:
+
+```
+Handlers → Services → Domain Models + Repositories → Database
+         ↓
+    Persistence (centralized access)
+```
+
+### Quick Reference
+
+**Access repositories:**
+```ruby
+require_relative 'lib/persistence'
+
+Persistence.tenants           # TenantRepository
+Persistence.rent_configs      # RentConfigRepository
+Persistence.rent_ledger       # RentLedgerRepository
+Persistence.electricity_bills # ElectricityBillRepository
+```
+
+**Domain model methods:**
+```ruby
+# Electricity billing period calculation:
+ElectricityBill.calculate_bill_period(due_date)  # → consumption period Date
+
+# Rent configuration with carry-forward logic:
+RentConfig.for_period(year: 2025, month: 10, repository: Persistence.rent_configs)
+
+# Tenant days stayed calculation:
+tenant.days_stayed_in_period(period_start, period_end)
+```
+
+**Services for transactions:**
+```ruby
+# Store electricity bill + auto-aggregate + update RentConfig:
+ApplyElectricityBill.call(
+  provider: 'Vattenfall',
+  amount: 1685.69,
+  due_date: Date.new(2025, 11, 3)
+)
+# Automatically: stores bill → aggregates period → updates RentConfig → notifies WebSocket
+```
+
+### Architecture Layers
+
+1. **Domain Models** (`lib/models/`) - Business logic, NO database access
+2. **Repositories** (`lib/repositories/`) - Persistence only, NO business rules
+3. **Services** (`lib/services/`) - Multi-table transactions
+4. **Persistence** (`lib/persistence.rb`) - Singleton repository access
+5. **RentDb** (`lib/rent_db.rb`) - Thin compatibility wrapper (deprecated for new code)
+
+### Documentation
+
+For LLM assistants and future developers:
+- **Complete API guide**: `docs/MODEL_ARCHITECTURE.md` (800+ lines)
+- **Migration commits**: d96d76f (models), d7b75ec (handlers), 7df8296 (tests)
+- **Business logic preservation**: Verified in test suite (spec/models/, spec/repositories/, spec/services/)
+- **Test coverage**: 37 tests for domain layer (all passing)
+
+---
+
 ## 🔐 Environment Variables
 
 **Production `.env` file synced with development** - The `/home/kimonokittens/.env` file contains all API keys and secrets from the Mac development environment for smooth deployment across all monorepo features (weather, Strava, bank integration, handbook, etc.).
@@ -187,6 +254,38 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 ---
 
 ## 🚀 DEPLOYMENT ARCHITECTURE
+
+> **✅ KIOSK DEPLOYED**: Dell Optiplex 7010 live in hallway (October 6, 2025)
+> - Dashboard display operational 24/7
+> - GPU acceleration + webhook auto-deployment active
+> - Migration from Pi 3B+ ongoing (Node-RED, MQTT, cron jobs)
+
+### 🔄 Pi Migration Strategy (October 6, 2025)
+
+**Network**: `kimonokittens.com` bound to home IP via DDClient dynamic DNS
+
+**Services Staying on Pi** (infrastructure/automation):
+- **DDClient**: Dynamic DNS updates for kimonokittens.com
+- **Pycalima**: Bluetooth-based bathroom fan control (hardware proximity required)
+- **Node-RED**: Temperature sensor aggregation, heatpump schedule generation (port 1880)
+- **Mosquitto MQTT**: Message broker for ThermIQ heatpump data (port 1883)
+
+**Services Migrating to Dell** (dashboard-relevant data):
+- **Electricity data cron jobs**: `vattenfall.rb` + `tibber.rb` (every 2 hours)
+- **Electricity JSON files**: `electricity_usage.json`, `tibber_price_data.json`
+- **Dashboard data generation**: All data consumed by widgets or useful for online handbook
+
+**Services to Sunset** (after BRF-Auto income secured):
+- **Pi Agoo server** (`json_server.rb`):
+  - Currently hosts simple public homepage at kimonokittens.com
+  - Dell has own handlers - no functional dependency
+  - Will be replaced by nginx on Dell serving handbook + dashboard publicly
+
+**Rationale**: Keep infrastructure services (DNS, MQTT, sensors) on Pi where hardware lives. Migrate dashboard-related data generation to Dell for consolidation and future handbook features (which is part of monorepo but not yet deployed).
+
+**Public Deployment Postponed**: Domain migration + handbook public hosting delayed until BRF-Auto project income secured (~1-2 weeks).
+
+**Documentation**: See `docs/PI_MIGRATION_MAP.md`, `docs/PI_VS_DELL_ELECTRICITY_ANALYSIS.md`, and `docs/ELECTRICITY_PRICE_DATA_ANALYSIS.md` for complete analysis.
 
 ### Production Paths & Services
 ```
@@ -518,9 +617,9 @@ npm run dev:logs     # Attach to live process logs
 5. **Verify results**: Test API and check dashboard
 6. **Clean up**: Remove any test data from production DB
 
-## 🖥️ Kiosk GPU Acceleration (Oct 2, 2025) **COMPLETED ✅**
+## 🖥️ Kiosk GPU Acceleration (Oct 2, 2025) **DEPLOYED ✅**
 
-**Status**: Production-ready with NVIDIA GTX 1650 on PopOS Linux
+**Status**: Live - Dell Optiplex in hallway (Oct 6, 2025), NVIDIA GTX 1650
 
 ### Achievement Summary
 Successfully configured hardware GPU acceleration for WebGL shader animations on Dell Optiplex 7010 kiosk after resolving crash-loop issues caused by outdated Chrome flags.
@@ -611,6 +710,22 @@ const generateTrainId = (train: TrainDeparture): string =>
 3. **React Context** manages centralized state with useReducer
 4. **Widgets** consume via `useData()` hook
 
+### Heating Cost Display (RentWidget) 🌡️
+**Location**: Displayed below electricity source line in RentWidget
+
+**Calculation**: Uses ElectricityProjector (trailing 12-month baseline + seasonal patterns)
+- **Current (Oct 2025)**: "2 °C varmare skulle kosta 143 kr/mån (36 kr/person); 2 °C kallare skulle spara 130 kr/mån (33 kr/person)"
+- **February 2026 (predicted)**: "2 °C varmare skulle kosta 451 kr/mån (113 kr/person); 2 °C kallare skulle spara 409 kr/mån (102 kr/person)"
+
+**Why February costs 3.5× more**:
+- Seasonal multiplier: Feb = 2.04x vs Sep = 0.56x (winter vs fall)
+- More heating usage = larger impact per degree adjustment
+
+**Architecture**:
+- Shared module: `lib/heating_cost_calculator.rb`
+- Sent via `/api/rent/friendly_message` in `heating_cost_line` field
+- Auto-updates monthly as ElectricityProjector recalculates
+
 ## Project Quirks & Technical Debt 🔧
 
 ### Test Database Contamination
@@ -648,6 +763,37 @@ Train departures use **keyless SL Transport API** (`transport.integration.sl.se`
 - Backend: Port 3001 (when running locally)
 - Frontend: Port 5175 (Vite dev server when running)
 
+### SSH Access to Kiosk
+
+**IMPORTANT**: The kiosk hostname is `pop` (not `kimonokittens.com` - that points to Pi)
+
+**SSH Commands**:
+```bash
+# Connect as fredrik user (default)
+ssh pop
+
+# Connect as kimonokittens user
+ssh kimonokittens@pop
+# or
+ssh pop -l kimonokittens
+```
+
+**Key Facts**:
+- `kimonokittens.com` DNS points to home WAN IP (via DDClient on Pi)
+- **Pi Agoo server** hosts simple public homepage at that domain:
+  - Port 6464 (HTTP), 6465 (HTTPS)
+  - Static landing page: logo + Swish donation message
+  - Proxies some endpoints to Node-RED (temperature, etc.)
+  - **NOT needed by Dell dashboard** (Dell has own handlers)
+- **Dell dashboard** only serves on localhost (not publicly accessible yet)
+  - Production deployment via webhook (port 3001)
+  - Backend handlers: rent, weather, temperature, electricity prices
+  - No dependency on Pi Agoo server for functionality
+- **Public migration postponed** until BRF-Auto income secured:
+  - Move kimonokittens.com → Dell nginx
+  - Deploy handbook publicly under domain
+  - Sunset Pi Agoo server (keep Node-RED/MQTT)
+
 ### Frontend Development Workflow
 
 **Problem**: Can't see frontend changes visually - display is downstairs, SSH session has no browser.
@@ -683,8 +829,6 @@ Host kimonokittens
 - Never edit production checkout directly
 - Always develop in fredrik checkout, deploy via git
 
----
-
 ## 🔄 SMART WEBHOOK DEPLOYMENT SYSTEM
 
 ### Overview: Modern Event-Driven Deployment
@@ -711,8 +855,8 @@ The kimonokittens project uses a **smart webhook system** with Puma architecture
 
 #### 🔒 **Database Safety**
 - **Webhook never touches database** - deployments are code-only
-- **Migrations are manual** - run `production_migration.rb` deliberately
-- **Zero database risk** from automated deployments
+- **Schema migrations are manual** - run `npx prisma migrate deploy` deliberately in production
+- **Zero database risk** from automated code deployments
 
 ### Deployment Scenarios
 
@@ -825,53 +969,49 @@ The Puma architecture is designed for:
 
 ---
 
-## 🚨 PRODUCTION DEPLOYMENT & HISTORICAL DATA MIGRATION
+## 📚 HISTORICAL: Initial Production Deployment (September-October 2025)
 
-### CRITICAL: Historical Data Migration Protocol
-**COMPLETED September 28, 2025** - All production deployments MUST include historical data migration.
+**Status**: ✅ COMPLETED - Database fully operational in production since October 6, 2025
 
-#### Migration Components:
-- **`deployment/production_migration.rb`**: Enhanced with historical JSON processing
-- **`data/rent_history/`**: Required directory containing 14+ JSON files
-- **Tenant Mapping**: Automatic name-to-ID conversion for foreign keys
-- **Semantic Conversion**: CONFIG PERIOD MONTH → rent period month (month 7 → August rent)
-- **Result**: 58 historical RentLedger records from corrected JSON data
+### What Was Done (Historical Context):
+- **Sep 28-30, 2025**: Created Prisma schema + initial migrations
+  - `20250930000000_initial_schema` - All tables (ElectricityBill, RentConfig, RentLedger, Tenants)
+  - `20251004112744_remove_generated_column_extend_ledger` - Schema fixes
+- **Sep 28, 2025**: Created `production_migration.rb` for initial data population
+  - Migrated 58 historical RentLedger records from JSON files
+  - Populated 8 Tenants, 7 RentConfig records
+- **Oct 6, 2025**: Dell kiosk deployed with database fully operational
 
-#### Database State After Migration:
+### Current Production Database State:
 ```
-RentConfig: 7 records (electricity, base rent, utilities, quarterly invoice)
-Tenants: 8 records (Adam, Amanda, Astrid, Elvira, Frans-Lukas, Fredrik, Malin, Rasmus)
-RentLedger: 58 records (complete historical rent payments)
-```
-
-#### Migration Verification Commands:
-```bash
-# Verify RentLedger record count
-ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.class.rent_ledger.count"
-
-# Check historical coverage
-ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.class.rent_ledger.group(:period).count"
+✅ Schema: 2 Prisma migrations applied
+✅ Data: RentConfig, Tenants, RentLedger, ElectricityBill tables populated
+✅ Location: kimonokittens_production database on Dell kiosk
 ```
 
-### Production Deployment Files Checklist:
-```
-deployment/production_database_20250928.json    ✅ Core data export
-deployment/production_migration.rb              ✅ WITH HISTORICAL DATA PROCESSING
-deployment/export_production_data.rb            ✅ Backup script
-deployment/DEPLOYMENT_CHECKLIST.md              ✅ Step-by-step guide
-DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md               ✅ Hardware setup
-data/rent_history/                               ✅ REQUIRED FOR MIGRATION
-```
+### Recent Work (October 21-23, 2025):
+**Model architecture refactoring** - Pure code changes, no database migrations:
+- Created domain models in `lib/models/` (ElectricityBill, RentConfig, Tenant, RentLedger)
+- Created repositories in `lib/repositories/`
+- Created services in `lib/services/` (ApplyElectricityBill)
+- Created persistence module `lib/persistence.rb`
+- **Deployment**: Code-only via webhook (no manual database steps needed)
 
-### ⚠️ IMPORTANT MIGRATION REMINDERS:
+### Complete Deployment Documentation:
+**All initial deployment procedures have been completed (Oct 6, 2025).** Documentation preserved for:
+- Future server migrations (e.g., new production environment)
+- Reference when considering deployment automation tools (Capistrano, Mina, etc.)
 
-1. **Never deploy without `data/rent_history/` directory** - Historical data won't migrate
-2. **CONFIG PERIOD MONTH semantics are corrected** - Files already fixed (month 7 = August rent)
-3. **Tenant mapping is automatic** - Script handles name-to-ID conversion
-4. **One-time operation** - Historical migration only runs during initial deployment
-5. **Backup exists** - Original JSON files preserved at `data/rent_history_original_backup_20250928/`
+**Available documentation:**
+- **`deployment/DEPLOYMENT_CHECKLIST.md`** - Complete step-by-step initial deployment
+- **`DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md`** - Hardware setup + database migration procedures
+- **`deployment/production_migration.rb`** - Historical data migration script (already run)
+- **`deployment/scripts/setup_production.sh`** - Automated setup script
+- **`docs/PRODUCTION_CRON_DEPLOYMENT.md`** - Cron job setup for electricity automation
 
-### Production Health Checks:
+**Note on Capistrano:** Current deployment uses webhook-based automation. If migrating to Capistrano or similar tools in the future, above docs provide the baseline deployment procedure to automate.
+
+### For Future Deployments:
 ```bash
 # Ruby dependencies
 bundle install --deployment --without development test assets
@@ -885,3 +1025,7 @@ curl http://localhost:3001/api/rent/friendly_message
 # WebSocket connection
 # Check browser console for WebSocket at ws://localhost:3001
 ```
+
+## 🔧 System Upgrade History
+
+**Oct 9, 2025**: Pop!_OS 22.04 system upgrade completed successfully - PostgreSQL 14→18, NVIDIA 550→580, kernel 6.16.3, 552 packages total. Database schema intact (kimonokittens_production), all DKMS modules compiled.

@@ -161,22 +161,22 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
     const sleepTime = parseTimeString(sleepTimeStr);
     const oneHourBeforeSleep = sleepTime - 1;
 
-    // Wake → 9am: Fade 0.5 → 1.2
+    // Wake → 9am: Fade 0.5 → 1.12
     if (wakeTime <= 9) {
       if (time >= wakeTime && time < 9) {
         const duration = 9 - wakeTime;
-        return 0.5 + ((time - wakeTime) / duration) * 0.7;
+        return 0.5 + ((time - wakeTime) / duration) * 0.62;
       }
     }
 
-    // 9am → 5pm: Stay at 1.2 (peak brightness)
+    // 9am → 5pm: Stay at 1.12 (peak brightness)
     if (time >= 9 && time < 17) {
-      return 1.2;
+      return 1.12;
     }
 
-    // 5pm → 7pm: Fade 1.2 → 1.0
+    // 5pm → 7pm: Fade 1.12 → 1.0
     if (time >= 17 && time < 19) {
-      return 1.2 - ((time - 17) / 2) * 0.2;
+      return 1.12 - ((time - 17) / 2) * 0.12;
     }
 
     // 7pm → 1hr before sleep: Multi-segment fade (1.0 → 0.85 → 0.8 → 0.5)

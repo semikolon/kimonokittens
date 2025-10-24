@@ -2,6 +2,83 @@ import React, { useMemo, useState, useEffect } from 'react'
 import { useData } from '../context/DataContext'
 import { Thermometer, Target, Droplets, Zap } from 'lucide-react'
 
+interface ElectricityPriceSparklineProps {
+  hours: Array<{ hour: number }>
+  electricityPrices?: Array<{
+    time_start: string
+    time_end: string
+    price_sek: number
+    price_eur: number
+  }>
+}
+
+const ElectricityPriceSparkline: React.FC<ElectricityPriceSparklineProps> = ({ hours, electricityPrices }) => {
+  if (!electricityPrices || electricityPrices.length === 0) return null
+
+  // Map hours to prices
+  const priceData = useMemo(() => {
+    return hours.map(hourData => {
+      // Find matching price for this hour
+      const priceEntry = electricityPrices.find(p => {
+        const hour = new Date(p.time_start).getHours()
+        return hour === hourData.hour
+      })
+      return {
+        hour: hourData.hour,
+        price: priceEntry ? priceEntry.price_sek : null
+      }
+    })
+  }, [hours, electricityPrices])
+
+  // Filter out null prices and get min/max for scaling
+  const validPrices = priceData.filter(d => d.price !== null).map(d => d.price!)
+  if (validPrices.length === 0) return null
+
+  const minPrice = Math.min(...validPrices)
+  const maxPrice = Math.max(...validPrices)
+  const priceRange = maxPrice - minPrice
+
+  // Generate SVG path
+  const pathData = useMemo(() => {
+    if (priceRange === 0) return '' // Flat line if all prices are the same
+
+    const points = priceData.map((d, index) => {
+      if (d.price === null) return null
+
+      const x = (index / (priceData.length - 1)) * 100 // 0-100%
+      const y = 100 - ((d.price - minPrice) / priceRange) * 80 // 20-100% (leave 20% margin at top)
+
+      return `${x},${y}`
+    }).filter(p => p !== null)
+
+    if (points.length === 0) return ''
+
+    return `M ${points.join(' L ')}`
+  }, [priceData, minPrice, priceRange])
+
+  if (!pathData) return null
+
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      style={{
+        zIndex: 5,
+        clipPath: 'inset(0 round 0.5rem)' // Clip to match rounded-lg of parent container
+      }}
+    >
+      <path
+        d={pathData}
+        fill="none"
+        stroke="rgba(255, 255, 255, 0.1)"
+        strokeWidth="2"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  )
+}
+
 export function TemperatureWidget() {
   const { state } = useData()
   const { temperatureData, connectionStatus } = state
@@ -207,6 +284,12 @@ export function TemperatureWidget() {
             mixBlendMode: 'overlay'
           }}
         >
+          {/* Electricity price sparkline overlay */}
+          <ElectricityPriceSparkline
+            hours={hours}
+            electricityPrices={state.electricityPriceData?.prices}
+          />
+
           {/* Single loop for all hour elements */}
           <div className="absolute inset-0 flex">
             {hours.map((hourData, index) => {

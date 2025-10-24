@@ -4,7 +4,7 @@ require 'singleton'
 require_relative 'lib/rent_config_store'
 require_relative 'lib/roommate_store'
 require_relative 'lib/rent_history'
-require_relative 'lib/rent_db'
+require_relative 'lib/persistence'
 require 'awesome_print'
 
 # RentCalculator handles fair distribution of rent and costs among roommates.
@@ -389,9 +389,10 @@ module RentCalculator
 
       # NEW: Save to database (single source of truth)
       unless history_options.fetch(:test_mode, false)
-        db = RentDb.instance
+        config_repo = Persistence.rent_configs
+        tenant_repo = Persistence.tenants
+        ledger_repo = Persistence.rent_ledger
 
-        # Calculate periods
         config_period = Time.utc(config.year, config.month, 1)
         rent_month = config.month + 1
         rent_year = config.year
@@ -401,31 +402,16 @@ module RentCalculator
         end
         rent_period = Time.utc(rent_year, rent_month, 1)
 
-        # 1. Save to RentConfig (input values for this config period)
         config.to_h.each do |key, value|
           next if value.nil? || value == 0
+          next if [:year, :month].include?(key)
 
-          existing = db.class.rent_configs.where(key: key.to_s, period: config_period).first
-          if existing
-            db.class.rent_configs.where(id: existing[:id]).update(
-              value: value.to_s,
-              updatedAt: Time.now.utc
-            )
-          else
-            db.class.rent_configs.insert(
-              id: Cuid.generate,
-              key: key.to_s,
-              value: value.to_s,
-              period: config_period,
-              createdAt: Time.now.utc,
-              updatedAt: Time.now.utc
-            )
-          end
+          config_repo.upsert(key: key.to_s, value: value, period: config_period)
         end
 
-        # 2. Save to RentLedger (per-tenant amounts + audit trail)
-        tenant_map = {}
-        db.class.tenants.all.each { |t| tenant_map[t[:name]] = t[:id] }
+        tenant_map = tenant_repo.all.each_with_object({}) do |tenant, memo|
+          memo[tenant.name] = tenant.id
+        end
 
         base_monthly_rent = config.kallhyra / roommates.size.to_f
 
@@ -437,33 +423,19 @@ module RentCalculator
           days_stayed = roommate_config[:days]
           room_adjustment = roommate_config[:room_adjustment] || 0
 
-          existing = db.class.rent_ledger.where(tenantId: tenant_id, period: rent_period).first
-          if existing
-            db.class.rent_ledger.where(id: existing[:id]).update(
-              amountDue: amount,
-              daysStayed: days_stayed,
-              roomAdjustment: room_adjustment,
-              baseMonthlyRent: base_monthly_rent,
-              calculationTitle: history_options[:title],
-              calculationDate: Time.now.utc
-            )
-          else
-            db.class.rent_ledger.insert(
-              id: Cuid.generate,
-              tenantId: tenant_id,
-              period: rent_period,
-              amountDue: amount,
-              amountPaid: 0,  # Not yet paid
-              paymentDate: nil,
-              createdAt: Time.now.utc,
-              daysStayed: days_stayed,
-              roomAdjustment: room_adjustment,
-              baseMonthlyRent: base_monthly_rent,
-              calculationTitle: history_options[:title],
-              calculationDate: Time.now.utc
-            )
-          end
+          ledger_repo.upsert_entry(
+            tenant_id: tenant_id,
+            period: rent_period,
+            amount_due: amount,
+            days_stayed: days_stayed,
+            room_adjustment: room_adjustment,
+            base_monthly_rent: base_monthly_rent,
+            calculation_title: history_options[:title],
+            calculation_date: Time.now.utc
+          )
         end
+
+        $pubsub&.publish('rent_data_updated')
       end
 
       # OLD: JSON file saving (DEPRECATED - database is now source of truth)

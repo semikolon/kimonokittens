@@ -68,18 +68,18 @@ class TrainDepartureHandler
           @bus_data = transform_sl_bus_data(bus_raw_data)
           @fetched_at = Time.now
         else
-          puts "WARNING: SL Transport API failed, using fallback data"
+          puts "WARNING: SL Transport API failed, returning empty data"
           puts "Train response: #{train_response.code}" if !train_response.success?
           puts "Bus response: #{bus_response.code}" if !bus_response.success?
-          @train_data = get_fallback_train_data
-          @bus_data = get_fallback_bus_data
+          @train_data = []
+          @bus_data = []
           @fetched_at = Time.now
         end
       rescue => e
         puts "ERROR: Exception calling SL Transport API: #{e.message}"
-        puts "Using fallback data"
-        @train_data = get_fallback_train_data
-        @bus_data = get_fallback_bus_data
+        puts "Returning empty data"
+        @train_data = []
+        @bus_data = []
         @fetched_at = Time.now
       end
     end
@@ -271,39 +271,6 @@ class TrainDepartureHandler
           'departure_time' => departure_time
         }
       end
-  end
-
-  def get_fallback_train_data
-    # Provide reasonable fallback data when API is unavailable
-    # This generates realistic departure times for the next hour
-    now = Time.now.in_time_zone('Stockholm')
-
-    # Generate departures every 15 minutes for the next hour
-    (1..4).map do |i|
-      departure_time = now + (i * 15 * 60) # 15, 30, 45, 60 minutes from now
-
-      {
-        'destination' => 'Stockholm Central',
-        'line_number' => '41',
-        'departure_time' => departure_time.iso8601,
-        'direction' => 'north',
-        'cancelled' => false,
-        'deviation_note' => ''
-      }
-    end
-  end
-
-  def get_fallback_bus_data
-    # Provide reasonable fallback bus data when API is unavailable
-    now = Time.now.in_time_zone('Stockholm')
-
-    # Generate bus departures every 10 minutes for different lines
-    [
-      { 'destination' => 'Handens station', 'line_number' => '865', 'departure_time' => (now + 8*60).iso8601 },
-      { 'destination' => 'Gladö kvarn', 'line_number' => '744', 'departure_time' => (now + 15*60).iso8601 },
-      { 'destination' => 'Sörskogen', 'line_number' => '710', 'departure_time' => (now + 22*60).iso8601 },
-      { 'destination' => 'Solgård', 'line_number' => '705', 'departure_time' => (now + 30*60).iso8601 }
-    ]
   end
 
   def determine_direction(destination)

@@ -1,12 +1,13 @@
 require_relative 'spec_helper'
 require 'rspec'
-require 'faraday'
+require 'webmock/rspec'
 require_relative '../handlers/strava_workouts_handler'
 
 RSpec.describe StravaWorkoutsHandler do
   let(:handler) { StravaWorkoutsHandler.new }
-  let(:mock_response) { double('Faraday::Response') }
-  
+  let(:stats_url) { 'https://www.strava.com/api/v3/athletes/6878181/stats' }
+  let(:token_url) { 'https://www.strava.com/oauth/token' }
+
   # Mock Strava API response data
   let(:mock_stats_data) do
     {
@@ -26,12 +27,13 @@ RSpec.describe StravaWorkoutsHandler do
   end
 
   before do
-    # Set up environment variables
+    # Set up environment variables (allow real ENV access for proxy vars)
+    allow(ENV).to receive(:[]).and_call_original
     allow(ENV).to receive(:[]).with('STRAVA_ACCESS_TOKEN').and_return('mock_access_token')
     allow(ENV).to receive(:[]).with('STRAVA_REFRESH_TOKEN').and_return('mock_refresh_token')
     allow(ENV).to receive(:[]).with('STRAVA_CLIENT_ID').and_return('mock_client_id')
     allow(ENV).to receive(:[]).with('STRAVA_CLIENT_SECRET').and_return('mock_client_secret')
-    
+
     # Mock file operations
     allow(File).to receive(:exist?).with('.refresh_token').and_return(false)
   end
@@ -39,19 +41,17 @@ RSpec.describe StravaWorkoutsHandler do
   describe '#call' do
     context 'when Strava API responds successfully' do
       before do
-        allow(mock_response).to receive(:success?).and_return(true)
-        allow(mock_response).to receive(:status).and_return(200)
-        allow(mock_response).to receive(:body).and_return(mock_stats_data.to_json)
-        
-        allow(Faraday).to receive(:get).and_return(mock_response)
+        stub_request(:get, stats_url)
+          .with(headers: { 'Authorization' => 'Bearer mock_access_token' })
+          .to_return(status: 200, body: mock_stats_data.to_json, headers: { 'Content-Type' => 'application/json' })
       end
 
       it 'returns transformed stats with 200 status' do
         status, headers, body = handler.call(nil)
-        
+
         expect(status).to eq(200)
         expect(headers['Content-Type']).to eq('application/json')
-        
+
         parsed_body = JSON.parse(body.first)
         expect(parsed_body).to have_key('runs')
         expect(parsed_body['runs']).to include('25.0 km')
@@ -59,69 +59,77 @@ RSpec.describe StravaWorkoutsHandler do
       end
 
       it 'makes request with proper authorization header' do
-        expect(Faraday).to receive(:get).with(
-          'https://www.strava.com/api/v3/athletes/6878181/stats',
-          {},
-          { 'Authorization' => 'Bearer mock_access_token' }
-        ).and_return(mock_response)
-        
         handler.call(nil)
+
+        expect(WebMock).to have_requested(:get, stats_url)
+          .with(headers: { 'Authorization' => 'Bearer mock_access_token' })
       end
     end
 
     context 'when access token is expired (401 response)' do
-      let(:unauthorized_response) { double('Faraday::Response', status: 401, success?: false) }
-      let(:refresh_response) { double('Faraday::Response', success?: true, body: { access_token: 'new_token', refresh_token: 'new_refresh' }.to_json) }
+      let(:token_refresh_response) do
+        {
+          access_token: 'new_access_token',
+          refresh_token: 'new_refresh_token'
+        }.to_json
+      end
 
       before do
-        allow(mock_response).to receive(:success?).and_return(true)
-        allow(mock_response).to receive(:status).and_return(200)
-        allow(mock_response).to receive(:body).and_return(mock_stats_data.to_json)
-        
-        # First call returns 401, second call (after refresh) succeeds
-        allow(Faraday).to receive(:get).and_return(unauthorized_response, mock_response)
-        allow(Faraday).to receive(:post).with('https://www.strava.com/oauth/token').and_return(refresh_response)
+        # First request returns 401
+        stub_request(:get, stats_url)
+          .with(headers: { 'Authorization' => 'Bearer mock_access_token' })
+          .to_return(status: 401)
+
+        # Token refresh
+        stub_request(:post, token_url)
+          .to_return(status: 200, body: token_refresh_response, headers: { 'Content-Type' => 'application/json' })
+
+        # Retry with new token succeeds
+        stub_request(:get, stats_url)
+          .with(headers: { 'Authorization' => 'Bearer new_access_token' })
+          .to_return(status: 200, body: mock_stats_data.to_json, headers: { 'Content-Type' => 'application/json' })
+
         allow(File).to receive(:write)
       end
 
       it 'refreshes token and retries successfully' do
         status, headers, body = handler.call(nil)
-        
+
         expect(status).to eq(200)
-        expect(Faraday).to have_received(:get).twice
-        expect(Faraday).to have_received(:post).once
+        expect(WebMock).to have_requested(:get, stats_url).twice
+        expect(WebMock).to have_requested(:post, token_url).once
       end
     end
 
     context 'when Strava API returns server error' do
       before do
-        allow(mock_response).to receive(:success?).and_return(false)
-        allow(mock_response).to receive(:status).and_return(500)
-        allow(Faraday).to receive(:get).and_return(mock_response)
+        stub_request(:get, stats_url)
+          .to_return(status: 500, body: 'Internal Server Error')
       end
 
       it 'returns 500 status with error message' do
         status, headers, body = handler.call(nil)
-        
+
         expect(status).to eq(500)
         expect(headers['Content-Type']).to eq('application/json')
-        
+
         parsed_body = JSON.parse(body.first)
-        expect(parsed_body['error']).to eq('Failed to fetch stats from Strava')
+        expect(parsed_body['error']).to eq('Failed to fetch stats from Strava (500): Internal Server Error')
       end
     end
 
     context 'when network timeout occurs' do
       before do
-        allow(Faraday).to receive(:get).and_raise(Faraday::TimeoutError.new('execution expired'))
+        stub_request(:get, stats_url)
+          .to_raise(Net::ReadTimeout.new('execution expired'))
       end
 
       it 'returns 504 status with timeout error' do
         status, headers, body = handler.call(nil)
-        
+
         expect(status).to eq(504)
         expect(headers['Content-Type']).to eq('application/json')
-        
+
         parsed_body = JSON.parse(body.first)
         expect(parsed_body['error']).to include('Strava API error')
         expect(parsed_body['error']).to include('execution expired')
@@ -130,15 +138,16 @@ RSpec.describe StravaWorkoutsHandler do
 
     context 'when connection error occurs' do
       before do
-        allow(Faraday).to receive(:get).and_raise(Faraday::ConnectionFailed.new('Connection refused'))
+        stub_request(:get, stats_url)
+          .to_raise(SocketError.new('Connection refused'))
       end
 
       it 'returns 504 status with connection error' do
         status, headers, body = handler.call(nil)
-        
+
         expect(status).to eq(504)
         expect(headers['Content-Type']).to eq('application/json')
-        
+
         parsed_body = JSON.parse(body.first)
         expect(parsed_body['error']).to include('Strava API error')
         expect(parsed_body['error']).to include('Connection refused')
@@ -149,7 +158,7 @@ RSpec.describe StravaWorkoutsHandler do
   describe '#transform_stats' do
     it 'correctly transforms Strava stats into readable format' do
       transformed = handler.send(:transform_stats, mock_stats_data)
-      
+
       expect(transformed).to have_key(:runs)
       expect(transformed[:runs]).to include('<strong>25.0 km</strong>')
       expect(transformed[:runs]).to include('<strong>250.0 km</strong>')
@@ -160,30 +169,29 @@ RSpec.describe StravaWorkoutsHandler do
 
   describe '#refresh_access_token' do
     let(:refresh_response) do
-      double('Faraday::Response', 
-        success?: true, 
-        body: { 
-          access_token: 'new_access_token',
-          refresh_token: 'new_refresh_token'
-        }.to_json
-      )
+      {
+        access_token: 'new_access_token',
+        refresh_token: 'new_refresh_token'
+      }.to_json
     end
 
     before do
-      allow(Faraday).to receive(:post).and_return(refresh_response)
+      stub_request(:post, token_url)
+        .to_return(status: 200, body: refresh_response, headers: { 'Content-Type' => 'application/json' })
       allow(File).to receive(:write)
     end
 
     it 'makes correct token refresh request' do
       handler.send(:refresh_access_token)
-      
-      expect(Faraday).to have_received(:post).with('https://www.strava.com/oauth/token')
+
+      expect(WebMock).to have_requested(:post, token_url)
       expect(File).to have_received(:write).with('.refresh_token', 'new_refresh_token')
     end
 
     context 'when token refresh fails' do
       before do
-        allow(refresh_response).to receive(:success?).and_return(false)
+        stub_request(:post, token_url)
+          .to_return(status: 401, body: 'Unauthorized')
       end
 
       it 'raises an error' do
@@ -191,4 +199,4 @@ RSpec.describe StravaWorkoutsHandler do
       end
     end
   end
-end 
+end

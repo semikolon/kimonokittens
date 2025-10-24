@@ -225,7 +225,7 @@
 }
 
 .schedule-cursor {
-  transition: box-shadow 0.6s ease-in-out;
+  transition: box-shadow 2s ease-in-out, background-color 2s ease-in-out, opacity 2s ease-in-out;
 }
 
 .schedule-cursor.heating-active {
@@ -319,6 +319,70 @@
   .shine-swoosh-red {
     background: none !important;
     color: white !important;
+  }
+}
+
+/* Dashboard background gradient animations - more edge movement */
+@keyframes dashboard-first {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate(45%, -35%) rotate(90deg) scale(1.1);
+  }
+  50% {
+    transform: translate(35%, 45%) rotate(180deg) scale(1.2);
+  }
+  75% {
+    transform: translate(-35%, 15%) rotate(270deg) scale(1.1);
+  }
+}
+
+@keyframes dashboard-second {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  33% {
+    transform: translate(-55%, -20%) rotate(120deg);
+  }
+  66% {
+    transform: translate(-30%, 25%) rotate(240deg);
+  }
+}
+
+@keyframes dashboard-third {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translate(40%, 40%) rotate(-120deg) scale(1.2);
+  }
+  66% {
+    transform: translate(-45%, -20%) rotate(-240deg) scale(0.9);
+  }
+}
+
+@keyframes dashboard-fourth {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(40%, -35%) rotate(45deg);
+  }
+  50% {
+    transform: translate(-20%, -45%) rotate(90deg);
+  }
+  75% {
+    transform: translate(-40%, 25%) rotate(135deg);
+  }
+}
+
+@keyframes dashboard-fifth {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate(-50%, 40%) rotate(180deg) scale(0.85);
   }
 }
 

@@ -1,13 +1,13 @@
 require 'date'
 require_relative 'electricity_projector'
-require_relative 'rent_db'
+require_relative 'persistence'
 
 # HeatingCostCalculator provides reusable heating cost calculation logic
 # Used by both HeatingCostHandler (API endpoint) and RentCalculatorHandler (friendly message)
 module HeatingCostCalculator
   # Configuration with defaults
   HEATING_FRACTION = (ENV['HEATING_FRACTION'] || 0.75).to_f
-  DEGREES = (ENV['HEATING_DEGREES'] || '-2,-1,1,2').split(',').map(&:to_i)
+  DEGREES = (ENV['HEATING_DEGREES'] || '2,-2').split(',').map(&:to_i)
 
   # Calculate heating cost impact for temperature adjustments
   #
@@ -31,11 +31,15 @@ module HeatingCostCalculator
       }
     end
 
-    # Generate Swedish one-liner (use ± for positive/negative)
+    # Generate Swedish one-liner with pedagogical language
     parts = degree_costs.map do |dc|
-      sign = dc[:total] >= 0 ? '+' : ''
-      sign_pp = dc[:per_person] >= 0 ? '+' : ''
-      "#{sign}#{dc[:degrees]} °C ≈ #{sign}#{dc[:total]} kr/mån (≈ #{sign_pp}#{dc[:per_person]} kr/person)"
+      if dc[:degrees] > 0
+        # Positive = cost increase
+        "#{dc[:degrees]} °C varmare skulle kosta #{dc[:total]} kr/mån (#{dc[:per_person]} kr/person)"
+      else
+        # Negative = savings
+        "#{dc[:degrees].abs} °C kallare skulle spara #{dc[:total].abs} kr/mån (#{dc[:per_person].abs} kr/person)"
+      end
     end
     line = parts.join('; ')
 
@@ -56,17 +60,13 @@ module HeatingCostCalculator
 
   # Get active roommate count from database
   #
-  # @param db [RentDb] Database instance (optional, defaults to RentDb.instance)
+  # @param repo [TenantRepository] Repository (optional, defaults to Persistence.tenants)
   # @param date [Date] Reference date for active check (optional, defaults to today)
   # @return [Integer] Number of active roommates (minimum 1)
-  def self.get_active_roommate_count(db: RentDb.instance, date: Date.today)
-    tenants = db.get_tenants
+  def self.get_active_roommate_count(repo: Persistence.tenants, date: Date.today)
+    tenants = repo.all
 
-    # Count active tenants (no departure date or future departure)
-    active_roommates = tenants.count do |t|
-      departure_date = t['departureDate']
-      departure_date.nil? || Date.parse(departure_date.to_s) >= date
-    end
+    active_roommates = tenants.count { |tenant| tenant.active_on?(date) }
 
     # Fallback to default if no active tenants found
     active_roommates == 0 ? 4 : active_roommates

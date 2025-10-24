@@ -32,6 +32,9 @@ gem 'cuid', '~> 1.0' # For Prisma-compatible IDs
 gem 'rugged', '~> 1.7'
 gem 'ferrum'
 
+# PDF Processing
+gem 'pdf-reader', '~> 2.12'
+
 # AI / Vector Search
 gem 'pinecone', '~> 1.2' # Corrected gem name
 gem 'ruby-openai', '~> 6.4'
@@ -40,6 +43,7 @@ gem 'ruby-openai', '~> 6.4'
 group :test, :development do
   gem 'rspec', '~> 3.13'
   gem 'rack-test', '~> 2.1'
+  gem 'webmock', '~> 3.24'
   gem 'pry'
   gem 'listen', '~> 3.8'
   gem 'foreman', '~> 0.90' # Process management for development

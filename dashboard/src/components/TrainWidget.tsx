@@ -187,15 +187,13 @@ const formatDelayAwareTimeDisplay = (departure: TrainDeparture): string => {
 }
 
 // Train identity tracking for animations
-// Round timestamp to 3-minute buckets to prevent false animations when API shifts times by 1-2 min
+// Use exact timestamps - Framer Motion handles time updates gracefully with exit/enter animations
 const generateTrainId = (train: TrainDeparture): string => {
-  const roundedTimestamp = Math.floor(train.departure_timestamp / 180) * 180
-  return `${roundedTimestamp}-${train.line_number}-${train.destination}`
+  return `${train.departure_timestamp}-${train.line_number}-${train.destination}`
 }
 
 const generateBusId = (bus: BusDeparture): string => {
-  const roundedTimestamp = Math.floor(bus.departure_timestamp / 180) * 180
-  return `${roundedTimestamp}-${bus.line_number}-${bus.destination}`
+  return `${bus.departure_timestamp}-${bus.line_number}-${bus.destination}`
 }
 
 // NOTE: useTrainListChanges and useBusListChanges removed in Phase 4

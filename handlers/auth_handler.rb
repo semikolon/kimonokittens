@@ -4,7 +4,8 @@ require 'jwt'
 require 'json'
 require 'faraday'
 require 'faraday/excon'
-require_relative '../lib/rent_db' # Use our new DB module
+require_relative '../lib/persistence'
+require_relative '../lib/models/tenant'
 
 # AuthHandler now follows the Agoo pattern: a plain Ruby class with a `call` method.
 # It handles Facebook OAuth callbacks, verifies the token, finds or creates a user
@@ -122,27 +123,26 @@ class AuthHandler
 
   def find_or_create_tenant(facebook_user)
     # Replace mock implementation with a call to our RentDb module.
-    db = RentDb.instance
-    
-    # Check if a tenant with this Facebook ID already exists.
-    existing_tenant = db.find_tenant_by_facebook_id(facebook_user[:facebookId])
-    return existing_tenant if existing_tenant
+    repo = Persistence.tenants
 
-    # If not, create a new tenant.
-    # Note: The `add_tenant` method in RentDb will need to handle this structure.
-    # We might need to adjust it if it doesn't match.
-    new_tenant_data = {
+    existing_tenant = repo.find_by_facebook_id(facebook_user[:facebookId])
+    return tenant_to_response(existing_tenant) if existing_tenant
+
+    new_tenant = Tenant.new(
       name: facebook_user[:name],
-      facebookId: facebook_user[:facebookId],
-      avatarUrl: facebook_user[:avatarUrl],
-      # Email is required by the schema, but not provided by FB basic login.
-      # We'll use a placeholder.
-      email: "#{facebook_user[:facebookId]}@facebook.placeholder.com"
-    }
-    db.add_tenant(**new_tenant_data.transform_keys(&:to_sym))
-    
-    # Fetch the newly created tenant to ensure we have the CUID etc.
-    db.find_tenant_by_facebook_id(facebook_user[:facebookId])
+      email: "#{facebook_user[:facebookId]}@facebook.placeholder.com",
+      facebook_id: facebook_user[:facebookId],
+      avatar_url: facebook_user[:avatarUrl]
+    )
+
+    created = repo.create(new_tenant)
+    $pubsub&.publish('rent_data_updated')
+
+    tenant_to_response(created)
+  end
+
+  def tenant_to_response(tenant)
+    tenant.to_h.transform_keys(&:to_s)
   end
 
   def generate_jwt(tenant_id)
