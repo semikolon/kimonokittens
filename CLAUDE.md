@@ -382,7 +382,7 @@ sudo systemctl restart kimonokittens-dashboard
 - **Symlink .env, don't duplicate** - Single source of truth in `/home/kimonokittens/.env`
 - **Kiosk auto-refresh on frontend deploy** - Webhook restarts kiosk service after rsync
 - **2-minute debounce prevents spam** - Rapid development pushes = one deployment with all changes
-- **No database changes via webhook** - Migrations are manual (run `production_migration.rb`)
+- **No database schema changes via webhook** - Prisma migrations are manual (run `npx prisma migrate deploy`)
 
 ---
 
@@ -854,8 +854,8 @@ The kimonokittens project uses a **smart webhook system** with Puma architecture
 
 #### 🔒 **Database Safety**
 - **Webhook never touches database** - deployments are code-only
-- **Migrations are manual** - run `production_migration.rb` deliberately
-- **Zero database risk** from automated deployments
+- **Schema migrations are manual** - run `npx prisma migrate deploy` deliberately in production
+- **Zero database risk** from automated code deployments
 
 ### Deployment Scenarios
 
@@ -963,53 +963,49 @@ The Puma architecture is designed for:
 
 ---
 
-## 🚨 PRODUCTION DEPLOYMENT & HISTORICAL DATA MIGRATION
+## 📚 HISTORICAL: Initial Production Deployment (September-October 2025)
 
-### CRITICAL: Historical Data Migration Protocol
-**COMPLETED September 28, 2025** - All production deployments MUST include historical data migration.
+**Status**: ✅ COMPLETED - Database fully operational in production since October 6, 2025
 
-#### Migration Components:
-- **`deployment/production_migration.rb`**: Enhanced with historical JSON processing
-- **`data/rent_history/`**: Required directory containing 14+ JSON files
-- **Tenant Mapping**: Automatic name-to-ID conversion for foreign keys
-- **Semantic Conversion**: CONFIG PERIOD MONTH → rent period month (month 7 → August rent)
-- **Result**: 58 historical RentLedger records from corrected JSON data
+### What Was Done (Historical Context):
+- **Sep 28-30, 2025**: Created Prisma schema + initial migrations
+  - `20250930000000_initial_schema` - All tables (ElectricityBill, RentConfig, RentLedger, Tenants)
+  - `20251004112744_remove_generated_column_extend_ledger` - Schema fixes
+- **Sep 28, 2025**: Created `production_migration.rb` for initial data population
+  - Migrated 58 historical RentLedger records from JSON files
+  - Populated 8 Tenants, 7 RentConfig records
+- **Oct 6, 2025**: Dell kiosk deployed with database fully operational
 
-#### Database State After Migration:
+### Current Production Database State:
 ```
-RentConfig: 7 records (electricity, base rent, utilities, quarterly invoice)
-Tenants: 8 records (Adam, Amanda, Astrid, Elvira, Frans-Lukas, Fredrik, Malin, Rasmus)
-RentLedger: 58 records (complete historical rent payments)
-```
-
-#### Migration Verification Commands:
-```bash
-# Verify RentLedger record count
-ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.class.rent_ledger.count"
-
-# Check historical coverage
-ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.class.rent_ledger.group(:period).count"
+✅ Schema: 2 Prisma migrations applied
+✅ Data: RentConfig, Tenants, RentLedger, ElectricityBill tables populated
+✅ Location: kimonokittens_production database on Dell kiosk
 ```
 
-### Production Deployment Files Checklist:
-```
-deployment/production_database_20250928.json    ✅ Core data export
-deployment/production_migration.rb              ✅ WITH HISTORICAL DATA PROCESSING
-deployment/export_production_data.rb            ✅ Backup script
-deployment/DEPLOYMENT_CHECKLIST.md              ✅ Step-by-step guide
-DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md               ✅ Hardware setup
-data/rent_history/                               ✅ REQUIRED FOR MIGRATION
-```
+### Recent Work (October 21-23, 2025):
+**Model architecture refactoring** - Pure code changes, no database migrations:
+- Created domain models in `lib/models/` (ElectricityBill, RentConfig, Tenant, RentLedger)
+- Created repositories in `lib/repositories/`
+- Created services in `lib/services/` (ApplyElectricityBill)
+- Created persistence module `lib/persistence.rb`
+- **Deployment**: Code-only via webhook (no manual database steps needed)
 
-### ⚠️ IMPORTANT MIGRATION REMINDERS:
+### Complete Deployment Documentation:
+**All initial deployment procedures have been completed (Oct 6, 2025).** Documentation preserved for:
+- Future server migrations (e.g., new production environment)
+- Reference when considering deployment automation tools (Capistrano, Mina, etc.)
 
-1. **Never deploy without `data/rent_history/` directory** - Historical data won't migrate
-2. **CONFIG PERIOD MONTH semantics are corrected** - Files already fixed (month 7 = August rent)
-3. **Tenant mapping is automatic** - Script handles name-to-ID conversion
-4. **One-time operation** - Historical migration only runs during initial deployment
-5. **Backup exists** - Original JSON files preserved at `data/rent_history_original_backup_20250928/`
+**Available documentation:**
+- **`deployment/DEPLOYMENT_CHECKLIST.md`** - Complete step-by-step initial deployment
+- **`DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md`** - Hardware setup + database migration procedures
+- **`deployment/production_migration.rb`** - Historical data migration script (already run)
+- **`deployment/scripts/setup_production.sh`** - Automated setup script
+- **`docs/PRODUCTION_CRON_DEPLOYMENT.md`** - Cron job setup for electricity automation
 
-### Production Health Checks:
+**Note on Capistrano:** Current deployment uses webhook-based automation. If migrating to Capistrano or similar tools in the future, above docs provide the baseline deployment procedure to automate.
+
+### For Future Deployments:
 ```bash
 # Ruby dependencies
 bundle install --deployment --without development test assets
