@@ -531,6 +531,18 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Technical approach**: Use Ferrum browser automation (same as current Vattenfall consumption scraper)
   - **Data target**: Write invoice amounts to RentConfig database (key='el') automatically when bills arrive
 - [ ] Fill in missing electricity bills history (Nov 2024 - Sept 2025) in `electricity_bills_history.txt`
+- [ ] **⚡ CRITICAL: Implement Time-of-Use Grid Pricing (Winter Savings Opportunity)**
+  - **Discovery (Oct 24, 2025)**: Vattenfall charges 2.5× higher grid transfer during winter peak hours
+  - **Peak pricing (53.60 öre/kWh)**: Mon-Fri 06:00-22:00 during Jan/Feb/Mar/Nov/Dec
+  - **Off-peak pricing (21.40 öre/kWh)**: All other times + entire summer (Apr-Oct)
+  - **Impact**: ~400-500 kr/month savings potential by shifting consumption to off-peak
+  - **Priority 1**: Update `ElectricityProjector` with hour-of-day + month-of-year logic
+  - **Priority 2**: Migrate Node-RED heatpump schedule from Tibber API to elprisetjustnu.se API
+  - **Priority 3**: Implement smart scheduling to avoid 06:00-22:00 weekdays in winter months
+  - **Technical**: Add peak/off-peak classification to consumption analysis
+  - **Testing**: Validate against Jan/Feb/Mar 2025 invoices with mixed peak/off-peak rates
+  - **Node-RED Migration**: Replace Tibber spot price queries with elprisetjustnu.se + peak logic
+  - **Heatpump Optimization**: Target 22:00-06:00 + weekends for heating during winter
 
 ### API Integration
 - [x] Expose rent calculator as API for voice/LLM assistants:

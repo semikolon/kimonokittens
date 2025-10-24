@@ -54,9 +54,11 @@ class ElectricityProjector
   ENERGY_TAX_EXCL_VAT = 0.439  # kr/kWh (43.9 öre/kWh)
   ENERGY_TAX_INCL_VAT = 0.54875  # kr/kWh (54.875 öre/kWh) = 0.439 × 1.25
 
-  # Grid transfer (elöverföring) - from Vattenfall invoices Aug/Sep 2025
-  # Actual rate: 21.40 öre/kWh excluding VAT
-  GRID_TRANSFER_EXCL_VAT = 0.214  # kr/kWh excluding VAT (from invoices)
+  # Grid transfer (elöverföring) - Vattenfall Tidstariff T4 (time-of-use pricing)
+  # Peak (höglasttid): Mon-Fri 06:00-22:00 in Jan/Feb/Mar/Nov/Dec (excl holidays)
+  # Off-peak (övrig tid): All other times + entire summer (Apr-Oct)
+  GRID_TRANSFER_PEAK_EXCL_VAT = 0.536     # kr/kWh (53.60 öre/kWh) - peak hours
+  GRID_TRANSFER_OFFPEAK_EXCL_VAT = 0.214  # kr/kWh (21.40 öre/kWh) - off-peak hours
 
   # Fixed monthly fees (verified from invoices)
   # Vattenfall: 7,080 kr/year = 590 kr/month (grid connection)
@@ -278,9 +280,12 @@ class ElectricityProjector
         next
       end
 
+      # Determine grid transfer rate based on peak/off-peak classification
+      grid_rate = is_peak_hour?(timestamp) ? GRID_TRANSFER_PEAK_EXCL_VAT : GRID_TRANSFER_OFFPEAK_EXCL_VAT
+
       # Calculate total price per kWh: (spot + transfer + tax) × VAT
       # All three components exclude VAT, so add them first then apply 25% VAT
-      price_per_kwh = (spot_price + GRID_TRANSFER_EXCL_VAT + ENERGY_TAX_EXCL_VAT) * 1.25
+      price_per_kwh = (spot_price + grid_rate + ENERGY_TAX_EXCL_VAT) * 1.25
 
       # Calculate cost for this hour
       hour_cost = consumption_kwh * price_per_kwh
@@ -372,5 +377,94 @@ class ElectricityProjector
     end
 
     prices
+  end
+
+  # Swedish holidays (red days - no peak pricing applies)
+  # Includes fixed holidays and calculated movable holidays for 2024-2027
+  #
+  # @param year [Integer] Year to get holidays for
+  # @return [Array<Date>] Array of holiday dates
+  def swedish_holidays(year)
+    holidays = []
+
+    # Fixed holidays
+    holidays << Date.new(year, 1, 1)   # New Year's Day
+    holidays << Date.new(year, 1, 6)   # Epiphany
+    holidays << Date.new(year, 5, 1)   # Labor Day
+    holidays << Date.new(year, 12, 24) # Christmas Eve
+    holidays << Date.new(year, 12, 25) # Christmas Day
+    holidays << Date.new(year, 12, 26) # Boxing Day
+    holidays << Date.new(year, 12, 31) # New Year's Eve
+
+    # Movable holidays (Easter-based)
+    # Hardcoded Easter dates for years we have data
+    easter_dates = {
+      2024 => Date.new(2024, 3, 31),
+      2025 => Date.new(2025, 4, 20),
+      2026 => Date.new(2026, 4, 5),
+      2027 => Date.new(2027, 3, 28)
+    }
+
+    if easter_dates[year]
+      easter = easter_dates[year]
+      holidays << easter - 2          # Good Friday
+      holidays << easter              # Easter Sunday
+      holidays << easter + 1          # Easter Monday
+      holidays << easter + 39         # Ascension Day (39 days after Easter)
+      holidays << easter + 49         # Whitsun/Pentecost Sunday (49 days)
+      holidays << easter + 50         # Whit Monday (50 days)
+    end
+
+    # Midsummer (Friday between June 19-25)
+    midsummer_start = Date.new(year, 6, 19)
+    7.times do |i|
+      candidate = midsummer_start + i
+      if candidate.friday?
+        holidays << candidate       # Midsummer Eve
+        holidays << candidate + 1   # Midsummer Day
+        break
+      end
+    end
+
+    # All Saints' Day (Saturday between Oct 31 - Nov 6)
+    all_saints_start = Date.new(year, 10, 31)
+    7.times do |i|
+      candidate = all_saints_start + i
+      if candidate.saturday?
+        holidays << candidate
+        break
+      end
+    end
+
+    holidays
+  end
+
+  # Determines if a given timestamp falls during peak pricing hours
+  #
+  # Peak hours (Vattenfall Tidstariff T4):
+  # - Months: January, February, March, November, December
+  # - Days: Monday-Friday (excluding Swedish holidays)
+  # - Hours: 06:00-22:00 (local time)
+  #
+  # @param timestamp [String] ISO8601 timestamp (UTC or with offset)
+  # @return [Boolean] true if peak hours, false if off-peak
+  def is_peak_hour?(timestamp)
+    dt = DateTime.parse(timestamp)
+
+    # Summer months (Apr-Oct) have NO peak pricing
+    return false unless [1, 2, 3, 11, 12].include?(dt.month)
+
+    # Weekends have NO peak pricing
+    return false if [0, 6].include?(dt.wday)  # Sunday=0, Saturday=6
+
+    # Swedish holidays have NO peak pricing
+    date_only = Date.new(dt.year, dt.month, dt.day)
+    return false if swedish_holidays(dt.year).include?(date_only)
+
+    # Peak hours: 06:00-22:00 (local time)
+    # Note: timestamp is in UTC, but we need local hour for classification
+    # Sweden is UTC+1 (winter) or UTC+2 (summer DST)
+    local_dt = dt.new_offset('+01:00')  # Conservative: use winter offset
+    local_dt.hour >= 6 && local_dt.hour < 22
   end
 end

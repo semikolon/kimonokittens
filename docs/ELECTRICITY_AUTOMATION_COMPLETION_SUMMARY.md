@@ -516,13 +516,57 @@ price_per_kwh = (spot_price + GRID_TRANSFER_EXCL_VAT + ENERGY_TAX_EXCL_VAT) * 1.
 - ✅ Created validation framework for future testing
 - ✅ All rate constants verified against actual invoices
 
+### Peak/Off-Peak Implementation ✅ (October 24, 2025 - Evening Session)
+
+**Status**: COMPLETE - Ready for validation testing
+
+**What Was Built**:
+
+1. **Swedish Holiday Calendar** (`lib/electricity_projector.rb:384-437`)
+   - Fixed holidays: New Year, Epiphany, Labor Day, Christmas, New Year's Eve
+   - Movable holidays: Easter-based (Good Friday, Easter, Whitsun, Ascension)
+   - Calculated holidays: Midsummer (Fri Jun 19-25), All Saints (Sat Oct 31-Nov 6)
+   - Hardcoded Easter dates for 2024-2027
+
+2. **Peak Hour Classification** (`lib/electricity_projector.rb:448-466`)
+   ```ruby
+   def is_peak_hour?(timestamp)
+     # Summer months (Apr-Oct): NO peak pricing
+     # Weekends: NO peak pricing
+     # Swedish holidays: NO peak pricing
+     # Peak: Mon-Fri 06:00-22:00 in Jan/Feb/Mar/Nov/Dec
+   ```
+
+3. **Peak Rate Constants** (`lib/electricity_projector.rb:57-61`)
+   ```ruby
+   GRID_TRANSFER_PEAK_EXCL_VAT = 0.536     # 53.60 öre/kWh
+   GRID_TRANSFER_OFFPEAK_EXCL_VAT = 0.214  # 21.40 öre/kWh
+   ```
+
+4. **Dynamic Rate Selection** (`lib/electricity_projector.rb:284`)
+   ```ruby
+   grid_rate = is_peak_hour?(timestamp) ? GRID_TRANSFER_PEAK_EXCL_VAT : GRID_TRANSFER_OFFPEAK_EXCL_VAT
+   price_per_kwh = (spot_price + grid_rate + ENERGY_TAX_EXCL_VAT) * 1.25
+   ```
+
+**Implementation Details**:
+
+- **Conservative timezone handling**: Uses UTC+1 for hour classification (winter time)
+- **Holiday detection**: Checks date (not datetime) against holiday list
+- **Weekend detection**: Sunday=0, Saturday=6 (Ruby wday convention)
+- **Month filtering**: Only Jan/Feb/Mar/Nov/Dec have peak pricing
+- **Hour range**: 06:00-22:00 local time (16 hours peak, 8 hours off-peak)
+
+**Expected Impact**:
+- Winter error reduction: 10-14% → 5-6% (matching summer accuracy)
+- Missing ~516 kr/month in winter → eliminated
+
 ### Remaining Work
 
-⏳ **Implement peak/off-peak pricing logic** (estimated 4-6 hours)
-- Add hour classification method
-- Update cost calculation formula
-- Test against Jan/Feb/Mar 2025 invoices
-- Verify accuracy improves to 5-6% in winter
+⏳ **Validate peak/off-peak implementation** (estimated 30 minutes)
+- Run test_projection_accuracy.rb with new logic
+- Verify Jan/Feb/Mar 2025 accuracy improves to 5-6%
+- Document actual vs expected results
 
 ⏳ **Migrate Node-RED heatpump schedule** (estimated 8-10 hours)
 - Replace Tibber API with elprisetjustnu.se

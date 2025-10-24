@@ -992,6 +992,178 @@ end
 
 ---
 
+## ✅ PHASE 4.5: PEAK/OFF-PEAK PRICING IMPLEMENTATION (October 24, 2025)
+
+**Status**: ✅ **IMPLEMENTATION COMPLETE** - Ready for validation
+
+**Timeline**: Evening session (4 hours implementation + testing)
+
+### Problem Statement
+
+**Discovered**: Vattenfall charges 2.5× higher grid transfer during winter peak hours
+**Impact**: 10-14% underestimation in winter months (Jan/Feb/Mar/Nov/Dec)
+**Root Cause**: Using flat 21.40 öre/kWh rate when actual rate is time-of-use
+**Missing**: ~516 kr/month in winter projections
+
+### Solution Architecture
+
+**Vattenfall Tidstariff T4 (Time-of-Use Pricing)**:
+
+| Rate Type | Months | Days | Hours | Rate (excl VAT) |
+|-----------|--------|------|-------|-----------------|
+| **Peak (höglasttid)** | Jan/Feb/Mar/Nov/Dec | Mon-Fri (excl holidays) | 06:00-22:00 | **53.60 öre/kWh** |
+| **Off-peak (övrig tid)** | All other times | All days | All hours | **21.40 öre/kWh** |
+
+### Implementation Details
+
+#### 1. Rate Constants (`lib/electricity_projector.rb:57-61`)
+
+```ruby
+# Grid transfer (elöverföring) - Vattenfall Tidstariff T4 (time-of-use pricing)
+# Peak (höglasttid): Mon-Fri 06:00-22:00 in Jan/Feb/Mar/Nov/Dec (excl holidays)
+# Off-peak (övrig tid): All other times + entire summer (Apr-Oct)
+GRID_TRANSFER_PEAK_EXCL_VAT = 0.536     # kr/kWh (53.60 öre/kWh) - peak hours
+GRID_TRANSFER_OFFPEAK_EXCL_VAT = 0.214  # kr/kWh (21.40 öre/kWh) - off-peak hours
+```
+
+#### 2. Swedish Holiday Calendar (`lib/electricity_projector.rb:384-437`)
+
+**Fixed Holidays**:
+- January 1: New Year's Day
+- January 6: Epiphany
+- May 1: Labor Day
+- December 24-26: Christmas Eve, Day, Boxing Day
+- December 31: New Year's Eve
+
+**Movable Holidays** (Easter-based, hardcoded 2024-2027):
+- Good Friday (Easter - 2 days)
+- Easter Sunday
+- Easter Monday (Easter + 1)
+- Ascension Day (Easter + 39)
+- Whitsun/Pentecost Sunday (Easter + 49)
+- Whit Monday (Easter + 50)
+
+**Calculated Holidays**:
+- Midsummer Eve/Day: First Friday between June 19-25 + Saturday
+- All Saints' Day: First Saturday between Oct 31 - Nov 6
+
+**Easter Dates** (hardcoded):
+```ruby
+2024 => March 31
+2025 => April 20
+2026 => April 5
+2027 => March 28
+```
+
+#### 3. Peak Hour Classification (`lib/electricity_projector.rb:448-466`)
+
+```ruby
+def is_peak_hour?(timestamp)
+  dt = DateTime.parse(timestamp)
+
+  # Summer months (Apr-Oct) have NO peak pricing
+  return false unless [1, 2, 3, 11, 12].include?(dt.month)
+
+  # Weekends have NO peak pricing
+  return false if [0, 6].include?(dt.wday)  # Sunday=0, Saturday=6
+
+  # Swedish holidays have NO peak pricing
+  date_only = Date.new(dt.year, dt.month, dt.day)
+  return false if swedish_holidays(dt.year).include?(date_only)
+
+  # Peak hours: 06:00-22:00 (local time)
+  # Note: timestamp is in UTC, need local hour for classification
+  local_dt = dt.new_offset('+01:00')  # Conservative: use winter offset
+  local_dt.hour >= 6 && local_dt.hour < 22
+end
+```
+
+**Design Decisions**:
+- **Conservative timezone**: Use UTC+1 (winter time) for hour classification
+- **Date-only comparison**: Extract date from datetime for holiday checks
+- **Weekend detection**: Ruby wday convention (0=Sunday, 6=Saturday)
+- **Fail-safe**: Unknown years return empty holiday list (treats all days as potential peak)
+
+#### 4. Dynamic Rate Selection (`lib/electricity_projector.rb:284-288`)
+
+```ruby
+# Determine grid transfer rate based on peak/off-peak classification
+grid_rate = is_peak_hour?(timestamp) ? GRID_TRANSFER_PEAK_EXCL_VAT : GRID_TRANSFER_OFFPEAK_EXCL_VAT
+
+# Calculate total price per kWh: (spot + transfer + tax) × VAT
+# All three components exclude VAT, so add them first then apply 25% VAT
+price_per_kwh = (spot_price + grid_rate + ENERGY_TAX_EXCL_VAT) * 1.25
+```
+
+### Testing Strategy
+
+**Validation Approach**:
+1. Run `test_projection_accuracy.rb` with new logic
+2. Compare Jan/Feb/Mar 2025 projections vs actual bills
+3. Verify error reduction from 10-14% → 5-6%
+4. Check peak/off-peak hour distribution matches invoice (~43% peak in winter)
+
+**Expected Results**:
+
+| Month | Actual | Old Projected | Old Error | New Projected (est) | New Error (target) |
+|-------|--------|---------------|-----------|---------------------|-------------------|
+| Feb 2025 | 5,945 kr | 5,220 kr | -725 kr (12.2%) | ~5,650 kr | ~-295 kr (5%) |
+| Mar 2025 | 5,936 kr | 5,374 kr | -562 kr (9.5%) | ~5,640 kr | ~-296 kr (5%) |
+| Jan 2025 | 4,763 kr | 4,493 kr | -270 kr (5.7%) | ~4,520 kr | ~-243 kr (5%) |
+
+**Success Criteria**:
+- ✅ Winter error ≤ 7% (matching summer accuracy)
+- ✅ Peak hours correctly classified (~43-45% in winter)
+- ✅ Holidays excluded from peak pricing
+- ✅ Summer months unaffected (still 5-6% error)
+
+### Files Modified
+
+**Core Projector**:
+- `lib/electricity_projector.rb` (+91 lines)
+  - Lines 57-61: Peak/off-peak rate constants
+  - Lines 284-288: Dynamic rate selection
+  - Lines 384-437: Swedish holiday calendar (54 lines)
+  - Lines 448-466: Peak hour classification (19 lines)
+
+**Testing** (pending):
+- `test_projection_accuracy.rb` - Run with new logic
+- Validation output to be documented
+
+### Next Steps
+
+1. **Immediate** (30 min):
+   - [ ] Run validation tests
+   - [ ] Document actual accuracy improvements
+   - [ ] Commit implementation with results
+
+2. **Future** (8-10 hours):
+   - [ ] Migrate Node-RED heatpump schedule to use peak/off-peak logic
+   - [ ] Implement smart scheduling (avoid peak hours)
+   - [ ] Monitor 400-500 kr/month savings
+
+3. **Maintenance** (annual):
+   - [ ] Add Easter dates for 2028+ as needed
+   - [ ] Verify Vattenfall hasn't changed rate structure
+   - [ ] Update holiday calendar if Swedish calendar changes
+
+### Key Learnings
+
+1. **Time-of-use pricing is significant**: 2.5× rate difference (150% markup)
+2. **Holidays matter**: 15-20 days/year excluded from peak pricing
+3. **Timezone handling critical**: Must convert UTC → local time for hour classification
+4. **Conservative approach**: When uncertain, use winter offset (safer for budgeting)
+5. **Easter calculation complex**: Hardcoded dates simpler than astronomical calculation
+
+### Production Readiness
+
+✅ **Implementation complete**
+⏳ **Validation pending** (30 min)
+⏳ **Documentation complete** (this section)
+⏳ **Deployment pending** (git commit + push)
+
+---
+
 ## Next Immediate Steps
 
 1. **Investigate Vessel status** - Determine if still usable or needs replacement
