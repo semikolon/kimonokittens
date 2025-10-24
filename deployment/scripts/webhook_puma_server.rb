@@ -421,7 +421,9 @@ class DeploymentHandler
       $logger.info("🧹 Removing vendor/bundle for clean install...")
       FileUtils.rm_rf('vendor/bundle')
 
-      output = `bundle install --deployment --without development test 2>&1`
+      # Use regular bundle install (no --deployment) to bootstrap vendor/bundle
+      # --deployment can't be used with empty vendor/bundle
+      output = `bundle install --without development test 2>&1`
       unless $?.success?
         $logger.error("❌ Bundle install failed")
         $logger.error("Error output: #{output.lines.last(15).join}")
