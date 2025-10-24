@@ -409,30 +409,18 @@ class DeploymentHandler
 
     # Note: Git pull already done in pull_latest_code() before deployment
 
-    # Install Ruby dependencies (self-healing: handles Gemfile changes automatically)
-    # Try deployment mode first (fast path when gems unchanged)
-    output = `bundle install --deployment --without development test --quiet 2>&1`
+    # Install Ruby dependencies (industry standard Capistrano/Heroku approach)
+    # CRITICAL: Gemfile.lock MUST be committed to version control
+    # Development workflow: change Gemfile → bundle install → commit BOTH files
+    # If deployment fails here, fix in development and commit updated Gemfile.lock
+    output = `bundle install --deployment --without development test 2>&1`
     unless $?.success?
-      $logger.warn("⚠️  Deployment mode failed (likely Gemfile changed), retrying with clean install...")
-      $logger.debug("Deployment mode error: #{output.lines.first(5).join}")
-
-      # Fall back to clean install (nuke vendor/bundle and reinstall from scratch)
-      # This handles Gemfile.lock/vendor mismatch that prevents bundler from even starting
-      $logger.info("🧹 Removing vendor/bundle for clean install...")
-      FileUtils.rm_rf('vendor/bundle')
-
-      # Use regular bundle install (no --deployment) to bootstrap vendor/bundle
-      # --deployment can't be used with empty vendor/bundle
-      output = `bundle install --without development test 2>&1`
-      unless $?.success?
-        $logger.error("❌ Bundle install failed")
-        $logger.error("Error output: #{output.lines.last(15).join}")
-        return false
-      end
-      $logger.info("✅ Bundle install successful (clean reinstall)")
-    else
-      $logger.info("✅ Bundle install successful (no changes)")
+      $logger.error("❌ Bundle install failed - Gemfile.lock may not match Gemfile")
+      $logger.error("Error output: #{output.lines.last(15).join}")
+      $logger.error("Fix: Run 'bundle install' in development and commit updated Gemfile.lock")
+      return false
     end
+    $logger.info("✅ Bundle install successful")
 
     # Reload backend service (graceful restart via USR1 signal to Puma)
     # NOTE: If webhook code itself changed (deployment/*.rb), this runs OLD code!

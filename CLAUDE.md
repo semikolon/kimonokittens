@@ -382,7 +382,11 @@ sudo systemctl restart kimonokittens-dashboard
 - **Symlink .env, don't duplicate** - Single source of truth in `/home/kimonokittens/.env`
 - **Kiosk auto-refresh on frontend deploy** - Webhook restarts kiosk service after rsync
 - **2-minute debounce prevents spam** - Rapid development pushes = one deployment with all changes
-- **Self-healing bundle install** - Webhook automatically handles Gemfile changes (tries `--deployment`, falls back to regular install)
+- **⚠️ GEMFILE.LOCK MUST BE COMMITTED** - Industry standard (Capistrano/Heroku) workflow:
+  - Development: `bundle install` after Gemfile changes → commit BOTH Gemfile + Gemfile.lock
+  - Production: `bundle install --deployment` (frozen mode - lockfile must match exactly)
+  - If deployment fails: Fix in development, update lockfile, commit both files
+  - No self-healing - deployment only succeeds if lockfile is correct
 - **No database changes via webhook** - Migrations are manual (run `production_migration.rb`)
 
 ---
