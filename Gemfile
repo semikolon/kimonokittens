@@ -35,9 +35,6 @@ gem 'ferrum'
 # PDF Processing
 gem 'pdf-reader', '~> 2.12'
 
-# Test gem for webhook self-healing deployment (TEMPORARY - will revert)
-gem 'terminal-table', '~> 3.0'
-
 # AI / Vector Search
 gem 'pinecone', '~> 1.2' # Corrected gem name
 gem 'ruby-openai', '~> 6.4'
