@@ -32,6 +32,9 @@ gem 'cuid', '~> 1.0' # For Prisma-compatible IDs
 gem 'rugged', '~> 1.7'
 gem 'ferrum'
 
+# PDF Processing
+gem 'pdf-reader', '~> 2.12'
+
 # AI / Vector Search
 gem 'pinecone', '~> 1.2' # Corrected gem name
 gem 'ruby-openai', '~> 6.4'
