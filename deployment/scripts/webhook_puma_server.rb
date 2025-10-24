@@ -364,7 +364,7 @@ class DeploymentHandler
         when /^dashboard\//
           frontend_changed = true
           $logger.info("Frontend change detected: #{file}")
-        when /\.(rb|ru|gemspec|Gemfile)$/
+        when /\.(rb|ru|gemspec)$|^Gemfile$/
           backend_changed = true
           $logger.info("Backend change detected: #{file}")
         when /^deployment\//
@@ -382,7 +382,7 @@ class DeploymentHandler
         when /^dashboard\//
           frontend_changed = true
           $logger.info("Frontend addition detected: #{file}")
-        when /\.(rb|ru|gemspec|Gemfile)$/
+        when /\.(rb|ru|gemspec)$|^Gemfile$/
           backend_changed = true
           $logger.info("Backend addition detected: #{file}")
         when /^config\/sleep_schedule\.json$/
