@@ -82,6 +82,8 @@ The system includes several validation rules to prevent common errors and ensure
 
 ### Electricity Bill Handling
 
+**Automated dual-scraper system** (Oct 24, 2025): Vattenfall (3am) + Fortum (4am) cron jobs auto-fetch invoices → `ApplyElectricityBill` service → RentConfig updates. See `docs/ELECTRICITY_AUTOMATION_COMPLETION_SUMMARY.md`.
+
 The system is designed to handle a specific billing cycle for electricity costs:
 
 *   **Normal Flow**: Bills for a given month's consumption (e.g., January) typically arrive in the following month (February). These costs are then included in the rent calculation for the month after that (March), which is due at the end of February.
@@ -164,7 +166,12 @@ This section summarizes non-obvious architectural choices and important lessons 
 
 ### System Architecture Decisions
 
-1.  **Prisma ORM & PostgreSQL for All Financial Data**
+1.  **Repository Architecture Pattern** (Oct 21, 2025)
+    * **Clean architecture**: Handlers → Services → Domain Models + Repositories → Database
+    * **Centralized access**: `lib/persistence.rb` provides singleton repository instances
+    * **Documentation**: See `docs/MODEL_ARCHITECTURE.md` for complete API guide
+
+2.  **Prisma ORM & PostgreSQL for All Financial Data**
     * **System:** All financial data, including configuration (`RentConfig`) and historical calculations (`RentLedger`), is stored in PostgreSQL and managed via Prisma.
     * **Migration Status:** Production deployment includes complete historical data migration from JSON files to RentLedger (58 historical records from `data/rent_history/`).
     * **JSON Files:** The `data/rent_history/` directory is preserved for migration purposes and as backup reference, but the database is now the single source of truth.
@@ -175,28 +182,28 @@ This section summarizes non-obvious architectural choices and important lessons 
         *   **Transactional Integrity:** Ensures that updates to rent data are atomic, reducing risks of corruption.
         *   **Historical Integrity:** All historical calculations are migrated with corrected CONFIG PERIOD MONTH semantics.
 
-2.  **API Route Registration**: A critical bug was caused by a missing route definition in `json_server.rb`. Although logic existed in the handler, the server returned a 404 because the route was not registered. **All API endpoints must be explicitly handled.**
+3.  **API Route Registration**: A critical bug was caused by a missing route definition in `json_server.rb`. Although logic existed in the handler, the server returned a 404 because the route was not registered. **All API endpoints must be explicitly handled.**
 
-3.  **Vite Proxy for Backend APIs**: The frontend dev server (`vite.config.ts`) must be configured to proxy both standard API calls (`/api`) and WebSocket connections (`/handbook/ws`) to the backend Ruby server to work in a local development environment.
+4.  **Vite Proxy for Backend APIs**: The frontend dev server (`vite.config.ts`) must be configured to proxy both standard API calls (`/api`) and WebSocket connections (`/handbook/ws`) to the backend Ruby server to work in a local development environment.
 
 ### Data Handling & Integration
 
-4.  **Data Structure Consistency (Frontend/Backend)**: The structure of JSON objects returned by the API must exactly match the TypeScript interfaces expected by React components. A mismatch (e.g., `Total` vs `total`) can cause silent failures where data appears as `0` or `null`.
+5.  **Data Structure Consistency (Frontend/Backend)**: The structure of JSON objects returned by the API must exactly match the TypeScript interfaces expected by React components. A mismatch (e.g., `Total` vs `total`) can cause silent failures where data appears as `0` or `null`.
 
-5.  **Ruby Hash Keys: String vs. Symbol**: A recurring source of subtle bugs. For any data passed from an external source (like an API handler) into core business logic, keys must be consistently transformed to symbols using `transform_keys(&:to_sym)`.
+6.  **Ruby Hash Keys: String vs. Symbol**: A recurring source of subtle bugs. For any data passed from an external source (like an API handler) into core business logic, keys must be consistently transformed to symbols using `transform_keys(&:to_sym)`.
 
-6.  **Historical Data Correction (`json_server.rb`)**
+7.  **Historical Data Correction (`json_server.rb`)**
     *   **Problem:** The `Tenant` table in the database lacked accurate `startDate` and `departureDate` information, leading to incorrect filtering in the rent forecast.
     *   **Solution:** A `startDate` column was added via a Prisma migration. A one-time data correction script was added to `json_server.rb` to run on startup, ensuring that the database is always populated with the correct historical timeline for all tenants. This makes the system resilient to database resets during development.
 
 ### Database & Environment
 
-7.  **Database Cleaning for Tests**: When using `TRUNCATE` to clean a PostgreSQL database between RSpec tests, the `TRUNCATE TABLE "MyTable" RESTART IDENTITY CASCADE;` command is essential to handle foreign key constraints correctly.
+8.  **Database Cleaning for Tests**: When using `TRUNCATE` to clean a PostgreSQL database between RSpec tests, the `TRUNCATE TABLE "MyTable" RESTART IDENTITY CASCADE;` command is essential to handle foreign key constraints correctly.
 
-8.  **Ruby `pg` Gem and `DATABASE_URL`**
+9.  **Ruby `pg` Gem and `DATABASE_URL`**
     *   The Ruby `pg` gem does not support the `?schema=public` parameter in the `DATABASE_URL` string, which is often added by Prisma. This causes a `PG::Error: invalid URI query parameter` on connection. The parameter must be removed from the `.env` file for the Ruby backend to connect.
 
-9.  **Frontend Dependencies & Environment**
+10. **Frontend Dependencies & Environment**
     *   **React 19 & `react-facebook-login`:** The legacy `react-facebook-login` package is incompatible with React 19. It was replaced with the maintained `@greatsumini/react-facebook-login` fork.
     *   **Facebook SDK Initialization:** The error `FB.login() called before FB.init()` occurs when the Facebook SDK is not initialized with a valid App ID.
     *   **Solution:** The App ID must be provided via a `VITE_FACEBOOK_APP_ID` environment variable. For local development, this should be placed in an untracked `handbook/frontend/.env.local` file.

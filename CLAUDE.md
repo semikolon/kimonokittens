@@ -176,6 +176,17 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 ---
 
+## ⚡ Electricity Invoice Automation
+
+**Status**: ✅ **PRODUCTION** (Oct 24, 2025) - Dual-scraper system with daily cron
+**Documentation**: `docs/ELECTRICITY_AUTOMATION_COMPLETION_SUMMARY.md`, `docs/PRODUCTION_CRON_DEPLOYMENT.md`
+
+**Architecture**: Vattenfall (3am) + Fortum (4am) scrapers → `ApplyElectricityBill` service → auto-update RentConfig
+**Features**: Peak/off-peak pricing, smart adaptive projection, automatic bill deduplication, timezone-normalized storage
+**Cron**: `/home/kimonokittens/Projects/kimonokittens/bin/fetch_vattenfall_data.sh` + `fetch_fortum_data.sh`
+
+---
+
 ## 🏗️ Repository Architecture Pattern
 
 **Status**: ✅ **PRODUCTION READY** (October 2025) - Full domain model migration complete
@@ -386,7 +397,8 @@ sudo systemctl restart kimonokittens-dashboard
   - Development: `bundle install` after Gemfile changes → commit BOTH Gemfile + Gemfile.lock
   - Production: `bundle install --deployment` (frozen mode - lockfile must match exactly)
   - If deployment fails: Fix in development, update lockfile, commit both files
-  - No self-healing - deployment only succeeds if lockfile is correct
+  - No self-healing - deployment only succeeds if lockfile is correct (Oct 24, 2025)
+- **pdf-reader removed** - Scrapers use Ferrum browser automation, not PDF parsing (Oct 25, 2025)
 - **No database changes via webhook** - Migrations are manual (run `production_migration.rb`)
 
 ---
