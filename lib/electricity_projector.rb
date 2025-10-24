@@ -321,10 +321,10 @@ class ElectricityProjector
       date.year == year && date.month == month
     end
 
-    # Convert to our format
+    # Convert to our format (normalize to UTC for consistent matching)
     month_data.map do |hour|
       {
-        timestamp: DateTime.parse(hour['date']).iso8601,
+        timestamp: DateTime.parse(hour['date']).new_offset(0).iso8601,
         kwh: hour['consumption'].to_f
       }
     end
@@ -355,7 +355,8 @@ class ElectricityProjector
 
           # API returns: [{"time_start": "2025-10-24T00:00:00+02:00", "SEK_per_kWh": 0.542}, ...]
           day_prices.each do |hour_data|
-            timestamp = DateTime.parse(hour_data['time_start']).iso8601
+            # Normalize to UTC for consistent matching with consumption data
+            timestamp = DateTime.parse(hour_data['time_start']).new_offset(0).iso8601
             price = hour_data['SEK_per_kWh'].to_f  # Already includes VAT
             prices[timestamp] = price
           end

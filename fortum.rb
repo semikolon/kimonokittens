@@ -411,7 +411,8 @@ class FortumScraper
           if month_year_match
             month_name = month_year_match[1].downcase
             year = month_year_match[2].to_i
-            status = lines[1].match?(/betald/i) ? 'Betald' : 'Obetald'
+            # Check "Obetald" first since /betald/i matches BOTH "Betald" and "Obetald"
+            status = lines[1].match?(/obetald/i) ? 'Obetald' : 'Betald'
             amount_text = lines[2]
           end
         elsif lines.size == 1
@@ -422,7 +423,8 @@ class FortumScraper
           if match
             month_name = match[1].downcase
             year = match[2].to_i
-            status = match[3].match?(/betald/i) ? 'Betald' : 'Obetald'
+            # Check "Obetald" first since /betald/i matches BOTH "Betald" and "Obetald"
+            status = match[3].match?(/obetald/i) ? 'Obetald' : 'Betald'
             amount_text = match[4].strip + ' kr'
             @logger.debug "  [#{idx}] Parsed: #{month_name} #{year} #{status} #{amount_text}" if @debug
           end
