@@ -21,7 +21,6 @@
 # Created: October 24, 2025 (cloned from vattenfall.rb)
 
 require 'dotenv/load'
-require 'awesome_print'
 require 'json'
 require 'ferrum'
 require 'oj'
