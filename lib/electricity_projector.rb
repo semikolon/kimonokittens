@@ -47,28 +47,24 @@ require_relative 'persistence'
 #   # 4. Projection: 2200 × 0.85 = 1870 kr
 class ElectricityProjector
   # 2025 Electricity Rate Constants
-  # Updated: October 24, 2025
+  # Updated: October 24, 2025 (verified from actual invoices)
   # Review annually: https://www.vattenfalleldistribution.se/kund-i-elnatet/elnatspriser/energiskatt/
 
-  # Energy tax (energiskatt) - verified from Skatteverket
+  # Energy tax (energiskatt) - verified from Skatteverket and invoices
   ENERGY_TAX_EXCL_VAT = 0.439  # kr/kWh (43.9 öre/kWh)
   ENERGY_TAX_INCL_VAT = 0.54875  # kr/kWh (54.875 öre/kWh) = 0.439 × 1.25
 
-  # Grid transfer (elöverföring) - empirically calibrated from historical bills
-  # Note: Vattenfall states "34 öre/kWh incl VAT" but actual billing includes
-  # additional components (capacity fees, distribution costs, etc.)
-  # Empirical validation shows 0.34 kr/kWh excl VAT provides best accuracy
-  GRID_TRANSFER_EXCL_VAT = 0.34  # kr/kWh excluding VAT (empirically validated)
+  # Grid transfer (elöverföring) - from Vattenfall invoices Aug/Sep 2025
+  # Actual rate: 21.40 öre/kWh excluding VAT
+  GRID_TRANSFER_EXCL_VAT = 0.214  # kr/kWh excluding VAT (from invoices)
 
-  # Combined variable rate (transfer + tax, excluding VAT, then apply VAT)
-  KWH_TRANSFER_PRICE = (GRID_TRANSFER_EXCL_VAT + ENERGY_TAX_EXCL_VAT) * 1.25
-  # = (0.34 + 0.439) × 1.25 = 0.974 kr/kWh
-
-  # Fixed monthly fees
-  # TODO: Verify these haven't changed for 2025
-  VATTENFALL_MONTHLY_FEE = 467  # Grid connection fee
-  FORTUM_MONTHLY_FEE = 39       # Trading service fee
-  MONTHLY_FEE = VATTENFALL_MONTHLY_FEE + FORTUM_MONTHLY_FEE  # 506 kr
+  # Fixed monthly fees (verified from invoices)
+  # Vattenfall: 7,080 kr/year = 590 kr/month (grid connection)
+  # Fortum: 31.20 kr/mån + VAT = 39 kr (trading service)
+  # Priskollen: 39.20 kr/mån + VAT = 49 kr (optional add-on we subscribe to)
+  VATTENFALL_MONTHLY_FEE = 590  # Grid connection fee (from invoice)
+  FORTUM_MONTHLY_FEE = 88       # Trading service (39 kr) + Priskollen (49 kr)
+  MONTHLY_FEE = VATTENFALL_MONTHLY_FEE + FORTUM_MONTHLY_FEE  # 678 kr
 
   # API endpoint for spot prices (SE3 region - Stockholm)
   ELPRISET_API_BASE = 'https://www.elprisetjustnu.se/api/v1/prices'
@@ -274,7 +270,7 @@ class ElectricityProjector
       timestamp = hour[:timestamp]
       consumption_kwh = hour[:kwh]
 
-      # Get spot price for this hour (already includes VAT from API)
+      # Get spot price for this hour (EXCLUDES VAT from API)
       spot_price = spot_prices[timestamp]
 
       if spot_price.nil?
@@ -282,8 +278,9 @@ class ElectricityProjector
         next
       end
 
-      # Calculate total price per kWh: spot + (transfer + tax)
-      price_per_kwh = spot_price + KWH_TRANSFER_PRICE
+      # Calculate total price per kWh: (spot + transfer + tax) × VAT
+      # All three components exclude VAT, so add them first then apply 25% VAT
+      price_per_kwh = (spot_price + GRID_TRANSFER_EXCL_VAT + ENERGY_TAX_EXCL_VAT) * 1.25
 
       # Calculate cost for this hour
       hour_cost = consumption_kwh * price_per_kwh
@@ -359,7 +356,7 @@ class ElectricityProjector
           day_prices.each do |hour_data|
             # Normalize to UTC for consistent matching with consumption data
             timestamp = DateTime.parse(hour_data['time_start']).new_offset(0).iso8601
-            price = hour_data['SEK_per_kWh'].to_f  # Already includes VAT
+            price = hour_data['SEK_per_kWh'].to_f  # Excludes VAT (will be added in formula)
             prices[timestamp] = price
           end
         else
