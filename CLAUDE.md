@@ -283,6 +283,7 @@ sudo systemctl restart kimonokittens-dashboard
 - **Symlink .env, don't duplicate** - Single source of truth in `/home/kimonokittens/.env`
 - **Kiosk auto-refresh on frontend deploy** - Webhook restarts kiosk service after rsync
 - **2-minute debounce prevents spam** - Rapid development pushes = one deployment with all changes
+- **Self-healing bundle install** - Webhook automatically handles Gemfile changes (tries `--deployment`, falls back to regular install)
 - **No database changes via webhook** - Migrations are manual (run `production_migration.rb`)
 
 ---

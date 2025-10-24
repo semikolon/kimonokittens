@@ -409,12 +409,20 @@ class DeploymentHandler
 
     # Note: Git pull already done in pull_latest_code() before deployment
 
-    # Install Ruby dependencies
-    unless system('bundle install --deployment --quiet')
-      $logger.error("❌ Bundle install failed")
-      return false
+    # Install Ruby dependencies (self-healing: handles Gemfile changes automatically)
+    # Try deployment mode first (fast path when gems unchanged)
+    unless system('bundle install --deployment --without development test --quiet 2>&1')
+      $logger.warn("⚠️  Deployment mode failed (likely Gemfile changed), retrying with regular install...")
+
+      # Fall back to regular install (updates vendor/bundle when Gemfile changes)
+      unless system('bundle install --without development test')
+        $logger.error("❌ Bundle install failed")
+        return false
+      end
+      $logger.info("✅ Bundle install successful (Gemfile updated)")
+    else
+      $logger.info("✅ Bundle install successful (no changes)")
     end
-    $logger.info("✅ Bundle install successful")
 
     # Reload backend service (graceful restart via USR1 signal to Puma)
     # NOTE: If webhook code itself changed (deployment/*.rb), this runs OLD code!
