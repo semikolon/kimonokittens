@@ -187,6 +187,35 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 ---
 
+## 📊 Quarterly Invoice Auto-Projection System
+
+**Status**: ✅ **PRODUCTION** (Oct 25, 2025) - Proactive growth-adjusted projections
+**Documentation**: `docs/QUARTERLY_INVOICE_RECURRENCE_PLAN.md`
+
+**Architecture**: RentConfig.for_period → QuarterlyInvoiceProjector → Auto-populate when missing
+**Pattern**: Quarterly months (Apr/Jul/Oct) = 3× yearly building operations invoices
+**Growth Rate**: 8.7% annual (2024 → 2025: 7,689 kr → 8,361 kr historical trend)
+**Base Amount**: 2,787 kr (2025 average of all drifträkningar)
+
+**Key Features**:
+- **Proactive auto-population**: Dashboard requests auto-create projections when drift_rakning missing
+- **Growth-adjusted formula**: `2,787 × (1.087 ^ years_forward)` → Apr 2026 = 3,030 kr, Apr 2027 = 3,294 kr
+- **Projection tracking**: Database `isProjection` flag distinguishes actual vs projected invoices
+- **Manual override**: PUT /api/rent/config automatically clears projection flag on updates
+- **API transparency**: `quarterly_invoice_projection` boolean + Swedish disclaimer in messages
+
+**Implementation**:
+- **Service**: `lib/services/quarterly_invoice_projector.rb` (projection calculations)
+- **Model**: `lib/models/rent_config.rb` (auto-population logic in `for_period`)
+- **Repository**: `lib/repositories/rent_config_repository.rb` (`save_with_projection_flag` method)
+- **Handler**: `handlers/rent_calculator_handler.rb` (API response includes projection status)
+
+**Production Data**:
+- Oct 2025: 2,797 kr (actual invoice, isProjection=false) → Nov rent: 7,577 kr/person
+- Apr 2026: 3,029 kr (auto-projected, isProjection=true) → May rent shows disclaimer
+
+---
+
 ## 🏗️ Repository Architecture Pattern
 
 **Status**: ✅ **PRODUCTION READY** (October 2025) - Full domain model migration complete
@@ -439,7 +468,8 @@ db.set_config('el', 2424, Time.new(2025, 9, 1))  # September period
 
 - **Peak/off-peak pricing**: Implemented with 0.6-4.3% winter accuracy (exceeds 5-6% target) - see `docs/ELECTRICITY_AUTOMATION_COMPLETION_SUMMARY.md`
 - **Dual-scraper system**: Vattenfall (3am) + Fortum (4am) cron jobs auto-fetch invoices, aggregate totals, update RentConfig - see `docs/PRODUCTION_CRON_DEPLOYMENT.md`
-- **Rent calculation**: Fully automated from bill arrival through WebSocket broadcast - zero manual intervention needed (after quarterly invoice recurrence is implemented)
+- **Rent calculation**: Fully automated from bill arrival through WebSocket broadcast - zero manual intervention needed
+- **Quarterly invoice auto-projection**: Growth-adjusted projections (8.7% YoY) for Apr/Jul/Oct when actual invoices not yet received - see `docs/QUARTERLY_INVOICE_RECURRENCE_PLAN.md`
 
 ### Electricity Bill Due Date Timing ⚡
 

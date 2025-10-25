@@ -6,29 +6,19 @@
 This document provides a detailed, step-by-step implementation plan for the Kimonokittens monorepo projects. It is designed to be executed by an AI assistant with minimal context loss. Execute tasks sequentially unless marked as `(BLOCKED)`.
 
 ---
-## 🚀 PRODUCTION DEPLOYMENT - Dell Optiplex Kiosk [IN PROGRESS]
+## 🚀 PRODUCTION DEPLOYMENT - Dell Optiplex Kiosk ✅ COMPLETE
 
 **Goal:** Deploy Kimonokittens dashboard as production kiosk on Dell Optiplex
 
-**Status:** Webhook functional, awaiting vite installation fix
+**Status:** ✅ **DEPLOYED** (October 6, 2025) - Webhook operational, kiosk live in hallway
 
-### **Current Status** (October 2, 2025)
-- ✅ **Webhook server:** Running on port 49123, receiving GitHub events
-- ✅ **Ping events:** Responding with 200 OK
-- ✅ **Push events:** Accepting both JSON and form-encoded payloads
-- ✅ **Debouncing:** 2-minute delay prevents deployment spam
-- ✅ **Smart analysis:** Only deploys changed components (frontend/backend)
-- ❌ **BLOCKER:** Frontend builds fail - vite not installed despite `npm ci`
-
-### **Critical Issue: NPM Workspace DevDependencies**
-**Problem:** Running `npm ci` from workspace root installs 200 packages but vite is missing
-**Impact:** All frontend deployments fail at build step
-**Investigation:** npm workspaces + devDependencies interaction issue
-**Next Steps:**
-- Research why vite (in `dashboard/package.json` devDependencies) isn't installed
-- Consider adding vite to root package.json devDependencies
-- Test npm install vs npm ci behavior
-- Evaluate Capistrano or modern deployment alternatives
+### **Current Status** (October 25, 2025)
+- ✅ **Webhook server:** Running on port 49123, smart change detection + debouncing
+- ✅ **Deployment automation:** Push to master → auto-deploy (code only, migrations manual)
+- ✅ **Kiosk hardware:** Dell Optiplex 7010 with GPU acceleration for WebGL shaders
+- ✅ **Production services:** Dashboard (port 3001), nginx, kiosk display all operational
+- ✅ **Database migrations:** Manual via `npx prisma migrate deploy` (by design - safety)
+- ✅ **NPM workspace fix:** Resolved - `npm ci` from project root, not subdirectories
 
 ### **Production Environment Setup**
 - [x] **Run production deployment script**
@@ -529,14 +519,21 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - Handling early departures
   - Partial reimbursements
 
-### Automation
-- [ ] **Automate electricity bill invoice fetching** (extends existing `vattenfall.rb` scraper):
-  - **Vattenfall elnät invoice**: Extend `vattenfall.rb` to also scrape latest monthly invoice PDF/amount from Vattenfall portal
-  - **Fortum elhandel invoice**: Create similar scraper for Fortum to fetch elhandel invoice amount
-  - **Goal**: Eliminate manual input of monthly electricity bills into rent calculator
-  - **Benefit**: Full automation of electricity cost tracking (consumption data already automated via existing cron)
-  - **Technical approach**: Use Ferrum browser automation (same as current Vattenfall consumption scraper)
-  - **Data target**: Write invoice amounts to RentConfig database (key='el') automatically when bills arrive
+### Automation ✅ COMPLETE
+- [x] **Automate electricity bill invoice fetching** - ✅ **DEPLOYED** (Oct 24, 2025):
+  - **Vattenfall elnät invoice**: ✅ Dual-scraper system with `ApplyElectricityBill` service
+  - **Fortum elhandel invoice**: ✅ Both providers scraped daily (3am Vattenfall, 4am Fortum)
+  - **Goal**: ✅ Full automation of monthly electricity bills into rent calculator
+  - **Benefit**: ✅ Zero manual intervention - bills → RentConfig → WebSocket broadcast
+  - **Technical approach**: ✅ Ferrum browser automation with deduplication + aggregation
+  - **Data target**: ✅ ElectricityBill table + auto-aggregated into RentConfig (key='el')
+  - **Cron deployment**: ✅ Production cron jobs running with full logging
+- [x] **Automate quarterly invoice projections** - ✅ **DEPLOYED** (Oct 25, 2025):
+  - **Pattern**: Quarterly months (Apr/Jul/Oct) = 3× yearly building operations invoices
+  - **Auto-projection**: Growth-adjusted (8.7% YoY) when drift_rakning missing
+  - **Projection tracking**: Database `isProjection` flag + API transparency
+  - **Manual override**: PUT endpoint auto-clears projection flag
+  - **API indicator**: `quarterly_invoice_projection` boolean + Swedish disclaimer
 - [ ] Fill in missing electricity bills history (Nov 2024 - Sept 2025) in `electricity_bills_history.txt`
 - [ ] **⚡ CRITICAL: Implement Time-of-Use Grid Pricing (Winter Savings Opportunity)**
   - **Discovery (Oct 24, 2025)**: Vattenfall charges 2.5× higher grid transfer during winter peak hours
