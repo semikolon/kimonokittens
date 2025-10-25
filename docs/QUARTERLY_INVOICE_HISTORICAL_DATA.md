@@ -171,6 +171,53 @@ See `docs/QUARTERLY_INVOICE_RECURRENCE_PLAN.md` for implementation plan:
 
 ---
 
+## Monthly Utilities Rate Analysis
+
+### Current Monthly Collection vs Actual Costs
+
+**Current Monthly Utilities** (building savings for quarterly invoices):
+- Vattenavgift (water): 375 kr/month
+- VA (sewage): 300 kr/month
+- Larm (alarm): 150 kr/month
+- **Total: 825 kr/month** (9,900 kr/year)
+
+**Historical Annual Drifträkning Costs** (all invoices including smaller ones):
+- **2024 Total**: 9,167 kr (1,478 + 2,473 + 2,604 + 2,612)
+- **2025 Total**: 8,933 kr (2,927 + 572 + 2,637 + 2,797)
+- **Average**: 9,050 kr/year (754 kr/month)
+
+**Current Over-Collection**: 850-967 kr/year (8.6-10.8%)
+
+### YoY Growth Analysis & Rate Decision
+
+**Main Quarterly Growth** (Apr/Jul/Oct pattern):
+- 2024: 7,689 kr
+- 2025: 8,361 kr
+- **Growth rate: 8.7% annually**
+
+**5-Year Projection** (assuming 8.7% growth continues):
+
+| Year | Actual Cost | Collected (825/mo) | Buffer | Status |
+|------|-------------|-------------------|--------|---------|
+| 2024 | 9,167 kr    | 9,900 kr          | +733 kr | 8.0% over |
+| 2025 | 8,933 kr    | 9,900 kr          | +967 kr | 10.8% over |
+| 2026 | 9,713 kr    | 9,900 kr          | +187 kr | 1.9% over |
+| 2027 | 10,561 kr   | 9,900 kr          | **-661 kr** | **6.3% under** |
+| 2028 | 11,484 kr   | 9,900 kr          | -1,584 kr | 13.8% under |
+
+**Decision: ✅ NO RATE ADJUSTMENT**
+
+**Rationale**:
+1. Current "over-collection" is consumed within 2-3 years by YoY growth
+2. Buffer exhausted by 2026, deficit begins 2027
+3. Reducing rates now would require rate increase by 2027 (confusing for household)
+4. Current 825 kr/month provides forward-looking prudence against cost escalation
+5. 967 kr annual buffer ≈ 1 year of cost growth cushion
+
+**Conclusion**: Current monthly utilities (825 kr) are appropriate given historical volatility and strong YoY growth trend.
+
+---
+
 ## Data Sources
 
 - Gmail search: `subject:faktura -("24 589") after:2023/1/1`

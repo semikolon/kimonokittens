@@ -8,12 +8,18 @@
 
 ## Executive Summary
 
-Implement automatic quarterly invoice recurrence in the rent calculation system. First occurrence: October 2025 (2,797 kr due Oct 31). Future occurrences: January, April, July, October.
+Implement automatic quarterly invoice recurrence in the rent calculation system. First occurrence: October 2025 (2,797 kr due Oct 31). **Future occurrences: April, July, October** (3× yearly pattern confirmed by 2023-2025 historical data).
 
 **Impact**:
 - November 2025 rent: 28,337 kr → 31,134 kr (7,084 kr → 7,783 kr per person)
 - Eliminates manual quarterly invoice entry
 - Maintains historical pattern (825 kr monthly utilities × 3 = ~2,475 kr quarterly)
+
+**Monthly Utilities Rate Decision**:
+- **NO ADJUSTMENT NEEDED** to current 825 kr/month (vatten 375 + va 300 + larm 150)
+- Current 8.6-10.8% over-collection buffer will be consumed by 8.7% YoY growth within 2-3 years
+- Provides forward-looking prudence against cost escalation (buffer exhausted by 2026, deficit by 2027)
+- See `docs/QUARTERLY_INVOICE_HISTORICAL_DATA.md` for complete analysis
 
 ---
 
@@ -55,10 +61,11 @@ end
 - **Used For**: November 2025 rent (due October 27)
 
 ### Recurrence Schedule
-- **Frequency**: Every 3 months
-- **Months**: January, April, July, October (Q1, Q2, Q3, Q4 endings)
-- **Pattern**: Quarterly building operations costs
-- **Timing**: Typically due last day of quarter month
+- **Frequency**: 3× yearly (NOT 4 quarters)
+- **Months**: April, July, October (confirmed by 2023-2025 historical data)
+- **Pattern**: Building operations costs (water, sewage, alarm, maintenance, property tax)
+- **Timing**: Typically due last day of month (invoices arrive 1-7 days before due date)
+- **No January invoice**: 3 consecutive years (2023-2025) show no January drifträkning
 
 ### Amount Variability
 - **Historical average**: ~2,600 kr
@@ -91,7 +98,7 @@ end
 ```ruby
 # In handlers/rent_calculator_handler.rb
 def validate_quarterly_invoice_presence(year, month)
-  quarterly_months = [1, 4, 7, 10]  # Jan, Apr, Jul, Oct
+  quarterly_months = [4, 7, 10]  # Apr, Jul, Oct (3× yearly confirmed pattern)
 
   if quarterly_months.include?(month)
     config = extract_config(year: year, month: month)
@@ -184,7 +191,7 @@ curl -s 'http://localhost:3001/api/rent/friendly_message' | jq -r '.message'
 ```ruby
 # Quarterly invoice validation service
 class QuarterlyInvoiceValidator
-  QUARTERLY_MONTHS = [1, 4, 7, 10].freeze  # Jan, Apr, Jul, Oct
+  QUARTERLY_MONTHS = [4, 7, 10].freeze  # Apr, Jul, Oct (3× yearly confirmed pattern)
   HISTORICAL_AVERAGE = 2700  # Updated as more data available
 
   def self.validate(year:, month:)
