@@ -68,6 +68,13 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 - `deployment/DEPLOYMENT_CHECKLIST.md` (step-by-step)
 - `deployment/SIMPLIFIED_ARCHITECTURE.md` (technical details)
 
+### **Production Environment Access Investigation**
+- [ ] **Research optimal deployment/server environment** for Claude Code + production database access
+- [ ] **Evaluate options**: Install CC for kimonokittens user vs fredrik user access patterns vs API-based verification tools
+- [ ] **Consider**: `/api/electricity_bills` endpoint to simplify verification without direct DB queries
+
+**Priority**: MEDIUM - Improves debugging and verification workflows
+
 ---
 
 ## 🌙 Dashboard Sleep Schedule Feature ✅ PRODUCTION READY

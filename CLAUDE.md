@@ -433,6 +433,14 @@ db.set_config('el', 2424, Time.new(2025, 9, 1))  # September period
 **Arrears Payments**:
 - **Electricity** (`el`): September consumption bills
 
+### Electricity Automation Status ⚡
+
+**Status**: ✅ **FULLY AUTOMATED** (Oct 24, 2025) - No manual entry required for rent calculations
+
+- **Peak/off-peak pricing**: Implemented with 0.6-4.3% winter accuracy (exceeds 5-6% target) - see `docs/ELECTRICITY_AUTOMATION_COMPLETION_SUMMARY.md`
+- **Dual-scraper system**: Vattenfall (3am) + Fortum (4am) cron jobs auto-fetch invoices, aggregate totals, update RentConfig - see `docs/PRODUCTION_CRON_DEPLOYMENT.md`
+- **Rent calculation**: Fully automated from bill arrival through WebSocket broadcast - zero manual intervention needed (after quarterly invoice recurrence is implemented)
+
 ### Electricity Bill Due Date Timing ⚡
 
 **CRITICAL: Bills have variable due dates that determine WHICH CONFIG PERIOD uses them.**
