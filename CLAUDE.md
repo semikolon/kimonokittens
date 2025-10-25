@@ -489,6 +489,8 @@ end
 - **Logic**: 825 kr × 3 months = 2,475 kr ≈ quarterly invoice amount
 - **When quarterly arrives**: Replaces monthly utilities for that month
 
+**Alarm System (Larm)**: Verisure pre-installed system in building, mandatory cost, cannot be removed. Household doesn't use it, but equipment remains installed. Initially separate billing (597 kr/quarter early 2023), now consolidated into Bostadsagenturen quarterly invoice.
+
 **Example:** September 27 payment covers:
 - October base rent (advance) + October utilities (savings) + September electricity (arrears)
 - OR October base rent (advance) + Q4 quarterly invoice (if it arrives) + September electricity (arrears)
