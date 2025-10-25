@@ -289,7 +289,7 @@ class RentCalculatorHandler
     repo = Persistence.rent_configs
 
     updates.each do |key, value|
-      repo.create_config(key, value.to_s, period)
+      repo.upsert(key: key, value: value.to_s, period: period)
     end
 
     $pubsub&.publish('rent_data_updated')
@@ -395,8 +395,18 @@ class RentCalculatorHandler
       {}
     end
 
-    # If drift_rakning is present and non-zero, it replaces monthly fees.
+    # Check if drift_rakning is a projection (for API response transparency)
+    @drift_rakning_is_projection = false
     if config_hash[:drift_rakning] && config_hash[:drift_rakning].to_f > 0
+      # Query database to check projection status
+      drift_config = repo.find_by_key_and_period('drift_rakning', Time.utc(year, month, 1))
+      if drift_config
+        # Access isProjection from database record
+        row = repo.dataset.where(id: drift_config.id).first
+        @drift_rakning_is_projection = row[:isProjection] if row
+      end
+
+      # If drift_rakning is present and non-zero, it replaces monthly fees.
       config_hash.delete(:vattenavgift)
       config_hash.delete(:va)
       config_hash.delete(:larm)
@@ -567,6 +577,11 @@ class RentCalculatorHandler
         config: config
       )
 
+      # Add projection indicator to message if quarterly invoice is projected
+      if @drift_rakning_is_projection
+        friendly_text += "\n_(uppskattad drifträkning - väntar på faktisk faktura)_"
+      end
+
       # Get electricity amount and target month for the suffix
       electricity_amount = config[:el].to_i
       target_month = month - 1
@@ -598,7 +613,8 @@ class RentCalculatorHandler
         data_source: data_source,
         electricity_amount: electricity_amount,
         electricity_month: target_month_name,
-        heating_cost_line: heating_cost_data[:line]
+        heating_cost_line: heating_cost_data[:line],
+        quarterly_invoice_projection: @drift_rakning_is_projection || false
       }
 
       [200, { 'Content-Type' => 'application/json' }, [result.to_json]]

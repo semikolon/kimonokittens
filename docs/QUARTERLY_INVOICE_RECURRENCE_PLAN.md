@@ -303,17 +303,192 @@ end
 
 ## Deployment Strategy
 
-### Production Deployment
+### Production Deployment - Detailed Instructions
 
-**Order**:
-1. **Immediate**: Manually set October 2025 drift_rakning via API (Phase 1)
-2. **Next week**: Deploy QuarterlyInvoiceValidator service (Phase 2)
-3. **Following week**: Deploy dashboard warning UI (Phase 3)
+**Status**: ✅ Auto-population implemented (proactive projections)
+**Production Environment**: Dell OptiPlex kiosk (hostname: `pop`)
+**API Access**: Available from Mac via LAN at `http://pop:3001`
 
-**Rollback Plan**:
-- Phase 1: Delete drift_rakning from October config if incorrect
-- Phase 2: No database changes - remove validator calls from API
-- Phase 3: Remove warning component from dashboard
+---
+
+#### **Step 1: Deploy Code Changes via Webhook**
+
+Code changes will auto-deploy via GitHub webhook. Simply push to master:
+
+```bash
+# From Mac dev environment
+git push origin master
+```
+
+**Webhook will automatically**:
+1. Pull latest code from GitHub
+2. Run `bundle install` (installs new services)
+3. Restart backend API (loads new RentConfig auto-population logic)
+4. Reload dashboard
+
+**Verify webhook deployment**:
+```bash
+# Check webhook logs
+ssh pop
+journalctl -u kimonokittens-webhook -f
+```
+
+---
+
+#### **Step 2: Run Database Migration (SSH to Production)**
+
+The `isProjection` column must be added to production database:
+
+```bash
+# SSH to kiosk as kimonokittens user
+ssh kimonokittens@pop
+
+# Navigate to project directory
+cd Projects/kimonokittens
+
+# Run Prisma migration
+npx prisma migrate deploy
+# This applies: prisma/migrations/20251025000000_add_is_projection_to_rent_config/migration.sql
+
+# Verify column was added
+psql kimonokittens_production -c "\d \"RentConfig\""
+# Should show: isProjection | boolean | not null | false
+
+# Exit SSH
+exit
+```
+
+**If migration fails**, manually run SQL:
+```bash
+ssh kimonokittens@pop
+psql kimonokittens_production -c "ALTER TABLE \"RentConfig\" ADD COLUMN \"isProjection\" BOOLEAN NOT NULL DEFAULT false;"
+```
+
+---
+
+#### **Step 3: Update October 2025 Config (API Call from Mac)**
+
+October 2025 config already exists with `drift_rakning=0`. Update it to actual invoice amount:
+
+```bash
+# From Mac (API accessible via LAN)
+curl -X PUT 'http://pop:3001/api/rent/config' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "year": 2025,
+    "month": 10,
+    "updates": {
+      "drift_rakning": 2797
+    }
+  }'
+
+# Expected response:
+# {"status":"success","updated":["drift_rakning"]}
+```
+
+**This upsert will**:
+1. Update existing October 2025 config
+2. Set `drift_rakning=2797`
+3. Automatically set `isProjection=false` (manual update = actual value)
+
+---
+
+#### **Step 4: Trigger Dashboard Reload**
+
+```bash
+# From Mac
+curl -X POST 'http://pop:3001/api/reload'
+
+# Expected response:
+# {"success":true,"message":"Reload triggered"}
+```
+
+---
+
+#### **Step 5: Verify Production Rent Calculation**
+
+```bash
+# From Mac - Check November 2025 rent
+curl -s 'http://pop:3001/api/rent/friendly_message' | jq '.'
+
+# Expected output:
+# {
+#   "message": "*Hyran för november 2025* ska betalas innan 27 okt\n*7783 kr* för alla",
+#   "year": 2025,
+#   "month": 10,
+#   "quarterly_invoice_projection": false,  # <-- NOT a projection (actual invoice)
+#   "electricity_amount": 2581,
+#   "data_source": { "type": "actual", ... }
+# }
+```
+
+**Check April 2026 projection** (auto-populated):
+```bash
+curl -s 'http://pop:3001/api/rent/friendly_message?year=2026&month=4' | jq '.'
+
+# Expected output:
+# {
+#   "message": "*Hyran för maj 2026* ska betalas innan 27 apr\n*7845 kr* för alla\n_(uppskattad drifträkning - väntar på faktisk faktura)_",
+#   "quarterly_invoice_projection": true,  # <-- Auto-projected
+#   ...
+# }
+```
+
+---
+
+#### **Step 6: Verify Database State (SSH)**
+
+```bash
+ssh kimonokittens@pop
+cd Projects/kimonokittens
+
+# Check October 2025 (actual invoice)
+ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; db = RentDb.instance; db.get_rent_config(year: 2025, month: 10).each { |r| puts '  ' + r['key'] + ': ' + r['value'] }"
+
+# Expected:
+#   drift_rakning: 2797   <-- Actual invoice
+#   el: 2581
+#   (other fields...)
+
+# Check if projection flag is set correctly
+psql kimonokittens_production -c "SELECT key, value, period, \"isProjection\" FROM \"RentConfig\" WHERE key='drift_rakning' AND period='2025-10-01';"
+
+# Expected:
+#  key          | value | period     | isProjection
+# --------------+-------+------------+--------------
+#  drift_rakning | 2797  | 2025-10-01 | f             <-- FALSE (actual)
+
+exit
+```
+
+---
+
+### Rollback Plan
+
+**If auto-population causes issues**:
+
+1. **Disable auto-population** (edit on Mac, push to master):
+   ```ruby
+   # In lib/models/rent_config.rb:115-122
+   # Comment out auto-population logic:
+   if key == 'drift_rakning' && (!config || config.value.to_i == 0)
+     # DISABLED: config = auto_populate_quarterly_projection(...)
+   end
+   ```
+
+2. **Remove projection column** (SSH to production):
+   ```bash
+   ssh kimonokittens@pop
+   psql kimonokittens_production -c "ALTER TABLE \"RentConfig\" DROP COLUMN \"isProjection\";"
+   ```
+
+3. **Verify rollback**:
+   ```bash
+   curl -s 'http://pop:3001/api/rent/friendly_message' | jq '.quarterly_invoice_projection'
+   # Should return: false (or field missing)
+   ```
+
+---
 
 ### Future Quarterly Invoices
 

@@ -76,6 +76,9 @@ class RentConfig
   #
   # PRESERVED LOGIC from rent_db.rb:152-184 (CRITICAL - DO NOT MODIFY)
   #
+  # **AUTO-POPULATION**: Quarterly invoice projections (drift_rakning) are automatically
+  # created for quarterly months (Apr/Jul/Oct) when no actual value exists.
+  #
   # @param year [Integer] The configuration period year
   # @param month [Integer] The configuration period month (1-12)
   # @param repository [RentConfigRepository] Repository instance
@@ -87,7 +90,14 @@ class RentConfig
   #   config = RentConfig.for_period(year: 2025, month: 9, repository: repo)
   #   config['el']  # => "2424" (September electricity bills)
   #   config['kallhyra']  # => "24530" (October base rent)
+  #
+  # @example Quarterly projection auto-population
+  #   config = RentConfig.for_period(year: 2026, month: 4, repository: repo)
+  #   # Auto-creates drift_rakning: 3030 (projected) if not exists
+  #   config['drift_rakning']  # => "3030" (growth-adjusted projection)
   def self.for_period(year:, month:, repository:)
+    require_relative '../services/quarterly_invoice_projector'
+
     target_date = Date.new(year, month, 1)
     target_time = Time.utc(year, month, 1)
     end_of_month = (target_date.next_month - 1).to_time.utc
@@ -96,8 +106,21 @@ class RentConfig
 
     # Period-specific keys: exact match only, no carry-forward
     # PRESERVED from rent_db.rb:161-168
+    #
+    # ENHANCED: Auto-populate quarterly invoice projections
     PERIOD_SPECIFIC_KEYS.each do |key|
       config = repository.find_by_key_and_period(key, target_time)
+
+      # Auto-populate quarterly invoice projection if missing
+      if key == 'drift_rakning' && (!config || config.value.to_i == 0)
+        config = auto_populate_quarterly_projection(
+          year: year,
+          month: month,
+          repository: repository,
+          target_time: target_time
+        )
+      end
+
       value = config ? config.value : '0'
       result[key] = value
     end
@@ -112,6 +135,46 @@ class RentConfig
     end
 
     result
+  end
+
+  # Auto-populate quarterly invoice projection if needed
+  #
+  # Creates a projected drift_rakning value for quarterly months (Apr/Jul/Oct)
+  # using growth-adjusted calculations from QuarterlyInvoiceProjector.
+  #
+  # @param year [Integer] Target year
+  # @param month [Integer] Target month
+  # @param repository [RentConfigRepository] Repository to save projection
+  # @param target_time [Time] Normalized period time
+  # @return [RentConfig, nil] Created projection config or nil if not needed
+  #
+  # @example April 2026 projection
+  #   config = auto_populate_quarterly_projection(
+  #     year: 2026,
+  #     month: 4,
+  #     repository: repo,
+  #     target_time: Time.utc(2026, 4, 1)
+  #   )
+  #   config.value  # => "3030" (growth-adjusted projection)
+  def self.auto_populate_quarterly_projection(year:, month:, repository:, target_time:)
+    # Only auto-populate for quarterly months
+    return nil unless QuarterlyInvoiceProjector.quarterly_month?(month)
+
+    # Calculate projection
+    projection = QuarterlyInvoiceProjector.calculate_projection(year: year, month: month)
+    return nil unless projection
+
+    # Create RentConfig domain object
+    config = RentConfig.new(
+      key: 'drift_rakning',
+      value: projection[:amount].to_s,
+      period: target_time
+    )
+
+    # Save to database with is_projection flag
+    saved_config = repository.save_with_projection_flag(config, is_projection: true)
+
+    saved_config
   end
 
   def to_s

@@ -115,7 +115,29 @@ class RentConfigRepository < BaseRepository
     )
   end
 
+  # Save config with projection flag (for auto-populated quarterly invoices)
+  # @param config [RentConfig] Configuration to persist
+  # @param is_projection [Boolean] Whether this is a projected value
+  # @return [RentConfig] Config with ID assigned
+  def save_with_projection_flag(config, is_projection:)
+    data = dehydrate(config).merge(isProjection: is_projection)
+    id = dataset.insert(data)
+
+    RentConfig.new(
+      id: id,
+      key: config.key,
+      value: config.value,
+      period: config.period,
+      created_at: now_utc,
+      updated_at: now_utc
+    )
+  end
+
   # Upsert configuration value for a period (creates or updates existing record)
+  #
+  # When updating an existing record, automatically clears isProjection flag
+  # (manual updates are considered actual values, not projections)
+  #
   # @param key [String] Configuration key
   # @param value [String, Numeric] Configuration value
   # @param period [Time, Date, String] Configuration period
@@ -128,6 +150,7 @@ class RentConfigRepository < BaseRepository
     if existing
       dataset.where(id: existing[:id]).update(
         value: value.to_s,
+        isProjection: false,  # Manual update = actual value, not projection
         updatedAt: now_utc
       )
 

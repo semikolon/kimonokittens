@@ -30,12 +30,13 @@ model ElectricityBill {
 }
 
 model RentConfig {
-  id        String   @id @default(cuid())
-  key       String
-  value     String
-  period    DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  key           String
+  value         String
+  period        DateTime @default(now())
+  isProjection  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@unique([key, period])
   @@index([key, period(sort: Desc)])
