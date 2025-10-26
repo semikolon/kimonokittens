@@ -1036,6 +1036,38 @@ curl http://localhost:49123/status | jq '{pending: .deployment.pending, time_rem
 
 **Note**: Webhook logs application output to `/var/log/kimonokittens/webhook.log`, not systemd journal. Use `tail -f` on the log file to see deployment progress, bundle install status, and errors.
 
+### GitHub Webhook Debugging (gh CLI)
+
+**Check webhook status and recent deliveries:**
+```bash
+# List all webhooks with status
+gh api repos/:owner/:repo/hooks | jq '.[] | {id, active, url: .config.url, last_response}'
+
+# Check specific webhook status (ID: 572892196)
+gh api repos/:owner/:repo/hooks/572892196 | jq '{id, active, last_response, events}'
+
+# View recent webhook deliveries (last 20)
+gh api repos/:owner/:repo/hooks/572892196/deliveries | jq '.[] | {delivered_at, status_code, status, event}' | head -20
+
+# Get detailed error from specific delivery
+gh api repos/:owner/:repo/hooks/572892196/deliveries/DELIVERY_ID | jq '{status: .status_code, request: .request.headers, response: .response}'
+
+# Latest delivery summary
+gh api repos/:owner/:repo/hooks/572892196/deliveries | jq -r '.[0] | "Latest: \(.delivered_at) - Status: \(.status_code) - \(.status)"'
+```
+
+**Common webhook issues:**
+- **500 errors**: Git pull failed (check file ownership, untracked files, or dirty git state)
+- **502 errors**: Webhook service down or network unreachable
+- **No deliveries**: GitHub may have disabled webhook after repeated failures
+
+**Recovery steps** (Oct 26, 2025 incident):
+1. **Check git ownership**: `ls -l /home/kimonokittens/Projects/kimonokittens/.git/index` (should be kimonokittens:kimonokittens)
+2. **Fix ownership**: `sudo chown -R kimonokittens:kimonokittens /home/kimonokittens/Projects/kimonokittens/.git`
+3. **Check untracked files**: `cd /home/kimonokittens/Projects/kimonokittens && git status --porcelain` (should be empty or only ignored files)
+4. **Test git pull**: `cd /home/kimonokittens/Projects/kimonokittens && git pull origin master`
+5. **Monitor next push**: `tail -f /var/log/kimonokittens/webhook.log` while pushing from dev machine
+
 ### Future-Proofing
 
 The Puma architecture is designed for:
