@@ -513,13 +513,21 @@ background: chunk.type === 'high'
 **Formula (backend: `handlers/electricity_stats_handler.rb:256-260`):**
 ```ruby
 consumption_diff = actual_consumption - expected_consumption  # kWh
-cost_impact = (consumption_diff * price_per_kwh).round(1)    # SEK
+cost_impact = (consumption_diff * price_per_kwh).round(1)    # SEK (variable cost ONLY)
 ```
 
-**Price components:**
-- Spot price: Variable hourly rate from Tibber API (~0.50-1.50 kr/kWh)
-- Transfer price: `(0.09 + 0.392) × 1.25 = 0.6025 kr/kWh` (Vattenfall network + energy tax + VAT)
-- Total: ~1.10-2.10 kr/kWh depending on spot price
+**CRITICAL: Variable cost only, NOT fixed fees!**
+- Anomalies visualize CONSUMPTION deviations from regression baseline
+- Cost impact reflects variable cost: excess_kWh × (spot + transfer + tax) × VAT
+- Fixed monthly fees (678 kr: Vattenfall 590 + Fortum 88) NOT included
+- Fixed fees appear in total monthly costs, not anomaly impacts
+
+**Price components (updated Oct 24-26, 2025):**
+- Spot price: Variable hourly rate from elprisetjustnu.se API (~0.50-1.50 kr/kWh excl VAT)
+- Grid transfer: 0.536 kr/kWh (peak) or 0.214 kr/kWh (off-peak) excl VAT
+- Energy tax: 0.439 kr/kWh excl VAT
+- Formula: `(spot + transfer + tax) × 1.25` = ~1.50-2.50 kr/kWh incl VAT
+- Peak/off-peak: 2.5× rate difference (winter weekdays 06:00-22:00 vs other times)
 
 **Per-day calculation then summed in frontend:**
 ```typescript
