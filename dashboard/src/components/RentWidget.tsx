@@ -396,35 +396,15 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
     }
   })
 
-  // Step 2: One-pass sequential layout (no iteration, no cascade effects)
+  // Step 2: Use midpoint-based positions directly (aligned with sparkline)
   const chunksWithPositions = [...chunksWithInitialPositions]
 
-  // Sort by midpoint date (left to right)
+  // Sort for rendering order
   chunksWithPositions.sort((a, b) => a.leftPercent - b.leftPercent)
 
-  // Calculate adaptive gap
-  const totalWidthNeeded = chunksWithPositions.reduce((sum, chunk) => sum + chunk.widthPercent, 0)
-  const availableSpace = 100 - totalWidthNeeded
-  const numGaps = chunksWithPositions.length - 1
-  const idealGap = numGaps > 0 ? availableSpace / numGaps : 0
-  const MIN_GAP = 0 // No minimum gap - px-2 padding provides text separation, backgrounds can overlap
-  const targetGap = Math.max(MIN_GAP, idealGap)
-
-  console.log(`One-pass layout: ${targetGap.toFixed(2)}% gap (ideal: ${idealGap.toFixed(2)}%), ${chunksWithPositions.length} chunks, ${totalWidthNeeded.toFixed(1)}% width)`)
-
-  // Place chunks sequentially left-to-right with guaranteed gaps
-  let currentLeft = 0 // Start at left edge
-
-  chunksWithPositions.forEach((chunk, i) => {
-    // Position chunk at current left
-    chunk.leftPercent = currentLeft
-
-    // Advance current left for next chunk
-    currentLeft += chunk.widthPercent + targetGap
-  })
-
-  // No compression - chunks can extend beyond 100% as long as text is readable
-  // User confirmed: backgrounds can overlap/extend, only text legibility matters
+  // No sequential repositioning - chunks stay at their natural calendar positions
+  // px-2 padding provides text separation, backgrounds can overlap naturally
+  console.log(`Midpoint alignment: ${chunksWithPositions.length} chunks at natural positions`)
 
   // Debug logging for cost verification and positioning
   console.log('Anomaly chunks with absolute positions:', chunksWithPositions.map(c => ({

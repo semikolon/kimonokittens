@@ -133,12 +133,12 @@ export function ClockWidget() {
       </div>
 
       {/* Logo positioned within widget boundaries */}
-      <div className="flex-shrink-0 w-3/5 max-w-full flex items-end justify-end relative" style={{ zIndex: 10, marginTop: '300px' }}>
+      <div className="flex-shrink-0 w-3/5 max-w-full flex items-end justify-end relative" style={{ zIndex: 50, marginTop: '300px' }}>
         <img
           src="/logo.png"
           alt="Kimonokittens"
           className="w-full h-auto object-contain transform translate-x-20 translate-y-16"
-          style={{ zIndex: 10 }}
+          style={{ zIndex: 50 }}
         />
       </div>
     </div>
