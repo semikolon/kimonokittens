@@ -8,7 +8,7 @@ import { WeatherWidget } from './components/WeatherWidget'
 import { TemperatureWidget } from './components/TemperatureWidget'
 import { TrainWidget } from './components/TrainWidget'
 import { StravaWidget } from './components/StravaWidget'
-import { RentWidget } from './components/RentWidget'
+import { RentWidget, AnomalySparklineBar } from './components/RentWidget'
 import { DeploymentBanner } from './components/DeploymentBanner'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import AnoAI from './components/ui/animated-shader-background'
@@ -74,7 +74,7 @@ function BackendErrorMessage() {
 
 function BackendDataWidgets() {
   const { state } = useData()
-  const { connectionStatus, trainData, temperatureData, weatherData, stravaData, rentData, todoData } = state
+  const { connectionStatus, trainData, temperatureData, weatherData, stravaData, rentData, todoData, electricityDailyCostsData } = state
 
   const isConnected = connectionStatus === 'open'
   const hasAnyData = trainData || temperatureData || weatherData || stravaData || rentData || todoData
@@ -121,6 +121,20 @@ function BackendDataWidgets() {
           </ErrorBoundary>
         </Widget>
       </div>
+
+      {/* Electricity anomaly bar - standalone section between rent and strava */}
+      {electricityDailyCostsData?.summary?.anomaly_summary && (
+        <div className="mb-12">
+          <Widget accent={true} className="w-full">
+            <ErrorBoundary resetKeys={[electricityDailyCostsData?.generated_at]}>
+              <AnomalySparklineBar
+                anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
+                regressionData={electricityDailyCostsData.summary.regression_data}
+              />
+            </ErrorBoundary>
+          </Widget>
+        </div>
+      )}
 
       {/* Full-width Strava section */}
       <div className="mb-12">

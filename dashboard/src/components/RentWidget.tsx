@@ -154,7 +154,7 @@ function AnomalySummaryText({ anomalySummary }: {
 }
 
 // Anomaly Sparkline Bar - Visual representation of electricity usage anomalies
-function AnomalySparklineBar({ anomalySummary, regressionData }: {
+export function AnomalySparklineBar({ anomalySummary, regressionData }: {
   anomalySummary?: {
     total_anomalies: number
     anomalous_days: Array<{
@@ -462,7 +462,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
       const p3 = points[Math.min(i + 2, points.length - 1)]
 
       // Calculate control points for smooth curve
-      const tension = 0.05 // Adjust smoothness (0 = sharp corners, 1 = very smooth)
+      const tension = 0.2 // Adjust smoothness (0 = sharp corners, 1 = very smooth)
 
       const cp1x = p1.x + (p2.x - p0.x) * tension
       const cp1y = p1.y + (p2.y - p0.y) * tension
@@ -597,14 +597,6 @@ export function RentWidget() {
 
   return (
     <div>
-      {/* Anomaly sparkline bar - visual representation of detected anomalies */}
-      {electricityDailyCostsData?.summary?.anomaly_summary && (
-        <AnomalySparklineBar
-          anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
-          regressionData={electricityDailyCostsData.summary.regression_data}
-        />
-      )}
-
       {header && (
         <div className="text-purple-200 mb-3 leading-relaxed">
           {parseMarkdown(header)}

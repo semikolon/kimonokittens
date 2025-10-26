@@ -572,7 +572,7 @@ export function TrainWidget() {
                 <LayoutGroup>
                   <AnimatePresence mode="popLayout">
                     {feasibleTrains
-                      .slice(0, 4)
+                      .slice(0, feasibleDeviations.length > 0 ? 3 : 4)
                       .map((train, index) => {
                       const trainId = generateTrainId(train)
                       const isRedTinted = shineAnimatedTrains.get(trainId) // undefined if not animating, true if red, false if orange
