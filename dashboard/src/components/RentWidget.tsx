@@ -334,19 +334,47 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
 
   // Generate continuous sparkline from full regression data (all 90 days)
   const generateSparkline = () => {
-    if (!regressionData || regressionData.length === 0) return ''
+    if (!regressionData || regressionData.length === 0) {
+      console.log('No regression data for sparkline')
+      return ''
+    }
+
+    console.log('Regression data:', {
+      length: regressionData.length,
+      first: regressionData[0],
+      last: regressionData[regressionData.length - 1],
+      sample: regressionData.slice(0, 5)
+    })
 
     const width = 100
     const totalDays = regressionData.length
 
+    // Find min/max excess_pct for scaling
+    const excessValues = regressionData.map(d => d.excess_pct)
+    const minExcess = Math.min(...excessValues)
+    const maxExcess = Math.max(...excessValues)
+    const range = maxExcess - minExcess
+
+    console.log('Excess range:', { min: minExcess, max: maxExcess, range })
+
     // Map each day to SVG coordinates
     const points = regressionData.map((day, index) => {
-      const x = (index / totalDays) * width
-      // Map excess_pct to y coordinate (invert y-axis, center at 50)
-      // -50% → y=75, 0% → y=50, +50% → y=25
-      const y = 50 - (day.excess_pct / 2)
+      // Fix x coordinate calculation - use (totalDays - 1) to reach 100 at the end
+      const x = totalDays > 1 ? (index / (totalDays - 1)) * width : 0
+
+      // Map excess_pct to y coordinate with dynamic scaling
+      // Map the full range to viewBox height (0-100), with padding
+      const padding = 10 // Leave 10% padding top/bottom
+      const usableHeight = 100 - (2 * padding)
+
+      // Normalize to 0-1 range, then scale to usable height
+      const normalizedY = range > 0 ? (day.excess_pct - minExcess) / range : 0.5
+      const y = padding + (1 - normalizedY) * usableHeight // Invert y-axis
+
       return `${x},${y}`
     })
+
+    console.log('Sparkline points sample:', points.slice(0, 5))
 
     // Create smooth continuous path
     return `M ${points.join(' L ')}`
