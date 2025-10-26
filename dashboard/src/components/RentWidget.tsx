@@ -413,8 +413,8 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <defs>
             <linearGradient id="sparklineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgba(255, 136, 68, 0.6)" />
-              <stop offset="100%" stopColor="rgba(68, 204, 204, 0.6)" />
+              <stop offset="0%" stopColor="rgba(255, 136, 68, 0.3)" />
+              <stop offset="100%" stopColor="rgba(68, 204, 204, 0.3)" />
             </linearGradient>
           </defs>
           <path
@@ -509,18 +509,18 @@ export function RentWidget() {
 
   return (
     <div>
-      {header && (
-        <div className="text-purple-200 mb-3 leading-relaxed">
-          {parseMarkdown(header)}
-        </div>
-      )}
-
       {/* Anomaly sparkline bar - visual representation of detected anomalies */}
       {electricityDailyCostsData?.summary?.anomaly_summary && (
         <AnomalySparklineBar
           anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
           regressionData={electricityDailyCostsData.summary.regression_data}
         />
+      )}
+
+      {header && (
+        <div className="text-purple-200 mb-3 leading-relaxed">
+          {parseMarkdown(header)}
+        </div>
       )}
 
       <div className="space-y-2">
