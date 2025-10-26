@@ -389,7 +389,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
       const p3 = points[Math.min(i + 2, points.length - 1)]
 
       // Calculate control points for smooth curve
-      const tension = 0.3 // Adjust smoothness (0 = sharp corners, 1 = very smooth)
+      const tension = 0.45 // Adjust smoothness (0 = sharp corners, 1 = very smooth)
 
       const cp1x = p1.x + (p2.x - p0.x) * tension
       const cp1y = p1.y + (p2.y - p0.y) * tension
@@ -406,7 +406,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
 
   return (
     <div className="mt-3 mb-3">
-      <div className="relative h-20 rounded-lg overflow-hidden"
+      <div className="relative h-24 rounded-lg overflow-hidden"
            style={{ background: 'rgba(255, 255, 255, 0.015)', mixBlendMode: 'screen' }}>
 
         {/* Sparkline SVG overlay */}
@@ -414,6 +414,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
           <defs>
             <linearGradient id="sparklineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="rgba(255, 136, 68, 0.3)" />
+              <stop offset="50%" stopColor="rgba(40, 30, 50, 0.25)" />
               <stop offset="100%" stopColor="rgba(68, 204, 204, 0.3)" />
             </linearGradient>
           </defs>
