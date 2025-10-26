@@ -74,8 +74,8 @@ chmod +x /home/kimonokittens/Projects/kimonokittens/bin/fetch_fortum_data.sh
 
 ```bash
 mkdir -p /home/kimonokittens/Projects/kimonokittens/logs
-touch /home/kimonokittens/Projects/kimonokittens/logs/vattenfall_fetcher.log
-touch /home/kimonokittens/Projects/kimonokittens/logs/fortum_fetcher.log
+touch /home/kimonokittens/Projects/kimonokittens/logs/vattenfall.log
+touch /home/kimonokittens/Projects/kimonokittens/logs/fortum.log
 ```
 
 ### 3. Add Cron Entries (as kimonokittens user)
@@ -178,10 +178,10 @@ ruby fortum.rb
 
 ```bash
 # Vattenfall logs
-tail -50 /home/kimonokittens/Projects/kimonokittens/logs/vattenfall_fetcher.log
+tail -50 /home/kimonokittens/Projects/kimonokittens/logs/vattenfall.log
 
 # Fortum logs
-tail -50 /home/kimonokittens/Projects/kimonokittens/logs/fortum_fetcher.log
+tail -50 /home/kimonokittens/Projects/kimonokittens/logs/fortum.log
 ```
 
 ### Verify Database Integration
@@ -208,11 +208,11 @@ bills.each { |b| puts \"  - #{b.provider} #{b.amount} kr (#{b.bill_period})\" }
 
 **Root cause:** Cron environment doesn't have bundler gem path in load path.
 
-**Fix applied:** Updated crontab entries to use `bundle exec`:
+**Fix applied:** Updated crontab entries to use `bundle exec` with rbenv:
 ```bash
 # Correct cron configuration (Oct 26, 2025)
-0 3 * * * cd /home/kimonokittens/Projects/kimonokittens && bundle exec ruby vattenfall.rb >> logs/vattenfall_fetcher.log 2>&1
-0 4 * * * cd /home/kimonokittens/Projects/kimonokittens && bundle exec ruby fortum.rb >> logs/fortum_fetcher.log 2>&1
+0 3 * * * /bin/bash -l -c 'eval "$(rbenv init -)"; cd /home/kimonokittens/Projects/kimonokittens && timeout 3m bundle exec ruby vattenfall.rb >> logs/vattenfall.log 2>&1'
+0 4 * * * /bin/bash -l -c 'eval "$(rbenv init -)"; cd /home/kimonokittens/Projects/kimonokittens && timeout 3m bundle exec ruby fortum.rb >> logs/fortum.log 2>&1'
 ```
 
 **Note:** The wrapper scripts mentioned earlier in this document (`bin/fetch_*_data.sh`) are not used in production. Cron jobs call the scrapers directly with `bundle exec`.
@@ -266,8 +266,8 @@ sudo -u kimonokittens crontab -l | grep bundle
 grep CRON /var/log/syslog | grep "vattenfall\|fortum" | tail -10
 
 # Check scraper output logs
-tail -50 /home/kimonokittens/Projects/kimonokittens/logs/vattenfall_fetcher.log
-tail -50 /home/kimonokittens/Projects/kimonokittens/logs/fortum_fetcher.log
+tail -50 /home/kimonokittens/Projects/kimonokittens/logs/vattenfall.log
+tail -50 /home/kimonokittens/Projects/kimonokittens/logs/fortum.log
 ```
 
 **Status:** ✅ **PRODUCTION READY** - Both scrapers running daily at 3am/4am with complete integration
@@ -330,12 +330,12 @@ grep CRON /var/log/syslog | grep fetch_fortum_data | tail -10
 
 ```bash
 # Live monitoring (run at 3am/4am to watch execution)
-tail -f /home/kimonokittens/Projects/kimonokittens/logs/vattenfall_fetcher.log
-tail -f /home/kimonokittens/Projects/kimonokittens/logs/fortum_fetcher.log
+tail -f /home/kimonokittens/Projects/kimonokittens/logs/vattenfall.log
+tail -f /home/kimonokittens/Projects/kimonokittens/logs/fortum.log
 
 # Last 50 lines of each
-tail -50 /home/kimonokittens/Projects/kimonokittens/logs/vattenfall_fetcher.log
-tail -50 /home/kimonokittens/Projects/kimonokittens/logs/fortum_fetcher.log
+tail -50 /home/kimonokittens/Projects/kimonokittens/logs/vattenfall.log
+tail -50 /home/kimonokittens/Projects/kimonokittens/logs/fortum.log
 ```
 
 ### Check Database State
@@ -411,8 +411,8 @@ Add logrotate configuration for log file management:
 
 ```bash
 sudo tee /etc/logrotate.d/kimonokittens-electricity << EOF
-/home/kimonokittens/Projects/kimonokittens/logs/vattenfall_fetcher.log
-/home/kimonokittens/Projects/kimonokittens/logs/fortum_fetcher.log {
+/home/kimonokittens/Projects/kimonokittens/logs/vattenfall.log
+/home/kimonokittens/Projects/kimonokittens/logs/fortum.log {
     daily
     missingok
     rotate 30
