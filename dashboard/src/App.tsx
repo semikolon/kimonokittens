@@ -87,7 +87,7 @@ function BackendDataWidgets() {
   return (
     <>
       {/* Secondary content in organic layout */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-3">
         <div className="md:col-span-2">
           <Widget title="Huset" accent={true} horsemenFont={true}>
             <ErrorBoundary resetKeys={[temperatureData?.last_updated_time]}>
