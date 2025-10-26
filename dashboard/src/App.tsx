@@ -113,18 +113,9 @@ function BackendDataWidgets() {
         </Widget>
       </div>
 
-      {/* Full-width rent section */}
-      <div className="mb-12">
-        <Widget title="Hyran" horsemenFont={true} accent={true} className="w-full">
-          <ErrorBoundary resetKeys={[rentData?.generated_at]}>
-            <RentWidget />
-          </ErrorBoundary>
-        </Widget>
-      </div>
-
-      {/* Electricity anomaly bar - standalone section between rent and strava */}
+      {/* Electricity anomaly bar - positioned above rent widget */}
       {electricityDailyCostsData?.summary?.anomaly_summary && (
-        <div className="-mt-10 mb-12 overflow-hidden backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md">
+        <div className="mb-3 overflow-hidden backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md">
           <ErrorBoundary resetKeys={[electricityDailyCostsData?.generated_at]}>
             <AnomalySparklineBar
               anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
@@ -133,6 +124,15 @@ function BackendDataWidgets() {
           </ErrorBoundary>
         </div>
       )}
+
+      {/* Full-width rent section */}
+      <div className="mb-12">
+        <Widget title="Hyran" horsemenFont={true} accent={true} className="w-full">
+          <ErrorBoundary resetKeys={[rentData?.generated_at]}>
+            <RentWidget />
+          </ErrorBoundary>
+        </Widget>
+      </div>
 
       {/* Full-width Strava section */}
       <div className="mb-12">
