@@ -106,7 +106,7 @@ function BackendDataWidgets() {
 
       {/* Electricity anomaly bar - positioned above rent widget */}
       {electricityDailyCostsData?.summary?.anomaly_summary && (
-        <div className="mb-2 overflow-hidden backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md">
+        <div className="my-3 overflow-hidden backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md">
           <ErrorBoundary resetKeys={[electricityDailyCostsData?.generated_at]}>
             <AnomalySparklineBar
               anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
