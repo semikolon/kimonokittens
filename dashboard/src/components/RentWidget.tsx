@@ -366,13 +366,37 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
     chunks.push(...chunksWithGaps)
   }
 
-  // Debug logging for cost verification
-  console.log('Anomaly chunks with gaps:', chunks.map(c => ({
+  // Calculate absolute positions for chunks to match sparkline calendar positioning
+  const totalDays = regressionData?.length || 89
+  const windowStart = regressionData && regressionData.length > 0
+    ? new Date(`${regressionData[0].date} 2025`)
+    : new Date('2025-07-18') // Fallback
+
+  const chunksWithPositions = chunks.map(chunk => {
+    // Calculate this chunk's start index in the regression window
+    const startIndex = Math.round((chunk.startDate.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24))
+    const endIndex = Math.round((chunk.endDate.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24))
+
+    // Use same formula as sparkline: (index / (totalDays - 1)) * 100
+    const leftPercent = totalDays > 1 ? (startIndex / (totalDays - 1)) * 100 : 0
+    const rightPercent = totalDays > 1 ? (endIndex / (totalDays - 1)) * 100 : 0
+    const widthPercent = rightPercent - leftPercent
+
+    return {
+      ...chunk,
+      leftPercent,
+      widthPercent
+    }
+  })
+
+  // Debug logging for cost verification and positioning
+  console.log('Anomaly chunks with absolute positions:', chunksWithPositions.map(c => ({
     dateRange: c.dateRange,
     type: c.type,
+    leftPercent: c.leftPercent.toFixed(2),
+    widthPercent: c.widthPercent.toFixed(2),
     avgExcessPct: c.avgExcessPct,
-    totalCostImpact: c.totalCostImpact,
-    durationDays: c.durationDays
+    totalCostImpact: c.totalCostImpact
   })))
 
   // Generate continuous sparkline from full regression data (all 90 days)
@@ -470,13 +494,16 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
           />
         </svg>
 
-        {/* Chunk visualization */}
-        <div className="absolute inset-0 flex">
-          {chunks.map((chunk, index) => (
+        {/* Chunk visualization - absolute positioning to match sparkline calendar positions */}
+        <div className="absolute inset-0">
+          {chunksWithPositions.map((chunk, index) => (
             <div
               key={index}
-              className="relative h-full"
-              style={{ flex: `${chunk.durationDays} 0 0` }}
+              className="absolute h-full"
+              style={{
+                left: `${chunk.leftPercent}%`,
+                width: `${chunk.widthPercent}%`
+              }}
             >
               {/* Background chunk - colored for anomaly type, transparent for gaps */}
               <div
