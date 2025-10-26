@@ -15,6 +15,25 @@ have_overmind() { command -v overmind >/dev/null 2>&1; }
 running_overmind() { [ -S "$SOCKET" ] && timeout 1 overmind status >/dev/null 2>&1; }
 is_tty() { [ -t 1 ] && [ -t 0 ]; }
 
+# Enable file logging for Overmind processes (AI/non-TTY access)
+enable_overmind_file_logging() {
+  mkdir -p log
+  sleep 0.5  # Give Overmind time to create all panes
+
+  # Use tmux to pipe each pane's output to a log file
+  # This works non-interactively and requires no Procfile changes
+  tmux -S "$SOCKET" list-panes -a -F "#{pane_id} #{window_name}" 2>/dev/null | while read -r pane_id win_name; do
+    # Sanitize window name for filename
+    safe_name=$(printf "%s" "$win_name" | tr -cs '[:alnum:]_.-' '_')
+    log_file="$PWD/log/${safe_name}.log"
+
+    # Enable pipe-pane with -o flag (don't duplicate if already set)
+    tmux -S "$SOCKET" pipe-pane -o -t "$pane_id" "exec cat >> '$log_file'" 2>/dev/null || true
+  done
+
+  echo "   Logs enabled: log/*.log"
+}
+
 cmd="${1:-start}"
 
 case "$cmd" in
@@ -58,7 +77,10 @@ case "$cmd" in
         else
           # Daemonize for non-TTY (Claude Code) - launches as daemon
           overmind start -f "$PROCFILE" -p "$PORT_BASE" -D
-          echo "✅ Started Overmind as daemon (check status with: npm run dev:status)"
+          enable_overmind_file_logging
+          echo "✅ Started Overmind as daemon"
+          echo "   Status: npm run dev:status"
+          echo "   Logs: npm run dev:logs"
           exit 0
         fi
       fi
@@ -220,9 +242,31 @@ case "$cmd" in
     ;;
   logs)
     if have_overmind && running_overmind; then
-      exec overmind connect
+      if is_tty; then
+        # Interactive terminal - attach to Overmind
+        exec overmind connect
+      else
+        # Non-TTY (Claude Code) - tail log files
+        mkdir -p log
+        # Find all process log files
+        log_files=$(ls log/web.log log/frontend.log 2>/dev/null || ls log/*.log 2>/dev/null || true)
+
+        if [ -n "$log_files" ]; then
+          echo "📋 Tailing process logs (Ctrl+C to stop):"
+          echo "$log_files" | tr ' ' '\n' | sed 's/^/   - /'
+          echo ""
+          exec tail -n 100 -F $log_files
+        else
+          echo "⚠️  No log files found in log/"
+          echo "   Logs should be created automatically when starting in non-TTY mode"
+          echo "   Try: npm run dev:restart"
+          exit 1
+        fi
+      fi
     else
-      echo "No Overmind session; start first with: bin/dev start"
+      echo "❌ No Overmind session running"
+      echo "   Start first with: npm run dev"
+      exit 1
     fi
     ;;
   nuke)

@@ -10,6 +10,10 @@ require 'base64'
 
 puts "Puma version: #{Puma::Const::VERSION}"
 
+# Enable immediate stdout/stderr flushing for non-TTY logging
+$stdout.sync = true
+$stderr.sync = true
+
 # Set timezone to avoid segfaults in rufus-scheduler/et-orbi
 Time.zone = 'Europe/Stockholm'
 ENV['TZ'] = Time.zone.name
