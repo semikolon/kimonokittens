@@ -326,4 +326,43 @@ Add to each anomaly:
 
 ---
 
-**Status:** Ready for implementation pending user decisions on open questions.
+**Status:** ✅ **IMPLEMENTED** (Oct 26, 2025)
+
+## Implementation Complete
+
+**Backend Enhancement (commit 46a1f7d):**
+- ✅ Added `price_per_kwh` and `cost_impact` calculation to each anomaly
+- ✅ Daily average price lookup using hourly Tibber data
+- ✅ Cost impact formula: `(actual_consumption - expected_consumption) * price_per_kwh`
+- ✅ Price includes spot price + transfer fee (0.09) + energy tax (0.392) + VAT (25%)
+
+**Frontend Component (commits 1952568, current):**
+- ✅ AnomalySparklineBar replaces text-based summary
+- ✅ Visual chunks show date range, excess %, cost impact
+- ✅ SVG sparkline overlay shows excess_pct peaks/troughs with 0% baseline
+- ✅ 14-day temporal clustering produces 5 chunks
+- ✅ Chunk widths proportional to time duration
+- ✅ Console logging for cost verification
+- ✅ Positioned at bottom of widget with top margin
+- ✅ Text padding (1em left/right) for readability
+- ✅ No background coloring (removed orange/blue glows per user request)
+
+**Current Visualization:**
+- High Cluster 1: Jul 28 - Aug 23 (6 days)
+- Low Cluster 1: 2-18 Aug (5 days)
+- High Cluster 2: Sep 8 (1 day)
+- Low Cluster 2: Sep 13 (1 day)
+- Low Cluster 3: 8-16 Oct (2 days)
+
+**Cost Calculation Verification:**
+Example (Jul 28):
+- Actual: 27.3 kWh, Expected: 19.4 kWh, Difference: +7.9 kWh
+- Price: 0.985 kr/kWh (spot ~0.35 + transfer 0.09 + tax 0.392, all × 1.25 VAT)
+- Cost Impact: 7.9 × 0.985 = 7.8 kr (single day)
+- Clusters aggregate multiple days: Jul 28 + Jul 29 + Aug 10 + Aug 11 + Aug 14 + Aug 23
+
+**Console Debugging:**
+Open browser console to verify:
+- Individual day cost_impact values
+- Cluster aggregation totals
+- All assumptions (price, consumption diff, clustering logic)

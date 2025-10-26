@@ -226,12 +226,22 @@ function AnomalySparklineBar({ anomalySummary }: {
   const chunks: AnomalyChunk[] = []
 
   // Process high clusters
-  highClusters.forEach(cluster => {
+  highClusters.forEach((cluster, clusterIndex) => {
     const startDate = new Date(`${cluster[0].date} 2025`)
     const endDate = new Date(`${cluster[cluster.length - 1].date} 2025`)
     const durationDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
     const avgExcessPct = Math.round(cluster.reduce((sum, d) => sum + d.excess_pct, 0) / cluster.length)
     const totalCostImpact = cluster.reduce((sum, d) => sum + d.cost_impact, 0)
+
+    // Debug: Log individual days in cluster
+    console.log(`High cluster ${clusterIndex + 1}:`, cluster.map(d => ({
+      date: d.date,
+      consumption: d.consumption,
+      expected: d.expected,
+      excess_pct: d.excess_pct,
+      price_per_kwh: d.price_per_kwh,
+      cost_impact: d.cost_impact
+    })))
 
     // Format date range
     let dateRange
@@ -262,12 +272,22 @@ function AnomalySparklineBar({ anomalySummary }: {
   })
 
   // Process low clusters
-  lowClusters.forEach(cluster => {
+  lowClusters.forEach((cluster, clusterIndex) => {
     const startDate = new Date(`${cluster[0].date} 2025`)
     const endDate = new Date(`${cluster[cluster.length - 1].date} 2025`)
     const durationDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
     const avgExcessPct = Math.round(cluster.reduce((sum, d) => sum + d.excess_pct, 0) / cluster.length)
     const totalCostImpact = cluster.reduce((sum, d) => sum + d.cost_impact, 0)
+
+    // Debug: Log individual days in cluster
+    console.log(`Low cluster ${clusterIndex + 1}:`, cluster.map(d => ({
+      date: d.date,
+      consumption: d.consumption,
+      expected: d.expected,
+      excess_pct: d.excess_pct,
+      price_per_kwh: d.price_per_kwh,
+      cost_impact: d.cost_impact
+    })))
 
     let dateRange
     if (cluster.length === 1) {
@@ -299,13 +319,67 @@ function AnomalySparklineBar({ anomalySummary }: {
   // Sort chunks chronologically
   chunks.sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
 
-  // Calculate total width (90 days)
-  const totalDays = 90
+  // Debug logging for cost verification
+  console.log('Anomaly chunks:', chunks.map(c => ({
+    dateRange: c.dateRange,
+    type: c.type,
+    avgExcessPct: c.avgExcessPct,
+    totalCostImpact: c.totalCostImpact,
+    durationDays: c.durationDays
+  })))
+
+  // Generate sparkline path from excess_pct values
+  const generateSparkline = () => {
+    if (chunks.length === 0) return ''
+
+    const width = 100
+    const height = 100
+
+    // Map chunks to x,y coordinates based on their position and excess_pct
+    let cumulativeDays = 0
+    const points = chunks.map(chunk => {
+      const midpoint = cumulativeDays + (chunk.durationDays / 2)
+      cumulativeDays += chunk.durationDays
+
+      const x = (midpoint / 90) * width
+      // Map excess_pct to y coordinate (invert y-axis, center at 50)
+      // -50% maps to y=75, 0% to y=50, +50% to y=25
+      const y = 50 - (chunk.avgExcessPct / 2)
+
+      return `${x},${y}`
+    })
+
+    // Create smooth path through points
+    return `M ${points.join(' L ')}`
+  }
+
+  const sparklinePath = generateSparkline()
 
   return (
-    <div className="mb-3">
+    <div className="mt-3 mb-3">
       <div className="relative h-20 rounded-lg overflow-hidden"
            style={{ background: 'rgba(255, 255, 255, 0.05)' }}>
+
+        {/* Sparkline SVG overlay */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path
+            d={sparklinePath}
+            stroke="rgba(216, 180, 254, 0.4)"
+            strokeWidth="1"
+            fill="none"
+            vectorEffect="non-scaling-stroke"
+          />
+          {/* Baseline at 0% */}
+          <line
+            x1="0"
+            y1="50"
+            x2="100"
+            y2="50"
+            stroke="rgba(216, 180, 254, 0.2)"
+            strokeWidth="0.5"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
 
         {/* Chunk visualization */}
         <div className="absolute inset-0 flex">
@@ -318,18 +392,9 @@ function AnomalySparklineBar({ anomalySummary }: {
               {/* Background chunk */}
               <div className="absolute inset-0 bg-white" style={{ opacity: 0.05 }} />
 
-              {/* Anomaly glow - proportional to excess percentage */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  backgroundColor: chunk.type === 'high' ? '#ff6600' : '#6699ff',
-                  opacity: Math.abs(chunk.avgExcessPct) / 100 * 0.6,
-                  boxShadow: `0 0 ${Math.abs(chunk.avgExcessPct) / 10}px rgba(${chunk.type === 'high' ? '255, 102, 0' : '102, 153, 255'}, ${Math.abs(chunk.avgExcessPct) / 100})`
-                }}
-              />
-
-              {/* Text content */}
-              <div className="relative z-10 flex flex-col items-center justify-center h-full px-1 text-center">
+              {/* Text content with horizontal padding */}
+              <div className="relative z-10 flex flex-col items-center justify-center h-full text-center"
+                   style={{ padding: '0 1em' }}>
                 <div className="text-[10px] text-purple-100 leading-tight">{chunk.dateRange}</div>
                 <div className="text-sm font-bold text-purple-50">
                   {chunk.avgExcessPct > 0 ? '+' : ''}{chunk.avgExcessPct}%
@@ -447,16 +512,16 @@ export function RentWidget() {
         </div>
       )}
 
-      {/* Anomaly sparkline bar - visual representation of detected anomalies */}
-      {electricityDailyCostsData?.summary?.anomaly_summary && (
-        <AnomalySparklineBar anomalySummary={electricityDailyCostsData.summary.anomaly_summary} />
-      )}
-
       {/* Heating cost impact line */}
       {rentData.heating_cost_line && (
         <div className="text-purple-300 text-xs mt-2" style={{ opacity: 0.5 }}>
           {rentData.heating_cost_line}
         </div>
+      )}
+
+      {/* Anomaly sparkline bar - visual representation of detected anomalies */}
+      {electricityDailyCostsData?.summary?.anomaly_summary && (
+        <AnomalySparklineBar anomalySummary={electricityDailyCostsData.summary.anomaly_summary} />
       )}
     </div>
   )
