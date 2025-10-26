@@ -375,12 +375,13 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
   const chunksWithPositions = chunks.map(chunk => {
     // Calculate this chunk's start index in the regression window
     const startIndex = Math.round((chunk.startDate.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24))
-    const endIndex = Math.round((chunk.endDate.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24))
 
-    // Use same formula as sparkline: (index / (totalDays - 1)) * 100
+    // Use same formula as sparkline for left position: (index / (totalDays - 1)) * 100
     const leftPercent = totalDays > 1 ? (startIndex / (totalDays - 1)) * 100 : 0
-    const rightPercent = totalDays > 1 ? (endIndex / (totalDays - 1)) * 100 : 0
-    const widthPercent = rightPercent - leftPercent
+
+    // Width should span the full duration (durationDays already includes +1 for inclusive range)
+    // E.g., 2-day chunk = 2 intervals in 88-interval space = 2.27%
+    const widthPercent = totalDays > 1 ? (chunk.durationDays / (totalDays - 1)) * 100 : 0
 
     return {
       ...chunk,
