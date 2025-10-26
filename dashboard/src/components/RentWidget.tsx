@@ -669,19 +669,19 @@ export function RentWidget() {
   return (
     <div>
       {header && (
-        <div className="flex items-baseline justify-between mb-3 gap-4 leading-relaxed">
-          <div className="text-purple-200">
-            {parseMarkdown(header)}
-          </div>
+        <div className="text-purple-200 mb-3 leading-relaxed">
+          {parseMarkdown(header)}
           {firstAmountParsed && (
-            <div className="flex items-baseline gap-2 flex-shrink-0">
+            <>
+              <span style={{ opacity: 0.5, margin: '0 0.3em' }}>•</span>
               <span className="text-2xl font-bold text-purple-100">
                 {firstAmountParsed.amount}
               </span>
-              <span className="text-purple-300 text-sm">
+              <span> </span>
+              <span className="text-purple-300">
                 {firstAmountParsed.description}
               </span>
-            </div>
+            </>
           )}
         </div>
       )}
