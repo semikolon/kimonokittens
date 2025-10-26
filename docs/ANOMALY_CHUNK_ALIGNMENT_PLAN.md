@@ -1,8 +1,8 @@
 # Anomaly Chunk vs Peak/Trough Alignment Analysis & Fix Plan
 
 **Date**: October 26, 2025
-**Status**: ✅ COMPLETE - All issues resolved
-**Final commit**: 810e43b
+**Status**: ✅ COMPLETE - Pure midpoint alignment (Solution D)
+**Final commit**: f6210e0
 
 ## Problem Statement
 
@@ -228,3 +228,50 @@ const leftPercent = ((midIndex / (totalDays - 1)) * 100) - (widthPercent / 2)
 4. **Accept minor overlap**: Current state is 87.5% clean, may be "good enough"
 
 **Recommendation**: Try one-pass sequential layout if overlap remains unacceptable. Otherwise ship current implementation.
+
+---
+
+## Final Solution (October 26, 2025)
+
+**Implemented: Pure Midpoint Alignment (Solution D)**
+
+After iterating through multiple approaches, the final solution is the simplest:
+
+**Architecture**:
+1. Calculate chunk center position based on date range midpoint
+2. Use calculated positions directly without any repositioning logic
+3. No compression, no gap enforcement, no sequential layout
+4. Natural calendar-based spacing with px-2 text padding
+
+**Code**: `RentWidget.tsx:375-407`
+```typescript
+// Step 1: Calculate midpoint positions
+const chunksWithInitialPositions = chunks.map(chunk => {
+  const midpointTime = (chunk.startDate.getTime() + chunk.endDate.getTime()) / 2
+  const midpointDate = new Date(midpointTime)
+  const midpointIndex = Math.round((midpointDate.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24))
+
+  const calculatedWidth = totalDays > 1 ? (chunk.durationDays / (totalDays - 1)) * 100 : 0
+  const widthPercent = Math.max(calculatedWidth, 10) // 10% minimum for text visibility
+
+  const midpointPercent = totalDays > 1 ? (midpointIndex / (totalDays - 1)) * 100 : 0
+  const idealLeft = midpointPercent - (widthPercent / 2)
+
+  return { ...chunk, leftPercent: idealLeft, widthPercent, midpointDate: ... }
+})
+
+// Step 2: Use positions directly (no sequential repositioning)
+const chunksWithPositions = [...chunksWithInitialPositions]
+chunksWithPositions.sort((a, b) => a.leftPercent - b.leftPercent)
+```
+
+**Results**:
+- ✅ Perfect alignment with sparkline peaks/troughs
+- ✅ No text overlap (px-2 padding provides 8px separation)
+- ✅ Natural date-based distribution (Sep 8 and Sep 13 are 5 days apart → natural spacing)
+- ✅ No artificial compression or narrowing
+- ✅ No right-side overflow from sequential layout
+- ✅ Backgrounds can overlap when dates are close (accepted by user)
+- ✅ All 8 chunks visible and readable
+
+**Key Insight**: User requirement "I don't care about anything other than TEXT overlap" meant all the complex repositioning logic was unnecessary. Natural calendar positioning + text padding = perfect solution.
