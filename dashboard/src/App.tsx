@@ -190,7 +190,7 @@ function DashboardContent() {
       <div className="w-full px-4 py-12 min-w-0">
 
         {/* Featured section - Full width Clock with integrated logo */}
-        <div className="mb-6">
+        <div className="mb-6 relative z-50">
           <Widget accent={true} allowOverflow={true} className="min-h-[260px] w-full" innerClassName="px-6 pt-4 pb-2 md:px-8">
             <ErrorBoundary>
               <ClockWidget />
