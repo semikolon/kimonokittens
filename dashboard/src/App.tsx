@@ -87,7 +87,7 @@ function BackendDataWidgets() {
   return (
     <>
       {/* Secondary content in organic layout */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-3">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="md:col-span-2">
           <Widget title="Huset" accent={true} horsemenFont={true}>
             <ErrorBoundary resetKeys={[temperatureData?.last_updated_time]}>
@@ -106,7 +106,7 @@ function BackendDataWidgets() {
 
       {/* Electricity anomaly bar - positioned above rent widget */}
       {electricityDailyCostsData?.summary?.anomaly_summary && (
-        <div className="my-3 overflow-hidden backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md">
+        <div className="mb-6 overflow-hidden backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md">
           <ErrorBoundary resetKeys={[electricityDailyCostsData?.generated_at]}>
             <AnomalySparklineBar
               anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
