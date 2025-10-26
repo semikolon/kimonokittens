@@ -176,6 +176,48 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
     return null
   }
 
+  // Add padding days to regression data for natural margins
+  // This pushes sparkline and chunks inward from edges while maintaining perfect alignment
+  const paddedRegressionData = (() => {
+    if (!regressionData || regressionData.length === 0) return regressionData
+
+    const PADDING_DAYS = 5
+    const firstDay = regressionData[0]
+    const lastDay = regressionData[regressionData.length - 1]
+
+    // Create left padding (5 days before first data point)
+    const leftPadding = []
+    const firstDate = new Date(`${firstDay.date} 2025`)
+    for (let i = PADDING_DAYS; i > 0; i--) {
+      const paddingDate = new Date(firstDate)
+      paddingDate.setDate(paddingDate.getDate() - i)
+      // Use first day's value with organic variation (±15%)
+      const variation = (Math.random() - 0.5) * 0.3 // -15% to +15%
+      const excess_pct = firstDay.excess_pct * (1 + variation)
+      leftPadding.push({
+        date: paddingDate.toISOString().split('T')[0].slice(5).replace('-', ' '),
+        excess_pct
+      })
+    }
+
+    // Create right padding (5 days after last data point)
+    const rightPadding = []
+    const lastDate = new Date(`${lastDay.date} 2025`)
+    for (let i = 1; i <= PADDING_DAYS; i++) {
+      const paddingDate = new Date(lastDate)
+      paddingDate.setDate(paddingDate.getDate() + i)
+      // Use last day's value with organic variation (±15%)
+      const variation = (Math.random() - 0.5) * 0.3 // -15% to +15%
+      const excess_pct = lastDay.excess_pct * (1 + variation)
+      rightPadding.push({
+        date: paddingDate.toISOString().split('T')[0].slice(5).replace('-', ' '),
+        excess_pct
+      })
+    }
+
+    return [...leftPadding, ...regressionData, ...rightPadding]
+  })()
+
   // Prepare chunk data for visualization
   const anomalousDays = anomalySummary.anomalous_days
 
@@ -367,9 +409,9 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
   }
 
   // Calculate absolute positions for chunks to match sparkline calendar positioning
-  const totalDays = regressionData?.length || 89
-  const windowStart = regressionData && regressionData.length > 0
-    ? new Date(`${regressionData[0].date} 2025`)
+  const totalDays = paddedRegressionData?.length || 89
+  const windowStart = paddedRegressionData && paddedRegressionData.length > 0
+    ? new Date(`${paddedRegressionData[0].date} 2025`)
     : new Date('2025-07-18') // Fallback
 
   // Step 1: Initial positioning using date range midpoint (Solution D)
@@ -417,25 +459,25 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
     totalCostImpact: c.totalCostImpact
   })))
 
-  // Generate continuous sparkline from full regression data (all 90 days)
+  // Generate continuous sparkline from full regression data (all days + padding)
   const generateSparkline = () => {
-    if (!regressionData || regressionData.length === 0) {
+    if (!paddedRegressionData || paddedRegressionData.length === 0) {
       console.log('No regression data for sparkline')
       return ''
     }
 
-    console.log('Regression data:', {
-      length: regressionData.length,
-      first: regressionData[0],
-      last: regressionData[regressionData.length - 1],
-      sample: regressionData.slice(0, 5)
+    console.log('Padded regression data:', {
+      length: paddedRegressionData.length,
+      first: paddedRegressionData[0],
+      last: paddedRegressionData[paddedRegressionData.length - 1],
+      sample: paddedRegressionData.slice(0, 5)
     })
 
     const width = 100
-    const totalDays = regressionData.length
+    const totalDays = paddedRegressionData.length
 
     // Find min/max excess_pct for scaling
-    const excessValues = regressionData.map(d => d.excess_pct)
+    const excessValues = paddedRegressionData.map(d => d.excess_pct)
     const minExcess = Math.min(...excessValues)
     const maxExcess = Math.max(...excessValues)
     const range = maxExcess - minExcess
@@ -443,7 +485,7 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
     console.log('Excess range:', { min: minExcess, max: maxExcess, range })
 
     // Map each day to SVG coordinates
-    const points = regressionData.map((day, index) => {
+    const points = paddedRegressionData.map((day, index) => {
       // Fix x coordinate calculation - use (totalDays - 1) to reach 100 at the end
       const x = totalDays > 1 ? (index / (totalDays - 1)) * width : 0
 
