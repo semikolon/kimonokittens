@@ -274,7 +274,12 @@ export function TemperatureWidget() {
           className={`text-purple-200 mb-2 heatpump-status ${isStatusChanging ? 'changing' : ''}`}
           style={{ textTransform: 'uppercase', fontSize: '0.8em' }}
         >
-          {currentSmartStatus}{(isActivelyHeating || hasHotSupplyLine) && ` - ${temperatureData.supplyline_temperature} i elementen`}
+          {currentSmartStatus}{(isActivelyHeating || hasHotSupplyLine) && (
+            <>
+              <span style={{ opacity: 0.5, margin: '0 0.3em' }}>•</span>
+              {temperatureData.supplyline_temperature} i elementen
+            </>
+          )}
         </div>
         <div
           className="relative h-5 rounded-lg overflow-visible"
