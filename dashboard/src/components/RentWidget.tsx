@@ -79,7 +79,7 @@ function DailyElectricityCostBar({ dailyCosts }: { dailyCosts: Array<{ date: str
             stroke="rgb(216, 180, 254)"
             strokeWidth="2"
             vectorEffect="non-scaling-stroke"
-            opacity="0.6"
+            opacity="0.3"
           />
         </svg>
 
