@@ -186,12 +186,10 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
     return aDate.getTime() - bDate.getTime()
   })
 
-  // Separate high and low anomalies
-  const highAnomalies = sortedDays.filter(d => d.excess_pct > 0)
-  const lowAnomalies = sortedDays.filter(d => d.excess_pct < 0)
-
-  // Cluster anomalies (same logic as text component - 14-day window)
-  const clusterAnomalies = (anomalies: typeof sortedDays, maxGapDays: number) => {
+  // NEW APPROACH: Cluster ALL anomalies together, then split on type changes
+  // This prevents overlapping date ranges (like Aug 15-18 inside Aug 10-23)
+  // while preserving high/low granularity for better sparkline alignment
+  const clusterAllAnomalies = (anomalies: typeof sortedDays, maxGapDays: number) => {
     if (anomalies.length === 0) return []
 
     const clusters: typeof sortedDays[] = []
@@ -213,8 +211,33 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
     return clusters
   }
 
-  const highClusters = clusterAnomalies(highAnomalies, 10)
-  const lowClusters = clusterAnomalies(lowAnomalies, 10)
+  // Split clusters when type changes (high → low or low → high)
+  const splitOnTypeChanges = (cluster: typeof sortedDays) => {
+    if (cluster.length === 0) return []
+
+    const subClusters: typeof sortedDays[] = []
+    let currentSub: typeof sortedDays = [cluster[0]]
+    let currentType = cluster[0].excess_pct > 0 ? 'high' : 'low'
+
+    for (let i = 1; i < cluster.length; i++) {
+      const thisType = cluster[i].excess_pct > 0 ? 'high' : 'low'
+
+      if (thisType === currentType) {
+        currentSub.push(cluster[i])
+      } else {
+        // Type changed - split here
+        subClusters.push(currentSub)
+        currentSub = [cluster[i]]
+        currentType = thisType
+      }
+    }
+    subClusters.push(currentSub)
+    return subClusters
+  }
+
+  // Cluster all anomalies, then split on type boundaries
+  const initialClusters = clusterAllAnomalies(sortedDays, 10)
+  const finalClusters = initialClusters.flatMap(splitOnTypeChanges)
 
   // Build chunks for visualization
   interface AnomalyChunk {
@@ -229,16 +252,17 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
 
   const chunks: AnomalyChunk[] = []
 
-  // Process high clusters
-  highClusters.forEach((cluster, clusterIndex) => {
+  // Process all clusters (already split by type and sorted chronologically)
+  finalClusters.forEach((cluster, clusterIndex) => {
     const startDate = new Date(`${cluster[0].date} 2025`)
     const endDate = new Date(`${cluster[cluster.length - 1].date} 2025`)
     const durationDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
     const avgExcessPct = Math.round(cluster.reduce((sum, d) => sum + d.excess_pct, 0) / cluster.length)
     const totalCostImpact = cluster.reduce((sum, d) => sum + d.cost_impact, 0)
+    const clusterType = cluster[0].excess_pct > 0 ? 'high' : 'low'
 
     // Debug: Log individual days in cluster
-    console.log(`High cluster ${clusterIndex + 1}:`, cluster.map(d => ({
+    console.log(`Cluster ${clusterIndex + 1} (${clusterType}):`, cluster.map(d => ({
       date: d.date,
       consumption: d.consumption,
       expected: d.expected,
@@ -265,7 +289,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
     }
 
     chunks.push({
-      type: 'high',
+      type: clusterType,
       dateRange,
       startDate,
       endDate,
@@ -274,54 +298,6 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
       totalCostImpact: Math.round(totalCostImpact)
     })
   })
-
-  // Process low clusters
-  lowClusters.forEach((cluster, clusterIndex) => {
-    const startDate = new Date(`${cluster[0].date} 2025`)
-    const endDate = new Date(`${cluster[cluster.length - 1].date} 2025`)
-    const durationDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
-    const avgExcessPct = Math.round(cluster.reduce((sum, d) => sum + d.excess_pct, 0) / cluster.length)
-    const totalCostImpact = cluster.reduce((sum, d) => sum + d.cost_impact, 0)
-
-    // Debug: Log individual days in cluster
-    console.log(`Low cluster ${clusterIndex + 1}:`, cluster.map(d => ({
-      date: d.date,
-      consumption: d.consumption,
-      expected: d.expected,
-      excess_pct: d.excess_pct,
-      price_per_kwh: d.price_per_kwh,
-      cost_impact: d.cost_impact
-    })))
-
-    let dateRange
-    if (cluster.length === 1) {
-      dateRange = cluster[0].date
-    } else {
-      const first = cluster[0].date
-      const last = cluster[cluster.length - 1].date
-      if (first.split(' ')[0] === last.split(' ')[0]) {
-        const month = first.split(' ')[0]
-        const firstDay = first.split(' ')[1]
-        const lastDay = last.split(' ')[1]
-        dateRange = `${firstDay}-${lastDay} ${month}`
-      } else {
-        dateRange = `${first} - ${last}`
-      }
-    }
-
-    chunks.push({
-      type: 'low',
-      dateRange,
-      startDate,
-      endDate,
-      durationDays,
-      avgExcessPct,
-      totalCostImpact: Math.round(totalCostImpact)
-    })
-  })
-
-  // Sort chunks chronologically
-  chunks.sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
 
   // Insert gap chunks to show spacing between anomalies (Option A: full gaps)
   if (regressionData && regressionData.length > 0) {
