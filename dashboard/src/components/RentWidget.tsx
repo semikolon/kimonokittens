@@ -98,7 +98,7 @@ function DailyElectricityCostBar({ dailyCosts }: { dailyCosts: Array<{ date: str
                 className={`absolute inset-0 ${index === 0 ? 'rounded-l-lg' : ''} ${index === days.length - 1 ? 'rounded-r-lg' : ''}`}
                 style={{
                   backgroundColor: '#ffffff',
-                  opacity: '30%',
+                  opacity: '5%',
                   mixBlendMode: 'overlay'
                 }}
               />
