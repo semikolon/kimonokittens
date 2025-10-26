@@ -10,7 +10,7 @@ function AnomalySummaryText({ anomalySummary }: {
       consumption: number
       expected: number
       temp_c: number
-      excess_pct: number
+      excess_pct: number  // Positive = higher than expected, Negative = lower than expected
     }>
   }
 }) {
@@ -25,24 +25,58 @@ function AnomalySummaryText({ anomalySummary }: {
 
     const anomalousDays = anomalySummary.anomalous_days
 
+    // Create cache key based on anomaly dates and percentages
+    const cacheKey = `anomaly_summary_${anomalousDays.map(d => `${d.date}_${d.excess_pct}`).join('_')}`
+    const today = new Date().toISOString().split('T')[0]
+
+    // Check cache first (valid for 24 hours)
+    try {
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        const { text, date } = JSON.parse(cached)
+        if (date === today) {
+          setSummaryText(text)
+          return
+        }
+      }
+    } catch (e) {
+      // Ignore cache errors
+    }
+
+    // Separate high and low anomalies
+    const highAnomalies = anomalousDays.filter(d => d.excess_pct > 0)
+    const lowAnomalies = anomalousDays.filter(d => d.excess_pct < 0)
+
     // Generate summary text via GPT-5-nano
     const generateSummary = async () => {
       setIsLoading(true)
       try {
-        const prompt = `Du är en svensk textgenerator för en hyresräkningsapp. Skapa EN KORT MENING (max 20 ord) på svenska som förklarar avvikande eldagar.
+        // Build date ranges string
+        const formatDateRange = (days: typeof anomalousDays) => {
+          if (days.length === 0) return ''
+          if (days.length === 1) return days[0].date
+          if (days.length === 2) return `${days[0].date} och ${days[1].date}`
 
-Anomalidata (${anomalousDays.length} dagar):
-${anomalousDays.map(d => `- ${d.date}: ${d.consumption} kWh (förväntat: ${d.expected} kWh, +${Math.round(d.excess_pct)}% över, temp: ${d.temp_c}°C)`).join('\n')}
+          // Group consecutive dates
+          const sorted = days.sort((a, b) => {
+            const aDate = new Date(`${a.date} 2025`)
+            const bDate = new Date(`${b.date} 2025`)
+            return aDate.getTime() - bDate.getTime()
+          })
 
-Kontext:
-- Högre förbrukning beror troligen på fler personer i huset
-- Juli/augusti 2025 hade extra person (Amanda)
-- Fokusera på VARFÖR, inte bara VAD
-- Du har tillgång till faktisk vs förväntad förbrukning OCH temperatur
+          return `${sorted[0].date} -> ${sorted[sorted.length - 1].date}`
+        }
 
-Exempel godkänd mening: "Högre förbrukning vissa dagar (juli/augusti) beror troligen på fler personer i huset då."
+        const prompt = `Du är en svensk textgenerator. Följ EXAKT denna meningsstruktur:
 
-Generera EN mening (max 20 ord):`
+${highAnomalies.length > 0 ? `"Högre förbrukning än väntat ${formatDateRange(highAnomalies)}. Förmodligen pga fler personer i huset."` : ''}
+${lowAnomalies.length > 0 ? `"Lägre förbrukning än väntat ${formatDateRange(lowAnomalies)}. Förmodligen pga färre personer i huset."` : ''}
+
+Data:
+${highAnomalies.length > 0 ? `HÖGRE: ${highAnomalies.map(d => `${d.date} (+${Math.round(d.excess_pct)}%)`).join(', ')}` : ''}
+${lowAnomalies.length > 0 ? `LÄGRE: ${lowAnomalies.map(d => `${d.date} (${Math.round(d.excess_pct)}%)`).join(', ')}` : ''}
+
+Använd EXAKT formatet ovan. Om flera datum: använd "datum1 -> datum2" format. Max 25 ord total.`
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -66,9 +100,17 @@ Generera EN mening (max 20 ord):`
         }
 
         const data = await response.json()
-        console.log('OpenAI response:', data)
         const text = data.choices?.[0]?.message?.content?.trim()
-        setSummaryText(text || null)
+
+        if (text) {
+          // Cache the result
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify({ text, date: today }))
+          } catch (e) {
+            // Ignore cache write errors
+          }
+          setSummaryText(text)
+        }
       } catch (error) {
         console.error('Error generating anomaly summary:', error)
         setSummaryText(null)

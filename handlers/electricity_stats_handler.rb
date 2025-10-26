@@ -241,15 +241,17 @@ class ElectricityStatsHandler
         expected_consumption = slope * day[:avg_temp_c] + intercept
         actual_consumption = day[:consumption]
 
-        # Anomaly: actual is significantly higher than expected for this temperature
-        # Lowered threshold from 25% to 20% for more sensitivity
-        if actual_consumption > expected_consumption * 1.20
+        # Anomaly: actual is significantly different from expected for this temperature
+        # High anomaly: >20% above expected, Low anomaly: <20% below expected
+        excess_pct = ((actual_consumption / expected_consumption - 1) * 100).round(1)
+
+        if actual_consumption > expected_consumption * 1.20 || actual_consumption < expected_consumption * 0.80
           all_anomalies << {
             date: day[:date],
             consumption: actual_consumption.round(1),
             expected: expected_consumption.round(1),
             temp_c: day[:avg_temp_c],
-            excess_pct: ((actual_consumption / expected_consumption - 1) * 100).round(1)
+            excess_pct: excess_pct  # Can be positive (high) or negative (low)
           }
         end
       end
@@ -265,10 +267,11 @@ class ElectricityStatsHandler
         expected_consumption = slope * day[:avg_temp_c] + intercept
         actual_consumption = day[:consumption]
 
-        # Anomaly: actual is significantly higher than expected for this temperature
-        if actual_consumption > expected_consumption * 1.20
-          excess_pct = ((actual_consumption / expected_consumption - 1) * 100).round(1)
-          day[:anomalous_usage_pct] = excess_pct
+        # Anomaly: actual is significantly different from expected for this temperature
+        excess_pct = ((actual_consumption / expected_consumption - 1) * 100).round(1)
+
+        if actual_consumption > expected_consumption * 1.20 || actual_consumption < expected_consumption * 0.80
+          day[:anomalous_usage_pct] = excess_pct  # Can be positive (high) or negative (low)
         end
       end
     end
