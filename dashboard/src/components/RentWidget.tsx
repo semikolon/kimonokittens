@@ -53,18 +53,20 @@ Generera EN mening (max 20 ord):`
           body: JSON.stringify({
             model: 'gpt-5-nano',
             messages: [{ role: 'user', content: prompt }],
-            max_completion_tokens: 100,
-            temperature: 0.3
+            max_completion_tokens: 5000  // GPT-5-nano needs generous allocation for hidden reasoning tokens
+            // Note: gpt-5-nano only supports default temperature (1), custom values cause 400 error
           })
         })
 
         if (!response.ok) {
-          console.error('Failed to generate anomaly summary:', response.statusText)
+          const errorBody = await response.json()
+          console.error('OpenAI API error:', response.status, errorBody)
           setSummaryText(null)
           return
         }
 
         const data = await response.json()
+        console.log('OpenAI response:', data)
         const text = data.choices?.[0]?.message?.content?.trim()
         setSummaryText(text || null)
       } catch (error) {
