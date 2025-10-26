@@ -1,3 +1,4 @@
+// Dashboard main application component (Oct 26, 2025 - triggering rebuild for daily costs bar)
 import React from 'react'
 import { DataProvider, useData } from './context/DataContext' // WebSocket data provider
 import { SleepScheduleProvider, useSleepSchedule } from './contexts/SleepScheduleContext'
