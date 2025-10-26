@@ -39,9 +39,19 @@ WDAY = {
 class ElectricityStatsHandler
   def initialize(electricity_price_handler)
     @electricity_price_handler = electricity_price_handler
+    @cache = {}
+    @cache_date = nil
   end
 
   def call(req)
+    # Check if cache is still valid (same date)
+    today = Date.today.to_s
+    if @cache_date == today && @cache[:data]
+      puts "ElectricityStatsHandler: Serving from cache (#{today})"
+      return [200, { 'Content-Type' => 'application/json' }, [ @cache[:data] ]]
+    end
+
+    puts "ElectricityStatsHandler: Cache miss or expired, computing fresh data (#{today})"
     electricity_usage = Oj.load_file('electricity_usage.json')
 
     # Fetch live prices from API instead of stale tibber JSON
@@ -347,7 +357,12 @@ class ElectricityStatsHandler
       # monthly_savings_summary: monthly_savings_summary
     }
 
-    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(stats, mode: :compat) ]]
+    # Store in cache (invalidates at midnight when date changes)
+    json_response = Oj.dump(stats, mode: :compat)
+    @cache_date = today
+    @cache[:data] = json_response
+
+    [200, { 'Content-Type' => 'application/json' }, [ json_response ]]
   end
 
   # Helper method to get the average price for the previous month
