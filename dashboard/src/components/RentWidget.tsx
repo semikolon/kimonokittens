@@ -1,149 +1,77 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useData } from '../context/DataContext'
 
-// Daily Electricity Cost Bar Component
-function DailyElectricityCostBar({ dailyCosts }: { dailyCosts: Array<{ date: string; weekday: string; price: number; consumption: number; avg_temp_c?: number; anomalous_usage_pct?: number }> }) {
-  if (!dailyCosts || dailyCosts.length === 0) return null
+// Anomaly Summary Component - generates dynamic text about anomalous electricity usage
+function AnomalySummaryText({ dailyCosts }: { dailyCosts: Array<{ date: string; weekday: string; price: number; consumption: number; avg_temp_c?: number; anomalous_usage_pct?: number }> }) {
+  const [summaryText, setSummaryText] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Reverse to show oldest first (left to right chronologically)
-  const days = dailyCosts.slice().reverse()
+  useEffect(() => {
+    // Extract anomalous days (threshold: 20% excess)
+    const anomalousDays = dailyCosts.filter(day => day.anomalous_usage_pct && day.anomalous_usage_pct >= 20)
 
-  // Prepare sparkline data
-  const prices = days.map(d => d.price)
-  const minPrice = Math.min(...prices)
-  const maxPrice = Math.max(...prices)
-  const priceRange = maxPrice - minPrice || 1
-
-  // Generate electricity cost sparkline path
-  const electricityPath = days.map((day, index) => {
-    const x = (index / (days.length - 1)) * 100
-    const normalizedPrice = ((day.price - minPrice) / priceRange)
-    const y = 100 - (normalizedPrice * 80) // Use 0-80% range (leave 20% margin at top)
-    return `${x},${y}`
-  }).join(' L ')
-
-  // Generate temperature sparkline path (if we have temperature data)
-  const hasTemperatureData = days.some(d => d.avg_temp_c !== undefined)
-  let temperaturePath = ''
-  if (hasTemperatureData) {
-    const temps = days.map(d => d.avg_temp_c || 0).filter(t => t !== 0)
-    if (temps.length > 0) {
-      const minTemp = Math.min(...temps)
-      const maxTemp = Math.max(...temps)
-      const tempRange = maxTemp - minTemp || 1
-
-      temperaturePath = days.map((day, index) => {
-        const x = (index / (days.length - 1)) * 100
-        const normalizedTemp = ((day.avg_temp_c || 0) - minTemp) / tempRange
-        const y = 100 - (normalizedTemp * 80) // Use 0-80% range (leave 20% margin at top)
-        return `${x},${y}`
-      }).join(' L ')
+    if (anomalousDays.length === 0) {
+      setSummaryText(null)
+      return
     }
-  }
+
+    // Generate summary text via GPT-5-nano
+    const generateSummary = async () => {
+      setIsLoading(true)
+      try {
+        const prompt = `Du är en svensk textgenerator för en hyresräkningsapp. Skapa EN KORT MENING (max 20 ord) på svenska som förklarar avvikande eldagar.
+
+Anomalidata:
+${anomalousDays.map(d => `- ${d.weekday} ${d.date}: +${Math.round(d.anomalous_usage_pct!)}% över normalt (${d.consumption} kWh)`).join('\n')}
+
+Kontext:
+- Högre förbrukning beror troligen på fler personer i huset
+- Juli/augusti 2025 hade extra person (Amanda)
+- Fokusera på VARFÖR, inte bara VAD
+
+Exempel godkänd mening: "Högre förbrukning vissa dagar (juli/augusti) beror troligen på fler personer i huset då."
+
+Generera EN mening (max 20 ord):`
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY || ''}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-5-nano',
+            messages: [{ role: 'user', content: prompt }],
+            max_completion_tokens: 100,
+            temperature: 0.3
+          })
+        })
+
+        if (!response.ok) {
+          console.error('Failed to generate anomaly summary:', response.statusText)
+          setSummaryText(null)
+          return
+        }
+
+        const data = await response.json()
+        const text = data.choices?.[0]?.message?.content?.trim()
+        setSummaryText(text || null)
+      } catch (error) {
+        console.error('Error generating anomaly summary:', error)
+        setSummaryText(null)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    generateSummary()
+  }, [dailyCosts])
+
+  if (!summaryText && !isLoading) return null
 
   return (
-    <div className="mb-3">
-      <div
-        className="relative h-16 rounded-lg overflow-visible"
-        style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          mixBlendMode: 'overlay'
-        }}
-      >
-        {/* Sparkline overlays */}
-        <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          style={{
-            zIndex: 5,
-            clipPath: 'inset(0 round 0.5rem)'
-          }}
-        >
-          {/* Temperature sparkline (orange, behind) */}
-          {temperaturePath && (
-            <path
-              d={`M ${temperaturePath}`}
-              fill="none"
-              stroke="#ffcc99"
-              strokeWidth="2.5"
-              vectorEffect="non-scaling-stroke"
-              opacity="0.27"
-            />
-          )}
-
-          {/* Electricity cost sparkline (purple, front) */}
-          <path
-            d={`M ${electricityPath}`}
-            fill="none"
-            stroke="rgb(216, 180, 254)"
-            strokeWidth="3"
-            vectorEffect="non-scaling-stroke"
-            opacity="0.2"
-          />
-        </svg>
-
-        {/* Day sections */}
-        <div className="absolute inset-0 flex">
-          {days.map((day, index) => (
-            <div
-              key={`${day.date}-${index}`}
-              className="flex-1 relative h-full flex flex-col items-center justify-center"
-              style={{
-                marginRight: index < days.length - 1 ? '2px' : '0'
-              }}
-            >
-              {/* Background chunk */}
-              <div
-                className={`absolute inset-0 ${index === 0 ? 'rounded-l-lg' : ''} ${index === days.length - 1 ? 'rounded-r-lg' : ''}`}
-                style={{
-                  backgroundColor: '#ffffff',
-                  opacity: '5%',
-                  mixBlendMode: 'overlay'
-                }}
-              />
-
-              {/* Anomalous usage glow overlay - intensity proportional to excess % */}
-              {day.anomalous_usage_pct && (() => {
-                // Calculate glow intensity based on excess percentage
-                // 20% → 30% intensity, 40% → 65% intensity, 60%+ → 100% intensity
-                const excessPct = day.anomalous_usage_pct
-                const intensity = excessPct >= 60
-                  ? 1.0
-                  : Math.max(0.3, ((excessPct - 20) / 40) * 0.7 + 0.3)
-
-                return (
-                  <div
-                    className={`absolute inset-0 ${index === 0 ? 'rounded-l-lg' : ''} ${index === days.length - 1 ? 'rounded-r-lg' : ''}`}
-                    style={{
-                      backgroundColor: '#ffcc99',
-                      opacity: `${intensity * 60}%`,
-                      boxShadow: `0 0 12px rgba(255, 60, 0, ${intensity * 2}), 0 0 24px rgba(255, 80, 0, ${intensity * 1.5}), 0 0 36px rgba(255, 100, 0, ${intensity * 1.2}), 0 0 48px rgba(255, 120, 0, ${intensity * 0.8})`,
-                      mixBlendMode: 'overlay'
-                    }}
-                  />
-                )
-              })()}
-
-              {/* Text content */}
-              <div className="relative z-10 flex flex-col items-center">
-                <div
-                  className="text-purple-200 text-xs font-semibold"
-                  style={{ textShadow: '0 0 10px rgba(25, 20, 30, 0.3), 0 0 16px rgba(25, 20, 30, 0.3), 0 0 24px rgba(25, 20, 30, 0.3)' }}
-                >
-                  {day.weekday}
-                </div>
-                <div
-                  className="text-purple-100 text-sm font-bold"
-                  style={{ textShadow: '0 0 10px rgba(25, 20, 30, 0.3), 0 0 16px rgba(25, 20, 30, 0.3), 0 0 24px rgba(25, 20, 30, 0.3)' }}
-                >
-                  {Math.round(day.price)} kr
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+    <div className="text-purple-300 text-xs mb-3" style={{ opacity: 0.7 }}>
+      {isLoading ? 'Analyserar elförbrukning...' : summaryText}
     </div>
   )
 }
@@ -201,11 +129,6 @@ export function RentWidget() {
 
   return (
     <div>
-      {/* Electricity daily costs bar */}
-      {electricityDailyCostsData && electricityDailyCostsData.daily_costs.length > 0 && (
-        <DailyElectricityCostBar dailyCosts={electricityDailyCostsData.daily_costs} />
-      )}
-
       {header && (
         <div className="text-purple-200 mb-3 leading-relaxed">
           {parseMarkdown(header)}
@@ -252,6 +175,11 @@ export function RentWidget() {
             ` - ${rentData.electricity_amount} kr för ${rentData.electricity_month} månads förbrukning`
           }
         </div>
+      )}
+
+      {/* Anomaly summary text - dynamic based on detected anomalies */}
+      {electricityDailyCostsData && electricityDailyCostsData.daily_costs.length > 0 && (
+        <AnomalySummaryText dailyCosts={electricityDailyCostsData.daily_costs} />
       )}
 
       {/* Heating cost impact line */}
