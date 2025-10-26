@@ -396,93 +396,47 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
     }
   })
 
-  // Step 2: Adaptive overlap resolution with position preservation
+  // Step 2: One-pass sequential layout (no iteration, no cascade effects)
   const chunksWithPositions = [...chunksWithInitialPositions]
 
-  // Sort by left position
+  // Sort by midpoint date (left to right)
   chunksWithPositions.sort((a, b) => a.leftPercent - b.leftPercent)
 
-  // Calculate what gap size would make everything fit perfectly
+  // Calculate adaptive gap
   const totalWidthNeeded = chunksWithPositions.reduce((sum, chunk) => sum + chunk.widthPercent, 0)
   const availableSpace = 100 - totalWidthNeeded
   const numGaps = chunksWithPositions.length - 1
   const idealGap = numGaps > 0 ? availableSpace / numGaps : 0
+  const MIN_GAP = 0 // No minimum gap - px-2 padding provides text separation, backgrounds can overlap
+  const targetGap = Math.max(MIN_GAP, idealGap)
 
-  // Adaptive gap: use 2% if possible (larger to prevent text collision), but reduce if needed
-  // Allow slight overflow if necessary to maintain readability
-  let targetGap = Math.max(0.3, Math.min(2, idealGap))
+  console.log(`One-pass layout: ${targetGap.toFixed(2)}% gap (ideal: ${idealGap.toFixed(2)}%), ${chunksWithPositions.length} chunks, ${totalWidthNeeded.toFixed(1)}% width)`)
 
-  console.log(`Adaptive gap: ${targetGap.toFixed(2)}% (ideal: ${idealGap.toFixed(2)}%, ${chunksWithPositions.length} chunks, ${totalWidthNeeded.toFixed(1)}% total width)`)
+  // Place chunks sequentially left-to-right with guaranteed gaps
+  let currentLeft = 0 // Start at left edge
 
-  // Iterative resolution with micro-adjustments (preserve date alignment)
-  const MAX_SHIFT = 12 // Maximum shift per chunk per iteration (high to resolve dense clusters)
-  const SOFT_EDGE_LEFT = -8 // Allow 8% overflow on left edge
-  const SOFT_EDGE_RIGHT = 108 // Allow 8% overflow on right edge
-  let iterationCount = 0
-  let hasOverlaps = true
+  chunksWithPositions.forEach((chunk, i) => {
+    // Position chunk at current left
+    chunk.leftPercent = currentLeft
 
-  while (hasOverlaps && iterationCount < 30) {
-    hasOverlaps = false
-    iterationCount++
+    // Advance current left for next chunk
+    currentLeft += chunk.widthPercent + targetGap
+  })
 
-    for (let i = 0; i < chunksWithPositions.length - 1; i++) {
-      const leftChunk = chunksWithPositions[i]
-      const rightChunk = chunksWithPositions[i + 1]
+  // Check if we overflowed 100% boundary
+  const lastChunk = chunksWithPositions[chunksWithPositions.length - 1]
+  const totalUsed = lastChunk.leftPercent + lastChunk.widthPercent
 
-      const leftChunkRight = leftChunk.leftPercent + leftChunk.widthPercent
-      const gap = rightChunk.leftPercent - leftChunkRight
+  if (totalUsed > 100) {
+    // Need compression - scale everything proportionally
+    const compressionRatio = 100 / totalUsed
+    console.log(`Compressing chunks by ${(compressionRatio * 100).toFixed(1)}% to fit`)
 
-      if (gap < targetGap) {
-        hasOverlaps = true
-        const neededSeparation = targetGap - gap
-
-        // Check if chunks are edge-constrained BEFORE calculating push
-        const leftChunkAtLeftEdge = leftChunk.leftPercent <= 0.5 // Within 0.5% of left edge
-        const rightChunkAtRightEdge = rightChunk.leftPercent + rightChunk.widthPercent >= 99.5 // Within 0.5% of right edge
-
-        let pushLeft = neededSeparation / 2
-        let pushRight = neededSeparation / 2
-
-        // CRITICAL: Full asymmetric push for edge-constrained pairs
-        if (leftChunkAtLeftEdge) {
-          // Left chunk pinned - give ALL push to right chunk
-          pushLeft = 0
-          pushRight = neededSeparation
-          // NO MAX_SHIFT limit for edge-constrained chunks - they need full separation
-        } else if (rightChunkAtRightEdge) {
-          // Right chunk pinned - give ALL push to left chunk
-          pushRight = 0
-          pushLeft = neededSeparation
-          // NO MAX_SHIFT limit for edge-constrained chunks
-        } else {
-          // Normal symmetric push with MAX_SHIFT limit
-          pushLeft = Math.min(pushLeft, MAX_SHIFT)
-          pushRight = Math.min(pushRight, MAX_SHIFT)
-        }
-
-        // Calculate new positions
-        let newLeftPos = leftChunk.leftPercent - pushLeft
-        let newRightPos = rightChunk.leftPercent + pushRight
-
-        // Final bounds enforcement (shouldn't trigger if edge detection works)
-        newLeftPos = Math.max(0, newLeftPos)
-        if (newRightPos + rightChunk.widthPercent > 100) {
-          newRightPos = 100 - rightChunk.widthPercent
-        }
-
-        leftChunk.leftPercent = newLeftPos
-        rightChunk.leftPercent = newRightPos
-      }
-    }
-
-    // Safety: if we can't resolve after many iterations, reduce target gap
-    if (iterationCount === 15 && hasOverlaps) {
-      targetGap *= 0.7 // Reduce gap by 30% and try again
-      console.log(`Reducing target gap to ${targetGap.toFixed(2)}% after 15 iterations`)
-    }
+    chunksWithPositions.forEach(chunk => {
+      chunk.leftPercent *= compressionRatio
+      chunk.widthPercent *= compressionRatio
+    })
   }
-
-  console.log(`Overlap resolution completed in ${iterationCount} iteration(s), final gap: ${targetGap.toFixed(2)}%`)
 
   // Debug logging for cost verification and positioning
   console.log('Anomaly chunks with absolute positions:', chunksWithPositions.map(c => ({

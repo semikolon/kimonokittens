@@ -87,7 +87,7 @@ function BackendDataWidgets() {
   return (
     <>
       {/* Secondary content in organic layout */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="md:col-span-2">
           <Widget title="Huset" accent={true} horsemenFont={true}>
             <ErrorBoundary resetKeys={[temperatureData?.last_updated_time]}>
@@ -105,7 +105,7 @@ function BackendDataWidgets() {
       </div>
 
       {/* Full-width transport section */}
-      <div className="mb-12">
+      <div className="mb-6">
         <Widget accent={true} className="w-full">
           <ErrorBoundary resetKeys={[trainData?.generated_at, connectionStatus]}>
             <TrainWidget />
@@ -115,7 +115,7 @@ function BackendDataWidgets() {
 
       {/* Electricity anomaly bar - positioned above rent widget */}
       {electricityDailyCostsData?.summary?.anomaly_summary && (
-        <div className="mb-3 overflow-hidden backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md">
+        <div className="mb-2 overflow-hidden backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md">
           <ErrorBoundary resetKeys={[electricityDailyCostsData?.generated_at]}>
             <AnomalySparklineBar
               anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
@@ -126,7 +126,7 @@ function BackendDataWidgets() {
       )}
 
       {/* Full-width rent section */}
-      <div className="mb-12">
+      <div className="mb-6">
         <Widget title="Hyran" horsemenFont={true} accent={true} className="w-full">
           <ErrorBoundary resetKeys={[rentData?.generated_at]}>
             <RentWidget />
@@ -135,7 +135,7 @@ function BackendDataWidgets() {
       </div>
 
       {/* Full-width Strava section */}
-      <div className="mb-12">
+      <div className="mb-6">
         <Widget title="Fredriks skogsturer" horsemenFont={true} className="w-full !bg-purple-900/15">
           <ErrorBoundary resetKeys={[stravaData?.generated_at]}>
             <StravaWidget />
@@ -190,7 +190,7 @@ function DashboardContent() {
       <div className="w-full px-4 py-12 min-w-0">
 
         {/* Featured section - Full width Clock with integrated logo */}
-        <div className="mb-12">
+        <div className="mb-6">
           <Widget accent={true} allowOverflow={true} className="min-h-[260px] w-full" innerClassName="px-6 pt-4 pb-2 md:px-8">
             <ErrorBoundary>
               <ClockWidget />
