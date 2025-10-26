@@ -462,7 +462,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
       const p3 = points[Math.min(i + 2, points.length - 1)]
 
       // Calculate control points for smooth curve
-      const tension = 0.2 // Adjust smoothness (0 = sharp corners, 1 = very smooth)
+      const tension = 0.05 // Adjust smoothness (0 = sharp corners, 1 = very smooth)
 
       const cp1x = p1.x + (p2.x - p0.x) * tension
       const cp1y = p1.y + (p2.y - p0.y) * tension
