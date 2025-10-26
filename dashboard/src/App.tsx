@@ -104,15 +104,6 @@ function BackendDataWidgets() {
         </div>
       </div>
 
-      {/* Full-width transport section */}
-      <div className="mb-6">
-        <Widget accent={true} className="w-full">
-          <ErrorBoundary resetKeys={[trainData?.generated_at, connectionStatus]}>
-            <TrainWidget />
-          </ErrorBoundary>
-        </Widget>
-      </div>
-
       {/* Electricity anomaly bar - positioned above rent widget */}
       {electricityDailyCostsData?.summary?.anomaly_summary && (
         <div className="mb-2 overflow-hidden backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md">
@@ -130,6 +121,15 @@ function BackendDataWidgets() {
         <Widget title="Hyran" horsemenFont={true} accent={true} className="w-full">
           <ErrorBoundary resetKeys={[rentData?.generated_at]}>
             <RentWidget />
+          </ErrorBoundary>
+        </Widget>
+      </div>
+
+      {/* Full-width transport section */}
+      <div className="mb-6">
+        <Widget accent={true} className="w-full">
+          <ErrorBoundary resetKeys={[trainData?.generated_at, connectionStatus]}>
+            <TrainWidget />
           </ErrorBoundary>
         </Widget>
       </div>
