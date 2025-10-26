@@ -407,13 +407,19 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
   return (
     <div className="mt-3 mb-3">
       <div className="relative h-20 rounded-lg overflow-hidden"
-           style={{ background: 'rgba(255, 255, 255, 0.025)' }}>
+           style={{ background: 'rgba(255, 255, 255, 0.015)', mixBlendMode: 'screen' }}>
 
         {/* Sparkline SVG overlay */}
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="sparklineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(255, 136, 68, 0.6)" />
+              <stop offset="100%" stopColor="rgba(68, 204, 204, 0.6)" />
+            </linearGradient>
+          </defs>
           <path
             d={sparklinePath}
-            stroke="rgba(35, 20, 45, 0.4)"
+            stroke="url(#sparklineGradient)"
             strokeWidth="1.5"
             fill="none"
             vectorEffect="non-scaling-stroke"
@@ -509,6 +515,14 @@ export function RentWidget() {
         </div>
       )}
 
+      {/* Anomaly sparkline bar - visual representation of detected anomalies */}
+      {electricityDailyCostsData?.summary?.anomaly_summary && (
+        <AnomalySparklineBar
+          anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
+          regressionData={electricityDailyCostsData.summary.regression_data}
+        />
+      )}
+
       <div className="space-y-2">
         {amounts.map((line, index) => {
           // Parse individual rent lines - look for bold amounts (marked with *)
@@ -556,14 +570,6 @@ export function RentWidget() {
         <div className="text-purple-300 text-xs mt-2" style={{ opacity: 0.5 }}>
           {rentData.heating_cost_line}
         </div>
-      )}
-
-      {/* Anomaly sparkline bar - visual representation of detected anomalies */}
-      {electricityDailyCostsData?.summary?.anomaly_summary && (
-        <AnomalySparklineBar
-          anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
-          regressionData={electricityDailyCostsData.summary.regression_data}
-        />
       )}
     </div>
   )
