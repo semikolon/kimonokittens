@@ -429,3 +429,81 @@ const y = padding + (1 - normalizedY) * usableHeight
 - `dashboard/src/components/RentWidget.tsx` (lines 335-381)
 
 **Status**: ✅ Committed and pushed. Awaiting browser verification.
+
+---
+
+## Chunk Alignment & Visual Refinements (Oct 26, 2025) - LATEST WORK
+
+### Problem: Chunks didn't align with sparkline peaks/troughs
+
+**Root cause discovered:** Two separate issues:
+1. **Overlapping date ranges** - Clustering high/low separately created ranges like "Aug 15-18" inside "Aug 10-23"
+2. **Flex layout drift** - Proportional flex widths accumulated positioning errors vs sparkline's calendar positioning
+
+### Solution 1: Unified Clustering with Type Splits (commit 9c17d51)
+
+**Algorithm change:**
+```typescript
+// OLD: Separate clustering caused overlaps
+const highClusters = clusterAnomalies(highAnomalies, 10)
+const lowClusters = clusterAnomalies(lowAnomalies, 10)
+
+// NEW: Unified clustering, then split on type changes
+const initialClusters = clusterAllAnomalies(sortedDays, 10)
+const finalClusters = initialClusters.flatMap(splitOnTypeChanges)
+```
+
+**Result:** No more overlapping date ranges. "Aug 10-23" becomes:
+- [Aug 10-14 high] [Aug 15-18 low] [Aug 18-23 high]
+
+### Solution 2: Absolute Positioning (commits d8ebb52, dcca0c1)
+
+**Replaced flex layout with calendar-based absolute positioning:**
+```typescript
+// Calculate exact position in 89-day window
+const startIndex = daysBetween(windowStart, chunk.startDate)
+const leftPercent = (startIndex / (totalDays - 1)) * 100
+const widthPercent = (chunk.durationDays / (totalDays - 1)) * 100
+
+// Render with absolute positioning
+<div style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}>
+```
+
+**Key insight:** Use same formula as sparkline: `(index / 88) * 100` for 89 days
+
+### Solution 3: Minimum Width + Radial Glow (commits 1934e77, current)
+
+**Problem:** Short chunks (1-2 days) caused text wrapping
+
+**Solution:**
+- 8% minimum width for anomaly chunks (gaps stay proportional)
+- Radial gradient glow instead of uniform background (reduces overlap clash)
+- Orange glow for high anomalies, turquoise for low
+
+```typescript
+const minWidthPercent = chunk.type === 'gap' ? calculatedWidth : 8
+const widthPercent = Math.max(calculatedWidth, minWidthPercent)
+
+// Radial glow centered in chunk
+background: chunk.type === 'high'
+  ? 'radial-gradient(circle at center, rgba(255, 136, 68, 0.06), transparent)'
+  : 'radial-gradient(circle at center, rgba(68, 204, 204, 0.06), transparent)'
+```
+
+### Current Status (Oct 26, 2025)
+
+**Architecture:**
+- Unified clustering algorithm (10-day window)
+- Absolute calendar positioning
+- 8% minimum width with radial gradient glow
+- Orange/turquoise color coding for high/low anomalies
+
+**Configuration values:**
+- Clustering window: 10 days
+- Sparkline tension: 0.2 (balance smoothness vs daily responsiveness)
+- Bar opacity: 0.018 (subtle background)
+- Gradient: orange→dark purple→turquoise (50% dark stop at 0.25 opacity)
+- Chunk glow: 0.06 opacity (doubled from background for visibility)
+- Min width: 8% (~96px at 1200px viewport)
+
+**Positioning formula:** Matches sparkline exactly - `(index / 88) * 100` for 89-day window

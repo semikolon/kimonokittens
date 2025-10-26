@@ -384,7 +384,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
     const calculatedWidth = totalDays > 1 ? (chunk.durationDays / (totalDays - 1)) * 100 : 0
 
     // Apply minimum width to prevent text wrapping (8% = ~96px at 1200px viewport)
-    // Conservative minimum ensures readability while minimizing overlap
+    // Radial gradient reduces overlap clash, so 8% is acceptable
     const minWidthPercent = chunk.type === 'gap' ? calculatedWidth : 8
     const widthPercent = Math.max(calculatedWidth, minWidthPercent)
 
@@ -511,13 +511,14 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
                 width: `${chunk.widthPercent}%`
               }}
             >
-              {/* Background chunk - colored for anomaly type, transparent for gaps */}
+              {/* Background chunk - radial glow centered in chunk, tightened to avoid cutoff at edges */}
               <div
                 className="absolute inset-0"
                 style={{
-                  backgroundColor: chunk.type === 'gap' ? 'transparent' :
-                                   chunk.type === 'high' ? 'rgba(255, 136, 68, 0.03)' :
-                                   'rgba(68, 204, 204, 0.03)'
+                  background: chunk.type === 'gap' ? 'transparent' :
+                              chunk.type === 'high'
+                                ? 'radial-gradient(circle at center, rgba(255, 136, 68, 0.06) 0%, rgba(255, 136, 68, 0.03) 50%, transparent 70%)'
+                                : 'radial-gradient(circle at center, rgba(68, 204, 204, 0.06) 0%, rgba(68, 204, 204, 0.03) 50%, transparent 70%)'
                 }}
               />
 
