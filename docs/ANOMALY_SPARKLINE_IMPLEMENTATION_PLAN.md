@@ -392,3 +392,40 @@ end
 - Sparkline and chunks are visually independent
 
 **Alternative (simpler)**: Start sparkline at first anomaly date, end at last anomaly date, interpolate between anomaly points. Less accurate but requires no backend changes.
+
+---
+
+## Sparkline Scaling Fix (Oct 26, 2025)
+
+**Problem**: Sparkline appeared completely flat in browser.
+
+**Root causes**:
+1. **X-coordinate calculation**: Used `(index / totalDays) * width`, which never reached 100 at the end. For 90 days, last point was at x=98.89.
+2. **Y-axis scaling too conservative**: Used fixed `/2` divisor, making ±40% variations only move ±20 pixels in 100px viewBox.
+3. **No dynamic scaling**: Didn't adapt to actual min/max values in dataset.
+
+**Solution** (commit `47bd5a5`):
+```typescript
+// Fix x-coordinate to reach 100 at end
+const x = totalDays > 1 ? (index / (totalDays - 1)) * width : 0
+
+// Dynamic y-axis scaling with padding
+const minExcess = Math.min(...excessValues)
+const maxExcess = Math.max(...excessValues)
+const padding = 10  // 10% padding top/bottom
+const usableHeight = 100 - (2 * padding)
+const normalizedY = (day.excess_pct - minExcess) / range
+const y = padding + (1 - normalizedY) * usableHeight
+```
+
+**Debugging support**: Added comprehensive console logging to verify:
+- Regression data length and sample values
+- Min/max/range of excess_pct values
+- Generated SVG point coordinates
+
+**Dev logs limitation discovered**: `npm run dev:logs` fails in Claude Code because it calls `overmind connect`, which requires interactive terminal (TTY). Alternative: Browser DevTools console (F12) for client-side logs.
+
+**Files modified**:
+- `dashboard/src/components/RentWidget.tsx` (lines 335-381)
+
+**Status**: ✅ Committed and pushed. Awaiting browser verification.
