@@ -381,7 +381,12 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
 
     // Width should span the full duration (durationDays already includes +1 for inclusive range)
     // E.g., 2-day chunk = 2 intervals in 88-interval space = 2.27%
-    const widthPercent = totalDays > 1 ? (chunk.durationDays / (totalDays - 1)) * 100 : 0
+    const calculatedWidth = totalDays > 1 ? (chunk.durationDays / (totalDays - 1)) * 100 : 0
+
+    // Apply minimum width to prevent text wrapping (8% = ~96px at 1200px viewport)
+    // Conservative minimum ensures readability while minimizing overlap
+    const minWidthPercent = chunk.type === 'gap' ? calculatedWidth : 8
+    const widthPercent = Math.max(calculatedWidth, minWidthPercent)
 
     return {
       ...chunk,
