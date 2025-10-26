@@ -180,6 +180,7 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 **Status**: ✅ **PRODUCTION** (Oct 24, 2025) - Dual-scraper system with daily cron
 **Documentation**: `docs/ELECTRICITY_AUTOMATION_COMPLETION_SUMMARY.md`, `docs/PRODUCTION_CRON_DEPLOYMENT.md`
+**Testing Verified**: Oct 26, 2025 - End-to-end deletion test confirmed 2,581 kr aggregation (see docs)
 
 **Architecture**: Vattenfall (3am) + Fortum (4am) scrapers → `ApplyElectricityBill` service → auto-update RentConfig
 **Features**: Peak/off-peak pricing, smart adaptive projection, automatic bill deduplication, timezone-normalized storage
