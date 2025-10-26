@@ -517,8 +517,8 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
                 style={{
                   background: chunk.type === 'gap' ? 'transparent' :
                               chunk.type === 'high'
-                                ? 'radial-gradient(circle at center, rgba(255, 136, 68, 0.06) 0%, rgba(255, 136, 68, 0.03) 50%, transparent 70%)'
-                                : 'radial-gradient(circle at center, rgba(68, 204, 204, 0.06) 0%, rgba(68, 204, 204, 0.03) 50%, transparent 70%)'
+                                ? 'radial-gradient(circle at center, rgba(255, 136, 68, 0.08) 0%, rgba(255, 136, 68, 0.04) 50%, transparent 70%)'
+                                : 'radial-gradient(circle at center, rgba(68, 204, 204, 0.08) 0%, rgba(68, 204, 204, 0.04) 50%, transparent 70%)'
                 }}
               />
 

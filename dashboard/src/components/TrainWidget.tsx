@@ -456,7 +456,7 @@ const DeviationAlerts: React.FC<{
   }, {} as Record<string, Deviation[]>)
 
   return (
-    <div className="text-yellow-400 bg-yellow-400/10 p-2 rounded inline-block max-w-full mb-3 -ml-2">
+    <div className="text-yellow-200 bg-yellow-400/10 p-2 rounded inline-block max-w-full mb-3 -ml-2 text-sm">
       <div className="space-y-1">
         {Object.entries(grouped).map(([reason, items], index) => (
           <div key={index} className="leading-tight">
