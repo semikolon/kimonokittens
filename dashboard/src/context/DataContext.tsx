@@ -117,6 +117,16 @@ interface ElectricityDailyCostsData {
     price_so_far: number
     projected_total: number
     average_hour: number
+    anomaly_summary?: {
+      total_anomalies: number
+      anomalous_days: Array<{
+        date: string
+        consumption: number
+        expected: number
+        temp_c: number
+        excess_pct: number
+      }>
+    }
   }
   daily_costs: ElectricityDailyCost[]
   generated_at?: string
@@ -347,7 +357,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 summary: {
                   price_so_far: summary.price_so_far,
                   projected_total: summary.projected_total,
-                  average_hour: summary.average_hour
+                  average_hour: summary.average_hour,
+                  anomaly_summary: summary.anomaly_summary
                 },
                 daily_costs,
                 generated_at: message.timestamp?.toString()

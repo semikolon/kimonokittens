@@ -2,18 +2,28 @@ import React, { useState, useEffect } from 'react'
 import { useData } from '../context/DataContext'
 
 // Anomaly Summary Component - generates dynamic text about anomalous electricity usage
-function AnomalySummaryText({ dailyCosts }: { dailyCosts: Array<{ date: string; weekday: string; price: number; consumption: number; avg_temp_c?: number; anomalous_usage_pct?: number }> }) {
+function AnomalySummaryText({ anomalySummary }: {
+  anomalySummary?: {
+    total_anomalies: number
+    anomalous_days: Array<{
+      date: string
+      consumption: number
+      expected: number
+      temp_c: number
+      excess_pct: number
+    }>
+  }
+}) {
   const [summaryText, setSummaryText] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    // Extract anomalous days (threshold: 20% excess)
-    const anomalousDays = dailyCosts.filter(day => day.anomalous_usage_pct && day.anomalous_usage_pct >= 20)
-
-    if (anomalousDays.length === 0) {
+    if (!anomalySummary || anomalySummary.anomalous_days.length === 0) {
       setSummaryText(null)
       return
     }
+
+    const anomalousDays = anomalySummary.anomalous_days
 
     // Generate summary text via GPT-5-nano
     const generateSummary = async () => {
@@ -21,13 +31,14 @@ function AnomalySummaryText({ dailyCosts }: { dailyCosts: Array<{ date: string; 
       try {
         const prompt = `Du är en svensk textgenerator för en hyresräkningsapp. Skapa EN KORT MENING (max 20 ord) på svenska som förklarar avvikande eldagar.
 
-Anomalidata:
-${anomalousDays.map(d => `- ${d.weekday} ${d.date}: +${Math.round(d.anomalous_usage_pct!)}% över normalt (${d.consumption} kWh)`).join('\n')}
+Anomalidata (${anomalousDays.length} dagar):
+${anomalousDays.map(d => `- ${d.date}: ${d.consumption} kWh (förväntat: ${d.expected} kWh, +${Math.round(d.excess_pct)}% över, temp: ${d.temp_c}°C)`).join('\n')}
 
 Kontext:
 - Högre förbrukning beror troligen på fler personer i huset
 - Juli/augusti 2025 hade extra person (Amanda)
 - Fokusera på VARFÖR, inte bara VAD
+- Du har tillgång till faktisk vs förväntad förbrukning OCH temperatur
 
 Exempel godkänd mening: "Högre förbrukning vissa dagar (juli/augusti) beror troligen på fler personer i huset då."
 
@@ -65,7 +76,7 @@ Generera EN mening (max 20 ord):`
     }
 
     generateSummary()
-  }, [dailyCosts])
+  }, [anomalySummary])
 
   if (!summaryText && !isLoading) return null
 
@@ -178,8 +189,8 @@ export function RentWidget() {
       )}
 
       {/* Anomaly summary text - dynamic based on detected anomalies */}
-      {electricityDailyCostsData && electricityDailyCostsData.daily_costs.length > 0 && (
-        <AnomalySummaryText dailyCosts={electricityDailyCostsData.daily_costs} />
+      {electricityDailyCostsData?.summary?.anomaly_summary && (
+        <AnomalySummaryText anomalySummary={electricityDailyCostsData.summary.anomaly_summary} />
       )}
 
       {/* Heating cost impact line */}
