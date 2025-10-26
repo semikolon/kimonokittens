@@ -34,29 +34,40 @@
 
 \* April 2023 data incomplete - smaller invoices visible (779 SEK, 1,016 SEK) may be partial payments or separate billing
 
-### Smaller Invoices (Non-Quarterly)
+### Irregular Drifträkningar (Confirmed Building Operations Invoices)
 
-Additional invoices found in email history that don't match the quarterly pattern:
+Additional drifträkning invoices found in email history with irregular timing:
 
 | Invoice Date | Due Date | Amount (SEK) | Invoice # | Notes |
 |--------------|----------|--------------|-----------|-------|
-| Jun 2, 2025  | -        | 572.00       | #8131     | Separate charge (nature unclear) |
-| Feb 6, 2024  | -        | 1,538.00     | #4389     | Separate charge (betalning mottagen) |
-| Jan 26, 2024 | Feb 2    | 1,478.00     | #4389     | Separate charge (possibly partial payment) |
+| Jun 2, 2025  | -        | 572.00       | #8131     | Irregular timing (Jun, not Apr/Jul/Oct) |
+| Feb 6, 2024  | -        | 1,538.00     | #4389     | Irregular timing (Feb, payment received) |
+| Jan 26, 2024 | Feb 2    | 1,478.00     | #4389     | Irregular timing (Jan, not Apr/Jul/Oct) |
 
-**Note**: These smaller invoices (500-1,500 SEK) appear to be separate charges or adjustments, not quarterly building operations costs. The typical quarterly invoice is 2,400-2,900 SEK.
+**Confirmed**: These ARE building operations costs (drifträkningar) from Bostadsagenturen, just with irregular timing. All Bostadsagenturen invoices are for building operations - there are no other billing categories from this provider.
+
+**Pattern**: Main invoices follow Apr/Jul/Oct pattern (2,400-2,900 SEK), but additional smaller invoices (500-1,600 SEK) appear irregularly for adjustments or partial-year charges.
+
+**Total Annual Costs** (including all drifträkningar):
+- 2024: 9,167 kr (1,478 + 2,473 + 2,604 + 2,612)
+- 2025: 8,933 kr (2,927 + 572 + 2,637 + 2,797)
 
 ---
 
 ## Invoice Pattern Analysis
 
 ### Billing Frequency
-**3 times per year** (not 4 quarters):
-- **April** (Q1 end/Q2 start)
-- **July** (Q2 end/Q3 start)
-- **October** (Q3 end/Q4 start)
+**Main Pattern: 3× yearly** (Apr, Jul, Oct) - consistent across 2023-2025:
+- **April** (Q1 end/Q2 start): 2,473-2,927 kr
+- **July** (Q2 end/Q3 start): 2,487-2,637 kr
+- **October** (Q3 end/Q4 start): 2,506-2,797 kr
 
-**No January invoice** - Pattern starts in April
+**Additional Irregular Invoices**:
+- Smaller drifträkningar (500-1,600 kr) appear irregularly (Jan 2024, Jun 2025)
+- Cannot predict timing - appear as needed for adjustments or partial-year charges
+- SHOULD be expected but timing unpredictable
+
+**Total Annual**: 8,900-9,200 kr including all drifträkningar (main + irregular)
 
 ### Amount Trends
 

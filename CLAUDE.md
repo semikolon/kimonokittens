@@ -296,6 +296,7 @@ For LLM assistants and future developers:
 ## 🚀 DEPLOYMENT ARCHITECTURE
 
 > **✅ KIOSK DEPLOYED**: Dell Optiplex 7010 live in hallway (October 6, 2025)
+> - **Production IP**: `192.168.4.84` (SSH hostname: `pop` via ~/.ssh/config)
 > - Dashboard display operational 24/7
 > - GPU acceleration + webhook auto-deployment active
 > - Migration from Pi 3B+ ongoing (Node-RED, MQTT, cron jobs)

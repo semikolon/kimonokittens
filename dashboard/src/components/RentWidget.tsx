@@ -1,78 +1,120 @@
 import React from 'react'
 import { useData } from '../context/DataContext'
 
-// Electricity Cost Sparkline Component
-function ElectricityCostSparkline({ dailyCosts }: { dailyCosts: Array<{ date: string; price: number; consumption: number; avg_temp_c?: number }> }) {
+// Daily Electricity Cost Bar Component
+function DailyElectricityCostBar({ dailyCosts }: { dailyCosts: Array<{ date: string; weekday: string; price: number; consumption: number; avg_temp_c?: number }> }) {
   if (!dailyCosts || dailyCosts.length === 0) return null
 
-  // Normalize price data to 0-100 range for SVG
-  const prices = dailyCosts.map(d => d.price)
+  // Reverse to show oldest first (left to right chronologically)
+  const days = dailyCosts.slice().reverse()
+
+  // Prepare sparkline data
+  const prices = days.map(d => d.price)
   const minPrice = Math.min(...prices)
   const maxPrice = Math.max(...prices)
-  const priceRange = maxPrice - minPrice || 1 // Avoid division by zero
+  const priceRange = maxPrice - minPrice || 1
 
-  // Generate SVG path for electricity costs
-  const electricityPoints = dailyCosts.map((day, index) => {
-    const x = (index / (dailyCosts.length - 1)) * 100
+  // Generate electricity cost sparkline path
+  const electricityPath = days.map((day, index) => {
+    const x = (index / (days.length - 1)) * 100
     const normalizedPrice = ((day.price - minPrice) / priceRange)
-    const y = 100 - (normalizedPrice * 100) // Invert Y axis (SVG 0 is top)
+    const y = 100 - (normalizedPrice * 80) // Use 0-80% range (leave 20% margin at top)
     return `${x},${y}`
-  }).join(' ')
+  }).join(' L ')
 
-  const electricityPath = electricityPoints
-
-  // Check if we have temperature data
-  const hasTemperatureData = dailyCosts.some(d => d.avg_temp_c !== undefined)
+  // Generate temperature sparkline path (if we have temperature data)
+  const hasTemperatureData = days.some(d => d.avg_temp_c !== undefined)
   let temperaturePath = ''
-
   if (hasTemperatureData) {
-    // Normalize temperature data to 0-100 range for SVG
-    const temps = dailyCosts.map(d => d.avg_temp_c || 0).filter(t => t !== 0)
+    const temps = days.map(d => d.avg_temp_c || 0).filter(t => t !== 0)
     if (temps.length > 0) {
       const minTemp = Math.min(...temps)
       const maxTemp = Math.max(...temps)
-      const tempRange = maxTemp - minTemp || 1 // Avoid division by zero
+      const tempRange = maxTemp - minTemp || 1
 
-      const temperaturePoints = dailyCosts.map((day, index) => {
-        const x = (index / (dailyCosts.length - 1)) * 100
+      temperaturePath = days.map((day, index) => {
+        const x = (index / (days.length - 1)) * 100
         const normalizedTemp = ((day.avg_temp_c || 0) - minTemp) / tempRange
-        const y = 100 - (normalizedTemp * 100) // Invert Y axis
+        const y = 100 - (normalizedTemp * 80) // Use 0-80% range (leave 20% margin at top)
         return `${x},${y}`
-      }).join(' ')
-
-      temperaturePath = temperaturePoints
+      }).join(' L ')
     }
   }
 
   return (
-    <div className="mt-2">
-      <svg
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        className="w-full h-8"
-        style={{ display: 'block' }}
+    <div className="mt-3">
+      <div className="text-purple-200 mb-2" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>
+        Senaste veckans elkostnader
+      </div>
+      <div
+        className="relative h-16 rounded-lg overflow-visible"
+        style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          mixBlendMode: 'overlay'
+        }}
       >
-        {/* Outdoor temperature line (orange) - behind electricity */}
-        {temperaturePath && (
-          <polyline
-            points={temperaturePath}
-            fill="none"
-            stroke="#ffcc99"
-            strokeWidth="1.5"
-            vectorEffect="non-scaling-stroke"
-            opacity="0.7"
-          />
-        )}
+        {/* Sparkline overlays */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          style={{
+            zIndex: 5,
+            clipPath: 'inset(0 round 0.5rem)'
+          }}
+        >
+          {/* Temperature sparkline (orange, behind) */}
+          {temperaturePath && (
+            <path
+              d={`M ${temperaturePath}`}
+              fill="none"
+              stroke="#ffcc99"
+              strokeWidth="1.5"
+              vectorEffect="non-scaling-stroke"
+              opacity="0.4"
+            />
+          )}
 
-        {/* Electricity cost line (purple) */}
-        <polyline
-          points={electricityPath}
-          fill="none"
-          stroke="rgb(216, 180, 254)"
-          strokeWidth="2"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
+          {/* Electricity cost sparkline (purple, front) */}
+          <path
+            d={`M ${electricityPath}`}
+            fill="none"
+            stroke="rgb(216, 180, 254)"
+            strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
+            opacity="0.6"
+          />
+        </svg>
+
+        {/* Day sections */}
+        <div className="absolute inset-0 flex">
+          {days.map((day, index) => (
+            <div
+              key={`${day.date}-${index}`}
+              className="flex-1 relative h-full flex flex-col items-center justify-center"
+              style={{
+                marginRight: index < days.length - 1 ? '2px' : '0'
+              }}
+            >
+              {/* Background chunk */}
+              <div
+                className={`absolute inset-0 ${index === 0 ? 'rounded-l-lg' : ''} ${index === days.length - 1 ? 'rounded-r-lg' : ''}`}
+                style={{
+                  backgroundColor: '#ffffff',
+                  opacity: '30%',
+                  mixBlendMode: 'overlay'
+                }}
+              />
+
+              {/* Text content */}
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="text-purple-200 text-xs font-semibold">{day.weekday}</div>
+                <div className="text-purple-100 text-sm font-bold">{Math.round(day.price)} kr</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -185,17 +227,9 @@ export function RentWidget() {
         </div>
       )}
 
-      {/* Electricity daily costs */}
+      {/* Electricity daily costs bar */}
       {electricityDailyCostsData && electricityDailyCostsData.daily_costs.length > 0 && (
-        <div className="text-purple-300 text-xs mt-3" style={{ opacity: 0.5 }}>
-          <div className="font-semibold mb-1">Senaste veckans elkostnader:</div>
-          <ElectricityCostSparkline dailyCosts={electricityDailyCostsData.daily_costs} />
-          {electricityDailyCostsData.daily_costs.slice().reverse().map((day, index) => (
-            <div key={index}>
-              {day.weekday} {day.date}: {day.consumption.toFixed(1)} kWh = {day.price} kr
-            </div>
-          ))}
-        </div>
+        <DailyElectricityCostBar dailyCosts={electricityDailyCostsData.daily_costs} />
       )}
     </div>
   )

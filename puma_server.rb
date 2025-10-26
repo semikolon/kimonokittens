@@ -43,12 +43,14 @@ require_relative 'handlers/display_control_handler'
 require_relative 'handlers/sleep_schedule_handler'
 require_relative 'handlers/heating_cost_handler'
 require_relative 'handlers/electricity_price_handler'
+require_relative 'handlers/electricity_stats_handler'
 require_relative 'handlers/screenshot_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
 heating_cost_handler = HeatingCostHandler.new
 electricity_price_handler = ElectricityPriceHandler.new
+electricity_stats_handler = ElectricityStatsHandler.new(electricity_price_handler)
 screenshot_handler = ScreenshotHandler.new
 proxy_handler = ProxyHandler.new
 static_handler = StaticHandler.new
@@ -373,6 +375,10 @@ app = Rack::Builder.new do
 
   map "/data/electricity_prices" do
     run electricity_price_handler
+  end
+
+  map "/api/electricity/daily_costs" do
+    run electricity_stats_handler
   end
 
   map "/data" do
