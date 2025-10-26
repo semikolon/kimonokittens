@@ -125,6 +125,8 @@ interface ElectricityDailyCostsData {
         expected: number
         temp_c: number
         excess_pct: number
+        price_per_kwh: number
+        cost_impact: number  // In SEK, positive = cost, negative = savings
       }>
     }
   }

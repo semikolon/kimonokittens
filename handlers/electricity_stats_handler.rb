@@ -215,6 +215,14 @@ class ElectricityStatsHandler
       end
     end
 
+    # Build daily average price lookup for cost impact calculation
+    # Group hourly prices by date and calculate daily average
+    daily_avg_prices = {}
+    all_hours.group_by { |h| h[:date] }.each do |date, hours|
+      avg_price = hours.sum { |h| h[:price_per_kwh] } / hours.length
+      daily_avg_prices[date] = avg_price.round(3)
+    end
+
     # Detect anomalous electricity usage (high consumption relative to heating needs)
     # Use ALL historical data (90 days) for robust regression model
     historical_with_temp = all_historical_summed.select { |d| d[:consumption] && d[:avg_temp_c] }
@@ -246,18 +254,28 @@ class ElectricityStatsHandler
         excess_pct = ((actual_consumption / expected_consumption - 1) * 100).round(1)
 
         if actual_consumption > expected_consumption * 1.20 || actual_consumption < expected_consumption * 0.80
+          # Calculate cost impact using daily average price
+          price_per_kwh = daily_avg_prices[day[:date]] || avg_price_per_kwh + KWH_TRANSFER_PRICE
+          consumption_diff = actual_consumption - expected_consumption
+          cost_impact = (consumption_diff * price_per_kwh).round(1)
+
           all_anomalies << {
             date: day[:date],
             consumption: actual_consumption.round(1),
             expected: expected_consumption.round(1),
             temp_c: day[:avg_temp_c],
-            excess_pct: excess_pct  # Can be positive (high) or negative (low)
+            excess_pct: excess_pct,  # Can be positive (high) or negative (low)
+            price_per_kwh: price_per_kwh.round(3),
+            cost_impact: cost_impact  # In SEK, can be positive (cost) or negative (savings)
           }
         end
       end
 
       puts "Anomaly check: #{all_anomalies.length} anomalous days found in 90-day period (threshold: 20%)"
-      all_anomalies.each { |a| puts "  #{a[:date]}: #{a[:consumption]} kWh (expected #{a[:expected]}, +#{a[:excess_pct]}% at #{a[:temp_c]}°C)" }
+      all_anomalies.each do |a|
+        cost_str = a[:cost_impact] >= 0 ? "+#{a[:cost_impact]}" : "#{a[:cost_impact]}"
+        puts "  #{a[:date]}: #{a[:consumption]} kWh (expected #{a[:expected]}, #{a[:excess_pct] >= 0 ? '+' : ''}#{a[:excess_pct]}% at #{a[:temp_c]}°C, #{cost_str} kr)"
+      end
 
       # Flag anomalies ONLY on the displayed days (last 14 days)
       # Return excess percentage for proportional glow intensity

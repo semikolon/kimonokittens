@@ -11,6 +11,8 @@ function AnomalySummaryText({ anomalySummary }: {
       expected: number
       temp_c: number
       excess_pct: number  // Positive = higher than expected, Negative = lower than expected
+      price_per_kwh: number
+      cost_impact: number  // In SEK, positive = cost, negative = savings
     }>
   }
 }) {
