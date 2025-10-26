@@ -26,7 +26,9 @@ grep -E "VATTENFALL_ID|VATTENFALL_PW|FORTUM_ID|FORTUM_PW|AZURE_SUBSCRIPTION_KEY"
 
 ## Installation Steps
 
-### 1. Create Cron Wrapper Scripts
+### 1. Create Cron Wrapper Scripts (OUTDATED - See Note Below)
+
+**⚠️ NOTE (Oct 26, 2025):** These wrapper scripts are **NOT used in production**. Cron jobs call the scrapers directly with `bundle exec`. This section is preserved for reference only. See "Production Verification" section below for actual cron configuration.
 
 **Vattenfall scraper (elnät - grid costs):**
 ```bash
@@ -195,6 +197,80 @@ puts \"Total bills in database: #{bills.length}\"
 bills.each { |b| puts \"  - #{b.provider} #{b.amount} kr (#{b.bill_period})\" }
 "
 ```
+
+### Production Verification (Oct 26, 2025) ✅
+
+**Complete end-to-end flow tested and verified in production.**
+
+#### Critical Fix: Bundle Exec Requirement
+
+**Problem discovered:** Cron jobs were failing with "cannot load such file -- ferrum" error.
+
+**Root cause:** Cron environment doesn't have bundler gem path in load path.
+
+**Fix applied:** Updated crontab entries to use `bundle exec`:
+```bash
+# Correct cron configuration (Oct 26, 2025)
+0 3 * * * cd /home/kimonokittens/Projects/kimonokittens && bundle exec ruby vattenfall.rb >> logs/vattenfall_fetcher.log 2>&1
+0 4 * * * cd /home/kimonokittens/Projects/kimonokittens && bundle exec ruby fortum.rb >> logs/fortum_fetcher.log 2>&1
+```
+
+**Note:** The wrapper scripts mentioned earlier in this document (`bin/fetch_*_data.sh`) are not used in production. Cron jobs call the scrapers directly with `bundle exec`.
+
+#### End-to-End Testing Method
+
+**Test procedure** (verified Oct 26, 2025):
+1. **Delete latest bills** from database to simulate new invoice arrival
+2. **Run both scrapers** manually with bundle exec
+3. **Verify re-insertion** of bills with correct amounts
+4. **Verify aggregation** to RentConfig with correct totals
+5. **Verify WebSocket** broadcast of rent_data_updated event
+
+**Commands used:**
+```bash
+# Delete latest bills (Sept 2025 consumption period)
+ruby -e "require 'dotenv/load'; require_relative 'lib/persistence'; \
+  Persistence.electricity_bills.delete_by_period(Date.new(2025, 9, 1))"
+
+# Run scrapers (bundle exec required in cron environment)
+cd /home/kimonokittens/Projects/kimonokittens
+bundle exec ruby vattenfall.rb
+bundle exec ruby fortum.rb
+
+# Verify results
+ruby -e "require 'dotenv/load'; require_relative 'lib/persistence'; \
+  bills = Persistence.electricity_bills.find_by_period(Date.new(2025, 9, 1)); \
+  bills.each { |b| puts \"#{b.provider}: #{b.amount} kr\" }; \
+  puts \"Total: #{bills.sum(&:amount)} kr\""
+```
+
+**Verified results:**
+```
+Vattenfall: 1685.69 kr  (Sept 2025 grid costs - elnät)
+Fortum: 896.0 kr        (Sept 2025 consumption - elhandel)
+Total: 2581.69 kr       (Aggregated to RentConfig for Oct rent calculation)
+```
+
+**Database verification:**
+- ✅ Both bills inserted with correct amounts
+- ✅ Deduplication working (subsequent runs skip duplicates)
+- ✅ RentConfig `el` key updated to 2,581 kr (rounded)
+- ✅ WebSocket broadcast triggered (dashboard auto-refreshed)
+
+**Cron verification:**
+```bash
+# Check cron is running both scrapers daily
+sudo -u kimonokittens crontab -l | grep bundle
+
+# View recent cron execution logs
+grep CRON /var/log/syslog | grep "vattenfall\|fortum" | tail -10
+
+# Check scraper output logs
+tail -50 /home/kimonokittens/Projects/kimonokittens/logs/vattenfall_fetcher.log
+tail -50 /home/kimonokittens/Projects/kimonokittens/logs/fortum_fetcher.log
+```
+
+**Status:** ✅ **PRODUCTION READY** - Both scrapers running daily at 3am/4am with complete integration
 
 ---
 

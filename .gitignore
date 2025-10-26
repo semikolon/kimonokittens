@@ -55,6 +55,7 @@ node_modules/
 
 tmp/
 log/
+logs/
 
 # Claude Code personal settings
 .claude/settings.local.json
