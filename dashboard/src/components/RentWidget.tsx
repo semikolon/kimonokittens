@@ -31,70 +31,114 @@ function AnomalySummaryText({ anomalySummary }: {
       return aDate.getTime() - bDate.getTime()
     })
 
-    // Group consecutive dates into ranges
-    interface DateRange {
-      start: string
-      end: string
-      days: typeof sortedDays
-      avgExcess: number
-      isHigh: boolean
+    // Separate high and low anomalies
+    const highAnomalies = sortedDays.filter(d => d.excess_pct > 0)
+    const lowAnomalies = sortedDays.filter(d => d.excess_pct < 0)
+
+    // Build intelligent summary with smart grouping
+    interface AnomalyGroup {
+      type: 'high' | 'low'
+      dateRange: string
+      avgPct: number
     }
 
-    const ranges: DateRange[] = []
-    let currentRange: DateRange | null = null
+    // Helper to group anomalies with temporal clustering
+    const clusterAnomalies = (anomalies: typeof sortedDays, maxGapDays: number) => {
+      if (anomalies.length === 0) return []
 
-    sortedDays.forEach((day, index) => {
-      const isHigh = day.excess_pct > 0
-      const dayDate = new Date(`${day.date} 2025`)
+      const clusters: typeof sortedDays[] = []
+      let currentCluster: typeof sortedDays = [anomalies[0]]
 
-      if (!currentRange) {
-        // Start new range
-        currentRange = {
-          start: day.date,
-          end: day.date,
-          days: [day],
-          avgExcess: day.excess_pct,
-          isHigh
-        }
-      } else {
-        const prevDate = new Date(`${currentRange.end} 2025`)
-        const daysDiff = (dayDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
-        const sameType = currentRange.isHigh === isHigh
+      for (let i = 1; i < anomalies.length; i++) {
+        const prevDate = new Date(`${currentCluster[currentCluster.length - 1].date} 2025`)
+        const currDate = new Date(`${anomalies[i].date} 2025`)
+        const daysDiff = (currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
 
-        if (daysDiff <= 3 && sameType) {
-          // Extend current range (within 3 days and same type)
-          currentRange.end = day.date
-          currentRange.days.push(day)
+        if (daysDiff <= maxGapDays) {
+          // Add to current cluster
+          currentCluster.push(anomalies[i])
         } else {
-          // Finalize current range and start new one
-          currentRange.avgExcess = currentRange.days.reduce((sum, d) => sum + d.excess_pct, 0) / currentRange.days.length
-          ranges.push(currentRange)
-          currentRange = {
-            start: day.date,
-            end: day.date,
-            days: [day],
-            avgExcess: day.excess_pct,
-            isHigh
-          }
+          // Start new cluster
+          clusters.push(currentCluster)
+          currentCluster = [anomalies[i]]
         }
       }
 
-      // Finalize last range
-      if (index === sortedDays.length - 1 && currentRange) {
-        currentRange.avgExcess = currentRange.days.reduce((sum, d) => sum + d.excess_pct, 0) / currentRange.days.length
-        ranges.push(currentRange)
+      // Add final cluster
+      clusters.push(currentCluster)
+      return clusters
+    }
+
+    // Helper to format date range
+    const formatDateRange = (cluster: typeof sortedDays) => {
+      if (cluster.length === 1) return cluster[0].date
+
+      const first = cluster[0].date
+      const last = cluster[cluster.length - 1].date
+
+      // If same month, show compact format
+      if (first.split(' ')[0] === last.split(' ')[0]) {
+        const month = first.split(' ')[0]
+        const firstDay = first.split(' ')[1]
+        const lastDay = last.split(' ')[1]
+        return `${firstDay}-${lastDay} ${month}`
       }
+
+      return `${first} - ${last}`
+    }
+
+    const groups: AnomalyGroup[] = []
+
+    // Process high anomalies with 14-day clustering
+    const highClusters = clusterAnomalies(highAnomalies, 14)
+    highClusters.forEach(cluster => {
+      const avgPct = cluster.reduce((sum, d) => sum + d.excess_pct, 0) / cluster.length
+      groups.push({
+        type: 'high',
+        dateRange: formatDateRange(cluster),
+        avgPct: Math.round(avgPct)
+      })
     })
 
-    // Build granular sentence
-    const segments = ranges.map(range => {
-      const dateStr = range.start === range.end ? range.start : `${range.start}-${range.end}`
-      const type = range.isHigh ? 'oväntat hög' : 'oväntat låg'
-      const pct = range.avgExcess > 0 ? `+${Math.round(range.avgExcess)}` : Math.round(range.avgExcess)
-      return `${dateStr}: ${type} (ca ${pct}%)`
+    // Process low anomalies with 14-day clustering
+    const lowClusters = clusterAnomalies(lowAnomalies, 14)
+    lowClusters.forEach(cluster => {
+      const avgPct = cluster.reduce((sum, d) => sum + d.excess_pct, 0) / cluster.length
+      groups.push({
+        type: 'low',
+        dateRange: formatDateRange(cluster),
+        avgPct: Math.round(avgPct)
+      })
     })
 
-    const finalText = `Elförbrukning ${segments.join(', ')}`
+    // Sort groups chronologically by first date
+    groups.sort((a, b) => {
+      const aDate = new Date(`${a.dateRange.split(' ')[0].split('-')[0]} ${a.dateRange.split(' ')[a.dateRange.split(' ').length - 1]} 2025`)
+      const bDate = new Date(`${b.dateRange.split(' ')[0].split('-')[0]} ${b.dateRange.split(' ')[b.dateRange.split(' ').length - 1]} 2025`)
+      return aDate.getTime() - bDate.getTime()
+    })
+
+    // Build final text
+    const segments = groups.map(g => {
+      const typeText = g.type === 'high' ? 'oväntat hög' : 'oväntat låg'
+      const pctText = g.avgPct > 0 ? `+${g.avgPct}` : g.avgPct
+      return `${g.dateRange}: ${typeText} (ca ${pctText}%)`
+    })
+
+    // Add explanation based on what types of anomalies exist
+    const hasHigh = groups.some(g => g.type === 'high')
+    const hasLow = groups.some(g => g.type === 'low')
+
+    let explanation = ''
+    if (hasHigh && hasLow) {
+      explanation = '. Förmodligen pga varierande antal personer i huset'
+    } else if (hasHigh) {
+      explanation = '. Förmodligen pga fler personer i huset'
+    } else if (hasLow) {
+      explanation = '. Förmodligen pga färre personer i huset'
+    }
+
+    const finalText = `Elförbrukning ${segments.join(', ')}${explanation}`
     setSummaryText(finalText)
   }, [anomalySummary])
 
