@@ -218,7 +218,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
 
   // Build chunks for visualization
   interface AnomalyChunk {
-    type: 'high' | 'low'
+    type: 'high' | 'low' | 'gap'
     dateRange: string
     startDate: Date
     endDate: Date
@@ -323,8 +323,75 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
   // Sort chunks chronologically
   chunks.sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
 
+  // Insert gap chunks to show spacing between anomalies (Option A: full gaps)
+  if (regressionData && regressionData.length > 0) {
+    const windowStart = new Date(`${regressionData[0].date} 2025`)
+    const windowEnd = new Date(`${regressionData[regressionData.length - 1].date} 2025`)
+
+    const chunksWithGaps: AnomalyChunk[] = []
+
+    // Gap before first anomaly
+    if (chunks.length > 0) {
+      const gapDays = Math.round((chunks[0].startDate.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24))
+      if (gapDays > 0) {
+        chunksWithGaps.push({
+          type: 'gap',
+          dateRange: '',
+          startDate: windowStart,
+          endDate: chunks[0].startDate,
+          durationDays: gapDays,
+          avgExcessPct: 0,
+          totalCostImpact: 0
+        })
+      }
+    }
+
+    // Anomalies with gaps between them
+    chunks.forEach((chunk, index) => {
+      chunksWithGaps.push(chunk)
+
+      if (index < chunks.length - 1) {
+        const nextChunk = chunks[index + 1]
+        const gapDays = Math.round((nextChunk.startDate.getTime() - chunk.endDate.getTime()) / (1000 * 60 * 60 * 24)) - 1
+
+        if (gapDays > 0) {
+          chunksWithGaps.push({
+            type: 'gap',
+            dateRange: '',
+            startDate: new Date(chunk.endDate.getTime() + 1000 * 60 * 60 * 24),
+            endDate: new Date(nextChunk.startDate.getTime() - 1000 * 60 * 60 * 24),
+            durationDays: gapDays,
+            avgExcessPct: 0,
+            totalCostImpact: 0
+          })
+        }
+      }
+    })
+
+    // Gap after last anomaly
+    if (chunks.length > 0) {
+      const lastChunk = chunks[chunks.length - 1]
+      const gapDays = Math.round((windowEnd.getTime() - lastChunk.endDate.getTime()) / (1000 * 60 * 60 * 24))
+      if (gapDays > 0) {
+        chunksWithGaps.push({
+          type: 'gap',
+          dateRange: '',
+          startDate: lastChunk.endDate,
+          endDate: windowEnd,
+          durationDays: gapDays,
+          avgExcessPct: 0,
+          totalCostImpact: 0
+        })
+      }
+    }
+
+    // Replace chunks with version including gaps
+    chunks.length = 0
+    chunks.push(...chunksWithGaps)
+  }
+
   // Debug logging for cost verification
-  console.log('Anomaly chunks:', chunks.map(c => ({
+  console.log('Anomaly chunks with gaps:', chunks.map(c => ({
     dateRange: c.dateRange,
     type: c.type,
     avgExcessPct: c.avgExcessPct,
@@ -389,7 +456,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
       const p3 = points[Math.min(i + 2, points.length - 1)]
 
       // Calculate control points for smooth curve
-      const tension = 0.45 // Adjust smoothness (0 = sharp corners, 1 = very smooth)
+      const tension = 0.2 // Adjust smoothness (0 = sharp corners, 1 = very smooth)
 
       const cp1x = p1.x + (p2.x - p0.x) * tension
       const cp1y = p1.y + (p2.y - p0.y) * tension
@@ -407,7 +474,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
   return (
     <div className="mt-3 mb-3">
       <div className="relative h-24 rounded-lg overflow-hidden"
-           style={{ background: 'rgba(255, 255, 255, 0.015)', mixBlendMode: 'screen' }}>
+           style={{ background: 'rgba(255, 255, 255, 0.008)', mixBlendMode: 'screen' }}>
 
         {/* Sparkline SVG overlay */}
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -435,20 +502,22 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
               className="relative h-full"
               style={{ flex: `${chunk.durationDays} 0 0` }}
             >
-              {/* Background chunk */}
-              <div className="absolute inset-0 bg-white" style={{ opacity: 0.05 }} />
+              {/* Background chunk - slightly more visible for anomalies, transparent for gaps */}
+              <div className="absolute inset-0 bg-white" style={{ opacity: chunk.type === 'gap' ? 0 : 0.05 }} />
 
-              {/* Text content with horizontal padding */}
-              <div className="relative z-10 flex flex-col items-center justify-center h-full text-center"
-                   style={{ padding: '0 1em' }}>
-                <div className="text-[10px] text-purple-100 leading-tight">{chunk.dateRange}</div>
-                <div className="text-sm font-bold text-purple-50">
-                  {chunk.avgExcessPct > 0 ? '+' : ''}{chunk.avgExcessPct}%
+              {/* Text content with horizontal padding - only for anomalies */}
+              {chunk.type !== 'gap' && (
+                <div className="relative z-10 flex flex-col items-center justify-center h-full text-center"
+                     style={{ padding: '0 1em' }}>
+                  <div className="text-[10px] text-purple-100 leading-tight">{chunk.dateRange}</div>
+                  <div className="text-sm font-bold text-purple-50">
+                    {chunk.avgExcessPct > 0 ? '+' : ''}{chunk.avgExcessPct}%
+                  </div>
+                  <div className="text-[10px] text-purple-200">
+                    {chunk.totalCostImpact > 0 ? '+' : ''}{chunk.totalCostImpact} kr
+                  </div>
                 </div>
-                <div className="text-[10px] text-purple-200">
-                  {chunk.totalCostImpact > 0 ? '+' : ''}{chunk.totalCostImpact} kr
-                </div>
-              </div>
+              )}
             </div>
           ))}
         </div>
