@@ -399,7 +399,11 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
     // Position chunk so its CENTER aligns with the peak day
     // Left position = peak position - half width
     const peakPercent = totalDays > 1 ? (peakIndex / (totalDays - 1)) * 100 : 0
-    const leftPercent = peakPercent - (widthPercent / 2)
+    const idealLeft = peakPercent - (widthPercent / 2)
+
+    // Apply bounds checking to prevent cutoff
+    // Clamp left edge to 0, right edge to 100
+    const leftPercent = Math.max(0, Math.min(idealLeft, 100 - widthPercent))
 
     return {
       ...chunk,
@@ -493,7 +497,7 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
   const sparklinePath = generateSparkline()
 
   return (
-    <div className="overflow-hidden backdrop-blur-sm bg-purple-900/30 rounded-2xl shadow-md border border-purple-900/10 p-8">
+    <div>
       <div className="relative h-24 rounded-lg overflow-hidden"
            style={{
              background: 'rgba(255, 255, 255, 0.028)',

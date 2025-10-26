@@ -124,7 +124,7 @@ function BackendDataWidgets() {
 
       {/* Electricity anomaly bar - standalone section between rent and strava */}
       {electricityDailyCostsData?.summary?.anomaly_summary && (
-        <div className="mb-12">
+        <div className="-mt-10 mb-12 overflow-hidden backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md p-8">
           <ErrorBoundary resetKeys={[electricityDailyCostsData?.generated_at]}>
             <AnomalySparklineBar
               anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
