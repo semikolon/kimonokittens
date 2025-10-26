@@ -2,132 +2,56 @@
 
 ## ⚠️ CRITICAL: PROCESS MANAGEMENT PROTOCOL
 
-**🔥 MANDATORY RULES FOR ALL CLAUDE CODE SESSIONS - NEVER DEVIATE! 🔥**
+**Status**: ✅ PRODUCTION (Oct 26, 2025) | **Deep Dive**: `docs/PROCESS_MANAGEMENT_DEEP_DIVE.md`
 
-**Status**: ✅ PRODUCTION - with Claude Code Background Caveats (Oct 1, 2025)
-**Deep Dive**: See `docs/PROCESS_MANAGEMENT_DEEP_DIVE.md` for complete technical analysis
+### 🐛 Claude Code Background Process Bug
 
-### 🐛 CLAUDE CODE BACKGROUND PROCESS BUG - CRITICAL AWARENESS
-
-**Claude Code has a systemic background process status tracking bug:**
-
-1. **Status in system reminders is UNRELIABLE** - may show "status: running" when process died instantly
-2. **BashOutput tool shows CORRECT status** - always cross-verify with `BashOutput` tool
-3. **Always verify with ps/pgrep** - don't trust system reminder status alone
-
-**Validation commands** (run these to verify actual process state):
+**System reminders show unreliable status** - always verify with `ps` or `BashOutput` tool:
 ```bash
-# Check if processes actually exist:
 ps aux | grep -E "(npm run dev|ruby.*puma|vite.*5175)" | grep -v grep
-
-# Check if ports are actually occupied:
 lsof -ti :3001 :5175
-
-# Use BashOutput tool to see real status, not system reminders
 ```
 
-**Related GitHub Issues:**
-- [#7838](https://github.com/anthropics/claude-code/issues/7838) - No process health monitoring, text-based polling unreliable
-- [#1481](https://github.com/anthropics/claude-code/issues/1481) - Background processes still wait for child processes
-- [#759](https://github.com/anthropics/claude-code/issues/759) - CLI hanging and background behavior issues
+**Issues**: [#7838](https://github.com/anthropics/claude-code/issues/7838), [#1481](https://github.com/anthropics/claude-code/issues/1481), [#759](https://github.com/anthropics/claude-code/issues/759)
 
-**Discovered**: Oct 1, 2025 - Commands appeared to "hang for 26 minutes" but actually failed instantly. System reminders showed "running" while BashOutput showed "failed". Cross-verification with `ps` confirmed no processes existed.
+### ⚠️ Sudo Commands - Tell User to Run
 
-### ⚠️ SUDO COMMANDS - CANNOT RUN INTERACTIVELY
+Claude Code cannot run `sudo` commands requiring password input. **Tell user exact command**, never attempt directly.
 
-**Claude Code cannot run `sudo` commands that require password input.**
+### 🚨 Production Deployment
 
-**NEVER attempt to run sudo commands directly** - instead:
-- ✅ **Tell the user what to run** - Provide the exact sudo command for them to copy/paste
-- ✅ **Explain what it does** - Brief description of why the command is needed
-- ❌ **Don't try to run it yourself** - Will fail with "a terminal is required to read the password"
+**Webhook deployments MANDATORY** - never `git pull` or edit production checkout directly:
+- Commit to dev → push to trigger webhook
+- Webhook broken? Fix webhook, don't work around
+- Check: `journalctl -u kimonokittens-webhook -f`
 
-**Example:**
+### ✅ Process Management Commands (ONLY Use These)
+
+```bash
+npm run dev          # Start (calls bin/dev start)
+npm run dev:stop     # Stop with aggressive cleanup
+npm run dev:restart  # Clean restart
+npm run dev:status   # Comprehensive status check
+bin/dev nuke         # Nuclear cleanup (last resort)
 ```
-User needs: Restart webhook service
-Wrong: Run sudo systemctl restart kimonokittens-webhook
-Right: "Please run: sudo systemctl restart kimonokittens-webhook"
-```
 
-### 🚨 NEVER MANUALLY DEPLOY TO PRODUCTION
+**NEVER** use direct commands (`ruby puma_server.rb`, `cd dashboard && npm run dev`, etc.)
 
-**CRITICAL RULE: Webhook deployments are MANDATORY - never work around them!**
+**Why:** Orphaned processes cause port conflicts, stale data (7,492 kr rent bug), zombie persistence. bin/dev handles Claude Code orphan bug ([#5545](https://github.com/anthropics/claude-code/issues/5545)) with multi-layered cleanup (ports, tmux sessions, stale sockets, process patterns).
 
-- ❌ **NEVER** run `git pull` in `/home/kimonokittens/Projects/kimonokittens`
-- ❌ **NEVER** manually copy files to production
-- ❌ **NEVER** edit files directly in production checkout
-- ✅ **ALWAYS** commit changes to dev checkout and push to trigger webhook
-- ✅ **IF webhook doesn't deploy** → Fix the webhook, don't work around it
+### 📋 Non-TTY Environment (Oct 26, 2025)
 
-**Why this matters:**
-1. Manual deploys bypass the smart debouncing and change detection
-2. They create inconsistencies between git state and deployed state
-3. They hide webhook configuration problems that need to be fixed
-4. The webhook is the single source of truth for production state
+**Procfile auto-detection:**
+- **TTY**: `Procfile.dev` (tmux pipe-pane logs)
+- **Non-TTY**: `Procfile.dev.nontty` (direct `>> log/*.log` redirection)
 
-**If webhook isn't working:**
-1. Check GitHub webhook configuration at repository settings
-2. Verify webhook secret matches `WEBHOOK_SECRET` in `.env`
-3. Check webhook service logs: `journalctl -u kimonokittens-webhook -f`
-4. **Fix the root cause** - don't bypass with manual git pull
+**Critical for Claude Code:**
+- Verification commands (`overmind status`, `tmux list-windows`) **HANG indefinitely** in non-TTY
+- Trust Overmind daemon starts successfully (`-D` flag returns immediately)
+- Log access: `npm run dev:logs` or `tail -f log/*.log`
+- Status: Run `npm run dev:status` separately AFTER startup, not inline
 
-### ✅ ALWAYS DO:
-- **ONLY** use these exact commands for ALL process management:
-  ```bash
-  npm run dev          # Start all processes (calls bin/dev start)
-  npm run dev:stop     # Stop all processes (calls bin/dev stop)
-  npm run dev:restart  # Clean restart (calls bin/dev restart)
-  npm run dev:status   # Check status (calls bin/dev status)
-  bin/dev nuke         # Nuclear cleanup (only if above fails)
-  ```
-- **VERIFY status after background commands** using `ps` or `BashOutput` tool
-- **Check status before starting** to verify clean state
-
-### ❌ NEVER DO:
-- **NEVER** use direct commands like `ruby puma_server.rb` or `PORT=3001 ENABLE_BROADCASTER=1 ruby puma_server.rb`
-- **NEVER** use `cd dashboard && npm run dev` directly
-- **NEVER** spawn processes outside bin/dev control
-- **NEVER** mix Claude Code background calls with direct process spawning
-
-### 🚨 WHY THIS MATTERS:
-**Orphaned processes cause:**
-- Port conflicts ("Address already in use" errors)
-- Stale data caching (7,492 kr rent bug was caused by old server running since Saturday)
-- Cross-session zombie persistence (processes from old CC sessions surviving)
-- Development workflow chaos
-- Hours of debugging pain
-
-**The bin/dev commands include multi-layered cleanup that handles:**
-- ✅ Claude Code's known orphan bug ([GitHub #5545](https://github.com/anthropics/claude-code/issues/5545))
-- ✅ Zombie tmux sessions across CC session boundaries
-- ✅ Stale socket files from abnormal termination
-- ✅ Port-based cleanup (fixed lsof syntax bug - commit `4f72e62`)
-- ✅ Process name pattern matching
-
-**Defense in depth**: Graceful → Aggressive → Nuclear cleanup strategies ensure processes NEVER survive.
-
-### 📋 NON-TTY LOGGING & STARTUP (Oct 26, 2025)
-
-**Claude Code runs in non-TTY environment - special handling required:**
-
-**Key Facts:**
-- ✅ **Procfile selection**: Auto-detects TTY vs non-TTY
-  - **TTY**: Uses `Procfile.dev` with tmux pipe-pane for interactive logs
-  - **Non-TTY**: Uses `Procfile.dev.nontty` with direct `>> log/*.log` redirection
-- ✅ **No verification in non-TTY**: Commands like `overmind status` and `tmux list-windows` HANG indefinitely in Claude Code's Bash tool
-- ✅ **Trust Overmind daemon**: Starts successfully in background, no verification needed
-- ✅ **Log access**: Use `npm run dev:logs` or `tail -f log/*.log` for non-interactive log viewing
-- ✅ **Status checking**: Use separate `npm run dev:status` command AFTER startup (not inline during startup)
-
-**Why this approach:**
-1. **Verification commands hang** - ANY command that waits for tmux/Overmind blocks indefinitely in non-TTY
-2. **Direct log redirection works** - `Procfile.dev.nontty` ensures logs exist immediately
-3. **Overmind daemon is reliable** - `-D` flag returns immediately, processes start successfully
-4. **Separate verification is safe** - `npm run dev:status` runs as independent command, not part of startup flow
-
-**Historical note:** Before Oct 26, 2025, the system worked reliably without verification. Adding verification loops (even with timeouts) introduced hanging issues. The Oct 26 simplification removed verification and restored reliability.
-
-**See**: `docs/PROCESS_MANAGEMENT_DEEP_DIVE.md` (lines 756-920) for complete technical analysis of Oct 26 findings.
+**Oct 26 simplification**: Removed verification loops that caused hanging - restored pre-Oct 26 reliability.
 
 ---
 
