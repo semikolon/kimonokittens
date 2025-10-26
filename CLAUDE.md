@@ -700,7 +700,7 @@ npm run dev:logs     # Attach to live process logs
 - **Backend**: 3001 (Ruby Puma + WebSocket broadcaster)
 - **Frontend**: 5175 (Vite dev server)
 - **Process manager**: Overmind (preferred) or Foreman (fallback)
-- **Definition**: `Procfile.dev` defines all development processes
+- **Definition**: `Procfile.dev` (TTY) or `Procfile.dev.nontty` (non-TTY) - auto-detected by bin/dev
 
 **Important for Claude Code Users**:
 - ⚠️ **Status tracking unreliable**: Always verify with `ps` or `BashOutput` after background commands
