@@ -96,9 +96,9 @@ class ElectricityStatsHandler
     peak_pricey_hours = peak_hours.select { |hour| hour[:price_per_kwh] > avg_price_per_kwh }
 
     # Filter out hours with null/zero consumption (future dates or reporting lag)
-    # Then take last 7 days worth of hours with actual data
+    # Then take last 14 days worth of hours with actual data
     hours_with_data = all_hours.select { |hour| hour[:consumption] && hour[:consumption] > 0 }
-    last_days = hours_with_data.last(24 * 7).group_by { |hour| hour[:date] }
+    last_days = hours_with_data.last(24 * 14).group_by { |hour| hour[:date] }
     
     # last_days.each do |date, date_hours|
     #   if date_hours.count.between?(18, 24)
@@ -142,35 +142,52 @@ class ElectricityStatsHandler
       "#{date[:weekday]}: #{date[:price]} kr\n"
     end.join
     
-    # Fetch historical outdoor temperatures for each day
-    last_days_summed.each do |day_data|
-      next unless day_data[:date] # Skip the summary item at the beginning
+    # Fetch historical outdoor temperatures for all days in one API call
+    # Collect all dates that need weather data (skip summary item)
+    days_needing_weather = last_days_summed.select { |day_data| day_data[:date] }
 
-      # Parse the date (e.g., "Oct 23" -> "2025-10-23")
-      date_obj = Date.parse("#{day_data[:date]} 2025")
-      iso_date = date_obj.strftime("%Y-%m-%d")
+    if days_needing_weather.any?
+      # Parse dates and find date range
+      date_objects = days_needing_weather.map { |day_data| Date.parse("#{day_data[:date]} 2025") }
+      start_date = date_objects.min.strftime("%Y-%m-%d")
+      end_date = date_objects.max.strftime("%Y-%m-%d")
 
-      # Fetch historical weather data from weatherapi.com
+      # Fetch historical weather data from Open-Meteo (free, no API key required)
+      # Huddinge coordinates: 59.2372°N, 18.1339°E
       begin
         weather_response = HTTParty.get(
-          "https://api.weatherapi.com/v1/history.json",
+          "https://archive-api.open-meteo.com/v1/archive",
           query: {
-            key: ENV['WEATHER_API_KEY'],
-            q: 'Huddinge',
-            dt: iso_date
+            latitude: 59.2372,
+            longitude: 18.1339,
+            start_date: start_date,
+            end_date: end_date,
+            daily: 'temperature_2m_max,temperature_2m_min',
+            timezone: 'Europe/Stockholm'
           },
-          timeout: 5
+          timeout: 10
         )
 
         if weather_response.success?
-          day_weather = weather_response.parsed_response['forecast']['forecastday'][0]['day']
-          # Calculate average temperature from max and min
-          avg_temp = (day_weather['maxtemp_c'] + day_weather['mintemp_c']) / 2.0
-          day_data[:avg_temp_c] = avg_temp.round(1)
+          daily_data = weather_response.parsed_response['daily']
+          # Build a hash mapping date string to average temperature
+          temp_by_date = {}
+          daily_data['time'].each_with_index do |date_str, index|
+            max_temp = daily_data['temperature_2m_max'][index]
+            min_temp = daily_data['temperature_2m_min'][index]
+            avg_temp = (max_temp + min_temp) / 2.0
+            temp_by_date[date_str] = avg_temp.round(1)
+          end
+
+          # Assign temperatures to each day
+          days_needing_weather.each do |day_data|
+            iso_date = Date.parse("#{day_data[:date]} 2025").strftime("%Y-%m-%d")
+            day_data[:avg_temp_c] = temp_by_date[iso_date] if temp_by_date[iso_date]
+          end
         end
       rescue => e
         # Silently fail if temperature fetch fails - sparkline will just show electricity
-        puts "Failed to fetch temperature for #{iso_date}: #{e.message}"
+        puts "Failed to fetch temperature data: #{e.message}"
       end
     end
 
