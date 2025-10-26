@@ -528,9 +528,6 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
                      style={{ padding: '0 1em' }}>
                   <div className="text-[10px] text-purple-100 leading-tight">{chunk.dateRange}</div>
                   <div className="text-sm font-bold text-purple-50">
-                    {chunk.avgExcessPct > 0 ? '+' : ''}{chunk.avgExcessPct}%
-                  </div>
-                  <div className="text-[10px] text-purple-200">
                     {chunk.totalCostImpact > 0 ? '+' : ''}{chunk.totalCostImpact} kr
                   </div>
                 </div>

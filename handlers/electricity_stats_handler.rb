@@ -5,27 +5,26 @@ require 'date'
 # require 'pry'  # Temporarily disabled due to gem conflict
 # require 'pry-nav'  # Temporarily disabled due to gem conflict
 
-# I maj 2023 använde vi 900 kWh och betalade 616 kr till elhandelsbolaget.
-# Samt till elnätsbolaget 1299 kr - varav 467 kr är en statisk månadsavgift.
+# 2025 Electricity Rate Constants (matches ElectricityProjector)
+# Updated: October 24-26, 2025 (peak/off-peak + anomaly cost accuracy)
+# Review annually: https://www.vattenfalleldistribution.se/kund-i-elnatet/elnatspriser/energiskatt/
 
-# Den variabla delen av elnätskostnaden får vi genom att subtrahera den fasta
-# abonnemangsavgiften från den totala elnätskostnaden:
-# 1299 kr - 467 kr = 832 kr
-# Detta är alltså kostnaden för elnätet baserat på förbrukningen.
+# Energy tax (energiskatt) - verified from Skatteverket and invoices
+ENERGY_TAX_EXCL_VAT = 0.439  # kr/kWh (43.9 öre/kWh)
 
-# Nu kan vi räkna ut den totala kostnaden för elen, vilket är summan av kostnaden
-# för elhandeln och den variabla delen av elnätskostnaden:
-# 616 kr (elhandel) + 832 kr (variabel elnätskostnad) = 1448 kr
+# Grid transfer (elöverföring) - Vattenfall Tidstariff T4 (time-of-use pricing)
+# Peak (höglasttid): Mon-Fri 06:00-22:00 in Jan/Feb/Mar/Nov/Dec (excl holidays)
+# Off-peak (övrig tid): All other times + entire summer (Apr-Oct)
+GRID_TRANSFER_PEAK_EXCL_VAT = 0.536     # kr/kWh (53.60 öre/kWh) - peak hours
+GRID_TRANSFER_OFFPEAK_EXCL_VAT = 0.214  # kr/kWh (21.40 öre/kWh) - off-peak hours
 
-# Slutligen, för att räkna ut elpriset per kWh, delar vi den totala kostnaden med antalet kWh:
-# 1448 kr / 900 kWh = 1.61 kr/kWh
-
-KWH_PRICE = 1.61
-# KWH_TRANSFER_PRICE = (0.244 + 0.392) * 1.25 # Elöverföring + energiskatt + moms (Vattenfall)
-KWH_TRANSFER_PRICE = (0.09 + 0.392) * 1.25 # Elöverföring + energiskatt + moms (Vattenfall)
-# https://www.vattenfalleldistribution.se/kund-i-elnatet/elnatspriser/elnatspriser-och-avtalsvillkor/
-# https://www.vattenfalleldistribution.se/kund-i-elnatet/elnatspriser/energiskatt/
-MONTHLY_FEE = 467 + 39 # Månadsavgift för elnät + elhandel
+# Fixed monthly fees (verified from invoices)
+# Vattenfall: 7,080 kr/year = 590 kr/month (grid connection)
+# Fortum: 31.20 kr/mån + VAT = 39 kr (trading service)
+# Priskollen: 39.20 kr/mån + VAT = 49 kr (optional add-on we subscribe to)
+VATTENFALL_MONTHLY_FEE = 590  # Grid connection fee (from invoice)
+FORTUM_MONTHLY_FEE = 88       # Trading service (39 kr) + Priskollen (49 kr)
+MONTHLY_FEE = VATTENFALL_MONTHLY_FEE + FORTUM_MONTHLY_FEE  # 678 kr
 
 WDAY = {
   'Mon': 'Mån',
@@ -67,9 +66,17 @@ class ElectricityStatsHandler
       short_date = date.strftime("%b %-d")
       weekday = WDAY[date.strftime("%a").to_sym]
 
-      price_per_kwh = tibber_prices[hour['date']]
-      price_per_kwh ||= avg_price_per_kwh
-      price_per_kwh = price_per_kwh + KWH_TRANSFER_PRICE
+      # Get spot price (excludes VAT from API)
+      spot_price = tibber_prices[hour['date']]
+      spot_price ||= avg_price_per_kwh
+
+      # Determine grid transfer rate based on peak/off-peak classification
+      grid_rate = is_peak_hour?(hour['date']) ? GRID_TRANSFER_PEAK_EXCL_VAT : GRID_TRANSFER_OFFPEAK_EXCL_VAT
+
+      # Calculate total price per kWh: (spot + transfer + tax) × VAT
+      # All three components exclude VAT, so add them first then apply 25% VAT
+      price_per_kwh = (spot_price + grid_rate + ENERGY_TAX_EXCL_VAT) * 1.25
+
       price = consumption * price_per_kwh
 
       {
@@ -388,6 +395,90 @@ class ElectricityStatsHandler
     end
 
     monthly_savings
+  end
+
+  # Swedish holidays (red days - no peak pricing applies)
+  # Includes fixed holidays and calculated movable holidays for 2024-2027
+  # Simplified version of ElectricityProjector#swedish_holidays
+  def swedish_holidays(year)
+    holidays = []
+
+    # Fixed holidays
+    holidays << Date.new(year, 1, 1)   # New Year's Day
+    holidays << Date.new(year, 1, 6)   # Epiphany
+    holidays << Date.new(year, 5, 1)   # Labor Day
+    holidays << Date.new(year, 12, 24) # Christmas Eve
+    holidays << Date.new(year, 12, 25) # Christmas Day
+    holidays << Date.new(year, 12, 26) # Boxing Day
+    holidays << Date.new(year, 12, 31) # New Year's Eve
+
+    # Movable holidays (Easter-based) - hardcoded for 2024-2027
+    easter_dates = {
+      2024 => Date.new(2024, 3, 31),
+      2025 => Date.new(2025, 4, 20),
+      2026 => Date.new(2026, 4, 5),
+      2027 => Date.new(2027, 3, 28)
+    }
+
+    if easter_dates[year]
+      easter = easter_dates[year]
+      holidays << easter - 2          # Good Friday
+      holidays << easter              # Easter Sunday
+      holidays << easter + 1          # Easter Monday
+      holidays << easter + 39         # Ascension Day
+      holidays << easter + 49         # Pentecost Sunday
+      holidays << easter + 50         # Whit Monday
+    end
+
+    # Midsummer (Friday between June 19-25)
+    midsummer_start = Date.new(year, 6, 19)
+    7.times do |i|
+      candidate = midsummer_start + i
+      if candidate.friday?
+        holidays << candidate       # Midsummer Eve
+        holidays << candidate + 1   # Midsummer Day
+        break
+      end
+    end
+
+    # All Saints' Day (Saturday between Oct 31 - Nov 6)
+    all_saints_start = Date.new(year, 10, 31)
+    7.times do |i|
+      candidate = all_saints_start + i
+      if candidate.saturday?
+        holidays << candidate
+        break
+      end
+    end
+
+    holidays
+  end
+
+  # Determines if a given timestamp falls during peak pricing hours
+  # Simplified version of ElectricityProjector#is_peak_hour?
+  #
+  # Peak hours (Vattenfall Tidstariff T4):
+  # - Months: January, February, March, November, December
+  # - Days: Monday-Friday (excluding Swedish holidays)
+  # - Hours: 06:00-22:00 (local time)
+  def is_peak_hour?(timestamp)
+    dt = DateTime.parse(timestamp)
+
+    # Summer months (Apr-Oct) have NO peak pricing
+    return false unless [1, 2, 3, 11, 12].include?(dt.month)
+
+    # Weekends have NO peak pricing
+    return false if [0, 6].include?(dt.wday)  # Sunday=0, Saturday=6
+
+    # Swedish holidays have NO peak pricing
+    date_only = Date.new(dt.year, dt.month, dt.day)
+    return false if swedish_holidays(dt.year).include?(date_only)
+
+    # Peak hours: 06:00-22:00 (local time)
+    # Note: timestamp is in UTC, but we need local hour for classification
+    # Sweden is UTC+1 (winter) or UTC+2 (summer DST)
+    local_dt = dt.new_offset('+01:00')  # Conservative: use winter offset
+    local_dt.hour >= 6 && local_dt.hour < 22
   end
 
 end
