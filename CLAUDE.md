@@ -106,6 +106,29 @@ Right: "Please run: sudo systemctl restart kimonokittens-webhook"
 
 **Defense in depth**: Graceful → Aggressive → Nuclear cleanup strategies ensure processes NEVER survive.
 
+### 📋 NON-TTY LOGGING & STARTUP (Oct 26, 2025)
+
+**Claude Code runs in non-TTY environment - special handling required:**
+
+**Key Facts:**
+- ✅ **Procfile selection**: Auto-detects TTY vs non-TTY
+  - **TTY**: Uses `Procfile.dev` with tmux pipe-pane for interactive logs
+  - **Non-TTY**: Uses `Procfile.dev.nontty` with direct `>> log/*.log` redirection
+- ✅ **No verification in non-TTY**: Commands like `overmind status` and `tmux list-windows` HANG indefinitely in Claude Code's Bash tool
+- ✅ **Trust Overmind daemon**: Starts successfully in background, no verification needed
+- ✅ **Log access**: Use `npm run dev:logs` or `tail -f log/*.log` for non-interactive log viewing
+- ✅ **Status checking**: Use separate `npm run dev:status` command AFTER startup (not inline during startup)
+
+**Why this approach:**
+1. **Verification commands hang** - ANY command that waits for tmux/Overmind blocks indefinitely in non-TTY
+2. **Direct log redirection works** - `Procfile.dev.nontty` ensures logs exist immediately
+3. **Overmind daemon is reliable** - `-D` flag returns immediately, processes start successfully
+4. **Separate verification is safe** - `npm run dev:status` runs as independent command, not part of startup flow
+
+**Historical note:** Before Oct 26, 2025, the system worked reliably without verification. Adding verification loops (even with timeouts) introduced hanging issues. The Oct 26 simplification removed verification and restored reliability.
+
+**See**: `docs/PROCESS_MANAGEMENT_DEEP_DIVE.md` (lines 756-920) for complete technical analysis of Oct 26 findings.
+
 ---
 
 ## ⚠️ CRITICAL: GIT SAFETY PROTOCOL

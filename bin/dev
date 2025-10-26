@@ -4,6 +4,11 @@ set -euo pipefail
 PROCFILE="${PROCFILE:-Procfile.dev}"
 PORT_BASE="${PORT_BASE:-3001}"
 
+# Use non-TTY Procfile with direct logging when not in interactive terminal
+if [ -z "${TERM:-}" ] || [ ! -t 1 ]; then
+  PROCFILE="${PROCFILE_NONTTY:-Procfile.dev.nontty}"
+fi
+
 ensure_tmp() { mkdir -p tmp; }
 
 # Pin Overmind identity for consistent socket/session management
@@ -32,6 +37,45 @@ enable_overmind_file_logging() {
   done
 
   echo "   Logs enabled: log/*.log"
+}
+
+# Wait for Overmind tmux session and windows to be ready (non-TTY verification)
+wait_for_overmind_tmux() {
+  local deadline=$((SECONDS + ${1:-10}))  # default 10s timeout
+  while (( SECONDS < deadline )); do
+    if tmux -S "$SOCKET" has-session -t "$OVERMIND_NAME" 2>/dev/null; then
+      local wins
+      wins=$(tmux -S "$SOCKET" list-windows -F '#{window_name}' 2>/dev/null || true)
+      if grep -qx 'web' <<<"$wins" && grep -qx 'frontend' <<<"$wins"; then
+        return 0
+      fi
+    fi
+    sleep 0.2
+  done
+  return 1
+}
+
+# Check if ports are listening (optional health check)
+check_ports_ready() {
+  local ok=0
+  for port in 3001 5175; do
+    if ! lsof -iTCP:$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+      ok=1
+    fi
+  done
+  return $ok
+}
+
+# Dump diagnostics on startup failure
+dump_diagnostics() {
+  echo "--- Diagnostics ---"
+  echo "Socket: $SOCKET (exists? $( [ -S "$SOCKET" ] && echo yes || echo no ))"
+  echo "tmux has-session:"; tmux -S "$SOCKET" has-session -t "$OVERMIND_NAME" 2>&1 || true
+  echo "tmux list-sessions:"; tmux -S "$SOCKET" list-sessions 2>&1 || true
+  echo "tmux list-windows:"; tmux -S "$SOCKET" list-windows -F '#{window_name} #{window_active}' 2>&1 || true
+  echo "Ports:"; lsof -iTCP:3001 -sTCP:LISTEN -P -n 2>/dev/null || true; lsof -iTCP:5175 -sTCP:LISTEN -P -n 2>/dev/null || true
+  echo "Recent logs:"; tail -n 50 log/web.log 2>/dev/null || true; tail -n 50 log/frontend.log 2>/dev/null || true
+  echo "-------------------"
 }
 
 cmd="${1:-start}"
@@ -75,13 +119,19 @@ case "$cmd" in
         if is_tty; then
           exec overmind start -f "$PROCFILE" -p "$PORT_BASE"
         else
-          # Daemon for non-TTY (Claude Code) - background to prevent hanging
+          # Daemon for non-TTY (Claude Code) - -D flag daemonizes
+          # CRITICAL: Don't wait/verify - Overmind daemon returns immediately and works in background
           overmind start -f "$PROCFILE" -p "$PORT_BASE" -D >/dev/null 2>&1 &
-          sleep 1  # Give Overmind time to start
-          enable_overmind_file_logging
+
+          # Give Overmind a moment to start
+          sleep 2
+
+          # Ensure log directory exists (Procfile.dev.nontty writes directly to logs)
+          mkdir -p log
+
           echo "✅ Started Overmind as daemon"
-          echo "   Status: npm run dev:status"
           echo "   Logs: npm run dev:logs"
+          echo "   Status: npm run dev:status"
           exit 0
         fi
       fi
