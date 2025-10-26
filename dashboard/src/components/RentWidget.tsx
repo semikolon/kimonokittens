@@ -371,13 +371,35 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
       const normalizedY = range > 0 ? (day.excess_pct - minExcess) / range : 0.5
       const y = padding + (1 - normalizedY) * usableHeight // Invert y-axis
 
-      return `${x},${y}`
+      return { x, y }
     })
 
     console.log('Sparkline points sample:', points.slice(0, 5))
 
-    // Create smooth continuous path
-    return `M ${points.join(' L ')}`
+    // Generate smooth curve using cubic Bezier curves
+    if (points.length < 2) return ''
+
+    let path = `M ${points[0].x},${points[0].y}`
+
+    // Use catmull-rom to cubic bezier conversion for smooth curves
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(i - 1, 0)]
+      const p1 = points[i]
+      const p2 = points[i + 1]
+      const p3 = points[Math.min(i + 2, points.length - 1)]
+
+      // Calculate control points for smooth curve
+      const tension = 0.3 // Adjust smoothness (0 = sharp corners, 1 = very smooth)
+
+      const cp1x = p1.x + (p2.x - p0.x) * tension
+      const cp1y = p1.y + (p2.y - p0.y) * tension
+      const cp2x = p2.x - (p3.x - p1.x) * tension
+      const cp2y = p2.y - (p3.y - p1.y) * tension
+
+      path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`
+    }
+
+    return path
   }
 
   const sparklinePath = generateSparkline()
