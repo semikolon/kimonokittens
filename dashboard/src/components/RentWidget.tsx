@@ -490,9 +490,9 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <defs>
             <linearGradient id="sparklineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgba(255, 136, 68, 0.35)" />
+              <stop offset="0%" stopColor="rgba(255, 136, 68, 0.37)" />
               <stop offset="50%" stopColor="rgba(40, 30, 50, 0.25)" />
-              <stop offset="100%" stopColor="rgba(68, 204, 204, 0.35)" />
+              <stop offset="100%" stopColor="rgba(68, 204, 204, 0.37)" />
             </linearGradient>
           </defs>
           <path
