@@ -1,8 +1,8 @@
 # Anomaly Chunk vs Peak/Trough Alignment Analysis & Fix Plan
 
 **Date**: October 26, 2025
-**Status**: Investigation & Planning
-**Context**: 4% remaining - fast documentation needed
+**Status**: ✅ MOSTLY COMPLETE (7/8 pairs clean, 1/8 minor overlap remains)
+**Final commit**: e083bfe
 
 ## Problem Statement
 
@@ -191,4 +191,40 @@ const leftPercent = ((midIndex / (totalDays - 1)) * 100) - (widthPercent / 2)
 
 ---
 
-**Next Session TODO**: Run Phase 1 diagnostics, measure actual offset, decide on solution.
+---
+
+## Implementation Summary (October 26, 2025)
+
+### What Was Implemented ✅
+
+**Phase 1: Midpoint Alignment (Solution D)**
+- Switched from peak-based to date range midpoint positioning
+- Simpler, more predictable alignment logic
+- Better correlation with sparkline troughs/peaks
+
+**Phase 2: Adaptive Overlap Prevention**
+- Iterative symmetric push algorithm (30 iterations max)
+- Adaptive gap sizing: 2% target, reduces to 0.3% minimum for dense clusters
+- Asymmetric edge handling: edge-constrained chunks get 0 push, movable chunk gets full separation
+- Removed MAX_SHIFT limit for edge pairs to ensure they can separate fully
+
+**Results:**
+- ✅ All 8 chunks visible within 0-100% bounds
+- ✅ 7/8 chunk pairs have clean text separation
+- ⚠️ July/Aug 2 pair still has minor text overlap ("+16 kr-9 kr" merged)
+
+### Remaining Challenge
+
+**The July/Aug 2 Problem:**
+- Dense cluster at left edge (within ~3 days)
+- July chunk pinned at 0% (can't move left)
+- Iterative algorithm creates cascade effects: Aug 2 pushes right → collides with 10-14 Aug → bounces back → still overlaps July
+- Oscillation prevents convergence even with 30 iterations
+
+**Potential Next Steps:**
+1. **One-pass sequential layout**: Place chunks left-to-right with guaranteed gaps (no iteration)
+2. **Reduce chunk width**: Use narrower chunks for dense clusters (may cause text wrapping)
+3. **Abbreviate dates**: "28-29 Jul" → "Jul 28" for compressed chunks
+4. **Accept minor overlap**: Current state is 87.5% clean, may be "good enough"
+
+**Recommendation**: Try one-pass sequential layout if overlap remains unacceptable. Otherwise ship current implementation.
