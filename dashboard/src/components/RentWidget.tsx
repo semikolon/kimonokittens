@@ -497,12 +497,11 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
   const sparklinePath = generateSparkline()
 
   return (
-    <div className="p-8">
+    <div>
       <div className="relative h-24 rounded-lg overflow-hidden"
            style={{
              background: 'rgba(255, 255, 255, 0.028)',
-             mixBlendMode: 'screen',
-             boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.05)'
+             mixBlendMode: 'screen'
            }}>
 
         {/* Sparkline SVG overlay */}
