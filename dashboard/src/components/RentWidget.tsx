@@ -413,7 +413,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path
             d={sparklinePath}
-            stroke="rgba(139, 92, 246, 0.9)"
+            stroke="rgba(90, 80, 100, 0.6)"
             strokeWidth="1.5"
             fill="none"
             vectorEffect="non-scaling-stroke"
