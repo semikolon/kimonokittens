@@ -646,17 +646,48 @@ export function RentWidget() {
 
   const header = lines[0]
   const amounts = lines.slice(1) // Everything after header
+  const firstAmount = amounts[0]
+  const remainingAmounts = amounts.slice(1)
+
+  // Parse first amount for header display
+  const parseFirstAmount = (line: string) => {
+    const cleanLine = line.replace(/\*/g, '')
+    const parts = cleanLine.split(' kr')
+    if (parts.length >= 2) {
+      const beforeKr = parts[0]
+      const afterKr = parts.slice(1).join(' kr')
+      return {
+        amount: `${beforeKr.trim()} kr`,
+        description: afterKr.trim()
+      }
+    }
+    return null
+  }
+
+  const firstAmountParsed = firstAmount ? parseFirstAmount(firstAmount) : null
 
   return (
     <div>
       {header && (
-        <div className="text-purple-200 mb-3 leading-relaxed">
-          {parseMarkdown(header)}
+        <div className="flex items-baseline justify-between mb-3 gap-4 leading-relaxed">
+          <div className="text-purple-200">
+            {parseMarkdown(header)}
+          </div>
+          {firstAmountParsed && (
+            <div className="flex items-baseline gap-2 flex-shrink-0">
+              <span className="text-2xl font-bold text-purple-100">
+                {firstAmountParsed.amount}
+              </span>
+              <span className="text-purple-300 text-sm">
+                {firstAmountParsed.description}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
       <div className="space-y-2">
-        {amounts.map((line, index) => {
+        {remainingAmounts.map((line, index) => {
           // Parse individual rent lines - look for bold amounts (marked with *)
           const cleanLine = line.replace(/\*/g, '') // Remove all asterisks
 
