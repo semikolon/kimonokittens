@@ -129,6 +129,10 @@ interface ElectricityDailyCostsData {
         cost_impact: number  // In SEK, positive = cost, negative = savings
       }>
     }
+    regression_data?: Array<{
+      date: string
+      excess_pct: number
+    }>
   }
   daily_costs: ElectricityDailyCost[]
   generated_at?: string

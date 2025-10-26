@@ -154,7 +154,7 @@ function AnomalySummaryText({ anomalySummary }: {
 }
 
 // Anomaly Sparkline Bar - Visual representation of electricity usage anomalies
-function AnomalySparklineBar({ anomalySummary }: {
+function AnomalySparklineBar({ anomalySummary, regressionData }: {
   anomalySummary?: {
     total_anomalies: number
     anomalous_days: Array<{
@@ -167,6 +167,10 @@ function AnomalySparklineBar({ anomalySummary }: {
       cost_impact: number
     }>
   }
+  regressionData?: Array<{
+    date: string
+    excess_pct: number
+  }>
 }) {
   if (!anomalySummary || anomalySummary.anomalous_days.length === 0) {
     return null
@@ -328,28 +332,23 @@ function AnomalySparklineBar({ anomalySummary }: {
     durationDays: c.durationDays
   })))
 
-  // Generate sparkline path from excess_pct values
+  // Generate continuous sparkline from full regression data (all 90 days)
   const generateSparkline = () => {
-    if (chunks.length === 0) return ''
+    if (!regressionData || regressionData.length === 0) return ''
 
     const width = 100
-    const height = 100
+    const totalDays = regressionData.length
 
-    // Map chunks to x,y coordinates based on their position and excess_pct
-    let cumulativeDays = 0
-    const points = chunks.map(chunk => {
-      const midpoint = cumulativeDays + (chunk.durationDays / 2)
-      cumulativeDays += chunk.durationDays
-
-      const x = (midpoint / 90) * width
+    // Map each day to SVG coordinates
+    const points = regressionData.map((day, index) => {
+      const x = (index / totalDays) * width
       // Map excess_pct to y coordinate (invert y-axis, center at 50)
-      // -50% maps to y=75, 0% to y=50, +50% to y=25
-      const y = 50 - (chunk.avgExcessPct / 2)
-
+      // -50% → y=75, 0% → y=50, +50% → y=25
+      const y = 50 - (day.excess_pct / 2)
       return `${x},${y}`
     })
 
-    // Create smooth path through points
+    // Create smooth continuous path
     return `M ${points.join(' L ')}`
   }
 
@@ -521,7 +520,10 @@ export function RentWidget() {
 
       {/* Anomaly sparkline bar - visual representation of detected anomalies */}
       {electricityDailyCostsData?.summary?.anomaly_summary && (
-        <AnomalySparklineBar anomalySummary={electricityDailyCostsData.summary.anomaly_summary} />
+        <AnomalySparklineBar
+          anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
+          regressionData={electricityDailyCostsData.summary.regression_data}
+        />
       )}
     </div>
   )

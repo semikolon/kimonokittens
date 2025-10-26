@@ -366,3 +366,29 @@ Open browser console to verify:
 - Individual day cost_impact values
 - Cluster aggregation totals
 - All assumptions (price, consumption diff, clustering logic)
+
+---
+
+## Sparkline Architecture Clarification (Oct 26, 2025)
+
+**User requirement**: Sparkline should show continuous curve of excess_pct across FULL 90-day window, completely uncoupled from anomaly chunks.
+
+**Current limitation**: Backend only sends 15 anomalous days (those exceeding ±20% threshold). Cannot draw continuous 90-day sparkline from this sparse data.
+
+**Required backend change:**
+```ruby
+# In electricity_stats_handler.rb, add new field alongside anomaly_summary:
+regression_data: historical_with_temp.map do |day|
+  {
+    date: day[:date],
+    excess_pct: ((day[:consumption] / (slope * day[:avg_temp_c] + intercept) - 1) * 100).round(1)
+  }
+end
+```
+
+**Frontend will then:**
+- Draw continuous sparkline from all 90 days of regression_data
+- Overlay anomaly chunks as highlights (unchanged)
+- Sparkline and chunks are visually independent
+
+**Alternative (simpler)**: Start sparkline at first anomaly date, end at last anomaly date, interpolate between anomaly points. Less accurate but requires no backend changes.

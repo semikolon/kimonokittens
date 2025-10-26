@@ -294,6 +294,22 @@ class ElectricityStatsHandler
       end
     end
 
+    # Prepare full regression data for sparkline (all 90 days, not just anomalies)
+    regression_data = if defined?(slope) && defined?(intercept) && defined?(historical_with_temp)
+      historical_with_temp.map do |day|
+        expected_consumption = slope * day[:avg_temp_c] + intercept
+        actual_consumption = day[:consumption]
+        excess_pct = ((actual_consumption / expected_consumption - 1) * 100).round(1)
+
+        {
+          date: day[:date],
+          excess_pct: excess_pct
+        }
+      end
+    else
+      nil
+    end
+
     last_days_summed.prepend({
       price_so_far: price_so_far.ceil + MONTHLY_FEE,
       projected_total: projected_total.ceil + MONTHLY_FEE,
@@ -303,7 +319,8 @@ class ElectricityStatsHandler
       anomaly_summary: defined?(all_anomalies) ? {
         total_anomalies: all_anomalies.length,
         anomalous_days: all_anomalies
-      } : nil
+      } : nil,
+      regression_data: regression_data
     })
 
     # Savings calculations
