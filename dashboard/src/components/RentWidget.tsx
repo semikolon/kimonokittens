@@ -372,51 +372,122 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
     ? new Date(`${regressionData[0].date} 2025`)
     : new Date('2025-07-18') // Fallback
 
-  const chunksWithPositions = chunks.map(chunk => {
-    // Find the day with maximum excess_pct within this chunk (the peak day)
-    // This is where the sparkline will have its visual peak
-    const chunkDays = chunk.type === 'gap' ? [] : anomalousDays.filter(day => {
-      const dayDate = new Date(`${day.date} 2025`)
-      return dayDate >= chunk.startDate && dayDate <= chunk.endDate
-    })
+  // Step 1: Initial positioning using date range midpoint (Solution D)
+  const chunksWithInitialPositions = chunks.map(chunk => {
+    // Calculate midpoint of chunk's date range
+    const midpointTime = (chunk.startDate.getTime() + chunk.endDate.getTime()) / 2
+    const midpointDate = new Date(midpointTime)
+    const midpointIndex = Math.round((midpointDate.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24))
 
-    // Find peak day (highest absolute excess_pct)
-    const peakDay = chunkDays.length > 0
-      ? chunkDays.reduce((max, day) =>
-          Math.abs(day.excess_pct) > Math.abs(max.excess_pct) ? day : max
-        )
-      : null
-
-    // Calculate peak day's index (for centering)
-    const peakDate = peakDay ? new Date(`${peakDay.date} 2025`) : chunk.startDate
-    const peakIndex = Math.round((peakDate.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24))
-
-    // Width should span the full duration (durationDays already includes +1 for inclusive range)
+    // Width should span the full duration
     const calculatedWidth = totalDays > 1 ? (chunk.durationDays / (totalDays - 1)) * 100 : 0
     const minWidthPercent = chunk.type === 'gap' ? calculatedWidth : 10
     const widthPercent = Math.max(calculatedWidth, minWidthPercent)
 
-    // Position chunk so its CENTER aligns with the peak day
-    // Left position = peak position - half width
-    const peakPercent = totalDays > 1 ? (peakIndex / (totalDays - 1)) * 100 : 0
-    const idealLeft = peakPercent - (widthPercent / 2)
-
-    // Apply bounds checking to prevent cutoff
-    // Clamp left edge to 0, right edge to 100
-    const leftPercent = Math.max(0, Math.min(idealLeft, 100 - widthPercent))
+    // Position chunk CENTER at midpoint (no bounds clamping yet)
+    const midpointPercent = totalDays > 1 ? (midpointIndex / (totalDays - 1)) * 100 : 0
+    const idealLeft = midpointPercent - (widthPercent / 2)
 
     return {
       ...chunk,
-      leftPercent,
+      leftPercent: idealLeft,
       widthPercent,
-      peakDate: peakDay?.date // For debugging
+      midpointDate: midpointDate.toISOString().split('T')[0]
     }
   })
+
+  // Step 2: Adaptive overlap resolution with position preservation
+  const chunksWithPositions = [...chunksWithInitialPositions]
+
+  // Sort by left position
+  chunksWithPositions.sort((a, b) => a.leftPercent - b.leftPercent)
+
+  // Calculate what gap size would make everything fit perfectly
+  const totalWidthNeeded = chunksWithPositions.reduce((sum, chunk) => sum + chunk.widthPercent, 0)
+  const availableSpace = 100 - totalWidthNeeded
+  const numGaps = chunksWithPositions.length - 1
+  const idealGap = numGaps > 0 ? availableSpace / numGaps : 0
+
+  // Adaptive gap: use 2% if possible (larger to prevent text collision), but reduce if needed
+  // Allow slight overflow if necessary to maintain readability
+  let targetGap = Math.max(0.3, Math.min(2, idealGap))
+
+  console.log(`Adaptive gap: ${targetGap.toFixed(2)}% (ideal: ${idealGap.toFixed(2)}%, ${chunksWithPositions.length} chunks, ${totalWidthNeeded.toFixed(1)}% total width)`)
+
+  // Iterative resolution with micro-adjustments (preserve date alignment)
+  const MAX_SHIFT = 12 // Maximum shift per chunk per iteration (high to resolve dense clusters)
+  const SOFT_EDGE_LEFT = -8 // Allow 8% overflow on left edge
+  const SOFT_EDGE_RIGHT = 108 // Allow 8% overflow on right edge
+  let iterationCount = 0
+  let hasOverlaps = true
+
+  while (hasOverlaps && iterationCount < 30) {
+    hasOverlaps = false
+    iterationCount++
+
+    for (let i = 0; i < chunksWithPositions.length - 1; i++) {
+      const leftChunk = chunksWithPositions[i]
+      const rightChunk = chunksWithPositions[i + 1]
+
+      const leftChunkRight = leftChunk.leftPercent + leftChunk.widthPercent
+      const gap = rightChunk.leftPercent - leftChunkRight
+
+      if (gap < targetGap) {
+        hasOverlaps = true
+        const neededSeparation = targetGap - gap
+
+        // Check if chunks are edge-constrained BEFORE calculating push
+        const leftChunkAtLeftEdge = leftChunk.leftPercent <= 0.5 // Within 0.5% of left edge
+        const rightChunkAtRightEdge = rightChunk.leftPercent + rightChunk.widthPercent >= 99.5 // Within 0.5% of right edge
+
+        let pushLeft = neededSeparation / 2
+        let pushRight = neededSeparation / 2
+
+        // CRITICAL: Full asymmetric push for edge-constrained pairs
+        if (leftChunkAtLeftEdge) {
+          // Left chunk pinned - give ALL push to right chunk
+          pushLeft = 0
+          pushRight = neededSeparation
+          // NO MAX_SHIFT limit for edge-constrained chunks - they need full separation
+        } else if (rightChunkAtRightEdge) {
+          // Right chunk pinned - give ALL push to left chunk
+          pushRight = 0
+          pushLeft = neededSeparation
+          // NO MAX_SHIFT limit for edge-constrained chunks
+        } else {
+          // Normal symmetric push with MAX_SHIFT limit
+          pushLeft = Math.min(pushLeft, MAX_SHIFT)
+          pushRight = Math.min(pushRight, MAX_SHIFT)
+        }
+
+        // Calculate new positions
+        let newLeftPos = leftChunk.leftPercent - pushLeft
+        let newRightPos = rightChunk.leftPercent + pushRight
+
+        // Final bounds enforcement (shouldn't trigger if edge detection works)
+        newLeftPos = Math.max(0, newLeftPos)
+        if (newRightPos + rightChunk.widthPercent > 100) {
+          newRightPos = 100 - rightChunk.widthPercent
+        }
+
+        leftChunk.leftPercent = newLeftPos
+        rightChunk.leftPercent = newRightPos
+      }
+    }
+
+    // Safety: if we can't resolve after many iterations, reduce target gap
+    if (iterationCount === 15 && hasOverlaps) {
+      targetGap *= 0.7 // Reduce gap by 30% and try again
+      console.log(`Reducing target gap to ${targetGap.toFixed(2)}% after 15 iterations`)
+    }
+  }
+
+  console.log(`Overlap resolution completed in ${iterationCount} iteration(s), final gap: ${targetGap.toFixed(2)}%`)
 
   // Debug logging for cost verification and positioning
   console.log('Anomaly chunks with absolute positions:', chunksWithPositions.map(c => ({
     dateRange: c.dateRange,
-    peakDate: c.peakDate, // Day where sparkline peaks
+    midpointDate: c.midpointDate, // Date range midpoint (alignment target)
     type: c.type,
     leftPercent: c.leftPercent.toFixed(2),
     widthPercent: c.widthPercent.toFixed(2),
