@@ -181,11 +181,11 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
   const paddedRegressionData = (() => {
     if (!regressionData || regressionData.length === 0) return regressionData
 
-    const PADDING_DAYS = 5
+    const PADDING_DAYS = 2
     const firstDay = regressionData[0]
     const lastDay = regressionData[regressionData.length - 1]
 
-    // Create left padding (5 days before first data point)
+    // Create left padding (days before first data point)
     const leftPadding = []
     const firstDate = new Date(`${firstDay.date} 2025`)
     for (let i = PADDING_DAYS; i > 0; i--) {
@@ -200,7 +200,7 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
       })
     }
 
-    // Create right padding (5 days after last data point)
+    // Create right padding (days after last data point)
     const rightPadding = []
     const lastDate = new Date(`${lastDay.date} 2025`)
     for (let i = 1; i <= PADDING_DAYS; i++) {
