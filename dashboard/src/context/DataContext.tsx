@@ -102,6 +102,25 @@ interface ElectricityPriceData {
   generated_at?: string
 }
 
+interface ElectricityDailyCost {
+  date: string
+  weekday: string
+  price: number
+  consumption: number
+  long_title?: string
+  avg_temp_c?: number
+}
+
+interface ElectricityDailyCostsData {
+  summary: {
+    price_so_far: number
+    projected_total: number
+    average_hour: number
+  }
+  daily_costs: ElectricityDailyCost[]
+  generated_at?: string
+}
+
 // Define the state shape
 interface DeploymentStatus {
   pending: boolean
@@ -117,6 +136,7 @@ interface DashboardState {
   rentData: RentData | null
   todoData: TodoData[] | null
   electricityPriceData: ElectricityPriceData | null
+  electricityDailyCostsData: ElectricityDailyCostsData | null
   deploymentStatus: DeploymentStatus | null
   connectionStatus: 'connecting' | 'open' | 'closed'
   lastUpdated: {
@@ -127,6 +147,7 @@ interface DashboardState {
     rent: number | null
     todo: number | null
     electricity: number | null
+    electricityDailyCosts: number | null
   }
 }
 
@@ -139,6 +160,7 @@ type DashboardAction =
   | { type: 'SET_RENT_DATA'; payload: RentData }
   | { type: 'SET_TODO_DATA'; payload: TodoData[] }
   | { type: 'SET_ELECTRICITY_PRICE_DATA'; payload: ElectricityPriceData }
+  | { type: 'SET_ELECTRICITY_DAILY_COSTS_DATA'; payload: ElectricityDailyCostsData }
   | { type: 'SET_DEPLOYMENT_STATUS'; payload: DeploymentStatus }
   | { type: 'SET_CONNECTION_STATUS'; payload: 'connecting' | 'open' | 'closed' }
 
@@ -151,6 +173,7 @@ const initialState: DashboardState = {
   rentData: null,
   todoData: null,
   electricityPriceData: null,
+  electricityDailyCostsData: null,
   deploymentStatus: null,
   connectionStatus: 'connecting',
   lastUpdated: {
@@ -160,7 +183,8 @@ const initialState: DashboardState = {
     strava: null,
     rent: null,
     todo: null,
-    electricity: null
+    electricity: null,
+    electricityDailyCosts: null
   }
 }
 
@@ -208,6 +232,12 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         ...state,
         electricityPriceData: action.payload,
         lastUpdated: { ...state.lastUpdated, electricity: Date.now() }
+      }
+    case 'SET_ELECTRICITY_DAILY_COSTS_DATA':
+      return {
+        ...state,
+        electricityDailyCostsData: action.payload,
+        lastUpdated: { ...state.lastUpdated, electricityDailyCosts: Date.now() }
       }
     case 'SET_DEPLOYMENT_STATUS':
       return {
@@ -294,6 +324,33 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             break
           case 'electricity_price_data':
             dispatch({ type: 'SET_ELECTRICITY_PRICE_DATA', payload: message.payload })
+            break
+          case 'electricity_daily_costs_data':
+            // Transform backend format: { electricity_stats: [summary, ...daily_costs] }
+            // to frontend format: { summary: {...}, daily_costs: [...] }
+            const stats = message.payload.electricity_stats || []
+            const summary = stats[0] || { price_so_far: 0, projected_total: 0, average_hour: 0 }
+            const daily_costs = stats.slice(1).map((day: any) => ({
+              date: day.date,
+              weekday: day.weekday,
+              price: day.price,
+              consumption: day.consumption,
+              long_title: day.long_title,
+              avg_temp_c: day.avg_temp_c
+            }))
+
+            dispatch({
+              type: 'SET_ELECTRICITY_DAILY_COSTS_DATA',
+              payload: {
+                summary: {
+                  price_so_far: summary.price_so_far,
+                  projected_total: summary.projected_total,
+                  average_hour: summary.average_hour
+                },
+                daily_costs,
+                generated_at: message.timestamp?.toString()
+              }
+            })
             break
           case 'reload':
             console.log('Reload message received from server')

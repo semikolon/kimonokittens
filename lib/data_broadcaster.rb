@@ -25,6 +25,7 @@ class DataBroadcaster
     @threads << periodic(300) { fetch_and_publish_todos }
     @threads << periodic(5) { fetch_and_publish_deployment_status }
     @threads << periodic(3600) { fetch_and_publish('electricity_price_data', "#{@base_url}/data/electricity_prices") }
+    @threads << periodic(300) { fetch_and_publish('electricity_daily_costs_data', "#{@base_url}/api/electricity/daily_costs") }
 
     puts "DataBroadcaster: All scheduled tasks started"
   end
@@ -39,6 +40,7 @@ class DataBroadcaster
       fetch_and_publish('temperature_data', "#{@base_url}/data/temperature")
       fetch_and_publish('rent_data', "#{@base_url}/api/rent/friendly_message")
       fetch_and_publish('electricity_price_data', "#{@base_url}/data/electricity_prices")
+      fetch_and_publish('electricity_daily_costs_data', "#{@base_url}/api/electricity/daily_costs")
       fetch_and_publish_todos
       puts "DataBroadcaster: Initial broadcasts complete"
     end
@@ -54,6 +56,7 @@ class DataBroadcaster
       fetch_and_publish('temperature_data', "#{@base_url}/data/temperature")
       fetch_and_publish('rent_data', "#{@base_url}/api/rent/friendly_message")
       fetch_and_publish('electricity_price_data', "#{@base_url}/data/electricity_prices")
+      fetch_and_publish('electricity_daily_costs_data', "#{@base_url}/api/electricity/daily_costs")
       fetch_and_publish_todos
       puts "DataBroadcaster: Immediate data sent to new client"
     end

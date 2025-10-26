@@ -1,9 +1,85 @@
 import React from 'react'
 import { useData } from '../context/DataContext'
 
+// Electricity Cost Sparkline Component
+function ElectricityCostSparkline({ dailyCosts }: { dailyCosts: Array<{ date: string; price: number; consumption: number; avg_temp_c?: number }> }) {
+  if (!dailyCosts || dailyCosts.length === 0) return null
+
+  // Normalize price data to 0-100 range for SVG
+  const prices = dailyCosts.map(d => d.price)
+  const minPrice = Math.min(...prices)
+  const maxPrice = Math.max(...prices)
+  const priceRange = maxPrice - minPrice || 1 // Avoid division by zero
+
+  // Generate SVG path for electricity costs
+  const electricityPoints = dailyCosts.map((day, index) => {
+    const x = (index / (dailyCosts.length - 1)) * 100
+    const normalizedPrice = ((day.price - minPrice) / priceRange)
+    const y = 100 - (normalizedPrice * 100) // Invert Y axis (SVG 0 is top)
+    return `${x},${y}`
+  }).join(' ')
+
+  const electricityPath = electricityPoints
+
+  // Check if we have temperature data
+  const hasTemperatureData = dailyCosts.some(d => d.avg_temp_c !== undefined)
+  let temperaturePath = ''
+
+  if (hasTemperatureData) {
+    // Normalize temperature data to 0-100 range for SVG
+    const temps = dailyCosts.map(d => d.avg_temp_c || 0).filter(t => t !== 0)
+    if (temps.length > 0) {
+      const minTemp = Math.min(...temps)
+      const maxTemp = Math.max(...temps)
+      const tempRange = maxTemp - minTemp || 1 // Avoid division by zero
+
+      const temperaturePoints = dailyCosts.map((day, index) => {
+        const x = (index / (dailyCosts.length - 1)) * 100
+        const normalizedTemp = ((day.avg_temp_c || 0) - minTemp) / tempRange
+        const y = 100 - (normalizedTemp * 100) // Invert Y axis
+        return `${x},${y}`
+      }).join(' ')
+
+      temperaturePath = temperaturePoints
+    }
+  }
+
+  return (
+    <div className="mt-2">
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="w-full h-8"
+        style={{ display: 'block' }}
+      >
+        {/* Outdoor temperature line (orange) - behind electricity */}
+        {temperaturePath && (
+          <polyline
+            points={temperaturePath}
+            fill="none"
+            stroke="#ffcc99"
+            strokeWidth="1.5"
+            vectorEffect="non-scaling-stroke"
+            opacity="0.7"
+          />
+        )}
+
+        {/* Electricity cost line (purple) */}
+        <polyline
+          points={electricityPath}
+          fill="none"
+          stroke="rgb(216, 180, 254)"
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    </div>
+  )
+}
+
 export function RentWidget() {
   const { state } = useData()
-  const { rentData, connectionStatus } = state
+  const { rentData, electricityDailyCostsData, connectionStatus } = state
 
   if (connectionStatus !== 'open') {
     return (
@@ -106,6 +182,19 @@ export function RentWidget() {
       {rentData.heating_cost_line && (
         <div className="text-purple-300 text-xs mt-2" style={{ opacity: 0.5 }}>
           {rentData.heating_cost_line}
+        </div>
+      )}
+
+      {/* Electricity daily costs */}
+      {electricityDailyCostsData && electricityDailyCostsData.daily_costs.length > 0 && (
+        <div className="text-purple-300 text-xs mt-3" style={{ opacity: 0.5 }}>
+          <div className="font-semibold mb-1">Senaste veckans elkostnader:</div>
+          <ElectricityCostSparkline dailyCosts={electricityDailyCostsData.daily_costs} />
+          {electricityDailyCostsData.daily_costs.slice().reverse().map((day, index) => (
+            <div key={index}>
+              {day.weekday} {day.date}: {day.consumption.toFixed(1)} kWh = {day.price} kr
+            </div>
+          ))}
         </div>
       )}
     </div>

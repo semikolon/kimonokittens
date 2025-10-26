@@ -113,6 +113,7 @@ const log = (message: string) => {
 
 export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, DEFAULT_STATE);
+  const [configLoaded, setConfigLoaded] = React.useState(false);
   const fadeAnimationRef = useRef<number>();
 
   // Load config from API on mount
@@ -145,6 +146,8 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch (error) {
         log(`[SleepSchedule] Failed to load config: ${error}`);
         // Continue with DEFAULT_STATE
+      } finally {
+        setConfigLoaded(true);
       }
     };
 
@@ -360,9 +363,9 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
     }, 500); // 500ms delay for monitor wake
   };
 
-  // Startup state detection - check if we should be sleeping on mount
+  // Startup state detection - check if we should be sleeping after config loads
   useEffect(() => {
-    if (!state.enabled || state.manualOverride) return;
+    if (!configLoaded || !state.enabled || state.manualOverride) return;
 
     const detectInitialState = () => {
       const now = new Date();
@@ -377,9 +380,9 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
         ? (currentHour >= sleepHour && currentHour < wakeHour)
         : (currentHour >= sleepHour || currentHour < wakeHour);
 
-      log(`[SleepSchedule] Startup detection: time=${currentHour.toFixed(2)} sleep=${sleepHour} wake=${wakeHour} inSleepPeriod=${isInSleepPeriod} currentState=${state.currentState}`);
+      log(`[SleepSchedule] Startup detection: time=${currentHour.toFixed(2)} sleep=${sleepHour} wake=${wakeHour} inSleepPeriod=${isInSleepPeriod} currentState=${state.currentState} enabled=${state.enabled}`);
 
-      if (isInSleepPeriod && state.currentState !== 'sleeping') {
+      if (state.enabled && isInSleepPeriod && state.currentState !== 'sleeping') {
         log('[SleepSchedule] 🌙 STARTUP: In sleep period, setting sleeping state immediately');
         dispatch({ type: 'SET_STATE', state: 'sleeping' });
 
@@ -416,10 +419,9 @@ export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
 
-    // Run after config loads (small delay to ensure sleep/wake times are loaded)
-    const timer = setTimeout(detectInitialState, 1000);
-    return () => clearTimeout(timer);
-  }, []); // Only run once on mount
+    // Run immediately when config is loaded
+    detectInitialState();
+  }, [configLoaded]); // Run when config loads
 
   // Schedule checker
   useEffect(() => {
