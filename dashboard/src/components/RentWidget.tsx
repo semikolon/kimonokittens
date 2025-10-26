@@ -407,13 +407,13 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
   return (
     <div className="mt-3 mb-3">
       <div className="relative h-20 rounded-lg overflow-hidden"
-           style={{ background: 'rgba(255, 255, 255, 0.05)' }}>
+           style={{ background: 'rgba(255, 255, 255, 0.025)' }}>
 
         {/* Sparkline SVG overlay */}
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path
             d={sparklinePath}
-            stroke="rgba(40, 30, 50, 0.4)"
+            stroke="rgba(35, 20, 45, 0.4)"
             strokeWidth="1.5"
             fill="none"
             vectorEffect="non-scaling-stroke"
