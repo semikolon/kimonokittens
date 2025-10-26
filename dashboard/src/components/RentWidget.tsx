@@ -42,10 +42,7 @@ function DailyElectricityCostBar({ dailyCosts }: { dailyCosts: Array<{ date: str
   }
 
   return (
-    <div className="mt-3">
-      <div className="text-purple-200 mb-2" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>
-        Senaste veckans elkostnader
-      </div>
+    <div className="mb-3">
       <div
         className="relative h-16 rounded-lg overflow-visible"
         style={{
@@ -172,6 +169,11 @@ export function RentWidget() {
 
   return (
     <div>
+      {/* Electricity daily costs bar */}
+      {electricityDailyCostsData && electricityDailyCostsData.daily_costs.length > 0 && (
+        <DailyElectricityCostBar dailyCosts={electricityDailyCostsData.daily_costs} />
+      )}
+
       {header && (
         <div className="text-purple-200 mb-3 leading-relaxed">
           {parseMarkdown(header)}
@@ -225,11 +227,6 @@ export function RentWidget() {
         <div className="text-purple-300 text-xs mt-2" style={{ opacity: 0.5 }}>
           {rentData.heating_cost_line}
         </div>
-      )}
-
-      {/* Electricity daily costs bar */}
-      {electricityDailyCostsData && electricityDailyCostsData.daily_costs.length > 0 && (
-        <DailyElectricityCostBar dailyCosts={electricityDailyCostsData.daily_costs} />
       )}
     </div>
   )
