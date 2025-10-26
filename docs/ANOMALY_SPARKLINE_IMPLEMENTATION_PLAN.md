@@ -507,3 +507,45 @@ background: chunk.type === 'high'
 - Min width: 8% (~96px at 1200px viewport)
 
 **Positioning formula:** Matches sparkline exactly - `(index / 88) * 100` for 89-day window
+
+### Cost Impact Calculation Verification (Oct 26, 2025)
+
+**Formula (backend: `handlers/electricity_stats_handler.rb:256-260`):**
+```ruby
+consumption_diff = actual_consumption - expected_consumption  # kWh
+cost_impact = (consumption_diff * price_per_kwh).round(1)    # SEK
+```
+
+**Price components:**
+- Spot price: Variable hourly rate from Tibber API (~0.50-1.50 kr/kWh)
+- Transfer price: `(0.09 + 0.392) × 1.25 = 0.6025 kr/kWh` (Vattenfall network + energy tax + VAT)
+- Total: ~1.10-2.10 kr/kWh depending on spot price
+
+**Per-day calculation then summed in frontend:**
+```typescript
+const totalCostImpact = cluster.reduce((sum, d) => sum + d.cost_impact, 0)
+```
+
+**Critical insight: Date ranges are misleading!**
+- Chunk label "Jul 28 - Aug 23" spans 27 days
+- But only anomalous days (>20% from expected) contribute to cost_impact
+- Normal days within that span are excluded from the sum
+- Example: "Jul 28 - Aug 23, +30%, +46 kr" might be:
+  - Jul 28-29 (2 days) + Aug 10-14 (5 days) + Aug 23 (1 day) = 8 anomalous days
+  - At ~6 kr/day excess → 48 kr ≈ 46 kr shown ✓
+
+**Math verification (single-day example from screenshot):**
+- "Sep 8" → +39%, +12 kr
+- If expected: 20 kWh, actual: 27.8 kWh (39% excess)
+- Excess: 7.8 kWh × 1.54 kr/kWh = 12 kr ✓
+
+**Why values seem low:**
+1. Only anomalous days count (not full date span)
+2. Many clusters have gaps with normal days between anomalies
+3. Typical excess: 5-8 kWh/day × 1-2 kr/kWh = 5-15 kr/day
+
+**Display considerations:**
+- Percentage (+30%) shows magnitude but not actionable cost
+- Cost impact (+46 kr) is more meaningful but date range misleading
+- Could add day count ("8 days") to clarify non-continuous span
+- Could remove percentage to reduce visual clutter
