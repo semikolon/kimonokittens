@@ -153,6 +153,199 @@ function AnomalySummaryText({ anomalySummary }: {
   )
 }
 
+// Anomaly Sparkline Bar - Visual representation of electricity usage anomalies
+function AnomalySparklineBar({ anomalySummary }: {
+  anomalySummary?: {
+    total_anomalies: number
+    anomalous_days: Array<{
+      date: string
+      consumption: number
+      expected: number
+      temp_c: number
+      excess_pct: number
+      price_per_kwh: number
+      cost_impact: number
+    }>
+  }
+}) {
+  if (!anomalySummary || anomalySummary.anomalous_days.length === 0) {
+    return null
+  }
+
+  // Prepare chunk data for visualization
+  const anomalousDays = anomalySummary.anomalous_days
+
+  // Parse and sort dates
+  const sortedDays = [...anomalousDays].sort((a, b) => {
+    const aDate = new Date(`${a.date} 2025`)
+    const bDate = new Date(`${b.date} 2025`)
+    return aDate.getTime() - bDate.getTime()
+  })
+
+  // Separate high and low anomalies
+  const highAnomalies = sortedDays.filter(d => d.excess_pct > 0)
+  const lowAnomalies = sortedDays.filter(d => d.excess_pct < 0)
+
+  // Cluster anomalies (same logic as text component - 14-day window)
+  const clusterAnomalies = (anomalies: typeof sortedDays, maxGapDays: number) => {
+    if (anomalies.length === 0) return []
+
+    const clusters: typeof sortedDays[] = []
+    let currentCluster: typeof sortedDays = [anomalies[0]]
+
+    for (let i = 1; i < anomalies.length; i++) {
+      const prevDate = new Date(`${currentCluster[currentCluster.length - 1].date} 2025`)
+      const currDate = new Date(`${anomalies[i].date} 2025`)
+      const daysDiff = (currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
+
+      if (daysDiff <= maxGapDays) {
+        currentCluster.push(anomalies[i])
+      } else {
+        clusters.push(currentCluster)
+        currentCluster = [anomalies[i]]
+      }
+    }
+    clusters.push(currentCluster)
+    return clusters
+  }
+
+  const highClusters = clusterAnomalies(highAnomalies, 14)
+  const lowClusters = clusterAnomalies(lowAnomalies, 14)
+
+  // Build chunks for visualization
+  interface AnomalyChunk {
+    type: 'high' | 'low'
+    dateRange: string
+    startDate: Date
+    endDate: Date
+    durationDays: number
+    avgExcessPct: number
+    totalCostImpact: number
+  }
+
+  const chunks: AnomalyChunk[] = []
+
+  // Process high clusters
+  highClusters.forEach(cluster => {
+    const startDate = new Date(`${cluster[0].date} 2025`)
+    const endDate = new Date(`${cluster[cluster.length - 1].date} 2025`)
+    const durationDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    const avgExcessPct = Math.round(cluster.reduce((sum, d) => sum + d.excess_pct, 0) / cluster.length)
+    const totalCostImpact = cluster.reduce((sum, d) => sum + d.cost_impact, 0)
+
+    // Format date range
+    let dateRange
+    if (cluster.length === 1) {
+      dateRange = cluster[0].date
+    } else {
+      const first = cluster[0].date
+      const last = cluster[cluster.length - 1].date
+      if (first.split(' ')[0] === last.split(' ')[0]) {
+        const month = first.split(' ')[0]
+        const firstDay = first.split(' ')[1]
+        const lastDay = last.split(' ')[1]
+        dateRange = `${firstDay}-${lastDay} ${month}`
+      } else {
+        dateRange = `${first} - ${last}`
+      }
+    }
+
+    chunks.push({
+      type: 'high',
+      dateRange,
+      startDate,
+      endDate,
+      durationDays,
+      avgExcessPct,
+      totalCostImpact: Math.round(totalCostImpact)
+    })
+  })
+
+  // Process low clusters
+  lowClusters.forEach(cluster => {
+    const startDate = new Date(`${cluster[0].date} 2025`)
+    const endDate = new Date(`${cluster[cluster.length - 1].date} 2025`)
+    const durationDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    const avgExcessPct = Math.round(cluster.reduce((sum, d) => sum + d.excess_pct, 0) / cluster.length)
+    const totalCostImpact = cluster.reduce((sum, d) => sum + d.cost_impact, 0)
+
+    let dateRange
+    if (cluster.length === 1) {
+      dateRange = cluster[0].date
+    } else {
+      const first = cluster[0].date
+      const last = cluster[cluster.length - 1].date
+      if (first.split(' ')[0] === last.split(' ')[0]) {
+        const month = first.split(' ')[0]
+        const firstDay = first.split(' ')[1]
+        const lastDay = last.split(' ')[1]
+        dateRange = `${firstDay}-${lastDay} ${month}`
+      } else {
+        dateRange = `${first} - ${last}`
+      }
+    }
+
+    chunks.push({
+      type: 'low',
+      dateRange,
+      startDate,
+      endDate,
+      durationDays,
+      avgExcessPct,
+      totalCostImpact: Math.round(totalCostImpact)
+    })
+  })
+
+  // Sort chunks chronologically
+  chunks.sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
+
+  // Calculate total width (90 days)
+  const totalDays = 90
+
+  return (
+    <div className="mb-3">
+      <div className="relative h-20 rounded-lg overflow-hidden"
+           style={{ background: 'rgba(255, 255, 255, 0.05)' }}>
+
+        {/* Chunk visualization */}
+        <div className="absolute inset-0 flex">
+          {chunks.map((chunk, index) => (
+            <div
+              key={index}
+              className="relative h-full"
+              style={{ flex: `${chunk.durationDays} 0 0` }}
+            >
+              {/* Background chunk */}
+              <div className="absolute inset-0 bg-white" style={{ opacity: 0.05 }} />
+
+              {/* Anomaly glow - proportional to excess percentage */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundColor: chunk.type === 'high' ? '#ff6600' : '#6699ff',
+                  opacity: Math.abs(chunk.avgExcessPct) / 100 * 0.6,
+                  boxShadow: `0 0 ${Math.abs(chunk.avgExcessPct) / 10}px rgba(${chunk.type === 'high' ? '255, 102, 0' : '102, 153, 255'}, ${Math.abs(chunk.avgExcessPct) / 100})`
+                }}
+              />
+
+              {/* Text content */}
+              <div className="relative z-10 flex flex-col items-center justify-center h-full px-1 text-center">
+                <div className="text-[10px] text-purple-100 leading-tight">{chunk.dateRange}</div>
+                <div className="text-sm font-bold text-purple-50">
+                  {chunk.avgExcessPct > 0 ? '+' : ''}{chunk.avgExcessPct}%
+                </div>
+                <div className="text-[10px] text-purple-200">
+                  {chunk.totalCostImpact > 0 ? '+' : ''}{chunk.totalCostImpact} kr
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function RentWidget() {
   const { state } = useData()
   const { rentData, electricityDailyCostsData, connectionStatus } = state
@@ -254,9 +447,9 @@ export function RentWidget() {
         </div>
       )}
 
-      {/* Anomaly summary text - dynamic based on detected anomalies */}
+      {/* Anomaly sparkline bar - visual representation of detected anomalies */}
       {electricityDailyCostsData?.summary?.anomaly_summary && (
-        <AnomalySummaryText anomalySummary={electricityDailyCostsData.summary.anomaly_summary} />
+        <AnomalySparklineBar anomalySummary={electricityDailyCostsData.summary.anomaly_summary} />
       )}
 
       {/* Heating cost impact line */}
