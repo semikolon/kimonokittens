@@ -213,8 +213,8 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
     return clusters
   }
 
-  const highClusters = clusterAnomalies(highAnomalies, 14)
-  const lowClusters = clusterAnomalies(lowAnomalies, 14)
+  const highClusters = clusterAnomalies(highAnomalies, 10)
+  const lowClusters = clusterAnomalies(lowAnomalies, 10)
 
   // Build chunks for visualization
   interface AnomalyChunk {
@@ -502,8 +502,15 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
               className="relative h-full"
               style={{ flex: `${chunk.durationDays} 0 0` }}
             >
-              {/* Background chunk - slightly more visible for anomalies, transparent for gaps */}
-              <div className="absolute inset-0 bg-white" style={{ opacity: chunk.type === 'gap' ? 0 : 0.035 }} />
+              {/* Background chunk - colored for anomaly type, transparent for gaps */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundColor: chunk.type === 'gap' ? 'transparent' :
+                                   chunk.type === 'high' ? 'rgba(255, 136, 68, 0.03)' :
+                                   'rgba(68, 204, 204, 0.03)'
+                }}
+              />
 
               {/* Text content with horizontal padding - only for anomalies */}
               {chunk.type !== 'gap' && (
