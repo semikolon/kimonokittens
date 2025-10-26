@@ -129,13 +129,13 @@ function DailyElectricityCostBar({ dailyCosts }: { dailyCosts: Array<{ date: str
               <div className="relative z-10 flex flex-col items-center">
                 <div
                   className="text-purple-200 text-xs font-semibold"
-                  style={{ textShadow: '0 0 8px rgba(25, 20, 30, 0.2), 0 0 12px rgba(25, 20, 30, 0.2), 0 0 16px rgba(25, 20, 30, 0.2)' }}
+                  style={{ textShadow: '0 0 10px rgba(25, 20, 30, 0.3), 0 0 16px rgba(25, 20, 30, 0.3), 0 0 24px rgba(25, 20, 30, 0.3)' }}
                 >
                   {day.weekday}
                 </div>
                 <div
                   className="text-purple-100 text-sm font-bold"
-                  style={{ textShadow: '0 0 8px rgba(25, 20, 30, 0.2), 0 0 12px rgba(25, 20, 30, 0.2), 0 0 16px rgba(25, 20, 30, 0.2)' }}
+                  style={{ textShadow: '0 0 10px rgba(25, 20, 30, 0.3), 0 0 16px rgba(25, 20, 30, 0.3), 0 0 24px rgba(25, 20, 30, 0.3)' }}
                 >
                   {Math.round(day.price)} kr
                 </div>
