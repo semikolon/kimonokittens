@@ -15,7 +15,6 @@ function AnomalySummaryText({ anomalySummary }: {
   }
 }) {
   const [summaryText, setSummaryText] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     if (!anomalySummary || anomalySummary.anomalous_days.length === 0) {
@@ -25,109 +24,85 @@ function AnomalySummaryText({ anomalySummary }: {
 
     const anomalousDays = anomalySummary.anomalous_days
 
-    // Create cache key based on anomaly dates and percentages
-    const cacheKey = `anomaly_summary_${anomalousDays.map(d => `${d.date}_${d.excess_pct}`).join('_')}`
-    const today = new Date().toISOString().split('T')[0]
+    // Parse and sort dates
+    const sortedDays = [...anomalousDays].sort((a, b) => {
+      const aDate = new Date(`${a.date} 2025`)
+      const bDate = new Date(`${b.date} 2025`)
+      return aDate.getTime() - bDate.getTime()
+    })
 
-    // Check cache first (valid for 24 hours)
-    // TEMPORARILY DISABLED for prompt testing
-    // try {
-    //   const cached = localStorage.getItem(cacheKey)
-    //   if (cached) {
-    //     const { text, date } = JSON.parse(cached)
-    //     if (date === today) {
-    //       setSummaryText(text)
-    //       return
-    //     }
-    //   }
-    // } catch (e) {
-    //   // Ignore cache errors
-    // }
-
-    // Separate high and low anomalies
-    const highAnomalies = anomalousDays.filter(d => d.excess_pct > 0)
-    const lowAnomalies = anomalousDays.filter(d => d.excess_pct < 0)
-
-    // Generate summary text via GPT-5-nano
-    const generateSummary = async () => {
-      setIsLoading(true)
-      try {
-        // Build date ranges string
-        const formatDateRange = (days: typeof anomalousDays) => {
-          if (days.length === 0) return ''
-          if (days.length === 1) return days[0].date
-          if (days.length === 2) return `${days[0].date} och ${days[1].date}`
-
-          // Group consecutive dates
-          const sorted = days.sort((a, b) => {
-            const aDate = new Date(`${a.date} 2025`)
-            const bDate = new Date(`${b.date} 2025`)
-            return aDate.getTime() - bDate.getTime()
-          })
-
-          return `${sorted[0].date} -> ${sorted[sorted.length - 1].date}`
-        }
-
-        const prompt = `Du är en svensk textgenerator. Följ EXAKT denna meningsstruktur:
-
-${highAnomalies.length > 0 ? `"Högre förbrukning än väntat ${formatDateRange(highAnomalies)}. Förmodligen pga fler personer i huset."` : ''}
-${lowAnomalies.length > 0 ? `"Lägre förbrukning än väntat ${formatDateRange(lowAnomalies)}. Förmodligen pga färre personer i huset."` : ''}
-
-Data:
-${highAnomalies.length > 0 ? `HÖGRE: ${highAnomalies.map(d => `${d.date} (+${Math.round(d.excess_pct)}%)`).join(', ')}` : ''}
-${lowAnomalies.length > 0 ? `LÄGRE: ${lowAnomalies.map(d => `${d.date} (${Math.round(d.excess_pct)}%)`).join(', ')}` : ''}
-
-Använd EXAKT formatet ovan. Om flera datum: använd "datum1 -> datum2" format. Max 25 ord total.`
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.OPENAI_API_KEY || ''}`
-          },
-          body: JSON.stringify({
-            model: 'gpt-5-nano',
-            messages: [{ role: 'user', content: prompt }],
-            max_completion_tokens: 5000  // GPT-5-nano needs generous allocation for hidden reasoning tokens
-            // Note: gpt-5-nano only supports default temperature (1), custom values cause 400 error
-          })
-        })
-
-        if (!response.ok) {
-          const errorBody = await response.json()
-          console.error('OpenAI API error:', response.status, errorBody)
-          setSummaryText(null)
-          return
-        }
-
-        const data = await response.json()
-        const text = data.choices?.[0]?.message?.content?.trim()
-
-        if (text) {
-          // Cache the result
-          try {
-            localStorage.setItem(cacheKey, JSON.stringify({ text, date: today }))
-          } catch (e) {
-            // Ignore cache write errors
-          }
-          setSummaryText(text)
-        }
-      } catch (error) {
-        console.error('Error generating anomaly summary:', error)
-        setSummaryText(null)
-      } finally {
-        setIsLoading(false)
-      }
+    // Group consecutive dates into ranges
+    interface DateRange {
+      start: string
+      end: string
+      days: typeof sortedDays
+      avgExcess: number
+      isHigh: boolean
     }
 
-    generateSummary()
+    const ranges: DateRange[] = []
+    let currentRange: DateRange | null = null
+
+    sortedDays.forEach((day, index) => {
+      const isHigh = day.excess_pct > 0
+      const dayDate = new Date(`${day.date} 2025`)
+
+      if (!currentRange) {
+        // Start new range
+        currentRange = {
+          start: day.date,
+          end: day.date,
+          days: [day],
+          avgExcess: day.excess_pct,
+          isHigh
+        }
+      } else {
+        const prevDate = new Date(`${currentRange.end} 2025`)
+        const daysDiff = (dayDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
+        const sameType = currentRange.isHigh === isHigh
+
+        if (daysDiff <= 3 && sameType) {
+          // Extend current range (within 3 days and same type)
+          currentRange.end = day.date
+          currentRange.days.push(day)
+        } else {
+          // Finalize current range and start new one
+          currentRange.avgExcess = currentRange.days.reduce((sum, d) => sum + d.excess_pct, 0) / currentRange.days.length
+          ranges.push(currentRange)
+          currentRange = {
+            start: day.date,
+            end: day.date,
+            days: [day],
+            avgExcess: day.excess_pct,
+            isHigh
+          }
+        }
+      }
+
+      // Finalize last range
+      if (index === sortedDays.length - 1 && currentRange) {
+        currentRange.avgExcess = currentRange.days.reduce((sum, d) => sum + d.excess_pct, 0) / currentRange.days.length
+        ranges.push(currentRange)
+      }
+    })
+
+    // Build granular sentence
+    const segments = ranges.map(range => {
+      const dateStr = range.start === range.end ? range.start : `${range.start}-${range.end}`
+      const type = range.isHigh ? 'oväntat hög' : 'oväntat låg'
+      const pct = range.avgExcess > 0 ? `+${Math.round(range.avgExcess)}` : Math.round(range.avgExcess)
+      return `${dateStr}: ${type} (ca ${pct}%)`
+    })
+
+    const finalText = `Elförbrukning ${segments.join(', ')}`
+    setSummaryText(finalText)
   }, [anomalySummary])
 
-  if (!summaryText && !isLoading) return null
+  if (!summaryText) return null
 
   return (
     <div className="text-purple-300 text-xs mb-3" style={{ opacity: 0.7 }}>
-      {isLoading ? 'Analyserar elförbrukning...' : summaryText}
+      {summaryText}
     </div>
   )
 }
