@@ -328,6 +328,25 @@ For LLM assistants and future developers:
 
 **Documentation**: See `docs/PI_MIGRATION_MAP.md`, `docs/PI_VS_DELL_ELECTRICITY_ANALYSIS.md`, and `docs/ELECTRICITY_PRICE_DATA_ANALYSIS.md` for complete analysis.
 
+**ThermIQ-MQTT Manual**: `docs/ThermIQ_MQTT_Installation_Presentation.pdf` - Complete reference for Thermia heatpump control via MQTT. Contains register reference (pages 12-13), EVU switch control, hot water production status (r10:3), and all telemetry/control registers exposed through the temperature data endpoint.
+
+**Heatpump Control Hierarchy** (highest to lowest priority):
+1. **EVU (Hardware Lockout)** - Terminal 307/308 on Thermia heatpump
+   - Blocks compressor at permission level, preventing **ALL heat production** (both space heating and hot water)
+   - MQTT: `{"EVU":1}` = blocked, `{"EVU":0}` = allowed
+   - Cannot be overridden by software - operates upstream of all internal logic
+2. **Temperature Override** (Node-RED function: "turn heat ON IF temp too low")
+   - Triggers when: `indoor ≤ target` OR `hotwater < 40°C`
+   - Forces heatpump ON regardless of schedule when conditions met
+   - Only effective when EVU allows compressor operation
+   - Location: Pi Node-RED flow at `192.168.4.66:1880`
+3. **Tibber Schedule** (Node-RED price optimization)
+   - Generates schedule from electricity prices (13h/day, maxPrice 2.2kr/kWh)
+   - Optimizes runtime for cheapest hours
+   - Subordinate to temperature override
+
+**Critical**: Hot water "priority" logic operates AFTER these three layers. EVU blocking occurs at the compressor (shared heat source), preventing the reversing valve from ever switching heat destination. Temperature override explains why `heatpump_disabled=0` even when schedule shows OFF - the system stays enabled to maintain comfort, but only when EVU permits operation.
+
 ### Production Paths & Services
 ```
 /home/kimonokittens/                          # Service user home
