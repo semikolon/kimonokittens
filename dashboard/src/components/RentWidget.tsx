@@ -66,9 +66,9 @@ function DailyElectricityCostBar({ dailyCosts }: { dailyCosts: Array<{ date: str
               d={`M ${temperaturePath}`}
               fill="none"
               stroke="#ffcc99"
-              strokeWidth="1.5"
+              strokeWidth="2.5"
               vectorEffect="non-scaling-stroke"
-              opacity="0.4"
+              opacity="0.27"
             />
           )}
 
@@ -77,9 +77,9 @@ function DailyElectricityCostBar({ dailyCosts }: { dailyCosts: Array<{ date: str
             d={`M ${electricityPath}`}
             fill="none"
             stroke="rgb(216, 180, 254)"
-            strokeWidth="2"
+            strokeWidth="3"
             vectorEffect="non-scaling-stroke"
-            opacity="0.3"
+            opacity="0.2"
           />
         </svg>
 
