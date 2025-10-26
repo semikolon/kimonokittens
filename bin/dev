@@ -75,8 +75,8 @@ case "$cmd" in
         if is_tty; then
           exec overmind start -f "$PROCFILE" -p "$PORT_BASE"
         else
-          # Daemonize for non-TTY (Claude Code) - launches as daemon
-          overmind start -f "$PROCFILE" -p "$PORT_BASE" -D
+          # Daemon for non-TTY (Claude Code) - redirect output to prevent hanging
+          overmind start -f "$PROCFILE" -p "$PORT_BASE" -D >/dev/null 2>&1
           enable_overmind_file_logging
           echo "✅ Started Overmind as daemon"
           echo "   Status: npm run dev:status"
