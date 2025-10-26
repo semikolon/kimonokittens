@@ -364,7 +364,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                   price_so_far: summary.price_so_far,
                   projected_total: summary.projected_total,
                   average_hour: summary.average_hour,
-                  anomaly_summary: summary.anomaly_summary
+                  anomaly_summary: summary.anomaly_summary,
+                  regression_data: summary.regression_data
                 },
                 daily_costs,
                 generated_at: message.timestamp?.toString()
