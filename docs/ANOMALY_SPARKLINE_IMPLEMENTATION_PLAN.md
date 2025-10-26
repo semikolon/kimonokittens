@@ -557,3 +557,19 @@ const totalCostImpact = cluster.reduce((sum, d) => sum + d.cost_impact, 0)
 - Cost impact (+46 kr) is more meaningful but date range misleading
 - Could add day count ("8 days") to clarify non-continuous span
 - Could remove percentage to reduce visual clutter
+
+---
+
+## Post-Implementation Refinement (October 26, 2025)
+
+**Alignment & Margin Improvements**: See `ANOMALY_CHUNK_ALIGNMENT_PLAN.md` for complete details.
+
+**Final solution:**
+- Pure midpoint alignment (chunks positioned at date range midpoints)
+- 2-day organic padding on both edges (±15% variation from edge values)
+- Natural calendar-based spacing with px-2 text padding
+- Perfect alignment between sparkline peaks/troughs and chunk labels
+- No text overlap, comfortable margins from boundaries
+- Widget spacing reduced by ~50% (mb-12 → mb-6) for better Strava visibility
+
+**Status**: ✅ Production (commit 4d7b43a)
