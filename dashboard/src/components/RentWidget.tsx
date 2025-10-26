@@ -423,20 +423,8 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
     currentLeft += chunk.widthPercent + targetGap
   })
 
-  // Check if we overflowed 100% boundary
-  const lastChunk = chunksWithPositions[chunksWithPositions.length - 1]
-  const totalUsed = lastChunk.leftPercent + lastChunk.widthPercent
-
-  if (totalUsed > 100) {
-    // Need compression - scale everything proportionally
-    const compressionRatio = 100 / totalUsed
-    console.log(`Compressing chunks by ${(compressionRatio * 100).toFixed(1)}% to fit`)
-
-    chunksWithPositions.forEach(chunk => {
-      chunk.leftPercent *= compressionRatio
-      chunk.widthPercent *= compressionRatio
-    })
-  }
+  // No compression - chunks can extend beyond 100% as long as text is readable
+  // User confirmed: backgrounds can overlap/extend, only text legibility matters
 
   // Debug logging for cost verification and positioning
   console.log('Anomaly chunks with absolute positions:', chunksWithPositions.map(c => ({
