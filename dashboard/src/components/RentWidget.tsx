@@ -373,31 +373,46 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
     : new Date('2025-07-18') // Fallback
 
   const chunksWithPositions = chunks.map(chunk => {
-    // Calculate this chunk's start index in the regression window
-    const startIndex = Math.round((chunk.startDate.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24))
+    // Find the day with maximum excess_pct within this chunk (the peak day)
+    // This is where the sparkline will have its visual peak
+    const chunkDays = chunk.type === 'gap' ? [] : anomalousDays.filter(day => {
+      const dayDate = new Date(`${day.date} 2025`)
+      return dayDate >= chunk.startDate && dayDate <= chunk.endDate
+    })
 
-    // Use same formula as sparkline for left position: (index / (totalDays - 1)) * 100
-    const leftPercent = totalDays > 1 ? (startIndex / (totalDays - 1)) * 100 : 0
+    // Find peak day (highest absolute excess_pct)
+    const peakDay = chunkDays.length > 0
+      ? chunkDays.reduce((max, day) =>
+          Math.abs(day.excess_pct) > Math.abs(max.excess_pct) ? day : max
+        )
+      : null
+
+    // Calculate peak day's index (for centering)
+    const peakDate = peakDay ? new Date(`${peakDay.date} 2025`) : chunk.startDate
+    const peakIndex = Math.round((peakDate.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24))
 
     // Width should span the full duration (durationDays already includes +1 for inclusive range)
-    // E.g., 2-day chunk = 2 intervals in 88-interval space = 2.27%
     const calculatedWidth = totalDays > 1 ? (chunk.durationDays / (totalDays - 1)) * 100 : 0
-
-    // Apply minimum width to prevent text wrapping (10% = ~120px at 1200px viewport)
-    // Ensures "+XX kr" cost values don't wrap on single line
     const minWidthPercent = chunk.type === 'gap' ? calculatedWidth : 10
     const widthPercent = Math.max(calculatedWidth, minWidthPercent)
+
+    // Position chunk so its CENTER aligns with the peak day
+    // Left position = peak position - half width
+    const peakPercent = totalDays > 1 ? (peakIndex / (totalDays - 1)) * 100 : 0
+    const leftPercent = peakPercent - (widthPercent / 2)
 
     return {
       ...chunk,
       leftPercent,
-      widthPercent
+      widthPercent,
+      peakDate: peakDay?.date // For debugging
     }
   })
 
   // Debug logging for cost verification and positioning
   console.log('Anomaly chunks with absolute positions:', chunksWithPositions.map(c => ({
     dateRange: c.dateRange,
+    peakDate: c.peakDate, // Day where sparkline peaks
     type: c.type,
     leftPercent: c.leftPercent.toFixed(2),
     widthPercent: c.widthPercent.toFixed(2),
@@ -462,7 +477,7 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
       const p3 = points[Math.min(i + 2, points.length - 1)]
 
       // Calculate control points for smooth curve
-      const tension = 0.2 // Adjust smoothness (0 = sharp corners, 1 = very smooth)
+      const tension = 0.3 // Adjust smoothness (0 = sharp corners, 1 = very smooth)
 
       const cp1x = p1.x + (p2.x - p0.x) * tension
       const cp1y = p1.y + (p2.y - p0.y) * tension
@@ -478,7 +493,7 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
   const sparklinePath = generateSparkline()
 
   return (
-    <div className="mt-3 mb-3">
+    <div className="overflow-hidden backdrop-blur-sm bg-purple-900/30 rounded-2xl shadow-md border border-purple-900/10 p-8">
       <div className="relative h-24 rounded-lg overflow-hidden"
            style={{
              background: 'rgba(255, 255, 255, 0.028)',

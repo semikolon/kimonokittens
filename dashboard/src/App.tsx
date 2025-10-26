@@ -125,14 +125,12 @@ function BackendDataWidgets() {
       {/* Electricity anomaly bar - standalone section between rent and strava */}
       {electricityDailyCostsData?.summary?.anomaly_summary && (
         <div className="mb-12">
-          <Widget accent={true} className="w-full">
-            <ErrorBoundary resetKeys={[electricityDailyCostsData?.generated_at]}>
-              <AnomalySparklineBar
-                anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
-                regressionData={electricityDailyCostsData.summary.regression_data}
-              />
-            </ErrorBoundary>
-          </Widget>
+          <ErrorBoundary resetKeys={[electricityDailyCostsData?.generated_at]}>
+            <AnomalySparklineBar
+              anomalySummary={electricityDailyCostsData.summary.anomaly_summary}
+              regressionData={electricityDailyCostsData.summary.regression_data}
+            />
+          </ErrorBoundary>
         </div>
       )}
 
