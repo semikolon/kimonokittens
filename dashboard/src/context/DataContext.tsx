@@ -109,6 +109,7 @@ interface ElectricityDailyCost {
   consumption: number
   long_title?: string
   avg_temp_c?: number
+  anomalous_usage_pct?: number  // Percentage excess (e.g., 25.3 for +25.3%)
 }
 
 interface ElectricityDailyCostsData {
@@ -336,7 +337,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
               price: day.price,
               consumption: day.consumption,
               long_title: day.long_title,
-              avg_temp_c: day.avg_temp_c
+              avg_temp_c: day.avg_temp_c,
+              anomalous_usage_pct: day.anomalous_usage_pct
             }))
 
             dispatch({

@@ -96,8 +96,9 @@ class ElectricityStatsHandler
     peak_pricey_hours = peak_hours.select { |hour| hour[:price_per_kwh] > avg_price_per_kwh }
 
     # Filter out hours with null/zero consumption (future dates or reporting lag)
-    # Then take last 14 days worth of hours with actual data
+    # Fetch 90 days for robust anomaly detection, but only display last 14
     hours_with_data = all_hours.select { |hour| hour[:consumption] && hour[:consumption] > 0 }
+    all_historical_days = hours_with_data.last(24 * 90).group_by { |hour| hour[:date] }
     last_days = hours_with_data.last(24 * 14).group_by { |hour| hour[:date] }
     
     # last_days.each do |date, date_hours|
@@ -120,8 +121,25 @@ class ElectricityStatsHandler
     #     }
     #   end
     # end
-    last_days.reject! { |date, date_hours| date_hours.count < 24 } # Remove days that are not complete
-    
+    # Remove incomplete days from both datasets
+    all_historical_days.reject! { |date, date_hours| date_hours.count < 24 }
+    last_days.reject! { |date, date_hours| date_hours.count < 24 }
+
+    # Aggregate all historical days (for regression)
+    all_historical_summed = all_historical_days.map do |date, date_hours|
+      consumption_sum = date_hours.sum { |hour| hour[:consumption] }
+      first_hour = date_hours.first
+      {
+        date: date,
+        weekday: first_hour[:weekday],
+        consumption: consumption_sum
+      }
+    end
+
+    puts "DEBUG: Historical days aggregated: #{all_historical_summed.length}"
+    puts "DEBUG: Last days aggregated: #{last_days.length}"
+
+    # Aggregate last 14 days (for display)
     last_days_summed = last_days.map do |date, date_hours|
       price_sum = date_hours.sum { |hour| hour[:price] }.ceil
       consumption_sum = date_hours.sum { |hour| hour[:consumption] }
@@ -142,13 +160,14 @@ class ElectricityStatsHandler
       "#{date[:weekday]}: #{date[:price]} kr\n"
     end.join
     
-    # Fetch historical outdoor temperatures for all days in one API call
-    # Collect all dates that need weather data (skip summary item)
-    days_needing_weather = last_days_summed.select { |day_data| day_data[:date] }
+    # Fetch historical outdoor temperatures for ALL historical days (90 days)
+    # We need temperature for regression, even if we only display 14 days
+    all_days_for_date_range = all_historical_summed + last_days_summed
+    all_days_for_date_range.uniq! { |d| d[:date] }
 
-    if days_needing_weather.any?
+    if all_days_for_date_range.any?
       # Parse dates and find date range
-      date_objects = days_needing_weather.map { |day_data| Date.parse("#{day_data[:date]} 2025") }
+      date_objects = all_days_for_date_range.map { |day_data| Date.parse("#{day_data[:date]} 2025") }
       start_date = date_objects.min.strftime("%Y-%m-%d")
       end_date = date_objects.max.strftime("%Y-%m-%d")
 
@@ -179,8 +198,13 @@ class ElectricityStatsHandler
             temp_by_date[date_str] = avg_temp.round(1)
           end
 
-          # Assign temperatures to each day
-          days_needing_weather.each do |day_data|
+          # Assign temperatures directly to BOTH original arrays (not the combined copy)
+          all_historical_summed.each do |day_data|
+            iso_date = Date.parse("#{day_data[:date]} 2025").strftime("%Y-%m-%d")
+            day_data[:avg_temp_c] = temp_by_date[iso_date] if temp_by_date[iso_date]
+          end
+
+          last_days_summed.each do |day_data|
             iso_date = Date.parse("#{day_data[:date]} 2025").strftime("%Y-%m-%d")
             day_data[:avg_temp_c] = temp_by_date[iso_date] if temp_by_date[iso_date]
           end
@@ -191,12 +215,74 @@ class ElectricityStatsHandler
       end
     end
 
+    # Detect anomalous electricity usage (high consumption relative to heating needs)
+    # Use ALL historical data (90 days) for robust regression model
+    historical_with_temp = all_historical_summed.select { |d| d[:consumption] && d[:avg_temp_c] }
+
+    if historical_with_temp.length >= 10
+      # Calculate simple linear regression: consumption vs temperature on ALL historical data
+      # Expectation: colder temps (lower °C) = higher consumption
+      temps = historical_with_temp.map { |d| d[:avg_temp_c] }
+      consumptions = historical_with_temp.map { |d| d[:consumption] }
+
+      n = temps.length
+      sum_temp = temps.sum
+      sum_consumption = consumptions.sum
+      sum_temp_sq = temps.map { |t| t * t }.sum
+      sum_temp_consumption = temps.zip(consumptions).map { |t, c| t * c }.sum
+
+      # Linear regression: consumption = slope * temp + intercept
+      slope = (n * sum_temp_consumption - sum_temp * sum_consumption) / (n * sum_temp_sq - sum_temp * sum_temp)
+      intercept = (sum_consumption - slope * sum_temp) / n
+
+      # Check ALL 90 days for anomalies (for reporting)
+      all_anomalies = []
+      historical_with_temp.each do |day|
+        expected_consumption = slope * day[:avg_temp_c] + intercept
+        actual_consumption = day[:consumption]
+
+        # Anomaly: actual is significantly higher than expected for this temperature
+        # Lowered threshold from 25% to 20% for more sensitivity
+        if actual_consumption > expected_consumption * 1.20
+          all_anomalies << {
+            date: day[:date],
+            consumption: actual_consumption.round(1),
+            expected: expected_consumption.round(1),
+            temp_c: day[:avg_temp_c],
+            excess_pct: ((actual_consumption / expected_consumption - 1) * 100).round(1)
+          }
+        end
+      end
+
+      puts "Anomaly check: #{all_anomalies.length} anomalous days found in 90-day period (threshold: 20%)"
+      all_anomalies.each { |a| puts "  #{a[:date]}: #{a[:consumption]} kWh (expected #{a[:expected]}, +#{a[:excess_pct]}% at #{a[:temp_c]}°C)" }
+
+      # Flag anomalies ONLY on the displayed days (last 14 days)
+      # Return excess percentage for proportional glow intensity
+      last_days_summed.each do |day|
+        next unless day[:avg_temp_c] && day[:consumption]
+
+        expected_consumption = slope * day[:avg_temp_c] + intercept
+        actual_consumption = day[:consumption]
+
+        # Anomaly: actual is significantly higher than expected for this temperature
+        if actual_consumption > expected_consumption * 1.20
+          excess_pct = ((actual_consumption / expected_consumption - 1) * 100).round(1)
+          day[:anomalous_usage_pct] = excess_pct
+        end
+      end
+    end
+
     last_days_summed.prepend({
       price_so_far: price_so_far.ceil + MONTHLY_FEE,
       projected_total: projected_total.ceil + MONTHLY_FEE,
       average_hour: average_hour.round(3),
       peak_pricey_hours: peak_pricey_hours,
-      last_days_summary: last_days_summary
+      last_days_summary: last_days_summary,
+      anomaly_summary: defined?(all_anomalies) ? {
+        total_anomalies: all_anomalies.length,
+        anomalous_days: all_anomalies
+      } : nil
     })
 
     # Savings calculations

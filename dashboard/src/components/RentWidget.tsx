@@ -2,7 +2,7 @@ import React from 'react'
 import { useData } from '../context/DataContext'
 
 // Daily Electricity Cost Bar Component
-function DailyElectricityCostBar({ dailyCosts }: { dailyCosts: Array<{ date: string; weekday: string; price: number; consumption: number; avg_temp_c?: number }> }) {
+function DailyElectricityCostBar({ dailyCosts }: { dailyCosts: Array<{ date: string; weekday: string; price: number; consumption: number; avg_temp_c?: number; anomalous_usage_pct?: number }> }) {
   if (!dailyCosts || dailyCosts.length === 0) return null
 
   // Reverse to show oldest first (left to right chronologically)
@@ -102,6 +102,28 @@ function DailyElectricityCostBar({ dailyCosts }: { dailyCosts: Array<{ date: str
                   mixBlendMode: 'overlay'
                 }}
               />
+
+              {/* Anomalous usage glow overlay - intensity proportional to excess % */}
+              {day.anomalous_usage_pct && (() => {
+                // Calculate glow intensity based on excess percentage
+                // 20% → 30% intensity, 40% → 65% intensity, 60%+ → 100% intensity
+                const excessPct = day.anomalous_usage_pct
+                const intensity = excessPct >= 60
+                  ? 1.0
+                  : Math.max(0.3, ((excessPct - 20) / 40) * 0.7 + 0.3)
+
+                return (
+                  <div
+                    className={`absolute inset-0 ${index === 0 ? 'rounded-l-lg' : ''} ${index === days.length - 1 ? 'rounded-r-lg' : ''}`}
+                    style={{
+                      backgroundColor: '#ffcc99',
+                      opacity: `${intensity * 60}%`,
+                      boxShadow: `0 0 12px rgba(255, 60, 0, ${intensity * 2}), 0 0 24px rgba(255, 80, 0, ${intensity * 1.5}), 0 0 36px rgba(255, 100, 0, ${intensity * 1.2}), 0 0 48px rgba(255, 120, 0, ${intensity * 0.8})`,
+                      mixBlendMode: 'overlay'
+                    }}
+                  />
+                )
+              })()}
 
               {/* Text content */}
               <div className="relative z-10 flex flex-col items-center">
