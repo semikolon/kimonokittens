@@ -673,7 +673,7 @@ export function RentWidget() {
           {parseMarkdown(header)}
           {firstAmountParsed && (
             <>
-              <span style={{ opacity: 0.5, margin: '0 0.3em' }}>•</span>
+              <span style={{ opacity: 0.25, margin: '0 0.3em' }}>•</span>
               <span className="text-2xl font-bold text-purple-100">
                 {firstAmountParsed.amount}
               </span>

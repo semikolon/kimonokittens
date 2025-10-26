@@ -276,7 +276,7 @@ export function TemperatureWidget() {
         >
           {currentSmartStatus}{(isActivelyHeating || hasHotSupplyLine) && (
             <>
-              <span style={{ opacity: 0.5, margin: '0 0.3em' }}>•</span>
+              <span style={{ opacity: 0.25, margin: '0 0.3em' }}>•</span>
               {temperatureData.supplyline_temperature} i elementen
             </>
           )}
