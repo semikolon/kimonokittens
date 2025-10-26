@@ -474,7 +474,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
   return (
     <div className="mt-3 mb-3">
       <div className="relative h-24 rounded-lg overflow-hidden"
-           style={{ background: 'rgba(255, 255, 255, 0.008)', mixBlendMode: 'screen' }}>
+           style={{ background: 'rgba(255, 255, 255, 0.018)', mixBlendMode: 'screen' }}>
 
         {/* Sparkline SVG overlay */}
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -503,7 +503,7 @@ function AnomalySparklineBar({ anomalySummary, regressionData }: {
               style={{ flex: `${chunk.durationDays} 0 0` }}
             >
               {/* Background chunk - slightly more visible for anomalies, transparent for gaps */}
-              <div className="absolute inset-0 bg-white" style={{ opacity: chunk.type === 'gap' ? 0 : 0.05 }} />
+              <div className="absolute inset-0 bg-white" style={{ opacity: chunk.type === 'gap' ? 0 : 0.035 }} />
 
               {/* Text content with horizontal padding - only for anomalies */}
               {chunk.type !== 'gap' && (
