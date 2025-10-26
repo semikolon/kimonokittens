@@ -30,18 +30,19 @@ function AnomalySummaryText({ anomalySummary }: {
     const today = new Date().toISOString().split('T')[0]
 
     // Check cache first (valid for 24 hours)
-    try {
-      const cached = localStorage.getItem(cacheKey)
-      if (cached) {
-        const { text, date } = JSON.parse(cached)
-        if (date === today) {
-          setSummaryText(text)
-          return
-        }
-      }
-    } catch (e) {
-      // Ignore cache errors
-    }
+    // TEMPORARILY DISABLED for prompt testing
+    // try {
+    //   const cached = localStorage.getItem(cacheKey)
+    //   if (cached) {
+    //     const { text, date } = JSON.parse(cached)
+    //     if (date === today) {
+    //       setSummaryText(text)
+    //       return
+    //     }
+    //   }
+    // } catch (e) {
+    //   // Ignore cache errors
+    // }
 
     // Separate high and low anomalies
     const highAnomalies = anomalousDays.filter(d => d.excess_pct > 0)
