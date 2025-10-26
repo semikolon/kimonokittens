@@ -37,7 +37,7 @@ Generera EN mening (max 20 ord):`
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY || ''}`
+            'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.OPENAI_API_KEY || ''}`
           },
           body: JSON.stringify({
             model: 'gpt-5-nano',

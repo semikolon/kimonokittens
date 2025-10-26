@@ -10,6 +10,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    // Expose OPENAI_API_KEY from shell environment for local testing
+    'import.meta.env.OPENAI_API_KEY': JSON.stringify(process.env.OPENAI_API_KEY || ''),
+  },
   server: {
     port: 5175,
     proxy: {
