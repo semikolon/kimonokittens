@@ -349,7 +349,7 @@ export function TemperatureWidget() {
           {/* Single loop for all hour elements */}
           <div className="absolute inset-0 flex">
             {hours.map((hourData, index) => {
-              const chunkOpacity = hourData.isScheduledOn ? '30%' : '5%'
+              const chunkOpacity = hourData.isScheduledOn ? '20%' : '5%'
               const isCurrentHour = hourData.isCurrentHour
 
               return (
