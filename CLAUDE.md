@@ -580,7 +580,7 @@ curl -s http://localhost:3001/api/rent/friendly_message | jq .message
 
 ### Check Temperature Data:
 ```bash
-curl -s http://localhost:3001/data/temperature | python3 -c "import sys, json; d=json.load(sys.stdin); print(f\"{d.get('supplyline_temperature')} | disabled={d.get('heatpump_disabled')} | demand={d.get('heating_demand')}\")"
+curl -s http://localhost:3001/data/temperature | jq '{temp: .supplyline_temperature, disabled: .heatpump_disabled, demand: .heating_demand}'
 ```
 
 ## Expected Behavior
