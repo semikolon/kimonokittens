@@ -742,6 +742,9 @@ const generateTrainId = (train: TrainDeparture): string =>
 ### Performance Caching
 **Electricity regression** (90-day linear model) cached until midnight - deterministic daily calculation runs once/day instead of every 5min broadcast (99.65% reduction, ~90% CPU savings for handler). Cache invalidates when `Date.today` changes.
 
+### Data Refresh Flow
+**Backend**: DataBroadcaster fetches handlers every 5-600s → checks cache → computes if needed → broadcasts via WebSocket. **Frontend**: Receives updates → React rerenders widgets. **Key**: Regression data changes once daily (midnight cache invalidation), but frontend receives WebSocket updates every 5min regardless.
+
 ### Heating Cost Display (RentWidget) 🌡️
 **Location**: Displayed below electricity source line in RentWidget
 
