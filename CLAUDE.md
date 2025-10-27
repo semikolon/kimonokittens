@@ -578,6 +578,11 @@ ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; db = RentDb.inst
 curl -s http://localhost:3001/api/rent/friendly_message | jq .message
 ```
 
+### Check Temperature Data:
+```bash
+curl -s http://localhost:3001/data/temperature | python3 -c "import sys, json; d=json.load(sys.stdin); print(f\"{d.get('supplyline_temperature')} | disabled={d.get('heatpump_disabled')} | demand={d.get('heating_demand')}\")"
+```
+
 ## Expected Behavior
 
 ### Correct October 2025 Rent:
