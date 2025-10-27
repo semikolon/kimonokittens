@@ -206,11 +206,21 @@
   100% { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes heatingGlow {
-  0% { box-shadow: 0 0 24px rgba(255, 120, 0, 0.8); }
+@keyframes heatingGlowActive {
+  0% {
+    box-shadow: 0 0 7px rgba(255, 50, 30, 0.7), 0 0 14px rgba(255, 50, 30, 0.7), 0 0 29px rgba(255, 50, 30, 0.7), 0 0 58px rgba(255, 70, 40, 0.7), 0 0 86px rgba(255, 90, 50, 0.7), 0 0 115px rgba(255, 110, 60, 0.7), 0 0 173px rgba(255, 130, 70, 0.7), 0 0 230px rgba(255, 150, 80, 0.7), 0 0 288px rgba(255, 170, 90, 0.7);
+  }
   100% {
-    box-shadow: 0 0 36px rgba(255, 120, 0, 1.2),
-                0 0 60px rgba(255, 120, 0, 0.6);
+    box-shadow: 0 0 8px rgba(255, 50, 30, 1.0), 0 0 16px rgba(255, 50, 30, 1.0), 0 0 32px rgba(255, 50, 30, 1.0), 0 0 64px rgba(255, 70, 40, 1.0), 0 0 96px rgba(255, 90, 50, 1.0), 0 0 128px rgba(255, 110, 60, 1.0), 0 0 192px rgba(255, 130, 70, 1.0), 0 0 256px rgba(255, 150, 80, 1.0), 0 0 320px rgba(255, 170, 90, 1.0);
+  }
+}
+
+@keyframes heatingGlowResidual {
+  0% {
+    box-shadow: 0 0 7px rgba(255, 80, 55, 0.7), 0 0 14px rgba(255, 80, 55, 0.7), 0 0 29px rgba(255, 80, 55, 0.7), 0 0 58px rgba(255, 95, 60, 0.7), 0 0 86px rgba(255, 110, 65, 0.7), 0 0 115px rgba(255, 125, 70, 0.7), 0 0 173px rgba(255, 140, 75, 0.7), 0 0 230px rgba(255, 150, 78, 0.7), 0 0 288px rgba(255, 160, 80, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 8px rgba(255, 80, 55, 1.0), 0 0 16px rgba(255, 80, 55, 1.0), 0 0 32px rgba(255, 80, 55, 1.0), 0 0 64px rgba(255, 95, 60, 1.0), 0 0 96px rgba(255, 110, 65, 1.0), 0 0 128px rgba(255, 125, 70, 1.0), 0 0 192px rgba(255, 140, 75, 1.0), 0 0 256px rgba(255, 150, 78, 1.0), 0 0 320px rgba(255, 160, 80, 1.0);
   }
 }
 
@@ -234,7 +244,11 @@
 }
 
 .schedule-cursor.heating-active {
-  animation: heatingGlow 3s ease-in-out infinite alternate;
+  animation: heatingGlowActive 3s ease-in-out infinite alternate;
+}
+
+.schedule-cursor.heating-residual {
+  animation: heatingGlowResidual 3s ease-in-out infinite alternate;
 }
 
 .heatpump-status {

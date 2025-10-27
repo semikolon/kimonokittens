@@ -85,6 +85,9 @@ export function TemperatureWidget() {
   const [isStatusChanging, setIsStatusChanging] = useState(false)
   const [prevSmartStatus, setPrevSmartStatus] = useState('')
 
+  // TESTING: Show comparison cursors (active + residual glows side by side)
+  const showTestCursors = false
+
   // Smart status function for animation tracking
   const getSmartStatus = () => {
     if (!temperatureData) return ''
@@ -285,8 +288,7 @@ export function TemperatureWidget() {
           className="relative h-5 rounded-lg overflow-visible"
           style={{
             opacity: barOpacity,
-            background: 'rgba(255, 255, 255, 0.1)',
-            mixBlendMode: 'overlay'
+            background: 'rgba(170, 90, 255, 0.06)'
           }}
         >
           {/* Electricity price sparkline overlay */}
@@ -294,6 +296,55 @@ export function TemperatureWidget() {
             hours={hours}
             electricityPrices={state.electricityPriceData?.prices}
           />
+
+          {/* TEST CURSORS: Toggle with showTestCursors variable */}
+          {showTestCursors && (() => {
+            const firstOnIndex = hours.findIndex(h => h.isScheduledOn && !h.isCurrentHour)
+            if (firstOnIndex === -1) return null
+            const position = (firstOnIndex / (hours.length - 1)) * 100
+            return (
+              <div
+                className="absolute top-0 h-full z-10 rounded-sm schedule-cursor heating-active"
+                style={{
+                  width: '12px',
+                  left: `${position}%`,
+                  transform: 'translateX(-50%)',
+                  opacity: '100%',
+                  backgroundColor: '#ffaa88',
+                  mixBlendMode: 'overlay'
+                }}
+              />
+            )
+          })()}
+
+          {showTestCursors && (() => {
+            // Find last transition to ON (last chunk start)
+            let lastChunkStartIndex = -1
+            for (let i = hours.length - 1; i >= 0; i--) {
+              if (hours[i].isScheduledOn && !hours[i].isCurrentHour) {
+                const prevIsOff = i === 0 || !hours[i-1].isScheduledOn
+                if (prevIsOff) {
+                  lastChunkStartIndex = i
+                  break
+                }
+              }
+            }
+            if (lastChunkStartIndex === -1) return null
+            const position = (lastChunkStartIndex / (hours.length - 1)) * 100
+            return (
+              <div
+                className="absolute top-0 h-full z-10 rounded-sm schedule-cursor heating-residual"
+                style={{
+                  width: '12px',
+                  left: `${position}%`,
+                  transform: 'translateX(-50%)',
+                  opacity: '100%',
+                  backgroundColor: '#ffa684',
+                  mixBlendMode: 'overlay'
+                }}
+              />
+            )
+          })()}
 
           {/* Single loop for all hour elements */}
           <div className="absolute inset-0 flex">
@@ -322,19 +373,18 @@ export function TemperatureWidget() {
                   {/* Time cursor - only for current hour */}
                   {isCurrentHour && (
                     <div
-                      className={`absolute top-0 h-full z-10 rounded-sm schedule-cursor ${isActivelyHeating ? 'heating-active' : ''}`}
+                      className={`absolute top-0 h-full z-10 rounded-sm schedule-cursor ${isActivelyHeating ? 'heating-active' : hasHotSupplyLine ? 'heating-residual' : ''}`}
                       style={{
                         width: '12px',
                         left: `${hourData.minuteProgress * 100}%`,
                         transform: 'translateX(-50%)',
                         opacity: '100%',
-                        backgroundColor: isActivelyHeating ? '#ffcc99' : hasHotSupplyLine ? '#ffaa88' : '#ffffff',
+                        backgroundColor: isActivelyHeating ? '#ffaa88' : hasHotSupplyLine ? '#ffa684' : '#ffffff',
                         mixBlendMode: 'overlay',
-                        boxShadow: isActivelyHeating
-                          ? '0 0 8px rgba(255, 40, 0, 1.0), 0 0 16px rgba(255, 40, 0, 1.0), 0 0 32px rgba(255, 40, 0, 1.0), 0 0 64px rgba(255, 60, 0, 1.0), 0 0 96px rgba(255, 80, 0, 1.0), 0 0 128px rgba(255, 100, 0, 1.0), 0 0 192px rgba(255, 120, 0, 1.0), 0 0 256px rgba(255, 140, 0, 1.0), 0 0 320px rgba(255, 160, 0, 1.0)'
-                          : hasHotSupplyLine
-                          ? '0 0 8px rgba(255, 50, 30, 1.0), 0 0 16px rgba(255, 50, 30, 1.0), 0 0 32px rgba(255, 50, 30, 1.0), 0 0 64px rgba(255, 70, 40, 1.0), 0 0 96px rgba(255, 90, 50, 1.0), 0 0 128px rgba(255, 110, 60, 1.0), 0 0 192px rgba(255, 130, 70, 1.0), 0 0 256px rgba(255, 150, 80, 1.0), 0 0 320px rgba(255, 170, 90, 1.0)'
-                          : '0 0 12px rgba(255, 255, 255, 0.8), 0 0 24px rgba(255, 255, 255, 0.5), 0 0 36px rgba(255, 255, 255, 0.3)'
+                        // Only default state uses inline boxShadow - animations handle heating states
+                        boxShadow: !isActivelyHeating && !hasHotSupplyLine
+                          ? '0 0 8px rgba(255, 255, 255, 0.8), 0 0 16px rgba(255, 255, 255, 0.7), 0 0 32px rgba(255, 255, 255, 0.6), 0 0 64px rgba(255, 255, 255, 0.5), 0 0 96px rgba(255, 255, 255, 0.4), 0 0 128px rgba(255, 255, 255, 0.3), 0 0 192px rgba(255, 255, 255, 0.25), 0 0 256px rgba(255, 255, 255, 0.2), 0 0 320px rgba(255, 255, 255, 0.15)'
+                          : undefined
                       }}
                     />
                   )}
