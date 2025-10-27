@@ -327,12 +327,13 @@ export function TemperatureWidget() {
                         width: '12px',
                         left: `${hourData.minuteProgress * 100}%`,
                         transform: 'translateX(-50%)',
-                        opacity: isActivelyHeating ? '100%' : '80%',
-                        backgroundColor: isActivelyHeating || hasHotSupplyLine ? '#ffcc99' : '#ffffff',
+                        opacity: '100%',
+                        backgroundColor: isActivelyHeating ? '#ffcc99' : hasHotSupplyLine ? '#ffaa88' : '#ffffff',
+                        mixBlendMode: 'overlay',
                         boxShadow: isActivelyHeating
-                          ? '0 0 16px rgba(255, 40, 0, 4), 0 0 32px rgba(255, 60, 0, 3.5), 0 0 48px rgba(255, 80, 0, 3), 0 0 64px rgba(255, 100, 0, 2.5), 0 0 96px rgba(255, 120, 0, 2), 0 0 128px rgba(255, 140, 0, 1.5), 0 0 160px rgba(255, 160, 0, 1)'
+                          ? '0 0 8px rgba(255, 40, 0, 1.0), 0 0 16px rgba(255, 40, 0, 1.0), 0 0 32px rgba(255, 40, 0, 1.0), 0 0 64px rgba(255, 60, 0, 1.0), 0 0 96px rgba(255, 80, 0, 1.0), 0 0 128px rgba(255, 100, 0, 1.0), 0 0 192px rgba(255, 120, 0, 1.0), 0 0 256px rgba(255, 140, 0, 1.0), 0 0 320px rgba(255, 160, 0, 1.0)'
                           : hasHotSupplyLine
-                          ? '0 0 12px rgba(255, 60, 0, 2.5), 0 0 24px rgba(255, 80, 0, 2), 0 0 36px rgba(255, 100, 0, 1.5), 0 0 48px rgba(255, 120, 0, 1.2), 0 0 72px rgba(255, 140, 0, 0.8), 0 0 96px rgba(255, 160, 0, 0.6), 0 0 120px rgba(255, 180, 0, 0.4)'
+                          ? '0 0 8px rgba(255, 50, 30, 1.0), 0 0 16px rgba(255, 50, 30, 1.0), 0 0 32px rgba(255, 50, 30, 1.0), 0 0 64px rgba(255, 70, 40, 1.0), 0 0 96px rgba(255, 90, 50, 1.0), 0 0 128px rgba(255, 110, 60, 1.0), 0 0 192px rgba(255, 130, 70, 1.0), 0 0 256px rgba(255, 150, 80, 1.0), 0 0 320px rgba(255, 170, 90, 1.0)'
                           : '0 0 12px rgba(255, 255, 255, 0.8), 0 0 24px rgba(255, 255, 255, 0.5), 0 0 36px rgba(255, 255, 255, 0.3)'
                       }}
                     />
