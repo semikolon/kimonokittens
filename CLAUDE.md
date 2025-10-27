@@ -734,6 +734,9 @@ const generateTrainId = (train: TrainDeparture): string =>
 3. **React Context** manages centralized state with useReducer
 4. **Widgets** consume via `useData()` hook
 
+### Performance Caching
+**Electricity regression** (90-day linear model) cached until midnight - deterministic daily calculation runs once/day instead of every 5min broadcast (99.65% reduction, ~90% CPU savings for handler). Cache invalidates when `Date.today` changes.
+
 ### Heating Cost Display (RentWidget) 🌡️
 **Location**: Displayed below electricity source line in RentWidget
 
