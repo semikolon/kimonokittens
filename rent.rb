@@ -90,13 +90,13 @@ module RentCalculator
       kallhyra: 24_530,
       el: 1_324 + 276,
       bredband: 400,
-      vattenavgift: 375,  # Monthly water fee (part of quarterly invoice)
-      va: 300,           # Monthly sewage fee (part of quarterly invoice)
-      larm: 150,        # Monthly alarm system fee (part of quarterly invoice)
-      drift_rakning: nil, # Quarterly invoice (~2600 kr) that replaces the above monthly fees
+      vattenavgift: 343,  # Monthly water fee (proportional to 754 kr/month total)
+      va: 274,           # Monthly sewage fee (proportional to 754 kr/month total)
+      larm: 137,        # Monthly alarm system fee (proportional to 754 kr/month total)
+      drift_rakning: nil, # Quarterly invoice - stored in DB but NOT used in calculations
       saldo_innan: 0,    # Default to no previous balance
       extra_in: 0,       # Extra income that reduces total rent
-      gas: 0             # Gas for stove as additional cost
+      gas: 83            # Gas for stove: 500 kr per 6 months = 83 kr/month baseline
     }.freeze
 
     attr_reader :year, :month, :kallhyra, :el, :bredband, :vattenavgift,
@@ -131,15 +131,17 @@ module RentCalculator
     end
 
     # Calculate total operational costs (drift)
-    # Note: When drift_rakning (quarterly invoice) is present, it replaces the monthly fees
-    # Monthly fees (vattenavgift, va, larm) are used to save up for the quarterly invoice
+    # VIRTUAL POT SYSTEM: Always use consistent monthly accruals, never actual invoice amounts
+    # - Building ops: vattenavgift + va + larm = 754 kr/month (saves up for quarterly invoices)
+    # - Gas: 83 kr/month baseline (saves up for 500 kr refills every 6 months)
+    # - drift_rakning stored in DB for tracking/projections but NOT used in billing
+    # - Dashboard shows virtual pot balance and warns if insufficient for upcoming invoices
     def drift_total
-      monthly_fees = if drift_rakning && drift_rakning > 0
-        drift_rakning  # Use quarterly invoice when present
-      else
-        vattenavgift + va + larm  # Otherwise use sum of monthly fees
-      end
-      el + bredband + monthly_fees + gas
+      monthly_building_ops = vattenavgift + va + larm  # Always 754 kr
+      monthly_gas = gas  # Always 83 kr
+
+      # NEVER use drift_rakning amount here - it creates rent spikes and inflates annual average
+      el + bredband + monthly_building_ops + monthly_gas
     end
 
     # Calculate total rent to be distributed among roommates

@@ -1,0 +1,244 @@
+=== KOMPLETT HYRESANALYS SÖRDALAVÄGEN 26 (SLUTGILTIG) ===
+Baserad på faktiska elräkningar från electricity_bills_history.txt + RentConfig databasen
+Analysperiod: Mars 2023 - Oktober 2025 (31 månader)
+Datum: 28 oktober 2025
+
+---
+
+## KRITISKA INSIKTER OCH KORRIGERINGAR
+
+### Kvartalsavier och driftskostnader - HUR DET FAKTISKT FUNGERAR:
+
+**Teoretisk modell (idealt):**
+- Spara 825 kr/mån varje månad
+- När kvartalsavi kommer (~2,800 kr), betala från sparande
+- Hyran förblir relativt stabil varje månad
+
+**Faktisk verklighet:**
+- Vi sparar INTE ihop 825 kr/mån konsekvent
+- När kvartalsavi kommer, betalas den DEN MÅNADEN
+- Detta skapar "spikar" i hyran 3-4 gånger per år
+- Genomsnittligt över hela året: 566 kr/mån driftskostnader
+
+**Kvartalsavier i databasen (2024-2025):**
+2024-10: 2,612 kr (för nov 2024 hyra)
+2024-11: 2,612 kr (för dec 2024 hyra)
+2025-04: 2,787 kr (för maj 2025 hyra)
+2025-07: 2,787 kr (för aug 2025 hyra)
+2025-10: 2,797 kr (för nov 2025 hyra)
+
+Total 2024: 5,224 kr (2 avier) → 435 kr/mån genomsnitt
+Total 2025: 8,371 kr (3 avier) → 698 kr/mån genomsnitt
+**Genomsnitt: 566 kr/mån över hela perioden**
+
+**Konsekvens för hyresberäkningar:**
+- Normal månad: använd 565 kr månadsavgifter
+- Kvartalsavi-månad: använd ~2,800 kr istället
+- Årligt genomsnitt: 566 kr/mån är korrekt
+- Men individuella månader varierar kraftigt!
+
+---
+
+## KORRIGERAD BERÄKNINGSLOGIK
+
+**Total månadshyra:**
+Kallhyra (24,530) + El (varierar) + Bredband (400) + Driftskostnader (565 ELLER ~2,800)
+
+**Normal månad:**
+24,530 + El + 400 + 565 = Total
+
+**Kvartalsavi-månad:**
+24,530 + El + 400 + 2,800 = Total (cirka +560 kr/person extra)
+
+**Per person (4 personer):**
+Total / 4
+
+---
+
+## FULLSTÄNDIG HISTORISK DATA (KORRIGERAD)
+
+**Med korrekta driftskostnader (565 kr/mån normalt, ~2,800 kr vid kvartalsavi):**
+
+2023-04 rent: 6,708 kr/person (4 pers, el: 1,335 kr) - Normal
+2023-05 rent: 7,534 kr/person (4 pers, el: 4,639 kr) - Normal, högt el
+2023-06 rent: 7,093 kr/person (4 pers, el: 2,878 kr) - Normal
+2023-07 rent: 5,495 kr/person (5 pers, el: 1,975 kr) - Normal, 5 pers börjar
+2023-08 rent: 5,406 kr/person (5 pers, el: 1,529 kr) - Normal
+2023-09 rent: 5,332 kr/person (5 pers, el: 1,167 kr) - Normal
+2023-10 rent: 5,370 kr/person (5 pers, el: 1,348 kr) - Normal
+2023-11 rent: 5,316 kr/person (5 pers, el: 1,082 kr) - Normal **← LÄGST**
+2023-12 rent: 5,522 kr/person (5 pers, el: 2,112 kr) - Normal
+2024-01 rent: 5,996 kr/person (5 pers, el: 4,483 kr) - Normal
+2024-02 rent: 6,028 kr/person (5 pers, el: 4,639 kr) - Normal
+2024-03 rent: 6,363 kr/person (5 pers, el: 6,317 kr) - Normal
+2024-04 rent: 5,964 kr/person (5 pers, el: 4,319 kr) - Normal
+2024-05 rent: 5,942 kr/person (5 pers, el: 4,208 kr) - Normal
+2024-06 rent: 5,756 kr/person (5 pers, el: 3,285 kr) - Normal
+2024-07 rent: 5,471 kr/person (5 pers, el: 1,856 kr) - Normal
+2024-08 rent: 5,399 kr/person (5 pers, el: 1,497 kr) - Normal
+2024-09 rent: 5,353 kr/person (5 pers, el: 1,264 kr) - Normal
+2024-10 rent: 5,360 kr/person (5 pers, el: 1,302 kr) - Normal
+2024-11 rent: 5,942 kr/person (5 pers, el: 1,599 kr) - MED kvartalsavi 2,612 kr
+2024-12 rent: 6,064 kr/person (5 pers, el: 2,209 kr) - MED kvartalsavi 2,612 kr
+2025-01 rent: 7,430 kr/person (4 pers, el: 4,226 kr) - Normal, 4 pers börjar
+2025-02 rent: 7,565 kr/person (4 pers, el: 4,763 kr) - Normal
+2025-03 rent: 7,860 kr/person (4 pers, el: 5,945 kr) - Normal
+2025-04 rent: 7,858 kr/person (4 pers, el: 5,936 kr) - Normal
+2025-05 rent: 8,031 kr/person (4 pers, el: 4,398 kr) - MED kvartalsavi 2,787 kr
+2025-06 rent: 7,204 kr/person (4 pers, el: 3,319 kr) - Normal
+2025-07 rent: 7,168 kr/person (4 pers, el: 3,177 kr) - Normal
+2025-08 rent: 7,425 kr/person (4 pers, el: 1,972 kr) - MED kvartalsavi 2,787 kr
+2025-09 rent: 6,809 kr/person (4 pers, el: 1,738 kr) - Normal
+2025-10 rent: 6,980 kr/person (4 pers, el: 2,424 kr) - Normal
+2025-11 rent: 7,538 kr/person (4 pers, el: 2,424 kr) - MED kvartalsavi 2,797 kr **← NUVARANDE**
+
+---
+
+## SAMMANFATTANDE STATISTIK (KORRIGERAD)
+
+**HELA PERIODEN (31 månader):**
+- Genomsnitt: **6,366 kr/person**
+- Lägst: 5,316 kr/person (november 2023, 5 pers, normal)
+- Högst: 8,031 kr/person (maj 2025, 4 pers, kvartalsavi)
+
+**4-PERSONERS-PERIODER (13 månader: apr-jun 2023, jan-nov 2025):**
+- Genomsnitt: **7,462 kr/person**
+- Utan kvartalsavi (9 mån): **7,273 kr/person**
+- Med kvartalsavi (4 mån): **7,963 kr/person**
+- Lägst: 6,708 kr/person (april 2023, normal)
+- Högst: 8,031 kr/person (maj 2025, kvartalsavi)
+
+**5-PERSONERS-PERIOD (18 månader: jul 2023 - dec 2024):**
+- Genomsnitt: **5,669 kr/person**
+- Utan kvartalsavi (16 mån): **5,615 kr/person**
+- Med kvartalsavi (2 mån): **6,003 kr/person**
+- Lägst: 5,316 kr/person (november 2023, normal)
+- Högst: 6,363 kr/person (mars 2024, normal hög el)
+
+---
+
+## JÄMFÖRELSE MOT ANNONSERAD HYRA (7,100 KR)
+
+**Annonserad:** 7,100 kr/person
+
+**Faktiska 4-personers-genomsnitt:**
+- Totalt: 7,462 kr/person (+362 kr)
+- Utan kvartalsavi: 7,273 kr/person (+173 kr)
+- Med kvartalsavi: 7,963 kr/person (+863 kr)
+
+**Nuvarande (november 2025):** 7,538 kr/person (+438 kr, MED kvartalsavi)
+
+**SLUTSATS:**
+✓ Annonserad hyra (7,100 kr) är LÄGRE än 4-personers-genomsnittet
+✓ Annonserad hyra ligger mellan "normal månad" och "kvartalsavi-månad"
+✓ Över 12 månader ligger faktiska kostnaden ~173-362 kr HÖGRE per månad
+✓ Men detta är rimligt med tanke på:
+  - Elprisökningar över tid
+  - Fler kvartalsavier 2025 (3) vs 2024 (2)
+  - Vinterförbrukning
+
+---
+
+## VÄRMEPUMPSOPTIMERING - FRAMTIDA BESPARING
+
+**Från analyze_heating_savings.rb (baserad på februari 2025 data):**
+
+**Scenario 2 (realistisk, 80% av uppvärmning flyttas till låglast):**
+- Total årlig besparing: **1,114 kr**
+- Per person (4 hyresgäster): **279 kr/år**
+- Per månad per person: **23 kr/mån**
+
+**Metod:**
+1. Analyserade februari 2025 (högsta vintermånad)
+2. 75% av förbrukning är uppvärmning
+3. Peak/off-peak grid-skillnad: 40.25 öre/kWh (inkl moms)
+4. 80% av peak-uppvärmning flyttas till off-peak (realistiskt)
+5. Besparing i februari: 265 kr/mån
+6. Applicera på 5 vintermånader med säsongsjustering (84% av feb)
+7. Total: 1,114 kr/år / 4 personer = 279 kr/år per person
+
+**Praktiska begränsningar:**
+- Varmvatten måste produceras regelbundet
+- Temperatur-override håller minimum +20°C
+- EVU-låsning blockerar kompressor under dyra timmar
+- 80% är konservativ uppskattning med marginal
+
+**Effekt på hyran:**
+- Normal vintermånad: 7,565 kr → **7,542 kr** (-23 kr)
+- Kvartalsavi vintermånad: 8,031 kr → **8,008 kr** (-23 kr)
+- Årligt genomsnitt: 7,273 kr → **7,250 kr** (-23 kr)
+
+---
+
+## PROJECTION VÅREN 2026
+
+**Baserat på våren 2025 (mars-maj) mönster:**
+
+**Mars 2026 (förväntat):**
+- El: ~6,000 kr (baserat på mars 2025: 5,945 kr)
+- Utan kvartalsavi: **7,860 kr/person**
+- Med optimering: **7,837 kr/person** (-23 kr)
+
+**April 2026 (förväntat):**
+- El: ~5,900 kr (baserat på april 2025: 5,936 kr)
+- Utan kvartalsavi: **7,858 kr/person**
+- Med optimering: **7,835 kr/person** (-23 kr)
+
+**Maj 2026 (förväntat):**
+- El: ~4,400 kr (baserat på maj 2025: 4,398 kr)
+- MED kvartalsavi (~2,800 kr): **8,031 kr/person**
+- Med optimering: **8,008 kr/person** (-23 kr)
+
+**Våren 2026 genomsnitt:** 7,916 kr/person
+**Med optimering:** 7,893 kr/person
+
+---
+
+## SÄSONGSVARIATION I ELKOSTNADER
+
+**Sommar (jun-sep):**
+- Elkostnad: 1,738-3,319 kr/månad (genomsnitt: 2,426 kr)
+- Hyra utan kvartalsavi: 6,809-7,269 kr/person
+- Hyra med kvartalsavi: 7,367-7,827 kr/person
+
+**Höst (sep-nov):**
+- Elkostnad: 1,738-2,424 kr/månad (genomsnitt: 1,994 kr)
+- Hyra utan kvartalsavi: 6,809-6,980 kr/person
+- Hyra med kvartalsavi: 7,367-7,538 kr/person
+
+**Vinter (dec-feb):**
+- Elkostnad: 4,226-4,763 kr/månad (genomsnitt: 4,406 kr)
+- Hyra utan kvartalsavi: 7,430-7,565 kr/person
+- Hyra med kvartalsavi: 7,988-8,123 kr/person
+
+**Vår (mar-maj):**
+- Elkostnad: 4,398-5,945 kr/månad (genomsnitt: 5,427 kr)
+- Hyra utan kvartalsavi: 7,858-7,860 kr/person
+- Hyra med kvartalsavi: 8,031-8,418 kr/person
+
+---
+
+## SLUTGILTIG SAMMANFATTNING
+
+**Annonserad hyra 7,100 kr/månad är:**
+✓ Rimlig för 4-personers-konfigurationen
+✓ Något lägre än faktiskt genomsnitt (7,273-7,462 kr beroende på kvartalsavier)
+✓ Mycket högre än historiskt genomsnitt (6,366 kr) pga vi är färre nu
+✓ En bra mellanväg mellan normal månad och kvartalsavi-månad
+
+**Typiska hyresintervall (4 personer):**
+- Sommarmånader utan kvartalsavi: 6,800-7,300 kr
+- Vintermånader utan kvartalsavi: 7,400-7,900 kr
+- Kvartalsavi-månader (3-4 gånger/år): +560 kr extra
+- Extremfall (vinter + kvartalsavi): 7,900-8,400 kr
+
+**Framtida optimering:**
+- Värmepumpsoptimering kan spara ~23 kr/person/månad
+- Årlig besparing: 279 kr/person
+- Effektivast på vintermånader (största elförbrukningen)
+
+**Faktorer som påverkar variationen:**
+1. Antal personer (4 vs 5) - störst påverkan (~1,700 kr skillnad)
+2. Säsongsvariation i el (vinter vs sommar) - ~700-1,000 kr skillnad
+3. Kvartalsavier (3-4 gånger per år) - ~560 kr extra per gång
+4. Elprisernas generella ökning över tid

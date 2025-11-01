@@ -33,13 +33,13 @@ class RentConfig
   PERSISTENT_KEYS = %w[kallhyra bredband vattenavgift va larm].freeze
 
   # Default values for persistent keys when no configuration is found
-  # PRESERVED from rent_db.rb:111-117
+  # Updated Oct 2025 to reflect actual 2025 quarterly invoice average (754 kr/month)
   DEFAULTS = {
     kallhyra: 24530,
     bredband: 400,
-    vattenavgift: 375,
-    va: 300,
-    larm: 150
+    vattenavgift: 343,  # 45.5% of 754 kr/month
+    va: 274,            # 36.4% of 754 kr/month
+    larm: 137           # 18.2% of 754 kr/month
   }.freeze
 
   attr_reader :id, :key, :value, :period, :created_at, :updated_at

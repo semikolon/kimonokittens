@@ -49,6 +49,7 @@ require_relative '../rent'
 require_relative '../lib/persistence'
 require_relative '../lib/electricity_projector'
 require_relative '../lib/heating_cost_calculator'
+require_relative '../lib/services/quarterly_invoice_projector'
 require 'json'
 require 'date'
 
@@ -401,15 +402,9 @@ class RentCalculatorHandler
       # Query database to check projection status
       drift_config = repo.find_by_key_and_period('drift_rakning', Time.utc(year, month, 1))
       if drift_config
-        # Access isProjection from database record
         row = repo.dataset.where(id: drift_config.id).first
         @drift_rakning_is_projection = row[:isProjection] if row
       end
-
-      # If drift_rakning is present and non-zero, it replaces monthly fees.
-      config_hash.delete(:vattenavgift)
-      config_hash.delete(:va)
-      config_hash.delete(:larm)
     end
 
     numeric_config = config_hash.transform_values do |value|
@@ -605,6 +600,9 @@ class RentCalculatorHandler
         roommates: roommates
       )
 
+      # Calculate virtual pot status for savings tracking
+      virtual_pot_data = calculate_virtual_pot_status(year: year, month: month)
+
       result = {
         message: friendly_text,
         year: year,
@@ -614,7 +612,9 @@ class RentCalculatorHandler
         electricity_amount: electricity_amount,
         electricity_month: target_month_name,
         heating_cost_line: heating_cost_data[:line],
-        quarterly_invoice_projection: @drift_rakning_is_projection || false
+        quarterly_invoice_projection: @drift_rakning_is_projection || false,
+        drift_rakning_amount: config[:drift_rakning]&.to_i,
+        virtual_pot: virtual_pot_data
       }
 
       [200, { 'Content-Type' => 'application/json' }, [result.to_json]]
@@ -690,5 +690,142 @@ class RentCalculatorHandler
       base_monthly_cost: monthly_cost,
       active_roommates: active_roommates
     )
+  end
+
+  # Calculate virtual pot status for both building operations and gas
+  #
+  # @param year [Integer] Configuration year
+  # @param month [Integer] Configuration month
+  # @return [Hash] Virtual pot data with :building_ops and :gas keys
+  def calculate_virtual_pot_status(year:, month:)
+    {
+      building_ops: calculate_building_ops_pot(year, month),
+      gas: calculate_gas_pot(year, month)
+    }
+  end
+
+  # Calculate building operations pot status
+  #
+  # @param year [Integer] Configuration year
+  # @param month [Integer] Configuration month
+  # @return [Hash] Pot status with next invoice projection and current balance
+  def calculate_building_ops_pot(year, month)
+    # Find last invoice date from database
+    last_invoice = find_last_quarterly_invoice(year, month)
+
+    # Calculate months since last invoice
+    current_date = Date.new(year, month, 1)
+    months_since = calculate_months_between(last_invoice[:date], current_date)
+
+    # Virtual pot balance = months × 754 kr
+    pot_balance = months_since * 754.0
+
+    # Find next quarterly month (Apr/Jul/Oct)
+    quarterly_months = [4, 7, 10]
+    next_year = year
+    next_month = nil
+
+    # Try months in current year after current month
+    quarterly_months.each do |qm|
+      if qm > month
+        next_month = qm
+        break
+      end
+    end
+
+    # If no upcoming month in current year, use April next year
+    if next_month.nil?
+      next_month = 4
+      next_year += 1
+    end
+
+    # Calculate projection for next invoice
+    next_amount_data = QuarterlyInvoiceProjector.calculate_projection(
+      year: next_year,
+      month: next_month
+    )
+
+    # Days until next invoice
+    next_date = Date.new(next_year, next_month, 15)
+    days_until = (next_date - current_date).to_i
+
+    {
+      next_invoice_date: next_date.to_s,
+      next_invoice_amount: next_amount_data[:amount],
+      days_until: days_until,
+      pot_balance: pot_balance.round,
+      shortfall: [next_amount_data[:amount] - pot_balance, 0].max.round
+    }
+  end
+
+  # Calculate gas pot status
+  #
+  # @param year [Integer] Configuration year
+  # @param month [Integer] Configuration month
+  # @return [Hash] Pot status with next refill projection and current balance
+  def calculate_gas_pot(year, month)
+    # Simple baseline for now (6-month cycle)
+    # Assume last refill: Jan 2025, next refill: Jul 2025, then Jan 2026, etc.
+    base_refill_date = Date.new(2025, 1, 15)
+    current_date = Date.new(year, month, 1)
+
+    # Find next refill date (6-month intervals)
+    months_since_base = (current_date.year - base_refill_date.year) * 12 +
+                        (current_date.month - base_refill_date.month)
+    cycles_passed = (months_since_base / 6).floor
+    next_refill_date = base_refill_date >> ((cycles_passed + 1) * 6)
+
+    # Months since last refill
+    last_refill_date = base_refill_date >> (cycles_passed * 6)
+    months_in_cycle = (current_date.year - last_refill_date.year) * 12 +
+                      (current_date.month - last_refill_date.month)
+
+    # Virtual pot balance = months × 83 kr
+    pot_balance = months_in_cycle * 83.0
+
+    # Days until next refill
+    days_until = (next_refill_date - current_date).to_i
+
+    {
+      next_refill_date: next_refill_date.to_s,
+      next_refill_amount: 500,
+      days_until: days_until,
+      pot_balance: pot_balance.round,
+      shortfall: [500 - pot_balance, 0].max.round
+    }
+  end
+
+  # Find the most recent quarterly invoice from database
+  #
+  # @param year [Integer] Configuration year
+  # @param month [Integer] Configuration month
+  # @return [Hash] Last invoice with :date and :amount keys
+  def find_last_quarterly_invoice(year, month)
+    repo = Persistence.rent_configs
+
+    # Look back up to 12 months for last drift_rakning entry (check recent months FIRST)
+    0.upto(12) do |months_back|
+      check_date = Date.new(year, month, 1) << months_back
+      config = repo.find_by_key_and_period('drift_rakning',
+                                           Time.utc(check_date.year, check_date.month, 1))
+      if config && config.value.to_f > 0
+        return {
+          date: check_date,
+          amount: config.value.to_f
+        }
+      end
+    end
+
+    # Default: assume October 2024 if nothing found
+    { date: Date.new(2024, 10, 1), amount: 2612 }
+  end
+
+  # Calculate number of months between two dates
+  #
+  # @param start_date [Date] Start date
+  # @param end_date [Date] End date
+  # @return [Integer] Number of months between dates
+  def calculate_months_between(start_date, end_date)
+    (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
   end
 end 

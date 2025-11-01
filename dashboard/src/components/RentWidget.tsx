@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useData } from '../context/DataContext'
+import { VirtualPotDisplay } from './VirtualPotDisplay'
 
 // Anomaly Summary Component - generates dynamic text about anomalous electricity usage
 function AnomalySummaryText({ anomalySummary }: {
@@ -733,6 +734,14 @@ export function RentWidget() {
         <div className="text-purple-300 text-xs mt-2" style={{ opacity: 0.5 }}>
           {rentData.heating_cost_line}
         </div>
+      )}
+
+      {/* Virtual pot savings tracker */}
+      {rentData.virtual_pot && (
+        <VirtualPotDisplay
+          building_ops={rentData.virtual_pot.building_ops}
+          gas={rentData.virtual_pot.gas}
+        />
       )}
     </div>
   )
