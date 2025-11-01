@@ -736,13 +736,15 @@ export function RentWidget() {
         </div>
       )}
 
-      {/* Virtual pot savings tracker */}
+      {/* Virtual pot savings tracker - HIDDEN until user review (Nov 2025) */}
+      {/*
       {rentData.virtual_pot && (
         <VirtualPotDisplay
           building_ops={rentData.virtual_pot.building_ops}
           gas={rentData.virtual_pot.gas}
         />
       )}
+      */}
     </div>
   )
 }

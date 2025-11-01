@@ -20,8 +20,15 @@ Claude Code cannot run `sudo` commands requiring password input. **Tell user exa
 
 ### 🚨 Production Deployment
 
+**🔴 CRITICAL: NEVER PUSH WITHOUT EXPLICIT USER AUTHORIZATION 🔴**
+- **ALWAYS ask "Ready to push to production?" before `git push`**
+- **User must explicitly say "yes" or "push it" or similar**
+- **"Looks good" or "that's fine" is NOT authorization to push**
+- Pushing = Immediate production deployment via webhook
+- User may want to review changes locally before production rollout
+
 **Webhook deployments MANDATORY** - never `git pull` or edit production checkout directly:
-- Commit to dev → push to trigger webhook
+- Commit to dev → push to trigger webhook (ONLY after user authorization)
 - Webhook broken? Fix webhook, don't work around
 - Check: `journalctl -u kimonokittens-webhook -f`
 
