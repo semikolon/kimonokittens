@@ -69,8 +69,8 @@ class ContractGeneratorHtml
     # Render markdown from ERB template
     markdown = render_markdown_template(template_data)
 
-    # Convert markdown to HTML and prepare for PDF
-    html_data = prepare_template_data_from_markdown(markdown, tenant)
+    # Prepare HTML data - use pre-calculated rent, convert markdown sections to HTML
+    html_data = prepare_html_data_from_template(template_data, markdown, tenant)
 
     # Render HTML
     html = render_html(html_data)
@@ -164,6 +164,33 @@ class ContractGeneratorHtml
   def render_markdown_template(data)
     template = ERB.new(File.read(MARKDOWN_TEMPLATE_PATH))
     template.result_with_hash(data)
+  end
+
+  # Prepare HTML data from pre-calculated template data (database-driven generation)
+  # Uses rent values from template_data, converts markdown sections to HTML
+  def prepare_html_data_from_template(template_data, markdown, tenant)
+    {
+      fonts_dir: FONTS_DIR,
+      logo_path: LOGO_PATH,
+      swish_qr_path: SWISH_QR_PATH,
+      landlord: template_data[:landlord],
+      tenant: template_data[:tenant],
+      property: template_data[:property],
+      contract_period: "#{template_data[:tenant][:move_in_date]} – tills vidare",
+      rental_period_text: extract_section(markdown, 'Hyrestid'),
+      rent: {
+        amount: template_data[:rent][:base_amount],  # Use pre-calculated value!
+        total: template_data[:rent][:total_amount],
+        due_day: '27',
+        swish: '073-653 60 35'
+      },
+      utilities_text: extract_section(markdown, 'Avgifter för el'),
+      deposit_text: extract_section(markdown, 'Deposition'),
+      furnishing_deposit_text: extract_section(markdown, 'Inredningsdeposition'),
+      notice_period_text: extract_section(markdown, 'Uppsägning'),
+      other_terms: extract_list_items(markdown, 'Övriga villkor'),
+      democratic_structure_text: extract_section(markdown, 'Hyresstruktur och demokratisk beslutsgång')
+    }
   end
 
   # Convert rendered markdown to HTML template data
