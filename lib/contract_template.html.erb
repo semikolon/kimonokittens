@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hyresavtal - <%= tenant[:name] %></title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    @font-face {
+      font-family: 'Horsemen';
+      src: url('file:///<%= fonts_dir %>/Horsemen.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'Horsemen';
+      src: url('file:///<%= fonts_dir %>/Horsemen%20(Slant).otf') format('opentype');
+      font-weight: normal;
+      font-style: italic;
+    }
+
+    @font-face {
+      font-family: 'Galvji';
+      src: url('file:///<%= fonts_dir %>/Galvji.ttc') format('truetype-collection');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    body {
+      font-family: 'Galvji', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      /* EXACT dashboard background - radial gradient */
+      background: radial-gradient(circle at center, rgb(28,22,35) 0%, rgb(25,18,32) 100%);
+      color: rgb(221, 214, 254); /* text-purple-200 */
+      font-size: 11pt;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;  /* Clip any rendering artifacts */
+      min-height: 100vh; /* Ensure full viewport coverage */
+    }
+
+    h1 {
+      font-family: 'Horsemen', sans-serif;
+      color: white;
+      font-weight: bold;
+      line-height: 1.3;  /* Increased spacing for graffiti font */
+    }
+
+    h2, h3 {
+      font-family: 'Galvji', sans-serif;
+      color: white;
+      font-weight: bold;
+    }
+
+    .widget-box {
+      /* EXACT dashboard widget styling - purple-900/15 */
+      background: rgba(49, 46, 129, 0.15);
+      border: 1px solid rgba(49, 46, 129, 0.3);
+      border-radius: 16px;  /* Dashboard uses rounded-2xl = 16px */
+      padding: 16px 20px;   /* Dashboard padding */
+      margin-bottom: 16px;
+      backdrop-filter: blur(4px); /* backdrop-blur-sm */
+    }
+
+    .gradient-line {
+      height: 2px;
+      background: linear-gradient(90deg,
+        rgba(139, 92, 246, 0.3) 0%,
+        rgba(139, 92, 246, 0.2) 50%,
+        transparent 100%);
+      margin: 8px 0 12px 0;
+    }
+
+    .section-title {
+      font-family: 'Galvji', sans-serif;
+      font-size: 0.8em;  /* Match dashboard heatpump schedule bar */
+      color: rgb(221, 214, 254);  /* text-purple-200 */
+      font-weight: bold;
+      margin-bottom: 6px;
+      text-transform: uppercase;  /* Match dashboard heatpump schedule bar */
+      letter-spacing: 0.05em;  /* Slight letter spacing for all-caps readability */
+    }
+
+    .logo {
+      width: 360px;  /* 3x larger for better visibility */
+      float: right;
+      margin-left: 20px;
+    }
+
+    @page {
+      margin: 0;  /* Zero margins - background extends to edges */
+      size: A4;
+    }
+
+    .container {
+      max-width: 100%;
+      margin: 0;
+      padding: 30px 40px;  /* Internal padding only */
+    }
+
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Dashboard-style gradient overlays (static versions of animated gradients) -->
+  <div style="position: fixed; top: -1px; left: -1px; width: calc(100% + 2px); height: calc(100% + 2px); pointer-events: none; z-index: 0;">
+    <div style="position: absolute; width: 60%; height: 60%; top: 10%; left: 10%; background: radial-gradient(ellipse at center, rgba(68,25,150,0.20) 0%, transparent 70%); mix-blend-mode: screen;"></div>
+    <div style="position: absolute; width: 50%; height: 70%; top: 15%; right: 5%; background: radial-gradient(ellipse at center, rgba(89,45,170,0.18) 0%, transparent 70%); mix-blend-mode: screen;"></div>
+    <div style="position: absolute; width: 70%; height: 50%; top: 35%; left: 20%; background: radial-gradient(ellipse at center, rgba(110,35,160,0.16) 0%, transparent 70%); mix-blend-mode: screen;"></div>
+  </div>
+
+  <div class="container" style="position: relative; z-index: 1;">
+
+    <!-- Logo and Title -->
+    <div style="margin-bottom: 20px; overflow: hidden;">
+      <img src="file:///<%= logo_path %>" class="logo" alt="Kimonokittens">
+      <h1 style="font-size: 13pt; margin: 0; padding-top: 10px;">
+        HYRESAVTAL
+      </h1>
+      <div class="gradient-line"></div>
+      <p style="color: rgb(148, 163, 184); font-size: 10pt; margin: 8px 0 0 0;">
+        <%= tenant[:name] %> • <%= contract_period %>
+      </p>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <p style="margin-bottom: 16px;">Mellan nedanstående parter har följande avtal slutits:</p>
+
+      <!-- Section 1: Parter -->
+      <h2 class="section-title">1. Parter</h2>
+      <div class="gradient-line" style="height: 1.5px;"></div>
+
+      <div class="widget-box">
+        <h3 style="font-size: 11pt; margin: 0 0 8px 0;">Förstahandshyresgäst (Hyresvärd i detta avtal):</h3>
+        <div style="margin-left: 15px; font-size: 10.5pt;">
+          <p style="margin: 3px 0;"><strong>Namn:</strong> <%= landlord[:name] %></p>
+          <p style="margin: 3px 0;"><strong>Personnummer:</strong> <%= landlord[:personnummer] %></p>
+          <p style="margin: 3px 0;"><strong>Telefon:</strong> <%= landlord[:phone] %></p>
+          <p style="margin: 3px 0;"><strong>E-post:</strong> <%= landlord[:email] %></p>
+        </div>
+      </div>
+
+      <div class="widget-box">
+        <h3 style="font-size: 11pt; margin: 0 0 8px 0;">Andrahands-hyresgäst (Hyresgäst i detta avtal):</h3>
+        <div style="margin-left: 15px; font-size: 10.5pt;">
+          <p style="margin: 3px 0;"><strong>Namn:</strong> <%= tenant[:name] %></p>
+          <p style="margin: 3px 0;"><strong>Personnummer:</strong> <%= tenant[:personnummer] %></p>
+          <p style="margin: 3px 0;"><strong>Telefon:</strong> <%= tenant[:phone] %></p>
+          <p style="margin: 3px 0;"><strong>E-post:</strong> <%= tenant[:email] %></p>
+        </div>
+      </div>
+
+      <!-- Section 2: Objekt -->
+      <h2 class="section-title">2. Objekt</h2>
+      <div class="gradient-line" style="height: 1.5px;"></div>
+
+      <div class="widget-box">
+        <p style="margin: 3px 0;"><strong>Adress:</strong> <%= property[:address] %></p>
+        <p style="margin: 3px 0;"><strong>Bostadstyp:</strong> <%= property[:type] %></p>
+      </div>
+
+      <!-- Section 3: Hyrestid -->
+      <h2 class="section-title">3. Hyrestid</h2>
+      <div class="gradient-line" style="height: 1.5px;"></div>
+
+      <div class="widget-box">
+        <p><%= rental_period_text %></p>
+      </div>
+
+      <!-- Section 4: Hyra -->
+      <h2 class="section-title">4. Hyra</h2>
+      <div class="gradient-line" style="height: 1.5px;"></div>
+
+      <div class="widget-box">
+        <p style="margin: 6px 0;"><strong>4.1 Kall månadshyra:</strong> <%= rent[:amount] %> kr.</p>
+        <p style="margin: 6px 0;"><strong>4.2 Hyran måste ha inkommit på Hyresvärdens konto senast den <%= rent[:due_day] %> varje månad.</strong></p>
+        <p style="margin: 6px 0;"><strong>Betalas till BankGiro:</strong> <%= rent[:bankgiro] %> eller <%= rent[:swish] %>.</p>
+      </div>
+
+      <!-- Section 5: Avgifter för el och bredband -->
+      <h2 class="section-title">5. Avgifter för el och bredband</h2>
+      <div class="gradient-line" style="height: 1.5px;"></div>
+
+      <div class="widget-box">
+        <p><%= utilities_text %></p>
+      </div>
+
+      <!-- Section 6: Deposition -->
+      <h2 class="section-title">6. Deposition</h2>
+      <div class="gradient-line" style="height: 1.5px;"></div>
+
+      <div class="widget-box">
+        <p><%= deposit_text %></p>
+      </div>
+
+      <!-- Section 7: Inredningsdeposition -->
+      <h2 class="section-title">7. Inredningsdeposition</h2>
+      <div class="gradient-line" style="height: 1.5px;"></div>
+
+      <div class="widget-box">
+        <p><%= furnishing_deposit_text %></p>
+      </div>
+
+      <!-- Section 8: Uppsägning -->
+      <h2 class="section-title">8. Uppsägning</h2>
+      <div class="gradient-line" style="height: 1.5px;"></div>
+
+      <div class="widget-box">
+        <p><%= notice_period_text %></p>
+      </div>
+
+      <!-- Section 9: Övriga villkor -->
+      <h2 class="section-title">9. Övriga villkor</h2>
+      <div class="gradient-line" style="height: 1.5px;"></div>
+
+      <div class="widget-box">
+        <% other_terms.each do |term| %>
+          <p style="margin: 6px 0;"><%= term %></p>
+        <% end %>
+      </div>
+
+      <!-- Section 10: Hyresstruktur och demokratisk beslutsgång -->
+      <h2 class="section-title">10. Hyresstruktur och demokratisk beslutsgång</h2>
+      <div class="gradient-line" style="height: 1.5px;"></div>
+
+      <div class="widget-box">
+        <%= democratic_structure_text %>
+      </div>
+
+      <!-- Digital signatures via Zigned BankID (manual signature areas removed) -->
+      <div style="margin-top: 40px;">
+        <p style="margin-bottom: 20px; color: rgb(148, 163, 184); font-size: 10pt; font-style: italic;">
+          Detta avtal signeras digitalt med BankID via Zigned e-signeringstjänst.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

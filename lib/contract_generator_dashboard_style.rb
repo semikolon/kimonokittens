@@ -37,9 +37,13 @@ class ContractGeneratorDashboardStyle
 
   # Dashboard-inspired color palette (from dashboard CSS + Tailwind config)
   COLORS = {
-    # Background gradients (deep purple to almost black)
-    bg_dark: '0c0a10',      # rgb(12, 10, 16) - darkest
-    bg_mid: '191e1e',       # rgb(25, 20, 30) - mid gradient
+    # Background gradients (matching dashboard exactly)
+    bg_base: '191e1e',      # rgb(25, 20, 30) - PRIMARY dashboard background
+    bg_dark: '0c0a10',      # rgb(12, 10, 16) - darker areas
+
+    # Widget box colors
+    box_bg: '1e1b2e',       # Dark purple box background (semi-transparent effect)
+    box_border: '312e81',   # storm-blue-900 - subtle border
 
     # Storm-blue accent palette
     primary: '6366f1',      # storm-blue-500 - vibrant purple
@@ -49,7 +53,7 @@ class ContractGeneratorDashboardStyle
 
     # Text colors (light on dark)
     text_primary: 'ddd6fe', # text-purple-200 - main text
-    text_accent: 'f8fafc',  # Almost white - headings
+    text_heading: 'ffffff', # WHITE - headings (like dashboard Horsemen font)
     text_muted: '94a3b8',   # Muted gray-blue
 
     # Graffiti logo colors
@@ -58,20 +62,45 @@ class ContractGeneratorDashboardStyle
   }.freeze
 
   LOGO_PATH = File.join(File.dirname(__FILE__), '../dashboard/public/logo.png')
+  FONTS_DIR = File.join(File.dirname(__FILE__), '../fonts')
 
   def initialize
     @pdf = nil
+  end
+
+  def setup_fonts
+    # Register dashboard fonts (Horsemen for headings, Galvji for body)
+    @pdf.font_families.update(
+      'Horsemen' => {
+        normal: File.join(FONTS_DIR, 'Horsemen.otf'),
+        italic: File.join(FONTS_DIR, 'Horsemen (Slant).otf'),
+        bold: File.join(FONTS_DIR, 'Horsemen.otf'),  # Use normal for bold
+        bold_italic: File.join(FONTS_DIR, 'Horsemen (Slant).otf')
+      },
+      'Galvji' => {
+        normal: File.join(FONTS_DIR, 'Galvji.ttc'),
+        italic: File.join(FONTS_DIR, 'Galvji.ttc'),  # TTC only has one variant
+        bold: File.join(FONTS_DIR, 'Galvji.ttc'),
+        bold_italic: File.join(FONTS_DIR, 'Galvji.ttc')
+      }
+    )
   end
 
   def generate(tenant:, output_path:)
     @tenant = tenant
     @output_path = output_path
 
-    # Create PDF with dark background
+    # Create PDF with dashboard styling
     @pdf = Prawn::Document.new(
       page_size: 'A4',
       margin: [60, 50, 60, 50]
     )
+
+    # Setup custom dashboard fonts
+    setup_fonts
+
+    # Set default font to Galvji (dashboard body font)
+    @pdf.font 'Galvji'
 
     # Hook to apply background to ALL future pages automatically
     @pdf.on_page_create { apply_page_background }
@@ -106,14 +135,14 @@ class ContractGeneratorDashboardStyle
 
   private
 
-  # Apply dark purple gradient background (call before adding content to each page)
+  # Apply dashboard background (lighter purple, matching screenshot)
   def apply_page_background
     # Save current fill color
     tmp_color = @pdf.fill_color
 
     @pdf.canvas do
-      # Dark purple/black background covering entire page
-      @pdf.fill_color COLORS[:bg_dark]
+      # LIGHTER purple background (rgb(25,20,30)) - matching dashboard exactly
+      @pdf.fill_color COLORS[:bg_base]
       @pdf.fill_rectangle [@pdf.bounds.left, @pdf.bounds.top], @pdf.bounds.right, @pdf.bounds.top
 
       # Gradient effect with EXTREMELY subtle ellipses (dashboard uses 0.01-0.02 opacity)
@@ -138,6 +167,65 @@ class ContractGeneratorDashboardStyle
     @pdf.fill_color COLORS[:text_primary]
   end
 
+  # Dashboard-style widget box with rounded corners and padding
+  def widget_box(padding: 15)
+    # Save starting position
+    box_top = @pdf.cursor
+    box_left = @pdf.bounds.left
+    box_width = @pdf.bounds.width
+
+    # Render content in a temporary "measure" to get height
+    content_height = 0
+
+    # Save current position
+    saved_y = @pdf.cursor
+
+    # Render content to measure height
+    @pdf.transparent(0) do  # Invisible render to measure
+      yield
+    end
+
+    # Calculate content height
+    content_height = saved_y - @pdf.cursor
+    box_height = content_height + (padding * 2)
+
+    # Reset cursor to start
+    @pdf.move_cursor_to box_top
+
+    # Draw rounded box background with canvas (behind content)
+    @pdf.canvas do
+      # Box background
+      @pdf.fill_color COLORS[:box_bg]
+      @pdf.rounded_rectangle [box_left, box_top],
+                            box_width,
+                            box_height,
+                            8  # 8pt corner radius like dashboard
+      @pdf.fill
+
+      # Subtle border
+      @pdf.stroke_color COLORS[:box_border]
+      @pdf.line_width 0.5
+      @pdf.rounded_rectangle [box_left, box_top],
+                            box_width,
+                            box_height,
+                            8
+      @pdf.stroke
+    end
+
+    # Now render actual content with padding
+    @pdf.bounding_box [box_left + padding, box_top - padding],
+                      width: box_width - (padding * 2) do
+      yield
+    end
+
+    # Move cursor past the box
+    @pdf.move_cursor_to(box_top - box_height)
+
+    # Restore colors
+    @pdf.fill_color COLORS[:text_primary]
+    @pdf.stroke_color '000000'
+  end
+
   # Setup footer with page numbers
   def setup_footer
     @pdf.repeat :all do
@@ -154,20 +242,9 @@ class ContractGeneratorDashboardStyle
     end
   end
 
-  # Add large dashboard-scale logo at top
+  # Add dashboard-scale logo (will be positioned with title)
   def add_dashboard_logo
-    return unless File.exist?(LOGO_PATH)
-
-    # Center logo at top with generous spacing
-    @pdf.bounding_box [(@pdf.bounds.width - 200) / 2, @pdf.bounds.top], width: 200, height: 120 do
-      @pdf.image LOGO_PATH, width: 200, position: :center
-    end
-
-    @pdf.move_down 30
-
-    # Gradient accent line below logo
-    gradient_line(height: 3)
-    @pdf.move_down 25
+    # Logo will be added in generate_title method to align with heading
   end
 
   # Draw gradient accent line (simulating purple glow)
@@ -188,12 +265,42 @@ class ContractGeneratorDashboardStyle
   end
 
   def generate_title
-    # Bold title with gradient accent colors
-    @pdf.fill_color COLORS[:text_accent]
-    @pdf.font_size(13) do
-      @pdf.text 'HYRESAVTAL – ANDRAHANDSUTHYRNING', align: :center, style: :bold
+    # Logo on right, title on left (same vertical alignment)
+    if File.exist?(LOGO_PATH)
+      # Calculate logo position (right-aligned with 20pt margin)
+      logo_width = 120
+      logo_x = @pdf.bounds.right - logo_width - 20
+      logo_y = @pdf.cursor
+
+      # Place logo
+      @pdf.image LOGO_PATH, at: [logo_x, logo_y], width: logo_width
+
+      # Place title on the left, vertically centered with logo
+      @pdf.bounding_box [0, logo_y], width: @pdf.bounds.width - logo_width - 40 do
+        @pdf.font 'Horsemen' do
+          @pdf.fill_color COLORS[:text_heading]  # WHITE
+          @pdf.font_size(13) do
+            @pdf.text 'HYRESAVTAL – ANDRAHANDSUTHYRNING', align: :left, style: :bold
+          end
+        end
+      end
+
+      @pdf.move_down 10
+    else
+      # No logo - just title
+      @pdf.font 'Horsemen' do
+        @pdf.fill_color COLORS[:text_heading]  # WHITE
+        @pdf.font_size(13) do
+          @pdf.text 'HYRESAVTAL – ANDRAHANDSUTHYRNING', align: :center, style: :bold
+        end
+      end
     end
+
     @pdf.fill_color COLORS[:text_primary]
+    @pdf.move_down 20
+
+    # Gradient accent line
+    gradient_line(height: 3)
     @pdf.move_down 20
 
     @pdf.font_size(11) do  # 60% of original dashboard scale
@@ -205,44 +312,37 @@ class ContractGeneratorDashboardStyle
   def generate_parties
     section_heading('1. Parter')
 
-    @pdf.font_size(11) do  # 60% of original dashboard scale
-      # Landlord box with subtle purple background
-      @pdf.transparent(0.15) do
-        @pdf.fill_color COLORS[:primary]
-        @pdf.fill_rectangle [@pdf.bounds.left, @pdf.cursor], @pdf.bounds.width, 85
+    # Landlord widget box (dashboard style)
+    widget_box(padding: 12) do
+      @pdf.font_size(11) do
+        @pdf.fill_color COLORS[:text_heading]
+        @pdf.text 'Förstahandshyresgäst (Hyresvärd i detta avtal):', style: :bold
+        @pdf.fill_color COLORS[:text_primary]
+        @pdf.move_down 5
+        @pdf.indent(10) do
+          @pdf.text "Namn: #{LANDLORD[:name]}"
+          @pdf.text "Personnummer: #{LANDLORD[:personnummer]}"
+          @pdf.text "Telefon: #{LANDLORD[:phone]}"
+          @pdf.text "E-post: #{LANDLORD[:email]}"
+        end
       end
-      @pdf.fill_color COLORS[:text_primary]
+    end
 
-      @pdf.move_down 8
-      @pdf.fill_color COLORS[:text_accent]
-      @pdf.text 'Förstahandshyresgäst (Hyresvärd i detta avtal):', style: :bold
-      @pdf.fill_color COLORS[:text_primary]
-      @pdf.move_down 5
-      @pdf.indent(15) do
-        @pdf.text "Namn: #{LANDLORD[:name]}"
-        @pdf.text "Personnummer: #{LANDLORD[:personnummer]}"
-        @pdf.text "Telefon: #{LANDLORD[:phone]}"
-        @pdf.text "E-post: #{LANDLORD[:email]}"
-      end
-      @pdf.move_down 15
+    @pdf.move_down 12
 
-      # Tenant box
-      @pdf.transparent(0.15) do
-        @pdf.fill_color COLORS[:accent]
-        @pdf.fill_rectangle [@pdf.bounds.left, @pdf.cursor], @pdf.bounds.width, 85
-      end
-      @pdf.fill_color COLORS[:text_primary]
-
-      @pdf.move_down 8
-      @pdf.fill_color COLORS[:text_accent]
-      @pdf.text 'Andrahands-hyresgäst (Hyresgäst i detta avtal):', style: :bold
-      @pdf.fill_color COLORS[:text_primary]
-      @pdf.move_down 5
-      @pdf.indent(15) do
-        @pdf.text "Namn: #{@tenant[:name]}"
-        @pdf.text "Personnummer: #{@tenant[:personnummer]}"
-        @pdf.text "Telefon: #{@tenant[:phone]}"
-        @pdf.text "E-post: #{@tenant[:email]}"
+    # Tenant widget box (dashboard style)
+    widget_box(padding: 12) do
+      @pdf.font_size(11) do
+        @pdf.fill_color COLORS[:text_heading]
+        @pdf.text 'Andrahands-hyresgäst (Hyresgäst i detta avtal):', style: :bold
+        @pdf.fill_color COLORS[:text_primary]
+        @pdf.move_down 5
+        @pdf.indent(10) do
+          @pdf.text "Namn: #{@tenant[:name]}"
+          @pdf.text "Personnummer: #{@tenant[:personnummer]}"
+          @pdf.text "Telefon: #{@tenant[:phone]}"
+          @pdf.text "E-post: #{@tenant[:email]}"
+        end
       end
     end
 
@@ -278,7 +378,7 @@ class ContractGeneratorDashboardStyle
     section_heading('4. Hyra')
 
     @pdf.font_size(11) do  # 60% of original dashboard scale
-      @pdf.fill_color COLORS[:text_accent]
+      @pdf.fill_color COLORS[:text_heading]
       @pdf.text "4.1 Kall månadshyra: #{format_currency(RENT_DETAILS[:base_rent])}", style: :bold
       @pdf.fill_color COLORS[:text_primary]
       @pdf.move_down 8
@@ -391,7 +491,7 @@ class ContractGeneratorDashboardStyle
 
     @pdf.font_size(11) do  # 60% of original dashboard scale
       # 10.1
-      @pdf.fill_color COLORS[:text_accent]
+      @pdf.fill_color COLORS[:text_heading]
       @pdf.text '10.1 Hyresberäkning', style: :bold
       @pdf.fill_color COLORS[:text_primary]
       @pdf.move_down 5
@@ -401,7 +501,7 @@ class ContractGeneratorDashboardStyle
       @pdf.move_down 10
 
       # 10.2
-      @pdf.fill_color COLORS[:text_accent]
+      @pdf.fill_color COLORS[:text_heading]
       @pdf.text '10.2 Rumsjusteringar', style: :bold
       @pdf.fill_color COLORS[:text_primary]
       @pdf.move_down 5
@@ -412,7 +512,7 @@ class ContractGeneratorDashboardStyle
       @pdf.move_down 10
 
       # 10.3
-      @pdf.fill_color COLORS[:text_accent]
+      @pdf.fill_color COLORS[:text_heading]
       @pdf.text '10.3 Beslutsprocess', style: :bold
       @pdf.fill_color COLORS[:text_primary]
       @pdf.move_down 5
@@ -424,7 +524,7 @@ class ContractGeneratorDashboardStyle
       @pdf.move_down 10
 
       # 10.4
-      @pdf.fill_color COLORS[:text_accent]
+      @pdf.fill_color COLORS[:text_heading]
       @pdf.text '10.4 Öppenhet', style: :bold
       @pdf.fill_color COLORS[:text_primary]
       @pdf.move_down 5
@@ -436,12 +536,14 @@ class ContractGeneratorDashboardStyle
     @pdf.move_down 25
   end
 
-  # Helper: Format section headings with gradient accent
+  # Helper: Format section headings with Horsemen font (like dashboard)
   def section_heading(text)
-    @pdf.font_size(12) do  # 60% of original dashboard heading scale
-      @pdf.fill_color COLORS[:bright]
-      @pdf.text text, style: :bold
-      @pdf.fill_color COLORS[:text_primary]
+    @pdf.font 'Horsemen' do
+      @pdf.font_size(12) do  # 60% of original dashboard heading scale
+        @pdf.fill_color COLORS[:text_heading]  # WHITE like dashboard
+        @pdf.text text, style: :bold
+        @pdf.fill_color COLORS[:text_primary]
+      end
     end
     @pdf.move_down 3
 
