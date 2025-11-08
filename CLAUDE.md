@@ -85,6 +85,50 @@ bin/dev nuke         # Nuclear cleanup (last resort)
 
 ---
 
+## ⚠️ CRITICAL: DATABASE AND DATA OPERATIONS
+
+**Query Before Scripting**: When writing scripts that depend on specific records:
+
+1. **First query to understand actual data state**:
+   - What IDs exist in the database?
+   - What schema/fields are actually used?
+   - Never assume IDs from filenames match database records
+
+2. **Read repository/API documentation** before using methods:
+   - Check what methods exist (don't assume `find_all()` exists)
+   - Verify method signatures and return types
+   - Read the actual code if documentation is missing
+
+3. **Then write scripts based on verified reality**:
+   - Use actual IDs discovered from queries
+   - Handle missing data gracefully
+   - Either discover IDs programmatically or accept parameters
+
+4. **For database operations**:
+   - Always check .env for actual `DATABASE_URL` before assuming database names
+   - Never connect to `*_development` without verifying it exists
+   - Use the database name from .env configuration
+
+**Example - WRONG approach**:
+```ruby
+# Assumes IDs without verification
+sanna = repo.find_by_id('sanna-juni-benemar-8706220020')  # FAILS: ID doesn't exist
+```
+
+**Example - CORRECT approach**:
+```bash
+# First query to discover actual IDs
+psql -d kimonokittens -c "SELECT id, name FROM \"Tenant\" WHERE name = 'Sanna Juni Benemar';"
+# Returns: cmhqe9enc0000wopipuxgc3kw
+
+# Then use verified ID in script
+sanna = repo.find_by_id('cmhqe9enc0000wopipuxgc3kw')  # SUCCESS
+```
+
+**Lesson learned**: Nov 8, 2025 - Hardcoded IDs from JSON filenames didn't match database UUIDs, causing export script to fail. Always query first.
+
+---
+
 ### 🧹 Cache Cleanup After Major Changes
 
 **CRITICAL: After major dependency changes (React version jumps, etc.), always clean build caches:**
