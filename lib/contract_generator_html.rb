@@ -6,7 +6,7 @@ require 'kramdown'
 class ContractGeneratorHtml
   TEMPLATE_PATH = File.expand_path('contract_template.html.erb', __dir__)
   FONTS_DIR = File.expand_path('../fonts', __dir__)
-  LOGO_PATH = '/tmp/logo-65pct-saturated.png'  # Using 65% saturated logo for color harmony
+  LOGO_PATH = '/tmp/logo-80pct-saturated.png'  # Using 80% saturated logo for color harmony
   # LOGO_PATH = File.expand_path('../dashboard/public/logo.png', __dir__)
   SWISH_QR_PATH = File.expand_path('swish-qr.png', __dir__)
 
@@ -89,6 +89,10 @@ class ContractGeneratorHtml
     rent_match = markdown.match(/Kall månadshyra:\*\*\s*([\d,\.]+)\s*kr/i)
     rent_amount = rent_match&.captures&.first&.gsub(',', ' ') || '4 500'
 
+    # Extract total rent (including utilities)
+    total_rent_match = markdown.match(/Genomsnittlig total månadshyra.*?:\*\*\s*([\d,\.]+)\s*kr/i)
+    total_rent = total_rent_match&.captures&.first&.gsub(',', ' ') || '7 300'
+
     {
       fonts_dir: FONTS_DIR,
       logo_path: LOGO_PATH,
@@ -100,6 +104,7 @@ class ContractGeneratorHtml
       rental_period_text: extract_section(markdown, 'Hyrestid'),
       rent: {
         amount: rent_amount,
+        total: total_rent,
         due_day: '27',
         swish: '073-653 60 35'  # House account from Swish QR code
       },
