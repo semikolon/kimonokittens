@@ -6,7 +6,7 @@ require 'kramdown'
 class ContractGeneratorHtml
   TEMPLATE_PATH = File.expand_path('contract_template.html.erb', __dir__)
   FONTS_DIR = File.expand_path('../fonts', __dir__)
-  LOGO_PATH = '/tmp/logo-half-saturated.png'  # Using 50% desaturated logo for color harmony
+  LOGO_PATH = '/tmp/logo-65pct-saturated.png'  # Using 65% saturated logo for color harmony
   # LOGO_PATH = File.expand_path('../dashboard/public/logo.png', __dir__)
   SWISH_QR_PATH = File.expand_path('swish-qr.png', __dir__)
 

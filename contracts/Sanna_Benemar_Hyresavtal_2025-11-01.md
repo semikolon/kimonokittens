@@ -46,11 +46,14 @@ Hyresgästen erlägger en deposition om en dryg (1) kall månadshyra, dvs. **6,2
 
 Vid inträde i kollektivet erlägger andrahandsgästen, utöver depositionen, en inredningsdeposition om **2,200 kr** till den utflyttande parten.
 
+Inredningsdepositionen utgör en delad investering i kollektivets gemensamma inredning och hushållsartiklar. Detta inkluderar bland annat sopkärl, växter, lampor, kuddar, filtar, mattor, ljus, förvaringslösningar, köksredskap, städmaterial och liknande. Det totala värdet av gemensamma inredningsartiklar överstiger depositionens belopp.
+
 Vid utflytt återbetalas denna inredningsdeposition på följande sätt:
+
 - Om det finns en efterträdande medlem överlämnar denna 2,200 kr till utflyttande part.
 - Om kollektivet upplöses återlämnas i stället motsvarande värde i de inventarier som köptes för depositionens summa när kollektivet bildades.
 
-Inredningsdepositionen utgör en delad investering i gemensamma hushållsartiklar (möbler, växter, prydnadsföremål, porslin, och liknande). Eventuella tvister rörande depositionen hanteras i god ton av kollektivets medlemmar.
+Om gemensamma föremål skadats eller förlorats under hyrestiden kan motsvarande värde dras av från depositionen vid utflytt. Hyresgästen har även möjlighet att ta med sig vissa föremål vid utflytt, varvid motsvarande värde dras från återbetalningen. Eventuella tvister rörande depositionen hanteras i god ton av kollektivets medlemmar.
 
 ## Uppsägning
 

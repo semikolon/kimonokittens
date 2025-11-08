@@ -53,25 +53,25 @@
 
     h1 {
       font-family: 'Horsemen', sans-serif;
-      color: #512E6C;  /* Logo-derived medium purple (desaturated 50%) */
+      color: #583B8F;  /* Logo-derived medium purple (65% saturation) */
       font-weight: bold;
       line-height: 1.3;
     }
 
     h2, h3 {
       font-family: 'Galvji', sans-serif;
-      color: #422D51;  /* Logo-derived dark purple (desaturated 50%) */
+      color: #32155F;  /* Logo-derived dark purple (65% saturation) */
       font-weight: bold;
     }
 
     .widget-box {
       /* Ultra-subtle widget boxes with minimal contrast */
       background: #f9f8fa;  /* Almost white with subtle purple tint */
-      border: 1.5px solid rgba(97, 76, 139, 0.18);  /* Logo purple, very faint (18% opacity) */
+      border: 1.5px solid rgba(88, 93, 152, 0.18);  /* Logo purple (65% sat), very faint */
       border-radius: 12px;
       padding: 16px 20px;
       margin-bottom: 16px;
-      box-shadow: 0 1px 3px rgba(81, 46, 108, 0.08);  /* Logo-derived shadow, very subtle */
+      box-shadow: 0 1px 3px rgba(88, 59, 143, 0.08);  /* Logo-derived shadow, very subtle */
       page-break-inside: avoid;
     }
 
@@ -108,7 +108,7 @@
     .section-title {
       font-family: 'Galvji', sans-serif;
       font-size: 0.8em;
-      color: #614C8B;  /* Logo-derived lighter purple (desaturated 50%) */
+      color: #585D98;  /* Logo-derived lighter purple (65% saturation) */
       font-weight: bold;
       margin-bottom: 8px;
       text-transform: uppercase;
@@ -173,7 +173,7 @@
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
         <div class="widget-box" style="margin-bottom: 0;">
-          <h3 style="font-size: 11pt; margin: 0 0 2px 0; text-transform: uppercase; color: #614C8B;">FÖRSTAHANDSHYRESGÄST</h3>
+          <h3 style="font-size: 11pt; margin: 0 0 2px 0; text-transform: uppercase; color: #585D98;">FÖRSTAHANDSHYRESGÄST</h3>
           <p style="font-size: 9pt; margin: 0 0 12px 0; color: #64748b;">Hyresvärd i detta avtal</p>
           <div style="margin-left: 15px; font-size: 10.5pt;">
             <p style="margin: 3px 0;"><strong style="color: #1a1a1a;">Namn:</strong> <span style="color: #475569;"><%= landlord[:name] %></span></p>
@@ -184,7 +184,7 @@
         </div>
 
         <div class="widget-box" style="margin-bottom: 0;">
-          <h3 style="font-size: 11pt; margin: 0 0 2px 0; text-transform: uppercase; color: #614C8B;">ANDRAHANDSHYRESGÄST</h3>
+          <h3 style="font-size: 11pt; margin: 0 0 2px 0; text-transform: uppercase; color: #585D98;">ANDRAHANDSHYRESGÄST</h3>
           <p style="font-size: 9pt; margin: 0 0 12px 0; color: #64748b;">Hyresgäst i detta avtal</p>
           <div style="margin-left: 15px; font-size: 10.5pt;">
             <p style="margin: 3px 0;"><strong style="color: #1a1a1a;">Namn:</strong> <span style="color: #475569;"><%= tenant[:name] %></span></p>

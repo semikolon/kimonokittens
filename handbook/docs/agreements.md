@@ -44,11 +44,16 @@ All tenants will sign a standard Swedish `hyreskontrakt` (rental agreement), whi
 
 Living in a collective involves the shared ownership of various items. This is managed through two primary mechanisms: a general communal fund and specific item agreements.
 
-### 2.1. The Communal Pot (`samägningspott`)
+### 2.1. The Communal Pot (`inredningsdeposition`)
 
--   **Purpose:** To fund the purchase and replacement of common, everyday household items. This includes, but is not limited to, kitchenware, cleaning supplies, plants, light bulbs, and shared decorations (e.g., cushions, blankets).
--   **Contribution:** Each tenant contributes a set amount (currently 2200 SEK) to this pot upon moving in. This is considered a shared investment, not a deposit.
--   **Management:** The funds are held in a shared account. When a tenant leaves, their contribution is conceptually transferred to the next tenant, ensuring the pot remains stable.
+-   **Purpose:** A shared investment in the collective's communal furnishings and household items. This includes trash bins, plants, lamps, pillows, blankets, carpets, candles, storage solutions, kitchenware, cleaning supplies, and similar items. The total value of communal items exceeds the deposit amount.
+-   **Contribution:** Each tenant contributes 2,200 SEK upon moving in to the outgoing tenant.
+-   **Return on Exit:**
+    - If there is a successor tenant, they pay 2,200 SEK to the departing tenant.
+    - If items are damaged or lost during the tenancy, corresponding value may be deducted from the deposit.
+    - Tenants may take certain items when leaving, with the corresponding value deducted from their return (e.g., take a 500 SEK lamp, receive 1,700 SEK back).
+    - If the collective dissolves, the corresponding value is returned in the form of the items purchased with the deposit.
+-   **Dispute Resolution:** Handled in good faith by collective members.
 
 ### 2.2. Specific Co-ownership Agreements
 
