@@ -59,16 +59,23 @@ model RentLedger {
 }
 
 model Tenant {
-  id             String        @id
-  facebookId     String?       @unique
-  name           String
-  email          String        @unique
-  avatarUrl      String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime
-  roomAdjustment Float?
-  departureDate  DateTime?
-  startDate      DateTime?
-  RentLedger     RentLedger[]
-  CoOwnedItem    CoOwnedItem[] @relation("ItemOwners")
+  id                 String        @id
+  facebookId         String?       @unique
+  name               String
+  email              String        @unique
+  avatarUrl          String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime
+  roomAdjustment     Float?
+  departureDate      DateTime?
+  startDate          DateTime?
+  // Contract fields
+  personnummer       String?
+  phone              String?
+  baseRent           Decimal?      @db.Decimal(10, 2)
+  deposit            Decimal?      @db.Decimal(10, 2)
+  furnishingDeposit  Decimal?      @db.Decimal(10, 2)
+  status             String?       @default("active")
+  RentLedger         RentLedger[]
+  CoOwnedItem        CoOwnedItem[] @relation("ItemOwners")
 }
