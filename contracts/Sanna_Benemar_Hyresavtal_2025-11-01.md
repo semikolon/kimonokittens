@@ -23,15 +23,16 @@ Mellan nedanstående parter har följande avtal slutits:
 
 ## Hyrestid
 
-Avtalet gäller omedelbart med inflytt från och med **2025-11-01** tills vidare med en uppsägningstid om två (2) månader räknat från den dag då uppsägningen skriftligen meddelats motparten.
+Avtalet gäller omedelbart med inflytt från och med **2025-11-01** tills vidare med en uppsägningstid om **två (2) månader** räknat från den dag då uppsägningen skriftligen meddelats motparten.
 
 ## Hyra
 
 **Kall månadshyra:** 6,132.5 kr
+**Genomsnittlig total månadshyra (inkl. el och drift):** 7,300 kr
 
 I hyran ingår ej el- och nätkostnad. Se punkt 5.
 
-## Avgifter för el och nät
+## Avgifter för el och drift
 
 Hyresgästen åtar sig att dela elkostnad, nätkostnad, vattenavgift, larm, gas och bredband lika med övriga medlemmar i kollektivet. Den genomsnittliga månadskostnaden för dessa är ca. 1,200 kr.
 
@@ -53,12 +54,11 @@ Inredningsdepositionen utgör en delad investering i gemensamma hushållsartikla
 
 ## Uppsägning
 
-Uppsägning ska ske skriftligen med minst två (2) månaders varsel. Uppsägning räknas från den sista dagen i den månad då uppsägningen delges motparten.
+Uppsägning ska ske skriftligen med minst **två (2) månaders** varsel. Uppsägning räknas från den sista dagen i den månad då uppsägningen delges motparten.
 
 ## Övriga villkor
 
 - Hyresgästen förbinder sig att följa ordningsregler som gäller för kollektivet.
-- Rökning inomhus är ej tillåtet.
 - **Husdjur:** tillåtet samt eventuella villkor: gemensam överrenskommelse
 - **Försäkring:** Hyresgästen ansvarar för att ha hemförsäkring med rättsskydd.
 

@@ -6,7 +6,8 @@ require 'kramdown'
 class ContractGeneratorHtml
   TEMPLATE_PATH = File.expand_path('contract_template.html.erb', __dir__)
   FONTS_DIR = File.expand_path('../fonts', __dir__)
-  LOGO_PATH = File.expand_path('../dashboard/public/logo.png', __dir__)
+  LOGO_PATH = '/tmp/logo-half-saturated.png'  # Using 50% desaturated logo for color harmony
+  # LOGO_PATH = File.expand_path('../dashboard/public/logo.png', __dir__)
   SWISH_QR_PATH = File.expand_path('swish-qr.png', __dir__)
 
   LANDLORD = {
@@ -21,11 +22,14 @@ class ContractGeneratorHtml
     type: 'Rum och gemensamma ytor i kollektiv'
   }.freeze
 
-  def self.generate_from_markdown(markdown_path, output_path)
+  def self.generate_from_markdown(markdown_path, output_path = nil)
     new.generate_from_markdown(markdown_path, output_path)
   end
 
-  def generate_from_markdown(markdown_path, output_path)
+  def generate_from_markdown(markdown_path, output_path = nil)
+    # Enforce canonical naming: PDF matches markdown filename
+    output_path ||= markdown_path.sub(/\.md$/, '.pdf')
+
     # Read markdown
     markdown = File.read(markdown_path)
 
@@ -123,8 +127,11 @@ class ContractGeneratorHtml
     section = markdown.match(/##\s*(?:\d+\.\s*)?#{Regexp.escape(heading)}.*?\n(.+?)(?=##|\z)/m)
     return [] unless section
 
-    # Match both * and - list markers
-    section.captures.first.scan(/^[*-]\s*(.+)$/).flatten.map(&:strip)
+    # Match both * and - list markers and convert markdown to HTML
+    section.captures.first.scan(/^[*-]\s*(.+)$/).flatten.map do |item|
+      # Convert markdown bold (**text**) to HTML
+      Kramdown::Document.new(item.strip).to_html.gsub(/<\/?p>/, '').strip
+    end
   end
 
   def render_html(data)

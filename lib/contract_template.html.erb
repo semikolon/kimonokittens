@@ -31,7 +31,7 @@
     }
 
     html {
-      background: radial-gradient(ellipse 150% 100% at top center, rgb(28,22,35) 0%, rgb(25,18,32) 100%) !important;
+      background: #ffffff !important;
       -webkit-print-color-adjust: exact !important;
       -webkit-filter: opacity(1) !important;
       print-color-adjust: exact !important;
@@ -41,9 +41,8 @@
 
     body {
       font-family: 'Galvji', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      /* Simple radial gradient from top center */
-      background: radial-gradient(ellipse 150% 100% at top center, rgb(28,22,35) 0%, rgb(25,18,32) 100%);
-      color: rgb(221, 214, 254); /* text-purple-200 */
+      background: #ffffff;  /* Clean white background - hides edge artifacts */
+      color: #1a1a1a;  /* Dark gray for readability */
       font-size: 11pt;
       line-height: 1.6;
       margin: 0;
@@ -52,40 +51,28 @@
       position: relative;
     }
 
-    body::before {
-      content: '';
-      position: fixed;
-      top: -100px;
-      left: -100px;
-      right: -100px;
-      bottom: -100px;
-      background: radial-gradient(ellipse 150% 100% at top center, rgb(28,22,35) 0%, rgb(25,18,32) 100%);
-      box-shadow: 0 0 0 200px rgb(25,18,32);  /* Extend background way beyond edges */
-      z-index: -1;
-    }
-
     h1 {
       font-family: 'Horsemen', sans-serif;
-      color: white;
+      color: #512E6C;  /* Logo-derived medium purple (desaturated 50%) */
       font-weight: bold;
-      line-height: 1.3;  /* Increased spacing for graffiti font */
+      line-height: 1.3;
     }
 
     h2, h3 {
       font-family: 'Galvji', sans-serif;
-      color: white;
+      color: #422D51;  /* Logo-derived dark purple (desaturated 50%) */
       font-weight: bold;
     }
 
     .widget-box {
-      /* EXACT dashboard widget styling - purple-900/15 */
-      background: rgba(49, 46, 129, 0.15);
-      border: 1px solid rgba(49, 46, 129, 0.3);
-      border-radius: 16px;  /* Dashboard uses rounded-2xl = 16px */
-      padding: 16px 20px;   /* Dashboard padding */
+      /* Ultra-subtle widget boxes with minimal contrast */
+      background: #f9f8fa;  /* Almost white with subtle purple tint */
+      border: 1.5px solid rgba(97, 76, 139, 0.18);  /* Logo purple, very faint (18% opacity) */
+      border-radius: 12px;
+      padding: 16px 20px;
       margin-bottom: 16px;
-      backdrop-filter: blur(4px); /* backdrop-blur-sm */
-      page-break-inside: avoid;  /* Prevent widget boxes from splitting across pages */
+      box-shadow: 0 1px 3px rgba(81, 46, 108, 0.08);  /* Logo-derived shadow, very subtle */
+      page-break-inside: avoid;
     }
 
     .widget-box p {
@@ -105,12 +92,6 @@
       font-weight: bold;
     }
 
-    .widget-box > p > strong:only-child {
-      display: block;  /* Only make standalone strong tags block-level */
-      margin-top: 12px;
-      margin-bottom: 6px;
-    }
-
     .widget-box ul {
       margin: 8px 0;
       padding-left: 20px;
@@ -126,16 +107,17 @@
 
     .section-title {
       font-family: 'Galvji', sans-serif;
-      font-size: 0.8em;  /* Match dashboard heatpump schedule bar */
-      color: rgb(221, 214, 254);  /* text-purple-200 */
+      font-size: 0.8em;
+      color: #614C8B;  /* Logo-derived lighter purple (desaturated 50%) */
       font-weight: bold;
-      margin-bottom: 6px;
-      text-transform: uppercase;  /* Match dashboard heatpump schedule bar */
-      letter-spacing: 0.05em;  /* Slight letter spacing for all-caps readability */
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;  /* Wider spacing for uppercase readability */
+      page-break-after: avoid;  /* Keep section headings with their content */
     }
 
     .logo {
-      width: 288px;  /* 20% smaller than 360px */
+      width: 250px;  /* Reduced from 288px to fit better with heading */
       float: right;
       margin-left: 20px;
       margin-right: 0;  /* Align close to right edge like dashboard */
@@ -151,18 +133,14 @@
     }
 
     @page {
-      margin: 0 !important;  /* Zero margins - background extends to edges */
-      margin-top: 0cm !important;
-      margin-bottom: 0cm !important;
-      margin-left: 0cm !important;
-      margin-right: 0cm !important;
+      margin: 50px 0 50px 0;  /* Top and bottom page margins */
       size: A4;
     }
 
     .container {
       max-width: 100%;
       margin: 0;
-      padding: 30px 40px;  /* Internal padding only */
+      padding: 0 60px 50px 60px;  /* Left, right, and bottom padding */
     }
 
     @media print {
@@ -177,12 +155,12 @@
   <div class="container">
 
     <!-- Logo and Title -->
-    <div style="margin-bottom: 20px; overflow: hidden;">
+    <div style="margin-bottom: 40px; overflow: hidden;">
       <img src="file:///<%= logo_path %>" class="logo" alt="Kimonokittens">
-      <h1 style="font-size: 25.2pt; margin: 0 0 1em 0; padding-top: 10px;">
+      <h1 style="font-size: 25.2pt; margin: 0 0 1.2em 0; padding-top: 15px; padding-left: 15px;">
         HYRESAVTAL
       </h1>
-      <p style="color: rgb(148, 163, 184); font-size: 10pt; margin: 8px 0 0 0;">
+      <p style="color: #64748b; font-size: 10pt; margin: 8px 0 0 0;">
         <%= tenant[:name] %> • <%= contract_period %>
       </p>
     </div>
@@ -195,24 +173,24 @@
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
         <div class="widget-box" style="margin-bottom: 0;">
-          <h3 style="font-size: 11pt; margin: 0 0 2px 0; text-transform: uppercase;">FÖRSTAHANDSHYRESGÄST</h3>
-          <p style="font-size: 9pt; margin: 0 0 12px 0; color: rgb(148, 163, 184);">Hyresvärd i detta avtal</p>
+          <h3 style="font-size: 11pt; margin: 0 0 2px 0; text-transform: uppercase; color: #614C8B;">FÖRSTAHANDSHYRESGÄST</h3>
+          <p style="font-size: 9pt; margin: 0 0 12px 0; color: #64748b;">Hyresvärd i detta avtal</p>
           <div style="margin-left: 15px; font-size: 10.5pt;">
-            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Namn:</strong> <%= landlord[:name] %></p>
-            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Personnummer:</strong> <%= landlord[:personnummer] %></p>
-            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Telefon:</strong> <%= landlord[:phone] %></p>
-            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">E-post:</strong> <%= landlord[:email] %></p>
+            <p style="margin: 3px 0;"><strong style="color: #1a1a1a;">Namn:</strong> <span style="color: #475569;"><%= landlord[:name] %></span></p>
+            <p style="margin: 3px 0;"><strong style="color: #1a1a1a;">Personnummer:</strong> <span style="color: #475569;"><%= landlord[:personnummer] %></span></p>
+            <p style="margin: 3px 0;"><strong style="color: #1a1a1a;">Telefon:</strong> <span style="color: #475569;"><%= landlord[:phone] %></span></p>
+            <p style="margin: 3px 0;"><strong style="color: #1a1a1a;">E-post:</strong> <span style="color: #475569;"><%= landlord[:email] %></span></p>
           </div>
         </div>
 
         <div class="widget-box" style="margin-bottom: 0;">
-          <h3 style="font-size: 11pt; margin: 0 0 2px 0; text-transform: uppercase;">ANDRAHANDSHYRESGÄST</h3>
-          <p style="font-size: 9pt; margin: 0 0 12px 0; color: rgb(148, 163, 184);">Hyresgäst i detta avtal</p>
+          <h3 style="font-size: 11pt; margin: 0 0 2px 0; text-transform: uppercase; color: #614C8B;">ANDRAHANDSHYRESGÄST</h3>
+          <p style="font-size: 9pt; margin: 0 0 12px 0; color: #64748b;">Hyresgäst i detta avtal</p>
           <div style="margin-left: 15px; font-size: 10.5pt;">
-            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Namn:</strong> <%= tenant[:name] %></p>
-            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Personnummer:</strong> <%= tenant[:personnummer] %></p>
-            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Telefon:</strong> <%= tenant[:phone] %></p>
-            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">E-post:</strong> <%= tenant[:email] %></p>
+            <p style="margin: 3px 0;"><strong style="color: #1a1a1a;">Namn:</strong> <span style="color: #475569;"><%= tenant[:name] %></span></p>
+            <p style="margin: 3px 0;"><strong style="color: #1a1a1a;">Personnummer:</strong> <span style="color: #475569;"><%= tenant[:personnummer] %></span></p>
+            <p style="margin: 3px 0;"><strong style="color: #1a1a1a;">Telefon:</strong> <span style="color: #475569;"><%= tenant[:phone] %></span></p>
+            <p style="margin: 3px 0;"><strong style="color: #1a1a1a;">E-post:</strong> <span style="color: #475569;"><%= tenant[:email] %></span></p>
           </div>
         </div>
       </div>
@@ -242,8 +220,8 @@
         <p style="margin: 8px 0 0 0;"><strong>Betalas till Swish:</strong> <%= rent[:swish] %>.</p>
       </div>
 
-      <!-- Section 5: Avgifter för el och bredband -->
-      <h2 class="section-title">Avgifter för el och bredband</h2>
+      <!-- Section 5: Avgifter för el och drift -->
+      <h2 class="section-title">Avgifter för el och drift</h2>
 
       <div class="widget-box">
         <%= utilities_text %>

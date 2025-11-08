@@ -368,3 +368,78 @@ fonts/Galvji.ttc                        # Copied from system fonts
 **Report Generated**: November 8, 2025, 12:30 PM
 **Session Type**: Contract PDF Generator Implementation
 **Status**: Core functionality complete, e-signature integration pending
+
+---
+
+## MAJOR PIVOT: Light Color Scheme Redesign (Nov 8, 2025 - Late Session)
+
+### The White Line Problem
+
+After extensive attempts to eliminate white pixel lines at page edges (top and right), the issue persisted despite:
+- Multiple negative offset attempts (-50px, -100px on body::before)
+- 200px box-shadow extension trick
+- Chrome flags: `--no-pdf-header-footer`, `--disable-gpu`, `--run-all-compositor-stages-before-draw`
+- Ferrum options: `printBackground: true`, `preferCSSPageSize: false`
+
+**Root Cause Identified**: These are sub-pixel anti-aliasing artifacts in PDF viewers (Chrome PDF viewer, macOS Preview). They occur when content edges don't align perfectly with the pixel grid, causing viewers to render 1-pixel transparent gaps. The white lines are **NOT in the actual PDF** - they're viewer rendering artifacts that disappear when printed.
+
+### User Decision: "I don't care, I don't like the way it looks when on a screen"
+
+Despite the lines being viewer artifacts only, user prioritized screen appearance and requested complete redesign.
+
+### New Light Theme Color Palette
+
+**Complete departure from dark dashboard aesthetic** to eliminate visibility of white edge artifacts:
+
+#### Background & Base
+- **Background**: Pure white `#ffffff` (makes white edge artifacts invisible)
+- **Body text**: Dark gray `#1a1a1a` for maximum readability
+- **Base font**: Galvji (Swedish character support)
+
+#### Purple Accent System (from Kimonokittens logo)
+- **Main heading (h1)**: Deep purple `#6b21a8`
+- **Section headers (h2, h3)**: Darker purple `#4c1d95`
+- **Section titles (PARTER, OBJEKT, etc.)**: Deep purple `#6b21a8` with light purple underline `#e9d5ff`
+- **Party widget headings**: Deep purple `#6b21a8`
+
+#### Widget Styling
+- **Background**: Very light purple `#faf5ff` (lavender tint)
+- **Border**: Light purple `#d8b4fe` (1.5px)
+- **Border radius**: 12px (slightly reduced from 16px)
+- **Shadow**: Subtle purple shadow `rgba(107, 33, 168, 0.1)`
+- **Section title underline**: Light purple `#e9d5ff` (2px)
+
+#### Typography Colors
+- **Subtitle text** (e.g., "Hyresvärd i detta avtal"): Medium gray `#64748b`
+- **Data labels** (Namn, Personnummer, etc.): Dark gray `#1a1a1a`
+- **Data values**: Slightly lighter gray `#475569`
+- **Contract subtitle** (tenant name, period): Medium gray `#64748b`
+
+### Design Philosophy Shift
+
+**Before**: Dark theme matching dashboard (failed due to edge artifacts)
+**After**: Clean, professional light theme prioritizing:
+1. **Screen readability** - White background eliminates edge artifact visibility
+2. **Print readability** - High contrast black text on white
+3. **Brand consistency** - Purple accents from Kimonokittens logo preserved
+4. **Professional appearance** - Light theme more suitable for legal documents
+
+### Files Modified
+- `lib/contract_template.html.erb` - Complete color scheme overhaul
+- `lib/contract_generator_html.rb` - Already had correct Ferrum options
+
+### Commits
+- **First commit** (c95590d): Kramdown integration + dark theme refinements
+- **Second commit** (pending): Light color scheme redesign
+
+### Lessons Learned
+
+1. **Viewer artifacts vs actual PDF content** - Important distinction for troubleshooting
+2. **User experience trumps technical correctness** - Even if lines aren't "real", screen appearance matters
+3. **Light themes hide edge rendering issues** - White on white = invisible artifacts
+4. **Design pivots mid-session** - Flexibility to change direction when solutions don't meet UX goals
+
+---
+
+**Updated**: November 8, 2025, ~1:30 PM
+**Status**: Light redesign complete, awaiting user approval

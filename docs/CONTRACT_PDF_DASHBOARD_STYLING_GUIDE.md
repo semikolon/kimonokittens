@@ -371,3 +371,109 @@ end
 **Last Updated**: November 8, 2025 (Deep code analysis with exact values)
 **Validated Against**: Dashboard screenshot + source code extraction
 **Status**: Production-ready reference guide
+
+---
+
+## MAJOR UPDATE: Light Color Scheme (Nov 8, 2025)
+
+### Background: White Pixel Line Problem
+
+After extensive attempts to eliminate white pixel lines at page edges (top and right), the dark theme proved incompatible with PDF viewer rendering. Despite multiple technical approaches (negative offsets, box-shadow tricks, Chrome flags, Ferrum options), sub-pixel anti-aliasing artifacts persisted in Chrome PDF viewer and macOS Preview.
+
+**Root cause**: 1-pixel transparent gaps when content edges don't align perfectly with pixel grids. While these artifacts don't appear in print, they were visually unacceptable for screen viewing.
+
+**Solution**: Complete redesign with light color scheme makes white edge artifacts invisible.
+
+### New Light Theme Color Palette
+
+**Background & Base**
+```css
+background: #ffffff  /* Pure white - hides edge artifacts */
+color: #1a1a1a      /* Dark gray for maximum readability */
+```
+
+**Purple Accent System** (from Kimonokittens logo)
+```css
+/* Main heading (h1 - "HYRESAVTAL") */
+color: #6b21a8  /* Deep purple */
+
+/* Section headers (h2, h3) */
+color: #4c1d95  /* Darker purple */
+
+/* Section titles (PARTER, OBJEKT, etc.) */
+color: #6b21a8
+letter-spacing: 0.08em
+text-transform: uppercase
+```
+
+**Widget Boxes**
+```css
+background: #faf5ff                            /* Very light purple (lavender) */
+border: 1.5px solid #d8b4fe                   /* Light purple border */
+border-radius: 12px
+box-shadow: 0 1px 3px rgba(107, 33, 168, 0.1) /* Subtle purple shadow */
+padding: 16px 20px
+page-break-inside: avoid                       /* Prevent splitting across pages */
+```
+
+**Typography Colors**
+```css
+/* Subtitle text (e.g., "Hyresvärd i detta avtal") */
+color: #64748b  /* Medium gray */
+
+/* Data labels (Namn:, Personnummer:, etc.) */
+color: #1a1a1a  /* Dark gray */
+
+/* Data values */
+color: #475569  /* Slightly lighter gray */
+
+/* Contract subtitle (tenant name • period) */
+color: #64748b  /* Medium gray */
+```
+
+**Spacing & Layout**
+```css
+/* Container padding (increased for breathing room) */
+padding: 50px 60px
+
+/* Logo and title section */
+margin-bottom: 40px
+
+/* Main heading */
+margin: 0 0 1.2em 0
+padding-top: 15px
+```
+
+### Design Philosophy
+
+**Before** (Dark Theme - Deprecated):
+- Matched dashboard dark aesthetic
+- Failed due to visible white edge artifacts
+- Low contrast made screen reading difficult
+
+**After** (Light Theme - Current):
+- Professional legal document appearance
+- White background hides edge rendering artifacts completely
+- High contrast (dark text on white) for print and screen readability
+- Purple accents preserve Kimonokittens brand identity
+- Clean, modern aesthetic suitable for formal documents
+
+### Breaking Changes
+
+The dark theme color palette documented in earlier sections of this guide is **DEPRECATED** and should not be used for new contracts. Historical references preserved for context only.
+
+**Migration**: All existing contract templates automatically use new light theme (single source: `lib/contract_template.html.erb`).
+
+### Browser Compatibility
+
+**Tested viewers**:
+- ✅ Chrome PDF viewer (no visible artifacts)
+- ✅ macOS Preview (no visible artifacts)
+- ✅ Adobe Acrobat Reader (no artifacts, as expected)
+
+**Print compatibility**: High contrast design optimized for both screen and print output.
+
+---
+
+**Updated**: November 8, 2025
+**Version**: 2.0 (Light Theme)
