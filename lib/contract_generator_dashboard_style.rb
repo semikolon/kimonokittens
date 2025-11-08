@@ -73,11 +73,14 @@ class ContractGeneratorDashboardStyle
       margin: [60, 50, 60, 50]
     )
 
-    # Apply dark gradient background to all pages
-    apply_dark_gradient_background
+    # Hook to apply background to ALL future pages automatically
+    @pdf.on_page_create { apply_page_background }
 
     # Setup footer (no header - logo will be inline)
     setup_footer
+
+    # Apply background to FIRST page (on_page_create doesn't fire for initial page)
+    apply_page_background
 
     # Add large prominent logo
     add_dashboard_logo
@@ -103,35 +106,35 @@ class ContractGeneratorDashboardStyle
 
   private
 
-  # Apply deep purple gradient background to all pages
-  def apply_dark_gradient_background
-    # Apply dark background to ALL pages (not just first)
-    @pdf.repeat :all do
-      @pdf.canvas do
-        # Dark purple/black background
-        @pdf.fill_color COLORS[:bg_dark]
-        @pdf.fill_rectangle [0, 0], @pdf.bounds.width, @pdf.bounds.height + @pdf.bounds.top
+  # Apply dark purple gradient background (call before adding content to each page)
+  def apply_page_background
+    # Save current fill color
+    tmp_color = @pdf.fill_color
 
-        # Gradient effect with EXTREMELY subtle ellipses (dashboard uses 0.01-0.02 opacity)
-        # These should be BARELY visible - just hints of purple color
-        @pdf.transparent(0.02) do
-          @pdf.fill_color COLORS[:primary]
-          @pdf.fill_ellipse [100, 600], 200, 150
-        end
+    @pdf.canvas do
+      # Dark purple/black background covering entire page
+      @pdf.fill_color COLORS[:bg_dark]
+      @pdf.fill_rectangle [@pdf.bounds.left, @pdf.bounds.top], @pdf.bounds.right, @pdf.bounds.top
 
-        @pdf.transparent(0.015) do
-          @pdf.fill_color COLORS[:accent]
-          @pdf.fill_ellipse [@pdf.bounds.width - 150, 300], 250, 200
-        end
+      # Gradient effect with EXTREMELY subtle ellipses (dashboard uses 0.01-0.02 opacity)
+      # These should be BARELY visible - just hints of purple color
+      @pdf.transparent(0.02) do
+        @pdf.fill_color COLORS[:primary]
+        @pdf.fill_ellipse [100, 600], 200, 150
+      end
 
-        @pdf.transparent(0.01) do
-          @pdf.fill_color COLORS[:bright]
-          @pdf.fill_ellipse [300, 100], 180, 180
-        end
+      @pdf.transparent(0.015) do
+        @pdf.fill_color COLORS[:accent]
+        @pdf.fill_ellipse [@pdf.bounds.right - 150, 300], 250, 200
+      end
+
+      @pdf.transparent(0.01) do
+        @pdf.fill_color COLORS[:bright]
+        @pdf.fill_ellipse [300, 100], 180, 180
       end
     end
 
-    # CRITICAL: Reset fill_color to text color after background operations
+    # Restore fill color to text color
     @pdf.fill_color COLORS[:text_primary]
   end
 
@@ -381,7 +384,7 @@ class ContractGeneratorDashboardStyle
   end
 
   def generate_democratic_structure
-    # Start new page if needed
+    # Start new page if needed (background will be applied automatically via on_page_create)
     @pdf.start_new_page if @pdf.cursor < 250
 
     section_heading('10. Hyresstruktur och demokratisk beslutsgång')

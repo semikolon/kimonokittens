@@ -1,0 +1,12 @@
+{
+  "tenant_name": "Frida Johansson",
+  "personnummer": "890622-3386",
+  "email": "PENDING - Awaiting from tenant",
+  "phone": "PENDING - Awaiting from tenant",
+  "move_in_date": "2025-12-03",
+  "base_rent": 6132.5,
+  "deposit": 6200,
+  "furnishing_deposit": 2200,
+  "status": "awaiting_contact_details",
+  "notes": "Contract ready to generate once email and phone number received"
+}
