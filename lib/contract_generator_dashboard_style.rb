@@ -94,7 +94,7 @@ class ContractGeneratorDashboardStyle
     generate_notice_period
     generate_other_terms
     generate_democratic_structure
-    generate_signature_section
+    # Note: No signature section - Zigned appends its own BankID signature page
 
     # Save PDF
     @pdf.render_file(output_path)
@@ -105,30 +105,34 @@ class ContractGeneratorDashboardStyle
 
   # Apply deep purple gradient background to all pages
   def apply_dark_gradient_background
+    # Apply dark background to ALL pages (not just first)
     @pdf.repeat :all do
-      # Canvas for background (behind all content)
       @pdf.canvas do
-        # Base layer - darkest purple/black
+        # Dark purple/black background
         @pdf.fill_color COLORS[:bg_dark]
-        @pdf.fill_rectangle [0, @pdf.bounds.top], @pdf.bounds.width, @pdf.bounds.height
+        @pdf.fill_rectangle [0, 0], @pdf.bounds.width, @pdf.bounds.height + @pdf.bounds.top
 
-        # Gradient effect with multiple overlaid ellipses (simulating dashboard gradients)
-        @pdf.transparent(0.15) do
+        # Gradient effect with EXTREMELY subtle ellipses (dashboard uses 0.01-0.02 opacity)
+        # These should be BARELY visible - just hints of purple color
+        @pdf.transparent(0.02) do
           @pdf.fill_color COLORS[:primary]
           @pdf.fill_ellipse [100, 600], 200, 150
         end
 
-        @pdf.transparent(0.1) do
+        @pdf.transparent(0.015) do
           @pdf.fill_color COLORS[:accent]
           @pdf.fill_ellipse [@pdf.bounds.width - 150, 300], 250, 200
         end
 
-        @pdf.transparent(0.08) do
+        @pdf.transparent(0.01) do
           @pdf.fill_color COLORS[:bright]
           @pdf.fill_ellipse [300, 100], 180, 180
         end
       end
     end
+
+    # CRITICAL: Reset fill_color to text color after background operations
+    @pdf.fill_color COLORS[:text_primary]
   end
 
   # Setup footer with page numbers
@@ -175,6 +179,9 @@ class ContractGeneratorDashboardStyle
       @pdf.fill_color COLORS[:accent]
       @pdf.fill_rectangle [@pdf.bounds.left, @pdf.cursor - height], @pdf.bounds.width, height
     end
+
+    # Reset fill_color to text color after decorative elements
+    @pdf.fill_color COLORS[:text_primary]
   end
 
   def generate_title
@@ -186,7 +193,7 @@ class ContractGeneratorDashboardStyle
     @pdf.fill_color COLORS[:text_primary]
     @pdf.move_down 20
 
-    @pdf.font_size(10) do
+    @pdf.font_size(18) do  # Match dashboard 1.5rem body text
       @pdf.text 'Mellan nedanstående parter har följande avtal slutits:'
     end
     @pdf.move_down 20
@@ -195,7 +202,7 @@ class ContractGeneratorDashboardStyle
   def generate_parties
     section_heading('1. Parter')
 
-    @pdf.font_size(10) do
+    @pdf.font_size(18) do  # Match dashboard body text size
       # Landlord box with subtle purple background
       @pdf.transparent(0.15) do
         @pdf.fill_color COLORS[:primary]
@@ -242,7 +249,7 @@ class ContractGeneratorDashboardStyle
   def generate_property
     section_heading('2. Objekt')
 
-    @pdf.font_size(10) do
+    @pdf.font_size(18) do  # Match dashboard body text size
       @pdf.text "Adress: #{PROPERTY[:address]}"
       @pdf.text "Bostadstyp: #{PROPERTY[:type]}"
     end
@@ -255,7 +262,7 @@ class ContractGeneratorDashboardStyle
 
     move_in = @tenant[:move_in_date].strftime('%Y-%m-%d')
 
-    @pdf.font_size(10) do
+    @pdf.font_size(18) do  # Match dashboard body text size
       @pdf.text "Avtalet gäller omedelbart med inflytt från och med #{move_in} tills vidare med en " \
                 "uppsägningstid om två (2) månader räknat från den dag då uppsägningen skriftligen " \
                 "meddelats motparten.", align: :justify
@@ -267,7 +274,7 @@ class ContractGeneratorDashboardStyle
   def generate_rent
     section_heading('4. Hyra')
 
-    @pdf.font_size(10) do
+    @pdf.font_size(18) do  # Match dashboard body text size
       @pdf.fill_color COLORS[:text_accent]
       @pdf.text "4.1 Kall månadshyra: #{format_currency(RENT_DETAILS[:base_rent])}", style: :bold
       @pdf.fill_color COLORS[:text_primary]
@@ -281,7 +288,7 @@ class ContractGeneratorDashboardStyle
   def generate_utilities
     section_heading('5. Avgifter för el och nät')
 
-    @pdf.font_size(10) do
+    @pdf.font_size(18) do  # Match dashboard body text size
       @pdf.text 'Hyresgästen åtar sig att dela elkostnad, nätkostnad, vattenavgift, larm, gas och ' \
                 "bredband lika med övriga medlemmar i kollektivet. Den genomsnittliga månadskostnaden " \
                 "för dessa är ca. #{format_currency(RENT_DETAILS[:utilities_estimate])}.", align: :justify
@@ -301,7 +308,7 @@ class ContractGeneratorDashboardStyle
   def generate_deposit
     section_heading('6. Deposition')
 
-    @pdf.font_size(10) do
+    @pdf.font_size(18) do  # Match dashboard body text size
       @pdf.text "Hyresgästen erlägger en deposition om en dryg (1) kall månadshyra, dvs. " \
                 "#{format_currency(RENT_DETAILS[:deposit])}, som återbetalas i enlighet med hyreslagens " \
                 "bestämmelser efter det att hyresobjektet återlämnats i godtagbart skick.", align: :justify
@@ -313,7 +320,7 @@ class ContractGeneratorDashboardStyle
   def generate_furnishing_deposit
     section_heading('7. Inredningsdeposition')
 
-    @pdf.font_size(10) do
+    @pdf.font_size(18) do  # Match dashboard body text size
       @pdf.text "7.1 Vid inträde i kollektivet erlägger andrahandsgästen, utöver depositionen, en " \
                 "inredningsdeposition om #{format_currency(RENT_DETAILS[:furnishing_deposit])} till den utflyttande parten.",
                 align: :justify
@@ -345,7 +352,7 @@ class ContractGeneratorDashboardStyle
   def generate_notice_period
     section_heading('8. Uppsägning')
 
-    @pdf.font_size(10) do
+    @pdf.font_size(18) do  # Match dashboard body text size
       @pdf.text 'Uppsägning ska ske skriftligen med minst två (2) månaders varsel. Uppsägning räknas ' \
                 'från den sista dagen i den månad då uppsägningen delges motparten.',
                 align: :justify
@@ -357,7 +364,7 @@ class ContractGeneratorDashboardStyle
   def generate_other_terms
     section_heading('9. Övriga villkor')
 
-    @pdf.font_size(10) do
+    @pdf.font_size(18) do  # Match dashboard body text size
       @pdf.indent(20) do
         @pdf.text '• Hyresgästen förbinder sig att följa ordningsregler som gäller för kollektivet.'
         @pdf.move_down 5
@@ -379,7 +386,7 @@ class ContractGeneratorDashboardStyle
 
     section_heading('10. Hyresstruktur och demokratisk beslutsgång')
 
-    @pdf.font_size(10) do
+    @pdf.font_size(18) do  # Match dashboard body text size
       # 10.1
       @pdf.fill_color COLORS[:text_accent]
       @pdf.text '10.1 Hyresberäkning', style: :bold
@@ -426,64 +433,9 @@ class ContractGeneratorDashboardStyle
     @pdf.move_down 25
   end
 
-  def generate_signature_section
-    # Ensure enough space
-    @pdf.start_new_page if @pdf.cursor < 200
-
-    gradient_line(height: 3)
-    @pdf.move_down 20
-
-    @pdf.font_size(11) do
-      @pdf.fill_color COLORS[:text_accent]
-      @pdf.text 'Ort och datum', style: :bold
-      @pdf.fill_color COLORS[:text_primary]
-      @pdf.move_down 8
-      @pdf.text "Huddinge den ____________________"
-      @pdf.move_down 35
-
-      @pdf.fill_color COLORS[:text_accent]
-      @pdf.text 'Underskrifter', style: :bold, align: :center
-      @pdf.fill_color COLORS[:text_primary]
-      @pdf.move_down 35
-
-      # Landlord signature
-      @pdf.fill_color COLORS[:accent]
-      @pdf.text 'Förstahandshyresgäst:', style: :bold
-      @pdf.fill_color COLORS[:text_primary]
-      @pdf.move_down 30
-
-      # Signature line with purple glow
-      @pdf.transparent(0.5) do
-        @pdf.stroke_color COLORS[:primary]
-        @pdf.line_width 2
-        @pdf.stroke_horizontal_line 0, 250, at: @pdf.cursor
-      end
-      @pdf.stroke_color COLORS[:text_primary]
-      @pdf.move_down 8
-      @pdf.text LANDLORD[:name]
-      @pdf.move_down 45
-
-      # Tenant signature
-      @pdf.fill_color COLORS[:accent]
-      @pdf.text 'Andrahands-hyresgäst:', style: :bold
-      @pdf.fill_color COLORS[:text_primary]
-      @pdf.move_down 30
-
-      # Signature line with purple glow
-      @pdf.transparent(0.5) do
-        @pdf.stroke_color COLORS[:primary]
-        @pdf.line_width 2
-        @pdf.stroke_horizontal_line 0, 250, at: @pdf.cursor
-      end
-      @pdf.stroke_color COLORS[:text_primary]
-      @pdf.move_down 8
-      @pdf.text @tenant[:name]
-    end
-  end
-
   # Helper: Format section headings with gradient accent
   def section_heading(text)
-    @pdf.font_size(12) do
+    @pdf.font_size(20) do  # Match dashboard h3 heading size (1.5rem)
       @pdf.fill_color COLORS[:bright]
       @pdf.text text, style: :bold
       @pdf.fill_color COLORS[:text_primary]

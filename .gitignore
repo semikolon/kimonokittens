@@ -60,3 +60,4 @@ logs/
 # Claude Code personal settings
 .claude/settings.local.json
 .claude/tier2_analyses/
+/contracts/generated/
