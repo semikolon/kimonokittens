@@ -147,7 +147,7 @@ class ContractGeneratorDashboardStyle
 
         @pdf.move_down 8
         @pdf.fill_color COLORS[:text_muted]
-        @pdf.font_size 9
+        @pdf.font_size 5
         @pdf.text "Sida #{@pdf.page_number}", align: :center
         @pdf.fill_color COLORS[:text_primary]
       end
@@ -190,13 +190,13 @@ class ContractGeneratorDashboardStyle
   def generate_title
     # Bold title with gradient accent colors
     @pdf.fill_color COLORS[:text_accent]
-    @pdf.font_size(22) do
+    @pdf.font_size(13) do
       @pdf.text 'HYRESAVTAL – ANDRAHANDSUTHYRNING', align: :center, style: :bold
     end
     @pdf.fill_color COLORS[:text_primary]
     @pdf.move_down 20
 
-    @pdf.font_size(18) do  # Match dashboard 1.5rem body text
+    @pdf.font_size(11) do  # 60% of original dashboard scale
       @pdf.text 'Mellan nedanstående parter har följande avtal slutits:'
     end
     @pdf.move_down 20
@@ -205,7 +205,7 @@ class ContractGeneratorDashboardStyle
   def generate_parties
     section_heading('1. Parter')
 
-    @pdf.font_size(18) do  # Match dashboard body text size
+    @pdf.font_size(11) do  # 60% of original dashboard scale
       # Landlord box with subtle purple background
       @pdf.transparent(0.15) do
         @pdf.fill_color COLORS[:primary]
@@ -252,7 +252,7 @@ class ContractGeneratorDashboardStyle
   def generate_property
     section_heading('2. Objekt')
 
-    @pdf.font_size(18) do  # Match dashboard body text size
+    @pdf.font_size(11) do  # 60% of original dashboard scale
       @pdf.text "Adress: #{PROPERTY[:address]}"
       @pdf.text "Bostadstyp: #{PROPERTY[:type]}"
     end
@@ -265,7 +265,7 @@ class ContractGeneratorDashboardStyle
 
     move_in = @tenant[:move_in_date].strftime('%Y-%m-%d')
 
-    @pdf.font_size(18) do  # Match dashboard body text size
+    @pdf.font_size(11) do  # 60% of original dashboard scale
       @pdf.text "Avtalet gäller omedelbart med inflytt från och med #{move_in} tills vidare med en " \
                 "uppsägningstid om två (2) månader räknat från den dag då uppsägningen skriftligen " \
                 "meddelats motparten.", align: :justify
@@ -277,7 +277,7 @@ class ContractGeneratorDashboardStyle
   def generate_rent
     section_heading('4. Hyra')
 
-    @pdf.font_size(18) do  # Match dashboard body text size
+    @pdf.font_size(11) do  # 60% of original dashboard scale
       @pdf.fill_color COLORS[:text_accent]
       @pdf.text "4.1 Kall månadshyra: #{format_currency(RENT_DETAILS[:base_rent])}", style: :bold
       @pdf.fill_color COLORS[:text_primary]
@@ -291,7 +291,7 @@ class ContractGeneratorDashboardStyle
   def generate_utilities
     section_heading('5. Avgifter för el och nät')
 
-    @pdf.font_size(18) do  # Match dashboard body text size
+    @pdf.font_size(11) do  # 60% of original dashboard scale
       @pdf.text 'Hyresgästen åtar sig att dela elkostnad, nätkostnad, vattenavgift, larm, gas och ' \
                 "bredband lika med övriga medlemmar i kollektivet. Den genomsnittliga månadskostnaden " \
                 "för dessa är ca. #{format_currency(RENT_DETAILS[:utilities_estimate])}.", align: :justify
@@ -311,7 +311,7 @@ class ContractGeneratorDashboardStyle
   def generate_deposit
     section_heading('6. Deposition')
 
-    @pdf.font_size(18) do  # Match dashboard body text size
+    @pdf.font_size(11) do  # 60% of original dashboard scale
       @pdf.text "Hyresgästen erlägger en deposition om en dryg (1) kall månadshyra, dvs. " \
                 "#{format_currency(RENT_DETAILS[:deposit])}, som återbetalas i enlighet med hyreslagens " \
                 "bestämmelser efter det att hyresobjektet återlämnats i godtagbart skick.", align: :justify
@@ -323,7 +323,7 @@ class ContractGeneratorDashboardStyle
   def generate_furnishing_deposit
     section_heading('7. Inredningsdeposition')
 
-    @pdf.font_size(18) do  # Match dashboard body text size
+    @pdf.font_size(11) do  # 60% of original dashboard scale
       @pdf.text "7.1 Vid inträde i kollektivet erlägger andrahandsgästen, utöver depositionen, en " \
                 "inredningsdeposition om #{format_currency(RENT_DETAILS[:furnishing_deposit])} till den utflyttande parten.",
                 align: :justify
@@ -355,7 +355,7 @@ class ContractGeneratorDashboardStyle
   def generate_notice_period
     section_heading('8. Uppsägning')
 
-    @pdf.font_size(18) do  # Match dashboard body text size
+    @pdf.font_size(11) do  # 60% of original dashboard scale
       @pdf.text 'Uppsägning ska ske skriftligen med minst två (2) månaders varsel. Uppsägning räknas ' \
                 'från den sista dagen i den månad då uppsägningen delges motparten.',
                 align: :justify
@@ -367,7 +367,7 @@ class ContractGeneratorDashboardStyle
   def generate_other_terms
     section_heading('9. Övriga villkor')
 
-    @pdf.font_size(18) do  # Match dashboard body text size
+    @pdf.font_size(11) do  # 60% of original dashboard scale
       @pdf.indent(20) do
         @pdf.text '• Hyresgästen förbinder sig att följa ordningsregler som gäller för kollektivet.'
         @pdf.move_down 5
@@ -389,7 +389,7 @@ class ContractGeneratorDashboardStyle
 
     section_heading('10. Hyresstruktur och demokratisk beslutsgång')
 
-    @pdf.font_size(18) do  # Match dashboard body text size
+    @pdf.font_size(11) do  # 60% of original dashboard scale
       # 10.1
       @pdf.fill_color COLORS[:text_accent]
       @pdf.text '10.1 Hyresberäkning', style: :bold
@@ -438,7 +438,7 @@ class ContractGeneratorDashboardStyle
 
   # Helper: Format section headings with gradient accent
   def section_heading(text)
-    @pdf.font_size(20) do  # Match dashboard h3 heading size (1.5rem)
+    @pdf.font_size(12) do  # 60% of original dashboard heading scale
       @pdf.fill_color COLORS[:bright]
       @pdf.text text, style: :bold
       @pdf.fill_color COLORS[:text_primary]
