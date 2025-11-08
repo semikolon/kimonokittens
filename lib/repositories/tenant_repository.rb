@@ -101,7 +101,12 @@ class TenantRepository < BaseRepository
       start_date: tenant.start_date,
       departure_date: tenant.departure_date,
       created_at: now_utc,
-      updated_at: now_utc
+      updated_at: now_utc,
+      # Contract fields
+      personnummer: tenant.personnummer,
+      phone: tenant.phone,
+      deposit: tenant.deposit,
+      furnishing_deposit: tenant.furnishing_deposit
     )
   end
 
@@ -119,7 +124,12 @@ class TenantRepository < BaseRepository
       roomAdjustment: tenant.room_adjustment,
       startDate: tenant.start_date,
       departureDate: tenant.departure_date,
-      updatedAt: now_utc
+      updatedAt: now_utc,
+      # Contract fields
+      personnummer: tenant.personnummer,
+      phone: tenant.phone,
+      deposit: tenant.deposit,
+      furnishingDeposit: tenant.furnishing_deposit
     )
 
     tenant
@@ -172,7 +182,12 @@ class TenantRepository < BaseRepository
       start_date: row[:startDate],
       departure_date: row[:departureDate],
       created_at: row[:createdAt],
-      updated_at: row[:updatedAt]
+      updated_at: row[:updatedAt],
+      # Contract fields
+      personnummer: row[:personnummer],
+      phone: row[:phone],
+      deposit: row[:deposit],
+      furnishing_deposit: row[:furnishingDeposit]
     )
   end
 
@@ -190,7 +205,12 @@ class TenantRepository < BaseRepository
       startDate: tenant.start_date,
       departureDate: tenant.departure_date,
       createdAt: tenant.created_at || now_utc,
-      updatedAt: tenant.updated_at || now_utc
+      updatedAt: tenant.updated_at || now_utc,
+      # Contract fields
+      personnummer: tenant.personnummer,
+      phone: tenant.phone,
+      deposit: tenant.deposit,
+      furnishingDeposit: tenant.furnishing_deposit
     }
   end
 end

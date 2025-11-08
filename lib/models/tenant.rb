@@ -27,11 +27,17 @@ require_relative 'period'
 class Tenant
   attr_reader :id, :name, :email, :facebook_id, :avatar_url,
               :room_adjustment, :start_date, :departure_date,
-              :created_at, :updated_at
+              :created_at, :updated_at,
+              # Contract fields:
+              :personnummer, :phone,
+              :deposit, :furnishing_deposit
 
   def initialize(id: nil, name:, email:, facebook_id: nil, avatar_url: nil,
                  room_adjustment: nil, start_date: nil, departure_date: nil,
-                 created_at: nil, updated_at: nil)
+                 created_at: nil, updated_at: nil,
+                 # Contract fields:
+                 personnummer: nil, phone: nil,
+                 deposit: nil, furnishing_deposit: nil)
     @id = id
     @name = name.to_s
     @email = email.to_s
@@ -42,6 +48,11 @@ class Tenant
     @departure_date = parse_date(departure_date)
     @created_at = created_at
     @updated_at = updated_at
+    # Contract fields
+    @personnummer = personnummer
+    @phone = phone
+    @deposit = parse_decimal(deposit)
+    @furnishing_deposit = parse_decimal(furnishing_deposit)
     validate!
   end
 
@@ -124,6 +135,37 @@ class Tenant
     !room_adjustment.nil? && room_adjustment != 0
   end
 
+  # Check if deposit paid
+  # @return [Boolean]
+  def deposit_paid?
+    !deposit.nil? && deposit > 0
+  end
+
+  # Check if furnishing deposit paid
+  # @return [Boolean]
+  def furnishing_deposit_paid?
+    !furnishing_deposit.nil? && furnishing_deposit > 0
+  end
+
+  # Calculate total deposits paid
+  # @return [Float] Total of both deposits
+  def total_deposits_paid
+    (deposit || 0) + (furnishing_deposit || 0)
+  end
+
+  # Calculate expected deposit based on number of active tenants
+  #
+  # Formula: ~110% of per-person base rent
+  # Example: 4 people → 24,530 / 4 = 6,132.5 → * 1.1 = 6,746 kr
+  #
+  # @param num_active_tenants [Integer] Number of active tenants
+  # @param total_base_rent [Integer] Total apartment base rent (default: 24,530 kr)
+  # @return [Integer] Expected deposit amount (rounded)
+  def self.calculate_deposit(num_active_tenants, total_base_rent: 24_530)
+    base_rent_per_person = total_base_rent / num_active_tenants.to_f
+    (base_rent_per_person * 1.1).round
+  end
+
   def to_s
     status = active? ? 'active' : "departed #{departure_date}"
     "#{name} <#{email}> (#{status})"
@@ -142,7 +184,12 @@ class Tenant
       startDate: start_date,
       departureDate: departure_date,
       createdAt: created_at,
-      updatedAt: updated_at
+      updatedAt: updated_at,
+      # Contract fields
+      personnummer: personnummer,
+      phone: phone,
+      deposit: deposit,
+      furnishingDeposit: furnishing_deposit
     }
   end
 
@@ -158,6 +205,15 @@ class Tenant
     Date.parse(value.to_s)
   end
 
+  # Parse decimal from various input types (for currency values)
+  # @param value [Numeric, String, nil] Decimal input
+  # @return [Float, nil]
+  def parse_decimal(value)
+    return nil if value.nil?
+    return value.to_f if value.is_a?(Numeric)
+    value.to_s.to_f
+  end
+
   def validate!
     raise ArgumentError, "Name required" if name.empty?
     raise ArgumentError, "Email required" if email.empty?
@@ -165,6 +221,15 @@ class Tenant
     # Validate date logic
     if start_date && departure_date && start_date > departure_date
       raise ArgumentError, "Start date (#{start_date}) cannot be after departure date (#{departure_date})"
+    end
+
+    # Validate deposits (cannot be negative)
+    if deposit && deposit < 0
+      raise ArgumentError, "Deposit cannot be negative"
+    end
+
+    if furnishing_deposit && furnishing_deposit < 0
+      raise ArgumentError, "Furnishing deposit cannot be negative"
     end
   end
 end
