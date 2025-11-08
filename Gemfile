@@ -22,6 +22,10 @@ gem 'mutex_m'
 gem 'faraday', '~> 2.13'
 gem 'faraday-excon', '~> 2.2'
 
+# PDF Generation
+gem 'prawn', '~> 2.5'
+gem 'prawn-table', '~> 0.2'
+
 # Database
 gem 'pg', '~> 1.6' # For PostgreSQL - upgraded for PostgreSQL 17 compatibility
 gem 'sequel', '~> 5.84' # Database toolkit with connection pooling for thread safety

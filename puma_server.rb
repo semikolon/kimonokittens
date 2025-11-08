@@ -49,6 +49,7 @@ require_relative 'handlers/heating_cost_handler'
 require_relative 'handlers/electricity_price_handler'
 require_relative 'handlers/electricity_stats_handler'
 require_relative 'handlers/screenshot_handler'
+require_relative 'handlers/zigned_webhook_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
@@ -295,6 +296,25 @@ app = Rack::Builder.new do
 
   map "/api/screenshot" do
     run screenshot_handler
+  end
+
+  # Zigned webhook endpoint for contract signing events
+  map "/api/webhooks/zigned" do
+    run lambda { |env|
+      req = Rack::Request.new(env)
+
+      if req.post?
+        handler = ZignedWebhookHandler.new
+        result = handler.handle(req)
+
+        status = result[:status]
+        body = Oj.dump(result)
+
+        [status, {'Content-Type' => 'application/json'}, [body]]
+      else
+        [405, {'Content-Type' => 'application/json'}, [Oj.dump({ error: 'Method not allowed' })]]
+      end
+    }
   end
 
   # Display control routes
