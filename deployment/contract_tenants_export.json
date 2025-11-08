@@ -1,0 +1,29 @@
+{
+  "exported_at": "2025-11-08T20:11:12+01:00",
+  "tenants": [
+    {
+      "id": "cmhqe9enc0000wopipuxgc3kw",
+      "name": "Sanna Juni Benemar",
+      "email": "sanna_benemar@hotmail.com",
+      "personnummer": "8706220020",
+      "phone": "070 289 44 37",
+      "deposit": 6200.0,
+      "furnishing_deposit": 2200.0,
+      "start_date": "2025-11-01",
+      "status": "active",
+      "room_adjustment": null
+    },
+    {
+      "id": "cmhqlmryv00004ipixj2zdkhj",
+      "name": "Frida Johansson",
+      "email": "frida.johansson@gmail.com",
+      "personnummer": "9012151234",
+      "phone": "070-123 45 67",
+      "deposit": 6200.0,
+      "furnishing_deposit": 2200.0,
+      "start_date": "2025-12-03",
+      "status": "pending",
+      "room_adjustment": null
+    }
+  ]
+}
