@@ -94,8 +94,7 @@ class ContractGeneratorHtml
       rent: {
         amount: rent_amount,
         due_day: '27',
-        bankgiro: '5862-4400',
-        swish: '073-830 72 22'
+        swish: '073-830 72 22'  # TODO: Replace with correct house Swish from QR code
       },
       utilities_text: extract_section(markdown, 'Avgifter för el'),
       deposit_text: extract_section(markdown, 'Deposition'),
