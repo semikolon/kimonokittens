@@ -59,12 +59,12 @@ model RentLedger {
 }
 
 model Tenant {
-  id                 String        @id
-  facebookId         String?       @unique
+  id                 String           @id
+  facebookId         String?          @unique
   name               String
-  email              String        @unique
+  email              String           @unique
   avatarUrl          String?
-  createdAt          DateTime      @default(now())
+  createdAt          DateTime         @default(now())
   updatedAt          DateTime
   roomAdjustment     Float?
   departureDate      DateTime?
@@ -72,10 +72,32 @@ model Tenant {
   // Contract fields
   personnummer       String?
   phone              String?
-  baseRent           Decimal?      @db.Decimal(10, 2)
-  deposit            Decimal?      @db.Decimal(10, 2)
-  furnishingDeposit  Decimal?      @db.Decimal(10, 2)
-  status             String?       @default("active")
+  baseRent           Decimal?         @db.Decimal(10, 2)
+  deposit            Decimal?         @db.Decimal(10, 2)
+  furnishingDeposit  Decimal?         @db.Decimal(10, 2)
+  status             String?          @default("active")
   RentLedger         RentLedger[]
-  CoOwnedItem        CoOwnedItem[] @relation("ItemOwners")
+  CoOwnedItem        CoOwnedItem[]    @relation("ItemOwners")
+  SignedContract     SignedContract[]
+}
+
+model SignedContract {
+  id               String    @id
+  tenantId         String
+  caseId           String    @unique
+  pdfUrl           String
+  status           String    @default("pending")
+  landlordSigned   Boolean   @default(false)
+  tenantSigned     Boolean   @default(false)
+  landlordSignedAt DateTime?
+  tenantSignedAt   DateTime?
+  completedAt      DateTime?
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([status])
 }
