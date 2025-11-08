@@ -54,3 +54,5 @@ end
 group :assets do
   gem 'sass-embedded', '~> 1.74'
 end
+
+gem "kramdown", "~> 2.5"

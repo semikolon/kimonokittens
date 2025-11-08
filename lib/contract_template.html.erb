@@ -30,17 +30,38 @@
       font-style: normal;
     }
 
+    html {
+      background: radial-gradient(ellipse 150% 100% at top center, rgb(28,22,35) 0%, rgb(25,18,32) 100%) !important;
+      -webkit-print-color-adjust: exact !important;
+      -webkit-filter: opacity(1) !important;
+      print-color-adjust: exact !important;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: 'Galvji', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      /* EXACT dashboard background - radial gradient */
-      background: radial-gradient(circle at center, rgb(28,22,35) 0%, rgb(25,18,32) 100%);
+      /* Simple radial gradient from top center */
+      background: radial-gradient(ellipse 150% 100% at top center, rgb(28,22,35) 0%, rgb(25,18,32) 100%);
       color: rgb(221, 214, 254); /* text-purple-200 */
       font-size: 11pt;
       line-height: 1.6;
       margin: 0;
       padding: 0;
-      overflow: hidden;  /* Clip any rendering artifacts */
-      min-height: 100vh; /* Ensure full viewport coverage */
+      min-height: 100vh;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -100px;
+      left: -100px;
+      right: -100px;
+      bottom: -100px;
+      background: radial-gradient(ellipse 150% 100% at top center, rgb(28,22,35) 0%, rgb(25,18,32) 100%);
+      box-shadow: 0 0 0 200px rgb(25,18,32);  /* Extend background way beyond edges */
+      z-index: -1;
     }
 
     h1 {
@@ -64,15 +85,43 @@
       padding: 16px 20px;   /* Dashboard padding */
       margin-bottom: 16px;
       backdrop-filter: blur(4px); /* backdrop-blur-sm */
+      page-break-inside: avoid;  /* Prevent widget boxes from splitting across pages */
     }
 
-    .gradient-line {
-      height: 2px;
-      background: linear-gradient(90deg,
-        rgba(139, 92, 246, 0.3) 0%,
-        rgba(139, 92, 246, 0.2) 50%,
-        transparent 100%);
-      margin: 8px 0 12px 0;
+    .widget-box p {
+      margin: 10px 0;  /* Space between paragraphs */
+    }
+
+    .widget-box p:first-child {
+      margin-top: 0;
+    }
+
+    .widget-box p:last-child {
+      margin-bottom: 0;
+    }
+
+    .widget-box strong {
+      display: inline;  /* Keep bold inline, not block */
+      font-weight: bold;
+    }
+
+    .widget-box > p > strong:only-child {
+      display: block;  /* Only make standalone strong tags block-level */
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+
+    .widget-box ul {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    .widget-box li {
+      margin: 4px 0;
+    }
+
+    .widget-box hr {
+      display: none;  /* Hide horizontal rules from markdown --- */
     }
 
     .section-title {
@@ -86,13 +135,27 @@
     }
 
     .logo {
-      width: 360px;  /* 3x larger for better visibility */
+      width: 288px;  /* 20% smaller than 360px */
       float: right;
       margin-left: 20px;
+      margin-right: 0;  /* Align close to right edge like dashboard */
+    }
+
+    .swish-qr {
+      width: 120px;
+      float: right;
+      margin-left: 15px;
+      margin-top: 0;
+      margin-bottom: 10px;
+      border-radius: 8px;
     }
 
     @page {
-      margin: 0;  /* Zero margins - background extends to edges */
+      margin: 0 !important;  /* Zero margins - background extends to edges */
+      margin-top: 0cm !important;
+      margin-bottom: 0cm !important;
+      margin-left: 0cm !important;
+      margin-right: 0cm !important;
       size: A4;
     }
 
@@ -111,22 +174,14 @@
   </style>
 </head>
 <body>
-  <!-- Dashboard-style gradient overlays (static versions of animated gradients) -->
-  <div style="position: fixed; top: -1px; left: -1px; width: calc(100% + 2px); height: calc(100% + 2px); pointer-events: none; z-index: 0;">
-    <div style="position: absolute; width: 60%; height: 60%; top: 10%; left: 10%; background: radial-gradient(ellipse at center, rgba(68,25,150,0.20) 0%, transparent 70%); mix-blend-mode: screen;"></div>
-    <div style="position: absolute; width: 50%; height: 70%; top: 15%; right: 5%; background: radial-gradient(ellipse at center, rgba(89,45,170,0.18) 0%, transparent 70%); mix-blend-mode: screen;"></div>
-    <div style="position: absolute; width: 70%; height: 50%; top: 35%; left: 20%; background: radial-gradient(ellipse at center, rgba(110,35,160,0.16) 0%, transparent 70%); mix-blend-mode: screen;"></div>
-  </div>
-
-  <div class="container" style="position: relative; z-index: 1;">
+  <div class="container">
 
     <!-- Logo and Title -->
     <div style="margin-bottom: 20px; overflow: hidden;">
       <img src="file:///<%= logo_path %>" class="logo" alt="Kimonokittens">
-      <h1 style="font-size: 13pt; margin: 0; padding-top: 10px;">
+      <h1 style="font-size: 25.2pt; margin: 0 0 1em 0; padding-top: 10px;">
         HYRESAVTAL
       </h1>
-      <div class="gradient-line"></div>
       <p style="color: rgb(148, 163, 184); font-size: 10pt; margin: 8px 0 0 0;">
         <%= tenant[:name] %> • <%= contract_period %>
       </p>
@@ -136,91 +191,87 @@
       <p style="margin-bottom: 16px;">Mellan nedanstående parter har följande avtal slutits:</p>
 
       <!-- Section 1: Parter -->
-      <h2 class="section-title">1. Parter</h2>
-      <div class="gradient-line" style="height: 1.5px;"></div>
+      <h2 class="section-title">Parter</h2>
 
-      <div class="widget-box">
-        <h3 style="font-size: 11pt; margin: 0 0 8px 0;">Förstahandshyresgäst (Hyresvärd i detta avtal):</h3>
-        <div style="margin-left: 15px; font-size: 10.5pt;">
-          <p style="margin: 3px 0;"><strong>Namn:</strong> <%= landlord[:name] %></p>
-          <p style="margin: 3px 0;"><strong>Personnummer:</strong> <%= landlord[:personnummer] %></p>
-          <p style="margin: 3px 0;"><strong>Telefon:</strong> <%= landlord[:phone] %></p>
-          <p style="margin: 3px 0;"><strong>E-post:</strong> <%= landlord[:email] %></p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div class="widget-box" style="margin-bottom: 0;">
+          <h3 style="font-size: 11pt; margin: 0 0 2px 0; text-transform: uppercase;">FÖRSTAHANDSHYRESGÄST</h3>
+          <p style="font-size: 9pt; margin: 0 0 12px 0; color: rgb(148, 163, 184);">Hyresvärd i detta avtal</p>
+          <div style="margin-left: 15px; font-size: 10.5pt;">
+            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Namn:</strong> <%= landlord[:name] %></p>
+            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Personnummer:</strong> <%= landlord[:personnummer] %></p>
+            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Telefon:</strong> <%= landlord[:phone] %></p>
+            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">E-post:</strong> <%= landlord[:email] %></p>
+          </div>
         </div>
-      </div>
 
-      <div class="widget-box">
-        <h3 style="font-size: 11pt; margin: 0 0 8px 0;">Andrahands-hyresgäst (Hyresgäst i detta avtal):</h3>
-        <div style="margin-left: 15px; font-size: 10.5pt;">
-          <p style="margin: 3px 0;"><strong>Namn:</strong> <%= tenant[:name] %></p>
-          <p style="margin: 3px 0;"><strong>Personnummer:</strong> <%= tenant[:personnummer] %></p>
-          <p style="margin: 3px 0;"><strong>Telefon:</strong> <%= tenant[:phone] %></p>
-          <p style="margin: 3px 0;"><strong>E-post:</strong> <%= tenant[:email] %></p>
+        <div class="widget-box" style="margin-bottom: 0;">
+          <h3 style="font-size: 11pt; margin: 0 0 2px 0; text-transform: uppercase;">ANDRAHANDSHYRESGÄST</h3>
+          <p style="font-size: 9pt; margin: 0 0 12px 0; color: rgb(148, 163, 184);">Hyresgäst i detta avtal</p>
+          <div style="margin-left: 15px; font-size: 10.5pt;">
+            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Namn:</strong> <%= tenant[:name] %></p>
+            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Personnummer:</strong> <%= tenant[:personnummer] %></p>
+            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">Telefon:</strong> <%= tenant[:phone] %></p>
+            <p style="margin: 3px 0; color: rgb(148, 163, 184);"><strong style="color: rgb(221, 214, 254);">E-post:</strong> <%= tenant[:email] %></p>
+          </div>
         </div>
       </div>
 
       <!-- Section 2: Objekt -->
-      <h2 class="section-title">2. Objekt</h2>
-      <div class="gradient-line" style="height: 1.5px;"></div>
+      <h2 class="section-title">Objekt</h2>
 
       <div class="widget-box">
-        <p style="margin: 3px 0;"><strong>Adress:</strong> <%= property[:address] %></p>
-        <p style="margin: 3px 0;"><strong>Bostadstyp:</strong> <%= property[:type] %></p>
+        <p style="margin: 0 0 6px 0;"><strong>Adress:</strong> <%= property[:address] %></p>
+        <p style="margin: 6px 0 0 0;"><strong>Bostadstyp:</strong> <%= property[:type] %></p>
       </div>
 
       <!-- Section 3: Hyrestid -->
-      <h2 class="section-title">3. Hyrestid</h2>
-      <div class="gradient-line" style="height: 1.5px;"></div>
+      <h2 class="section-title">Hyrestid</h2>
 
       <div class="widget-box">
-        <p><%= rental_period_text %></p>
+        <%= rental_period_text %>
       </div>
 
       <!-- Section 4: Hyra -->
-      <h2 class="section-title">4. Hyra</h2>
-      <div class="gradient-line" style="height: 1.5px;"></div>
+      <h2 class="section-title">Hyra</h2>
 
-      <div class="widget-box">
-        <p style="margin: 6px 0;"><strong>4.1 Kall månadshyra:</strong> <%= rent[:amount] %> kr.</p>
-        <p style="margin: 6px 0;"><strong>4.2 Hyran måste ha inkommit på Hyresvärdens konto senast den <%= rent[:due_day] %> varje månad.</strong></p>
-        <p style="margin: 6px 0;"><strong>Betalas till Swish:</strong> <%= rent[:swish] %>.</p>
+      <div class="widget-box" style="overflow: hidden;">
+        <img src="file:///<%= swish_qr_path %>" class="swish-qr" alt="Swish QR Code">
+        <p style="margin: 0 0 8px 0;"><strong>Kall månadshyra:</strong> <%= rent[:amount] %> kr.</p>
+        <p style="margin: 8px 0;"><strong>Hyran måste ha inkommit på Hyresvärdens konto senast den <%= rent[:due_day] %> varje månad.</strong></p>
+        <p style="margin: 8px 0 0 0;"><strong>Betalas till Swish:</strong> <%= rent[:swish] %>.</p>
       </div>
 
       <!-- Section 5: Avgifter för el och bredband -->
-      <h2 class="section-title">5. Avgifter för el och bredband</h2>
-      <div class="gradient-line" style="height: 1.5px;"></div>
+      <h2 class="section-title">Avgifter för el och bredband</h2>
 
       <div class="widget-box">
-        <p><%= utilities_text %></p>
+        <%= utilities_text %>
       </div>
 
       <!-- Section 6: Deposition -->
-      <h2 class="section-title">6. Deposition</h2>
-      <div class="gradient-line" style="height: 1.5px;"></div>
+      <h2 class="section-title">Deposition</h2>
 
       <div class="widget-box">
-        <p><%= deposit_text %></p>
+        <%= deposit_text %>
       </div>
 
       <!-- Section 7: Inredningsdeposition -->
-      <h2 class="section-title">7. Inredningsdeposition</h2>
-      <div class="gradient-line" style="height: 1.5px;"></div>
+      <h2 class="section-title">Inredningsdeposition</h2>
 
       <div class="widget-box">
-        <p><%= furnishing_deposit_text %></p>
+        <%= furnishing_deposit_text %>
       </div>
 
       <!-- Section 8: Uppsägning -->
-      <h2 class="section-title">8. Uppsägning</h2>
-      <div class="gradient-line" style="height: 1.5px;"></div>
+      <h2 class="section-title">Uppsägning</h2>
 
       <div class="widget-box">
-        <p><%= notice_period_text %></p>
+        <%= notice_period_text %>
       </div>
 
       <!-- Section 9: Övriga villkor -->
-      <h2 class="section-title">9. Övriga villkor</h2>
-      <div class="gradient-line" style="height: 1.5px;"></div>
+      <h2 class="section-title">Övriga villkor</h2>
 
       <div class="widget-box">
         <% other_terms.each do |term| %>
@@ -229,8 +280,7 @@
       </div>
 
       <!-- Section 10: Hyresstruktur och demokratisk beslutsgång -->
-      <h2 class="section-title">10. Hyresstruktur och demokratisk beslutsgång</h2>
-      <div class="gradient-line" style="height: 1.5px;"></div>
+      <h2 class="section-title">Hyresstruktur och demokratisk beslutsgång</h2>
 
       <div class="widget-box">
         <%= democratic_structure_text %>

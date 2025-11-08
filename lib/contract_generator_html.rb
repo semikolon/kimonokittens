@@ -1,11 +1,13 @@
 require 'erb'
 require 'ferrum'
 require 'fileutils'
+require 'kramdown'
 
 class ContractGeneratorHtml
-  TEMPLATE_PATH = File.expand_path('../contract_template.html.erb', __FILE__)
+  TEMPLATE_PATH = File.expand_path('contract_template.html.erb', __dir__)
   FONTS_DIR = File.expand_path('../fonts', __dir__)
   LOGO_PATH = File.expand_path('../dashboard/public/logo.png', __dir__)
+  SWISH_QR_PATH = File.expand_path('swish-qr.png', __dir__)
 
   LANDLORD = {
     name: 'Fredrik Bränström',
@@ -86,6 +88,7 @@ class ContractGeneratorHtml
     {
       fonts_dir: FONTS_DIR,
       logo_path: LOGO_PATH,
+      swish_qr_path: SWISH_QR_PATH,
       landlord: LANDLORD,
       tenant: tenant,
       property: PROPERTY,
@@ -94,7 +97,7 @@ class ContractGeneratorHtml
       rent: {
         amount: rent_amount,
         due_day: '27',
-        swish: '073-830 72 22'  # TODO: Replace with correct house Swish from QR code
+        swish: '073-653 60 35'  # House account from Swish QR code
       },
       utilities_text: extract_section(markdown, 'Avgifter för el'),
       deposit_text: extract_section(markdown, 'Deposition'),
@@ -110,13 +113,9 @@ class ContractGeneratorHtml
     section = markdown.match(/##\s*(?:\d+\.\s*)?#{Regexp.escape(heading)}.*?\n(.+?)(?=##|\z)/m)
     return 'Information saknas' unless section
 
-    # Clean up the captured text
-    section.captures.first.strip
-      .gsub(/^\*\*(.+?):\*\*\s*/, '<strong>\1:</strong> ') # Convert **Label:** to HTML
-      .gsub(/\n\n/, '</p><p>') # Convert double newlines to paragraphs
-      .gsub(/\n/, ' ') # Convert single newlines to spaces
-      .then { |text| "<p>#{text}</p>" } # Wrap in paragraph
-      .gsub(/<p>\s*<\/p>/, '') # Remove empty paragraphs
+    # Use kramdown to render markdown properly (handles **bold**, *italic*, etc.)
+    markdown_text = section.captures.first.strip
+    Kramdown::Document.new(markdown_text).to_html.strip
   end
 
   def extract_list_items(markdown, heading)
@@ -124,7 +123,8 @@ class ContractGeneratorHtml
     section = markdown.match(/##\s*(?:\d+\.\s*)?#{Regexp.escape(heading)}.*?\n(.+?)(?=##|\z)/m)
     return [] unless section
 
-    section.captures.first.scan(/^\*\s*(.+)$/).flatten.map(&:strip)
+    # Match both * and - list markers
+    section.captures.first.scan(/^[*-]\s*(.+)$/).flatten.map(&:strip)
   end
 
   def render_html(data)
@@ -136,10 +136,13 @@ class ContractGeneratorHtml
     # Ensure output directory exists
     FileUtils.mkdir_p(File.dirname(pdf_path))
 
-    # Launch headless Chrome via Ferrum
+    # Launch headless Chrome via Ferrum with aggressive flags to eliminate white lines
     browser = Ferrum::Browser.new(
       headless: true,
-      window_size: [1200, 1600]
+      window_size: [1200, 1600],
+      browser_options: {
+        'args' => ['--no-pdf-header-footer', '--disable-gpu', '--run-all-compositor-stages-before-draw']
+      }
     )
 
     begin
@@ -149,7 +152,7 @@ class ContractGeneratorHtml
       # Wait for fonts and images to load
       sleep 1
 
-      # Generate PDF with Chrome's print-to-PDF (zero margins for edge-to-edge background)
+      # Generate PDF with Chrome's print-to-PDF (zero margins + force background rendering)
       browser.pdf(
         path: pdf_path,
         format: :A4,
@@ -157,7 +160,8 @@ class ContractGeneratorHtml
         margin_right: 0,
         margin_bottom: 0,
         margin_left: 0,
-        print_background: true
+        printBackground: true,  # Force background colors/images to render
+        preferCSSPageSize: false  # Use format parameter, not CSS
       )
     ensure
       browser.quit

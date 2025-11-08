@@ -75,8 +75,7 @@ RSpec.describe ContractGeneratorHtml do
 
     describe 'payment information' do
       it 'includes Swish number' do
-        # TODO: Update this test when correct house Swish number is extracted from QR code
-        expect(template_data[:rent][:swish]).to eq('073-830 72 22')
+        expect(template_data[:rent][:swish]).to eq('073-653 60 35')  # House account from Swish QR code
       end
 
       it 'includes due day' do

@@ -2,7 +2,7 @@
 
 Mellan nedanstående parter har följande avtal slutits:
 
-## 1. Parter
+## Parter
 
 **Förstahandshyresgäst (Hyresvärd i detta avtal):**
 - Namn: Fredrik Bränström
@@ -16,46 +16,46 @@ Mellan nedanstående parter har följande avtal slutits:
 - Telefon: 070 289 44 37
 - E-post: sanna_benemar@hotmail.com
 
-## 2. Objekt
+## Objekt
 
 - **Adress:** Sördalavägen 26, 141 60 Huddinge
 - **Bostadstyp:** Rum och gemensamma ytor i kollektiv
 
-## 3. Hyrestid
+## Hyrestid
 
 Avtalet gäller omedelbart med inflytt från och med **2025-11-01** tills vidare med en uppsägningstid om två (2) månader räknat från den dag då uppsägningen skriftligen meddelats motparten.
 
-## 4. Hyra
+## Hyra
 
-**4.1 Kall månadshyra:** 6,132.5 kr
+**Kall månadshyra:** 6,132.5 kr
 
-**4.2** I hyran ingår ej el- och nätkostnad. Se punkt 5.
+I hyran ingår ej el- och nätkostnad. Se punkt 5.
 
-## 5. Avgifter för el och nät
+## Avgifter för el och nät
 
 Hyresgästen åtar sig att dela elkostnad, nätkostnad, vattenavgift, larm, gas och bredband lika med övriga medlemmar i kollektivet. Den genomsnittliga månadskostnaden för dessa är ca. 1,200 kr.
 
 **Observera** att totalkostnaden varierar säsongsmässigt beroende på elförbrukning. Den genomsnittliga totala boendekostnaden är cirka 7,300 kr per månad, med maximal kostnad på cirka 7,900 kr under vinterhalvåret (uppvärmningsbehov).
 
-## 6. Deposition
+## Deposition
 
 Hyresgästen erlägger en deposition om en dryg (1) kall månadshyra, dvs. **6,200 kr**, som återbetalas i enlighet med hyreslagens bestämmelser efter det att hyresobjektet återlämnats i godtagbart skick.
 
-## 7. Inredningsdeposition
+## Inredningsdeposition
 
-**7.1** Vid inträde i kollektivet erlägger andrahandsgästen, utöver depositionen, en inredningsdeposition om **2,200 kr** till den utflyttande parten.
+Vid inträde i kollektivet erlägger andrahandsgästen, utöver depositionen, en inredningsdeposition om **2,200 kr** till den utflyttande parten.
 
-**7.2** Vid utflytt återbetalas denna inredningsdeposition på följande sätt:
+Vid utflytt återbetalas denna inredningsdeposition på följande sätt:
 - Om det finns en efterträdande medlem överlämnar denna 2,200 kr till utflyttande part.
 - Om kollektivet upplöses återlämnas i stället motsvarande värde i de inventarier som köptes för depositionens summa när kollektivet bildades.
 
-**7.3** Inredningsdepositionen utgör en delad investering i gemensamma hushållsartiklar (möbler, växter, prydnadsföremål, porslin, och liknande). Eventuella tvister rörande depositionen hanteras i god ton av kollektivets medlemmar.
+Inredningsdepositionen utgör en delad investering i gemensamma hushållsartiklar (möbler, växter, prydnadsföremål, porslin, och liknande). Eventuella tvister rörande depositionen hanteras i god ton av kollektivets medlemmar.
 
-## 8. Uppsägning
+## Uppsägning
 
 Uppsägning ska ske skriftligen med minst två (2) månaders varsel. Uppsägning räknas från den sista dagen i den månad då uppsägningen delges motparten.
 
-## 9. Övriga villkor
+## Övriga villkor
 
 - Hyresgästen förbinder sig att följa ordningsregler som gäller för kollektivet.
 - Rökning inomhus är ej tillåtet.
@@ -64,21 +64,21 @@ Uppsägning ska ske skriftligen med minst två (2) månaders varsel. Uppsägning
 
 I övriga frågor kontakta först förstahandshyresgästen enligt uppgifter i punkt 1.
 
-## 10. Hyresstruktur och demokratisk beslutsgång
+## Hyresstruktur och demokratisk beslutsgång
 
-**10.1 Hyresberäkning**
+**Hyresberäkning**
 
 Kallhyran per person baseras på husets totala kallhyra (24,530 kr) delat på antalet boende. Vid fyra boende: 6,132.5 kr per person. Vid fem boende: 4,906 kr per person.
 
-**10.2 Rumsjusteringar**
+**Rumsjusteringar**
 
 Rumsjusteringar kan förekomma efter demokratisk överenskommelse. Mindre rum eller rum som delas av par kan berättiga till reducerad kallhyra. Sådana justeringar beslutas gemensamt av kollektivets medlemmar.
 
-**10.3 Beslutsprocess**
+**Beslutsprocess**
 
 Beslut om hyresstruktur och rumsjusteringar fattas demokratiskt med förstahandshyresgästen som slutgiltig beslutsfattare vid oenighet. Förstahandshyresgästen har ansvarat för kollektivets drift och utveckling sedan 2023 och säkerställer kontinuitet och rättvisa i beslutsprocessen.
 
-**10.4 Öppenhet**
+**Öppenhet**
 
 Alla hyresberäkningar och beslut dokumenteras transparent och är tillgängliga för kollektivets medlemmar.
 
