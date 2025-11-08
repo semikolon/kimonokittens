@@ -1,0 +1,118 @@
+require 'sequel'
+require_relative '../rent_db'
+require_relative '../models/signed_contract'
+
+# Repository for SignedContract persistence
+# Handles database operations for signed contracts from Zigned
+class SignedContractRepository
+  def initialize(db = RentDb.instance)
+    @db = db
+  end
+
+  # Find by Zigned case ID (unique)
+  def find_by_case_id(case_id)
+    row = @db.class.db[:SignedContract].where(caseId: case_id).first
+    row ? hydrate(row) : nil
+  end
+
+  # Find all contracts for a tenant
+  def find_by_tenant_id(tenant_id)
+    @db.class.db[:SignedContract]
+      .where(tenantId: tenant_id)
+      .order(Sequel.desc(:createdAt))
+      .map { |row| hydrate(row) }
+  end
+
+  # Find by internal ID
+  def find_by_id(id)
+    row = @db.class.db[:SignedContract].where(id: id).first
+    row ? hydrate(row) : nil
+  end
+
+  # Find all completed contracts
+  def find_completed
+    @db.class.db[:SignedContract]
+      .where(status: 'completed')
+      .order(Sequel.desc(:completedAt))
+      .map { |row| hydrate(row) }
+  end
+
+  # Find contracts expiring soon
+  def find_expiring_soon(days: 7)
+    cutoff = Time.now + (days * 86400)
+    @db.class.db[:SignedContract]
+      .where(status: 'pending')
+      .where { expiresAt < cutoff }
+      .order(Sequel.asc(:expiresAt))
+      .map { |row| hydrate(row) }
+  end
+
+  # Save (insert or update)
+  def save(signed_contract)
+    data = dehydrate(signed_contract)
+
+    existing = @db.class.db[:SignedContract].where(id: signed_contract.id).first
+
+    if existing
+      @db.class.db[:SignedContract].where(id: signed_contract.id).update(data)
+    else
+      @db.class.db[:SignedContract].insert(data)
+    end
+
+    signed_contract
+  end
+
+  # Delete contract
+  def delete(id)
+    @db.class.db[:SignedContract].where(id: id).delete
+  end
+
+  # Get statistics
+  def statistics
+    {
+      total: @db.class.db[:SignedContract].count,
+      completed: @db.class.db[:SignedContract].where(status: 'completed').count,
+      pending: @db.class.db[:SignedContract].where(status: 'pending').count,
+      expired: @db.class.db[:SignedContract].where(status: 'expired').count,
+      cancelled: @db.class.db[:SignedContract].where(status: 'cancelled').count
+    }
+  end
+
+  private
+
+  def hydrate(row)
+    SignedContract.new(
+      id: row[:id],
+      tenant_id: row[:tenantId],
+      case_id: row[:caseId],
+      pdf_url: row[:pdfUrl],
+      status: row[:status],
+      landlord_signed: row[:landlordSigned],
+      tenant_signed: row[:tenantSigned],
+      landlord_signed_at: row[:landlordSignedAt],
+      tenant_signed_at: row[:tenantSignedAt],
+      completed_at: row[:completedAt],
+      expires_at: row[:expiresAt],
+      created_at: row[:createdAt],
+      updated_at: row[:updatedAt]
+    )
+  end
+
+  def dehydrate(contract)
+    {
+      id: contract.id,
+      tenantId: contract.tenant_id,
+      caseId: contract.case_id,
+      pdfUrl: contract.pdf_url,
+      status: contract.status,
+      landlordSigned: contract.landlord_signed,
+      tenantSigned: contract.tenant_signed,
+      landlordSignedAt: contract.landlord_signed_at,
+      tenantSignedAt: contract.tenant_signed_at,
+      completedAt: contract.completed_at,
+      expiresAt: contract.expires_at,
+      createdAt: contract.created_at,
+      updatedAt: Time.now
+    }
+  end
+end
