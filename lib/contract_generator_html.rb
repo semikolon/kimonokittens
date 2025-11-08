@@ -2,9 +2,13 @@ require 'erb'
 require 'ferrum'
 require 'fileutils'
 require 'kramdown'
+require_relative 'repositories/tenant_repository'
+require_relative 'handbook_parser'
 
 class ContractGeneratorHtml
   TEMPLATE_PATH = File.expand_path('contract_template.html.erb', __dir__)
+  MARKDOWN_TEMPLATE_PATH = File.expand_path('../contracts/templates/base_contract.md.erb', __dir__)
+  HANDBOOK_PATH = File.expand_path('../handbook/docs/agreements.md', __dir__)
   FONTS_DIR = File.expand_path('../fonts', __dir__)
   LOGO_PATH = '/tmp/logo-80pct-saturated.png'  # Using 80% saturated logo for color harmony
   # LOGO_PATH = File.expand_path('../dashboard/public/logo.png', __dir__)
@@ -22,8 +26,67 @@ class ContractGeneratorHtml
     type: 'Rum och gemensamma ytor i kollektiv'
   }.freeze
 
+  # Total base rent for the apartment (used in rent calculations)
+  TOTAL_BASE_RENT = 24_530
+
+  # Standard deposit amounts (can be overridden by tenant-specific values)
+  DEFAULT_DEPOSITS = {
+    base_deposit: 6_200,
+    furnishing_deposit: 2_200
+  }.freeze
+
   def self.generate_from_markdown(markdown_path, output_path = nil)
     new.generate_from_markdown(markdown_path, output_path)
+  end
+
+  # Generate contract from database tenant record
+  #
+  # @param tenant_id [String] Tenant ID from database
+  # @param output_path [String, nil] Optional PDF output path
+  # @return [String] Path to generated PDF
+  def self.generate_from_tenant_id(tenant_id, output_path: nil)
+    new.generate_from_tenant_id(tenant_id, output_path: output_path)
+  end
+
+  def generate_from_tenant_id(tenant_id, output_path: nil)
+    # Load tenant from database
+    repo = TenantRepository.new
+    tenant = repo.find_by_id(tenant_id)
+    raise ArgumentError, "Tenant not found: #{tenant_id}" unless tenant
+
+    # Default output path: contracts/<Name>_<Surname>_Hyresavtal_<Date>.pdf
+    output_path ||= begin
+      name_parts = tenant.name.split(' ')
+      surname = name_parts.last
+      first_name = name_parts.first
+      date = tenant.start_date&.strftime('%Y-%m-%d') || Date.today.strftime('%Y-%m-%d')
+      File.expand_path("../contracts/#{first_name}_#{surname}_Hyresavtal_#{date}.pdf", __dir__)
+    end
+
+    # Prepare template data
+    template_data = prepare_database_template_data(tenant)
+
+    # Render markdown from ERB template
+    markdown = render_markdown_template(template_data)
+
+    # Convert markdown to HTML and prepare for PDF
+    html_data = prepare_template_data_from_markdown(markdown, tenant)
+
+    # Render HTML
+    html = render_html(html_data)
+
+    # Save temporary HTML file
+    html_path = output_path.sub('.pdf', '_temp.html')
+    File.write(html_path, html)
+
+    # Generate PDF using Ferrum (headless Chrome)
+    generate_pdf(html_path, output_path)
+
+    # Clean up temp HTML
+    File.delete(html_path) if File.exist?(html_path)
+
+    puts "✅ Generated contract from database: #{output_path}"
+    output_path
   end
 
   def generate_from_markdown(markdown_path, output_path = nil)
@@ -57,6 +120,107 @@ class ContractGeneratorHtml
   end
 
   private
+
+  # Prepare template data from database tenant record
+  def prepare_database_template_data(tenant)
+    # Calculate rent amounts
+    num_active_tenants = 4  # TODO: Query from database
+    base_rent_per_person = TOTAL_BASE_RENT / num_active_tenants.to_f
+    base_rent_5_people = TOTAL_BASE_RENT / 5.0
+
+    # Use tenant-specific deposits if available, otherwise defaults
+    base_deposit = tenant.deposit || DEFAULT_DEPOSITS[:base_deposit]
+    furnishing_deposit = tenant.furnishing_deposit || DEFAULT_DEPOSITS[:furnishing_deposit]
+
+    {
+      landlord: LANDLORD,
+      tenant: {
+        name: tenant.name,
+        personnummer: tenant.personnummer || 'N/A',
+        phone: tenant.phone || 'N/A',
+        email: tenant.email,
+        move_in_date: tenant.start_date&.strftime('%Y-%m-%d') || Date.today.strftime('%Y-%m-%d')
+      },
+      property: PROPERTY,
+      rent: {
+        base_amount: format_currency(base_rent_per_person),
+        total_amount: '7,300',  # Average including utilities
+        total_base_rent: format_currency(TOTAL_BASE_RENT),
+        base_amount_4_people: format_currency(base_rent_per_person),
+        base_amount_5_people: format_currency(base_rent_5_people)
+      },
+      utilities: {
+        average_monthly: '1,200',
+        winter_max: '7,900'
+      },
+      deposits: {
+        base_deposit: format_currency(base_deposit),
+        furnishing_deposit: format_currency(furnishing_deposit)
+      }
+    }
+  end
+
+  # Render markdown contract from ERB template
+  def render_markdown_template(data)
+    template = ERB.new(File.read(MARKDOWN_TEMPLATE_PATH))
+    template.result_with_hash(data)
+  end
+
+  # Convert rendered markdown to HTML template data
+  def prepare_template_data_from_markdown(markdown, tenant)
+    # Extract tenant info for consistency
+    tenant_info = {
+      name: tenant.name,
+      personnummer: tenant.personnummer || 'N/A',
+      phone: tenant.phone || 'N/A',
+      email: tenant.email
+    }
+
+    # Extract start date
+    start_date_match = markdown.match(/från och med \*\*(\d{4}-\d{2}-\d{2})\*\*/i)
+    start_date = start_date_match&.captures&.first || tenant.start_date&.strftime('%Y-%m-%d')
+
+    # Extract rent amounts
+    rent_match = markdown.match(/Kall månadshyra:\*\*\s*([\d,\.]+)\s*kr/i)
+    rent_amount = rent_match&.captures&.first&.gsub(',', ' ') || '4 500'
+
+    total_rent_match = markdown.match(/Genomsnittlig total månadshyra.*?:\*\*\s*([\d,\.]+)\s*kr/i)
+    total_rent = total_rent_match&.captures&.first&.gsub(',', ' ') || '7 300'
+
+    {
+      fonts_dir: FONTS_DIR,
+      logo_path: LOGO_PATH,
+      swish_qr_path: SWISH_QR_PATH,
+      landlord: LANDLORD,
+      tenant: tenant_info,
+      property: PROPERTY,
+      contract_period: "#{start_date} – tills vidare",
+      rental_period_text: extract_section(markdown, 'Hyrestid'),
+      rent: {
+        amount: rent_amount,
+        total: total_rent,
+        due_day: '27',
+        swish: '073-653 60 35'
+      },
+      utilities_text: extract_section(markdown, 'Avgifter för el'),
+      deposit_text: extract_section(markdown, 'Deposition'),
+      furnishing_deposit_text: extract_section(markdown, 'Inredningsdeposition'),
+      notice_period_text: extract_section(markdown, 'Uppsägning'),
+      other_terms: extract_list_items(markdown, 'Övriga villkor'),
+      democratic_structure_text: extract_section(markdown, 'Hyresstruktur och demokratisk beslutsgång')
+    }
+  end
+
+  # Format number as Swedish currency (space as thousand separator)
+  def format_currency(amount)
+    return amount if amount.is_a?(String)
+    amount = amount.to_f.round(2)
+    integer_part = amount.to_i
+    decimal_part = ((amount - integer_part) * 100).round
+
+    formatted = integer_part.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1 ').reverse
+    decimal_part > 0 ? "#{formatted},#{decimal_part.to_s.rjust(2, '0')}" : formatted
+  end
 
   def extract_tenant_info(markdown)
     # Find text after "Andrahands-hyresgäst" and before next "##"
