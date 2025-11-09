@@ -1,5 +1,6 @@
-require_relative 'contract_generator'
+require_relative 'contract_generator_html'
 require_relative 'zigned_client'
+require_relative 'repositories/tenant_repository'
 require 'json'
 require 'fileutils'
 
@@ -40,6 +41,142 @@ class ContractSigner
     personnummer: '8604230717',
     email: 'branstrom@gmail.com'
   }.freeze
+
+  # Database-driven contract signing (PRODUCTION CODE PATH)
+  #
+  # Generates contract from database tenant record and sends for e-signing
+  #
+  # @param tenant_id [String] Tenant ID from database
+  # @param test_mode [Boolean] Use Zigned test environment (default: false)
+  # @param send_emails [Boolean] Whether Zigned should send email invitations (default: true)
+  #
+  # @return [Hash] {
+  #   pdf_path: String,
+  #   case_id: String,
+  #   signing_links: Hash,
+  #   landlord_link: String,
+  #   tenant_link: String
+  # }
+  #
+  # @example
+  #   # Test mode with no emails (safe for testing)
+  #   result = ContractSigner.create_and_send(
+  #     tenant_id: 'cmhqe9enc0000wopipuxgc3kw',
+  #     test_mode: true,
+  #     send_emails: false
+  #   )
+  #
+  #   # Production mode (real BankID signatures, sends emails)
+  #   result = ContractSigner.create_and_send(
+  #     tenant_id: 'cmhqe9enc0000wopipuxgc3kw'
+  #   )
+  def self.create_and_send(tenant_id:, test_mode: false, send_emails: true)
+    # Load tenant from database
+    repo = TenantRepository.new
+    tenant = repo.find_by_id(tenant_id)
+    raise ArgumentError, "Tenant not found: #{tenant_id}" unless tenant
+
+    puts "👤 Loading tenant: #{tenant.name}"
+    puts "   Email: #{tenant.email}"
+    puts "   Phone: #{tenant.phone}"
+    puts "   Start date: #{tenant.start_date}"
+    puts "   Test mode: #{test_mode ? 'YES (free, invalid signatures)' : 'NO (production, real BankID)'}"
+    puts "   Send emails: #{send_emails ? 'YES' : 'NO (manual link sharing)'}"
+    puts ""
+
+    # Step 1: Generate PDF from database
+    pdf_filename = "#{tenant.name.gsub(/[^\w\s-]/, '').gsub(/\s+/, '_')}_Hyresavtal_#{tenant.start_date&.strftime('%Y-%m-%d') || 'DRAFT'}.pdf"
+    pdf_path = File.join(GENERATED_DIR, pdf_filename)
+
+    puts "📄 Generating contract PDF from database..."
+    ContractGeneratorHtml.generate_from_tenant_id(tenant_id, output_path: pdf_path)
+    puts "✅ PDF generated: #{pdf_path} (#{File.size(pdf_path)} bytes)"
+
+    # Step 2: Create Zigned signing case
+    puts "\n🔐 Creating Zigned signing case..."
+
+    zigned = ZignedClient.new(
+      api_key: ENV['ZIGNED_API_KEY'] || raise('ZIGNED_API_KEY not set in environment'),
+      test_mode: test_mode
+    )
+
+    case_title = "Hyresavtal - #{tenant.name}"
+    webhook_url = ENV['WEBHOOK_BASE_URL'] ? "#{ENV['WEBHOOK_BASE_URL']}/api/webhooks/zigned" : nil
+
+    signers = [
+      LANDLORD,
+      {
+        name: tenant.name,
+        personnummer: tenant.personnummer,
+        email: tenant.email
+      }
+    ]
+
+    # send_emails parameter controls whether Zigned sends email invitations
+    zigned_result = zigned.create_signing_case(
+      pdf_path: pdf_path,
+      signers: signers,
+      title: case_title,
+      webhook_url: webhook_url,
+      message: "Välkommen till BRF Kimonokittens! Vänligen signera hyresavtalet med ditt BankID.",
+      send_emails: send_emails
+    )
+
+    puts "✅ Signing case created: #{zigned_result[:case_id]}"
+    puts "📅 Expires at: #{zigned_result[:expires_at]}"
+
+    # Step 3: Print signing links
+    landlord_link = zigned_result[:signing_links][LANDLORD[:personnummer].gsub(/\D/, '')]
+    tenant_link = zigned_result[:signing_links][tenant.personnummer.gsub(/\D/, '')]
+
+    puts "\n🔗 Signing Links:"
+    puts "\nLandlord (#{LANDLORD[:name]}):"
+    puts landlord_link
+    puts "\nTenant (#{tenant.name}):"
+    puts tenant_link
+
+    if send_emails
+      puts "\n📧 Zigned will send email invitations to both parties."
+    else
+      puts "\n⚠️  Email invitations disabled - share links manually."
+    end
+
+    # Step 4: Save metadata for audit trail
+    FileUtils.mkdir_p(METADATA_DIR) unless Dir.exist?(METADATA_DIR)
+
+    metadata = {
+      tenant_id: tenant_id,
+      tenant_name: tenant.name,
+      tenant_personnummer: tenant.personnummer,
+      tenant_email: tenant.email,
+      tenant_phone: tenant.phone,
+      move_in_date: tenant.start_date&.strftime('%Y-%m-%d'),
+      pdf_path: pdf_path,
+      case_id: zigned_result[:case_id],
+      status: zigned_result[:status],
+      created_at: Time.now.strftime('%Y-%m-%d %H:%M:%S'),
+      expires_at: zigned_result[:expires_at],
+      test_mode: test_mode,
+      signing_links: zigned_result[:signing_links]
+    }
+
+    safe_name = tenant.name.gsub(/[^\w\s-]/, '').gsub(/\s+/, '_')
+    metadata_path = File.join(METADATA_DIR, "#{safe_name}_contract_metadata.json")
+    File.write(metadata_path, JSON.pretty_generate(metadata))
+    puts "✅ Metadata saved: #{metadata_path}"
+
+    # Return result
+    {
+      pdf_path: pdf_path,
+      case_id: zigned_result[:case_id],
+      signing_links: zigned_result[:signing_links],
+      landlord_link: landlord_link,
+      tenant_link: tenant_link,
+      expires_at: zigned_result[:expires_at],
+      status: zigned_result[:status],
+      metadata_path: metadata_path
+    }
+  end
 
   # @param test_mode [Boolean] Use Zigned test environment (free, no real signatures)
   def initialize(test_mode: false)

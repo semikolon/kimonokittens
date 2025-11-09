@@ -121,43 +121,84 @@ We **skipped standalone Phase 1** and went straight to **full database integrati
 
 ## 🔄 Current Phase: Testing (November 8, 2025)
 
-### **About to Test: Contract Signing with Fredrik-Only Signature**
+### **Architecture Issue Discovered: Webhook Cross-Machine Problem**
 
-**Approach:** Incremental testing without bothering Sanna
-- Generate Sanna's contract from database ✅ (already done: 1.4MB PDF)
-- Send to Zigned in **test mode** with `--no-emails` flag
-- Both signers defined (Fredrik + Sanna) but emails NOT sent
-- Fredrik signs with real BankID
-- Test 80% of flow: generation, upload, case creation, webhook, signature tracking
-- Skip 20%: `case.completed` event (requires both signatures)
+**CRITICAL BLOCKER:** File-based webhook handler won't work for Mac → Dell workflow!
 
-**Command to run:**
-```bash
-./bin/send_contract.rb \
-  --name "Sanna Juni Benemar" \
-  --personnummer 8706220020 \
-  --email sanna_benemar@hotmail.com \
-  --phone "070 289 44 37" \
-  --move-in 2025-11-01 \
-  --test \
-  --no-emails
+**The Problem:**
+1. Mac generates contract + creates Zigned case
+2. Mac saves metadata to **local** filesystem (`contracts/metadata/*.json`)
+3. Zigned sends webhooks to **Dell** server
+4. Dell webhook handler looks for metadata file... **doesn't exist on Dell!**
+5. Dell can't process webhook - no context about the case
+
+**Why This Happens:**
+- Current webhook handler uses FILE storage (`handlers/zigned_webhook_handler.rb` lines 159, 176)
+- Assumes generation and webhook handling on SAME machine
+- Works for Dell-only workflow, FAILS for Mac → Dell testing
+
+**Three Options:**
+
+### **Option 1: Test on Dell Only (Simplest)**
+- Generate contracts on Dell production server
+- Webhook and generation on same machine = file storage works
+- ❌ Con: Can't test on Mac during development
+- ✅ Pro: No code changes needed, works with current implementation
+
+### **Option 2: Accept Incomplete Mac Testing**
+- Test contract generation + Zigned case creation on Mac
+- **Ignore webhook failures** (Dell can't process without metadata)
+- Test webhook flow separately on Dell with Dell-generated contracts
+- ✅ Pro: Can test generation locally
+- ❌ Con: Can't test full end-to-end flow locally
+
+### **Option 3: Implement Database Storage NOW (Phase 7)**
+- Update webhook handler to use `SignedContractRepository` instead of files
+- Webhook queries database by `case_id` to get context
+- Works across machines (database is shared)
+- ✅ Pro: Full end-to-end testing works anywhere
+- ❌ Con: Requires Phase 7 implementation NOW, database migration on Dell
+
+**DECISION NEEDED:** Which option to pursue?
+
+### **Updated Test Strategy: Option 2 (Incremental Testing)**
+
+**Mac Testing (Partial - Generation Only):**
+```ruby
+# Test database-driven contract generation + Zigned API
+result = ContractSigner.create_and_send(
+  tenant_id: 'cmhqe9enc0000wopipuxgc3kw',  # Sanna
+  test_mode: true,
+  send_emails: false
+)
+# Returns: case_id, signing links, PDF path
+# Webhooks will fail (Dell doesn't have metadata) - EXPECTED
 ```
 
-**What gets tested:**
-- ✅ Contract generation (already verified: 6,132.50 kr ✅)
+**What Mac Test Covers (60%):**
+- ✅ Database tenant loading
+- ✅ Contract generation with correct rent (6,132.50 kr)
 - ✅ PDF upload to Zigned API
 - ✅ Case creation with 2 signers
-- ✅ Webhook: `case.created` event
-- ✅ Signing link generation (both links)
-- ✅ Fredrik's BankID signature (real!)
-- ✅ Webhook: `case.signed` event (first signature)
+- ✅ Signing link generation
+- ✅ Test mode works (dev API key)
 
-**What's NOT tested (20% gap):**
-- ❌ Webhook: `case.completed` event (requires BOTH signatures)
-- ❌ Final signed PDF download
-- ❌ Both signatures timestamp tracking
+**What Mac Test SKIPS (40%):**
+- ❌ Webhook reception (Dell receives, but can't process)
+- ❌ Signature tracking
+- ❌ Database storage of signed contracts
+- ❌ Final PDF download
 
-**Risk assessment:** Low - Untested 20% is simple plumbing (download file, update database). Production is appropriate place to test. If it fails, easy fix with zero legal consequences.
+**Dell Production Testing (Complete - 100%):**
+1. Deploy all code to Dell (✅ already done via webhook)
+2. Run database migrations on Dell
+3. Import Sanna/Frida tenant data
+4. Generate contract ON DELL (not Mac)
+5. Send to Zigned from Dell
+6. Webhook and generation on same machine = full flow works
+7. Test signing with real BankID
+
+**Risk Assessment:** Option 2 is pragmatic - test what we can locally, test full flow in production where it matters.
 
 ---
 
