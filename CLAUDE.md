@@ -1077,6 +1077,19 @@ gh api repos/:owner/:repo/hooks/572892196/deliveries | jq -r '.[0] | "Latest: \(
 4. **Test git pull**: `cd /home/kimonokittens/Projects/kimonokittens && git pull origin master`
 5. **Monitor next push**: `tail -f /var/log/kimonokittens/webhook.log` while pushing from dev machine
 
+### Why Deploy Webhook MUST Stay Separate
+
+**Deploy and Zigned webhooks serve different services and cannot be unified.**
+
+1. **Self-Restart Impossibility** - Deploy webhook updates its own code; can't restart from within while serving HTTP
+2. **Fault Isolation** - Git pull/npm failures shouldn't crash live contract signing webhooks
+3. **Security Through Obscurity** - Deploy on port 49123 (GitHub only), API on port 3001 (public-facing)
+4. **Operational Simplicity** - Independent restart/recovery without affecting business logic
+
+**Architecture (intentional, not technical debt):**
+- Port 49123: Deploy webhook only (kimonokittens-webhook.service)
+- Port 3001: Main API + Zigned webhooks (kimonokittens-dashboard.service)
+
 ### Future-Proofing
 
 The Puma architecture is designed for:
