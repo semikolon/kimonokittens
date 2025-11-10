@@ -12,13 +12,15 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 **Status:** ✅ **DEPLOYED** (October 6, 2025) - Webhook operational, kiosk live in hallway
 
-### **Current Status** (October 25, 2025)
+### **Current Status** (November 10, 2025)
 - ✅ **Webhook server:** Running on port 49123, smart change detection + debouncing
 - ✅ **Deployment automation:** Push to master → auto-deploy (code only, migrations manual)
 - ✅ **Kiosk hardware:** Dell Optiplex 7010 with GPU acceleration for WebGL shaders
 - ✅ **Production services:** Dashboard (port 3001), nginx, kiosk display all operational
 - ✅ **Database migrations:** Manual via `npx prisma migrate deploy` (by design - safety)
 - ✅ **NPM workspace fix:** Resolved - `npm ci` from project root, not subdirectories
+- ✅ **SSL certificates:** Manual DNS-01 via Namecheap (expires 2026-02-08)
+- ⏰ **TODO (before Feb 2026):** Migrate to Cloudflare DNS delegation for automated SSL renewals (see DOMAIN_MIGRATION_CHECKLIST.md Option B)
 
 ### **Production Environment Setup**
 - [x] **Run production deployment script**
