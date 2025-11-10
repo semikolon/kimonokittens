@@ -56,6 +56,7 @@ class ZignedClient
   # @param title [String] Case title shown to signers
   # @param webhook_url [String] URL to receive status updates (optional)
   # @param message [String] Message shown to signers (optional)
+  # @param send_emails [Boolean] Send email invitations to signers (default: true)
   #
   # @return [Hash] { case_id:, signing_links: { personnummer: url } }
   #
@@ -67,9 +68,10 @@ class ZignedClient
   #       { name: 'Sanna Benemar', personnummer: '8706220020', email: 'sanna_benemar@hotmail.com' }
   #     ],
   #     title: 'Hyresavtal - Sanna Juni Benemar',
-  #     webhook_url: 'https://kimonokittens.com/api/webhooks/zigned'
+  #     webhook_url: 'https://kimonokittens.com/api/webhooks/zigned',
+  #     send_emails: false  # Disable emails for testing
   #   )
-  def create_signing_case(pdf_path:, signers:, title:, webhook_url: nil, message: nil)
+  def create_signing_case(pdf_path:, signers:, title:, webhook_url: nil, message: nil, send_emails: true)
     raise ArgumentError, "PDF file not found: #{pdf_path}" unless File.exist?(pdf_path)
     raise ArgumentError, 'At least 2 signers required (landlord + tenant)' if signers.length < 2
 
@@ -97,6 +99,7 @@ class ZignedClient
 
     payload[:webhook_url] = webhook_url if webhook_url
     payload[:message] = message if message
+    payload[:send_emails] = send_emails
 
     # Make API request
     response = self.class.post('/cases', body: payload.to_json)
