@@ -16,7 +16,12 @@ lsof -ti :3001 :5175
 
 ### ⚠️ Sudo Commands - Tell User to Run
 
-Claude Code cannot run `sudo` commands requiring password input. **Tell user exact command**, never attempt directly.
+**Claude Code cannot run `sudo` commands requiring password input.** Always tell user the exact command, never attempt to run directly.
+
+**Dell Production Server - User Permissions:**
+- **fredrik user**: Has sudo access ✅
+- **kimonokittens user**: NOT in sudoers ❌
+- **All sudo commands must run as fredrik user**, not kimonokittens
 
 ### 🚨 Production Deployment
 
