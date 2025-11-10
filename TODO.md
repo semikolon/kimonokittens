@@ -90,10 +90,49 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
   - [ ] Build static site or simple React app
   - [ ] Configure nginx to serve at domain root
   - [ ] Test public accessibility
-- [ ] **Future: Contract signup page** (`/meow` endpoint)
-  - [ ] Form: name, personnummer, email, phone, move-in date
-  - [ ] Creates Tenant record → generates contract → Zigned signing
-  - [ ] Admin approval step before final contract creation
+- [ ] **Tenant Signup & Contract Management System** (`/meow`, `/curious`, or `/signup` endpoints)
+
+  **Public Signup Flow:**
+  - [ ] Public signup form at `/meow` (or `/curious` or `/signup`)
+    - Fields: name, personnummer, email, phone, desired move-in date
+    - Creates draft Tenant record with `status: 'pending_approval'`
+    - Email notification to admin (landlord)
+
+  **Admin Management UI:**
+  - [ ] Admin interface for tenant approval & contract generation
+    - View all pending tenant applications
+    - Approve/reject applicants
+    - Assign tenant to specific room (1-4)
+    - Set move-in date (can adjust from application date)
+    - Set individual room price adjustment (if not standard pricing)
+    - Preview rent calculation before contract generation
+
+  **Contract Generation & Signing:**
+  - [ ] On admin approval → Automatic contract workflow:
+    - Create Tenant record in database (status: 'approved')
+    - Generate contract PDF via `ContractSigner.create_and_send()`
+    - Send to Zigned for BankID e-signing
+    - Email signing links to landlord + tenant
+
+  **Webhook Integration:**
+  - [ ] Zigned webhook updates contract status:
+    - `case.created` → Contract sent for signing
+    - `case.signed` → Both parties signed
+    - `case.completed` → Download signed PDF
+    - Update Tenant record status: 'contract_signed', 'move_in_ready'
+
+  **Authentication & Security:**
+  - [ ] Admin login (HTTP Basic Auth or simple token-based)
+  - [ ] Rate limiting on public signup form
+  - [ ] CAPTCHA or similar spam protection
+
+  **Related Files:**
+  - `lib/contract_signer.rb` - Contract generation + Zigned API
+  - `lib/zigned_client.rb` - BankID e-signing integration
+  - `lib/models/tenant.rb` - Tenant domain model
+  - `lib/repositories/tenant_repository.rb` - Tenant persistence
+  - Homepage files: `www/` directory → deployed to `/var/www/kimonokittens/`
+  - Nginx config: Public domain serves root, kiosk serves `dashboard/` subdirectory
 
 **Priority**: MEDIUM - Improves public presence and future automation
 
