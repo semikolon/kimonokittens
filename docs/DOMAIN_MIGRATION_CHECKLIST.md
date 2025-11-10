@@ -66,25 +66,85 @@ grep -E 'ZIGNED' /home/kimonokittens/.env
 
 ## Step 2: Generate SSL Certificates on Dell
 
-SSH to Dell as kimonokittens user:
+**Three approaches for SSL certificates - choose based on automation needs:**
+
+### Option A: Manual DNS-01 Challenge (USED - Nov 10, 2025)
+
+**Best for:** Getting domain live quickly without API bureaucracy
+**Renewal:** Manual every 90 days (5 minutes)
+
 ```bash
 ssh pop
 sudo apt update
-sudo apt install certbot python3-certbot-nginx
+sudo apt install certbot
 
-# Generate certificates (requires domain pointing to Dell first, or use DNS challenge)
-sudo certbot certonly --standalone -d kimonokittens.com
-# OR if nginx already running:
-sudo certbot --nginx -d kimonokittens.com
+# Start DNS challenge
+sudo certbot certonly --manual --preferred-challenges dns -d kimonokittens.com
+
+# Certbot will display TXT record to add:
+# _acme-challenge.kimonokittens.com → [random-token]
+
+# 1. Log into Namecheap → Advanced DNS
+# 2. Add TXT record with given value
+# 3. Wait 2 minutes for propagation
+# 4. Press Enter in certbot
 ```
 
 **Result**: Certificates at `/etc/letsencrypt/live/kimonokittens.com/`
 
-**Auto-renewal**: Certbot installs systemd timer automatically
+**Renewal reminder**: Certificates expire in 90 days. Set calendar reminder to repeat process.
+
+---
+
+### Option B: Cloudflare DNS Delegation (RECOMMENDED for automation)
+
+**Best for:** Automated renewals without Namecheap API restrictions
+**Renewal:** Fully automated via certbot timer
+
+**Setup (one-time):**
+1. Create free Cloudflare account at cloudflare.com
+2. Add kimonokittens.com to Cloudflare
+3. Cloudflare provides nameservers (e.g., `ns1.cloudflare.com`)
+4. Update nameservers at Namecheap (domain stays registered there)
+5. Wait 1-2 hours for DNS propagation
+
+**Install plugin:**
 ```bash
-# Verify auto-renewal is configured
+sudo apt install python3-pip
+pip3 install certbot-dns-cloudflare
+```
+
+**Create credentials file:**
+```bash
+sudo nano /root/.secrets/cloudflare.ini
+# Add:
+# dns_cloudflare_api_token = YOUR_CLOUDFLARE_API_TOKEN
+sudo chmod 600 /root/.secrets/cloudflare.ini
+```
+
+**Generate certificate (automated renewals):**
+```bash
+sudo certbot certonly \
+  --dns-cloudflare \
+  --dns-cloudflare-credentials /root/.secrets/cloudflare.ini \
+  -d kimonokittens.com
+```
+
+**Auto-renewal**: Certbot systemd timer handles renewals automatically
+```bash
 sudo systemctl status certbot.timer
 ```
+
+---
+
+### Option C: Namecheap API (NOT RECOMMENDED - bureaucracy)
+
+**Requirements:**
+- $50+ account balance OR 20+ domains OR $50+ spent in last 2 years
+- Namecheap support approval (can take days)
+- IP whitelisting setup
+
+**Only use if:** You already meet requirements and want to avoid Cloudflare migration
 
 ---
 

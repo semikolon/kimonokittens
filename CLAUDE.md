@@ -383,7 +383,10 @@ machinectl shell kimonokittens@ /usr/bin/systemctl --user status kimonokittens-k
 ### Webhook Deployment Flow
 **Smart change detection + 2-minute debounce + component-specific deployment**
 
-1. **Push to master** → GitHub webhook → `POST localhost:49123/webhook`
+**Current routing (Nov 2025):** GitHub webhooks bypass nginx, hitting port 49123 directly via home IP
+**After domain migration:** Webhooks will route through nginx at `https://kimonokittens.com/api/webhooks/deploy`
+
+1. **Push to master** → GitHub webhook → `POST localhost:49123/webhook` (direct) or `POST https://kimonokittens.com/api/webhooks/deploy` (via nginx after migration)
 2. **Analyze changes**:
    - `dashboard/` → Frontend deployment
    - `*.rb`, `Gemfile` → Backend deployment
