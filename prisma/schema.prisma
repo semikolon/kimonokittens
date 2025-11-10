@@ -82,19 +82,22 @@ model Tenant {
 }
 
 model SignedContract {
-  id               String    @id
-  tenantId         String
-  caseId           String    @unique
-  pdfUrl           String
-  status           String    @default("pending")
-  landlordSigned   Boolean   @default(false)
-  tenantSigned     Boolean   @default(false)
-  landlordSignedAt DateTime?
-  tenantSignedAt   DateTime?
-  completedAt      DateTime?
-  expiresAt        DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                  String    @id
+  tenantId            String
+  caseId              String    @unique
+  pdfUrl              String
+  status              String    @default("pending")
+  landlordSigned      Boolean   @default(false)
+  tenantSigned        Boolean   @default(false)
+  landlordSignedAt    DateTime?
+  tenantSignedAt      DateTime?
+  landlordSigningUrl  String?
+  tenantSigningUrl    String?
+  testMode            Boolean   @default(false)
+  completedAt         DateTime?
+  expiresAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
