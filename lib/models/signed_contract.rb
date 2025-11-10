@@ -13,12 +13,16 @@ class SignedContract
   attr_reader :id, :tenant_id, :case_id, :pdf_url, :status,
               :landlord_signed, :tenant_signed,
               :landlord_signed_at, :tenant_signed_at,
+              :landlord_signing_url, :tenant_signing_url,
+              :test_mode,
               :completed_at, :expires_at,
               :created_at, :updated_at
 
   def initialize(id: nil, tenant_id:, case_id:, pdf_url:, status: 'pending',
                  landlord_signed: false, tenant_signed: false,
                  landlord_signed_at: nil, tenant_signed_at: nil,
+                 landlord_signing_url: nil, tenant_signing_url: nil,
+                 test_mode: false,
                  completed_at: nil, expires_at: nil,
                  created_at: nil, updated_at: nil)
     @id = id || generate_id
@@ -30,6 +34,9 @@ class SignedContract
     @tenant_signed = tenant_signed
     @landlord_signed_at = landlord_signed_at
     @tenant_signed_at = tenant_signed_at
+    @landlord_signing_url = landlord_signing_url
+    @tenant_signing_url = tenant_signing_url
+    @test_mode = test_mode
     @completed_at = completed_at
     @expires_at = expires_at
     @created_at = created_at || Time.now
@@ -37,6 +44,10 @@ class SignedContract
 
     validate!
   end
+
+  # Writer methods for mutable fields
+  attr_writer :pdf_url, :status, :landlord_signed, :tenant_signed,
+              :landlord_signed_at, :tenant_signed_at, :completed_at
 
   # Query methods
 
