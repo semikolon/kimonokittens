@@ -2,6 +2,8 @@
 
 **Goal**: Migrate kimonokittens.com from Pi Agoo server to Dell production, with clean URLs and proper SSL.
 
+**Status**: 🚀 **IN PROGRESS** (Nov 10, 2025 - SSL obtained, nginx configured, ready for port forwarding)
+
 **Timeline**: Ready when ready (BRF-Auto timeline no longer blocking)
 
 **Detailed Analysis**: See `PI_TO_DELL_MIGRATION_ANALYSIS.md` for complete dependency mapping and "what breaks if..." scenarios.
@@ -15,11 +17,13 @@
 - [x] Deploy webhook functional (port 49123)
 - [x] Main API functional (port 3001)
 - [x] Kiosk display working perfectly
-- [ ] Environment variables configured on Dell
-- [ ] SSL certificates generated on Dell
-- [ ] Nginx configured for public access
-- [ ] Homepage content migrated
-- [ ] Port forwarding updated
+- [x] Environment variables configured on Dell (ZIGNED_API_KEY test mode)
+- [x] SSL certificates generated on Dell (manual DNS-01, expires 2026-02-08)
+- [x] Nginx configured for public HTTPS access
+- [x] Local testing passed (HTTP→HTTPS redirect, API endpoints, webhooks)
+- [ ] Port forwarding updated (Pi → Dell)
+- [ ] External testing from different network
+- [ ] GitHub webhook URL updated to use domain
 
 ---
 
