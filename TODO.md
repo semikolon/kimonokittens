@@ -67,6 +67,36 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 ---
 
+## 🌐 PUBLIC HOMEPAGE & DOMAIN SETUP
+
+**Goal:** Deploy public-facing kimonokittens.com homepage with SSL
+
+**Status:** ⏳ **PLANNED** - Domain exists, needs SSL renewal + homepage design
+
+### Tasks
+- [ ] **Renew SSL certificate for kimonokittens.com**
+  - [ ] Configure Let's Encrypt on Dell nginx
+  - [ ] Setup auto-renewal via certbot
+  - [ ] Verify HTTPS works for all webhook endpoints
+- [ ] **Design new homepage with Magic MCP** (`/ui-prototype` command)
+  - [ ] Modern, welcoming design for Kimono Kittens
+  - [ ] Information about the collective
+  - [ ] Links to handbook (when public)
+  - [ ] Contact/application information
+  - [ ] Swish donation QR code
+- [ ] **Deploy homepage to production**
+  - [ ] Build static site or simple React app
+  - [ ] Configure nginx to serve at domain root
+  - [ ] Test public accessibility
+- [ ] **Future: Contract signup page** (`/meow` endpoint)
+  - [ ] Form: name, personnummer, email, phone, move-in date
+  - [ ] Creates Tenant record → generates contract → Zigned signing
+  - [ ] Admin approval step before final contract creation
+
+**Priority**: MEDIUM - Improves public presence and future automation
+
+---
+
 ## 🌙 Dashboard Sleep Schedule Feature ✅ PRODUCTION READY
 
 **Status:** ✅ FULLY WORKING with CSS transitions (October 4, 2025)
@@ -436,12 +466,22 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 - [ ] Document current data structures for smooth transition
 
 ### SMS Reminders and Swish Integration
+
+**📌 IMPORTANT: Detailed planning exists in ChatGPT thread with automated Swish transaction matching implementation details**
+
 - [ ] Implement automated rent reminders via SMS:
   - Generate personalized Swish payment links with correct amounts
   - Send monthly reminders with payment links
   - Manual confirmation system for payments
   - Update payment status in persistent storage
   - Track payment history
+- [ ] **Automated Swish Payment Matching via Bank Sync**:
+  - [ ] Integrate bank transaction sync API (Tink/Nordigen/similar)
+  - [ ] Filter Swish transactions from synced bank history
+  - [ ] Match payments to expected rent amounts by tenant
+  - [ ] Automatic payment confirmation without manual checks
+  - [ ] Reduce manual verification overhead
+  - [ ] **Reference**: See ChatGPT thread for complete implementation plan
 - [ ] Investigate Swish API access requirements:
   - Research requirements for företag/enskild firma
   - Evaluate costs and benefits
