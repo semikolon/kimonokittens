@@ -2,6 +2,8 @@ require 'json'
 require 'openssl'
 require_relative '../lib/contract_signer'
 require_relative '../lib/data_broadcaster'
+require_relative '../lib/repositories/signed_contract_repository'
+require_relative '../lib/persistence'
 
 # ZignedWebhookHandler processes signing events from Zigned API
 #
@@ -17,7 +19,7 @@ require_relative '../lib/data_broadcaster'
 # - Rejects requests with invalid signatures
 #
 # Integration Points:
-# - Updates contract metadata files
+# - Updates SignedContract database records
 # - Broadcasts signing events via WebSocket
 # - Auto-downloads signed PDF when completed
 # - Notifies stakeholders (future: email/SMS)
@@ -31,12 +33,11 @@ require_relative '../lib/data_broadcaster'
 #     json result
 #   end
 class ZignedWebhookHandler
-  METADATA_DIR = File.join(File.dirname(__FILE__), '../contracts/metadata')
-
   # @param webhook_secret [String] Secret key from Zigned dashboard for signature verification
   def initialize(webhook_secret: ENV['ZIGNED_WEBHOOK_SECRET'])
     @webhook_secret = webhook_secret
     @broadcaster = DataBroadcaster.instance
+    @repository = Persistence.signed_contracts
   end
 
   # Process incoming webhook from Zigned
@@ -114,9 +115,13 @@ class ZignedWebhookHandler
 
     puts "📝 New signing case created: #{case_id} - #{title}"
 
-    update_metadata(case_id) do |metadata|
-      metadata['status'] = 'created'
-      metadata['zigned_webhook_received_at'] = Time.now.strftime('%Y-%m-%d %H:%M:%S')
+    # Update database record
+    contract = @repository.find_by_case_id(case_id)
+    if contract
+      contract.status = 'awaiting_signatures'
+      @repository.update(contract)
+    else
+      puts "⚠️  Warning: SignedContract record not found for case_id #{case_id}"
     end
 
     # Broadcast event
@@ -135,13 +140,23 @@ class ZignedWebhookHandler
 
     puts "✍️  Signature received: #{signer['name']} signed case #{case_id}"
 
-    update_metadata(case_id) do |metadata|
-      metadata['signers'] ||= []
-      metadata['signers'] << {
-        name: signer['name'],
-        personnummer: signer['personal_number'],
-        signed_at: signer['signed_at']
-      }
+    # Update database record with signature info
+    contract = @repository.find_by_case_id(case_id)
+    if contract
+      # Determine if landlord or tenant signed (simplified - assumes Fredrik is landlord)
+      is_landlord = signer['personal_number']&.gsub(/\D/, '') == '8604230717'
+
+      if is_landlord
+        contract.landlord_signed = true
+        contract.landlord_signed_at = Time.parse(signer['signed_at'])
+      else
+        contract.tenant_signed = true
+        contract.tenant_signed_at = Time.parse(signer['signed_at'])
+      end
+
+      @repository.update(contract)
+    else
+      puts "⚠️  Warning: SignedContract record not found for case_id #{case_id}"
     end
 
     # Broadcast event
@@ -160,25 +175,33 @@ class ZignedWebhookHandler
 
     puts "🎉 Contract fully signed: #{case_id} - #{title}"
 
+    contract = @repository.find_by_case_id(case_id)
+    unless contract
+      puts "⚠️  Warning: SignedContract record not found for case_id #{case_id}"
+      return
+    end
+
     # Auto-download signed PDF
     begin
-      metadata = find_metadata_by_case_id(case_id)
-      if metadata
-        tenant_name = metadata['tenant_name']
-        signer = ContractSigner.new(test_mode: metadata['test_mode'] || false)
+      tenant = Persistence.tenants.find_by_id(contract.tenant_id)
+      if tenant
+        # TODO: Determine test mode from contract metadata
+        signer = ContractSigner.new(test_mode: false)
 
-        signed_path = signer.download_signed_contract(case_id, tenant_name)
+        signed_path = signer.download_signed_contract(case_id, tenant.name)
 
+        # Update contract with signed PDF URL (for now, local path)
+        contract.pdf_url = signed_path
         puts "✅ Signed PDF downloaded: #{signed_path}"
       end
     rescue => e
       puts "⚠️  Failed to auto-download signed PDF: #{e.message}"
     end
 
-    update_metadata(case_id) do |metadata|
-      metadata['status'] = 'completed'
-      metadata['completed_at'] = Time.now.strftime('%Y-%m-%d %H:%M:%S')
-    end
+    # Update contract status
+    contract.status = 'completed'
+    contract.completed_at = Time.now
+    @repository.update(contract)
 
     # Broadcast event
     @broadcaster.broadcast_data('contract_status', {
@@ -189,7 +212,7 @@ class ZignedWebhookHandler
     })
 
     # Future: Send notification emails/SMS
-    # send_completion_notification(metadata)
+    # send_completion_notification(contract)
   end
 
   # Handle case.expired event
@@ -199,9 +222,12 @@ class ZignedWebhookHandler
 
     puts "⏰ Contract expired: #{case_id} - #{title}"
 
-    update_metadata(case_id) do |metadata|
-      metadata['status'] = 'expired'
-      metadata['expired_at'] = Time.now.strftime('%Y-%m-%d %H:%M:%S')
+    contract = @repository.find_by_case_id(case_id)
+    if contract
+      contract.status = 'expired'
+      @repository.update(contract)
+    else
+      puts "⚠️  Warning: SignedContract record not found for case_id #{case_id}"
     end
 
     # Broadcast event
@@ -213,7 +239,7 @@ class ZignedWebhookHandler
     })
 
     # Future: Send expiration notification
-    # send_expiration_notification(metadata)
+    # send_expiration_notification(contract)
   end
 
   # Handle case.cancelled event
@@ -223,9 +249,12 @@ class ZignedWebhookHandler
 
     puts "🚫 Contract cancelled: #{case_id} - #{title}"
 
-    update_metadata(case_id) do |metadata|
-      metadata['status'] = 'cancelled'
-      metadata['cancelled_at'] = Time.now.strftime('%Y-%m-%d %H:%M:%S')
+    contract = @repository.find_by_case_id(case_id)
+    if contract
+      contract.status = 'cancelled'
+      @repository.update(contract)
+    else
+      puts "⚠️  Warning: SignedContract record not found for case_id #{case_id}"
     end
 
     # Broadcast event
@@ -235,33 +264,5 @@ class ZignedWebhookHandler
       title: title,
       timestamp: Time.now.to_i
     })
-  end
-
-  # Find metadata file by case_id
-  def find_metadata_by_case_id(case_id)
-    metadata_files = Dir.glob(File.join(METADATA_DIR, '*_contract_metadata.json'))
-
-    metadata_files.each do |file|
-      data = JSON.parse(File.read(file))
-      return data if data['case_id'] == case_id
-    end
-
-    nil
-  end
-
-  # Update metadata file for a case
-  def update_metadata(case_id)
-    metadata_files = Dir.glob(File.join(METADATA_DIR, '*_contract_metadata.json'))
-
-    metadata_files.each do |file|
-      data = JSON.parse(File.read(file))
-      if data['case_id'] == case_id
-        yield data
-        File.write(file, JSON.pretty_generate(data))
-        return true
-      end
-    end
-
-    false
   end
 end
