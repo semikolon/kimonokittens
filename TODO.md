@@ -98,6 +98,20 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
     - Creates draft Tenant record with `status: 'pending_approval'`
     - Email notification to admin (landlord)
 
+  **Design Specification (Nov 10, 2025):**
+  - [ ] Simple unstyled signup page (`www/signup.html`)
+    - Page background: Empty dashboard-style (dark gradient)
+    - Page heading: "Intresseanmälan" above form
+    - Form width: 40% of page, max-width 900px
+    - Form style: Widget-like appearance (matches dashboard widgets)
+    - Input fields: Huge font size, left-aligned text
+    - Labels: All-caps, half font size, 50% opacity, right-aligned on left side of fields
+    - Label positioning: Right-aligned to mirror/meet left-aligned field content
+    - Submit button: Large, glowing orange with stark gradient, 5px half-opacity orange border
+    - Form fields: name, personnummer, email, phone, move-in date
+    - Backend: POST /api/signup creates Tenant with status 'pending_approval'
+    - Security: Rate limiting + CAPTCHA required before production
+
   **Admin Management UI:**
   - [ ] Admin interface for tenant approval & contract generation
     - View all pending tenant applications
@@ -133,6 +147,9 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
   - `lib/repositories/tenant_repository.rb` - Tenant persistence
   - Homepage files: `www/` directory → deployed to `/var/www/kimonokittens/`
   - Nginx config: Public domain serves root, kiosk serves `dashboard/` subdirectory
+
+  **Status:** ✅ Nginx routes enabled (Nov 10, 2025) - `/meow`, `/curious`, `/signup` + `/api/signup` ready
+  **Pending:** Backend implementation (signup form HTML + POST /api/signup handler with rate limiting + CAPTCHA)
 
 **Priority**: MEDIUM - Improves public presence and future automation
 

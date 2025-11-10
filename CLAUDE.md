@@ -23,6 +23,28 @@ lsof -ti :3001 :5175
 - **kimonokittens user**: NOT in sudoers ❌
 - **All sudo commands must run as fredrik user**, not kimonokittens
 
+### 🔒 Public API Security
+
+**CRITICAL: Most endpoints MUST NOT be exposed to public internet via nginx.**
+
+**Safe to expose (authenticated):**
+- `/api/webhooks/deploy` - GitHub signature verification protects against unauthorized deployments
+- `/api/webhooks/zigned` - Zigned webhook secret verification ensures only legitimate contract status updates
+
+**DANGEROUS to expose (unauthenticated):**
+- `PUT /api/rent/config` - Anyone could modify rent amounts, electricity costs, utilities (financial fraud risk)
+- `GET /api/rent/friendly_message` - Exposes tenant names, rent amounts, personal financial data (GDPR violation)
+- `/dashboard/*` static files - Exposes internal kiosk UI not designed for public access (information disclosure)
+- `/data/*` endpoints - Temperature, weather, etc. - less critical but still internal-only data
+
+**Nginx rule:** Public domain server block should ONLY serve homepage files + authenticated webhooks. All other endpoints restricted to localhost.
+
+**Future public signup endpoint (`/api/signup`):**
+- Enabled in nginx config for future tenant signup form at `/meow`, `/curious`, or `/signup`
+- ⚠️ **MUST implement rate limiting** when building backend handler (prevent signup spam)
+- ⚠️ **MUST implement CAPTCHA** or similar bot prevention (hCaptcha, Cloudflare Turnstile, etc.)
+- Creates pending tenant record → admin approval → contract generation → Zigned e-signing flow
+
 ### 🚨 Production Deployment
 
 **🔴 CRITICAL: NEVER PUSH WITHOUT EXPLICIT USER AUTHORIZATION 🔴**
