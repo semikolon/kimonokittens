@@ -1100,6 +1100,78 @@ The Puma architecture is designed for:
 
 ---
 
+## 📝 CONTRACT SIGNING SYSTEM (Zigned Integration)
+
+**Status**: ✅ **READY FOR TESTING** (Nov 10, 2025) - Database-based webhook handler deployed
+
+### Architecture
+
+**Contract Workflow**:
+1. **Generation** (`lib/contract_signer.rb`): Create PDF → Send to Zigned for e-signing
+2. **Webhook Events** (`handlers/zigned_webhook_handler.rb`): Receive signature updates
+3. **Database Storage** (`lib/models/signed_contract.rb`): Track signing progress
+4. **Completion**: Auto-download signed PDF when both parties sign
+
+### Key Components ✅
+
+- **Database schema**: `SignedContract` table with signing URLs, test mode flag, timestamps
+- **Webhook handler**: Database-based (not file-based) for cross-machine compatibility
+- **Test/production separation**: `testMode` field enables safe testing without real BankID signatures
+- **SMS reminders**: Signing URLs stored for future notification features
+
+### Production Requirements ⚠️
+
+**Environment variables** (must be set in `/home/kimonokittens/.env` on Dell):
+```bash
+WEBHOOK_BASE_URL=https://kimonokittens.com
+ZIGNED_API_KEY='your_api_key_here'
+ZIGNED_WEBHOOK_SECRET_REAL='production_webhook_secret'
+ZIGNED_WEBHOOK_SECRET_TEST='test_webhook_secret'
+```
+
+**Zigned dashboard configuration**:
+- **Production webhook**: `https://kimonokittens.com/api/webhooks/zigned`
+- **Test webhook**: `https://kimonokittens.com/api/webhooks/zigned` (same endpoint, different secrets)
+- Events enabled: `case.created`, `case.signed`, `case.completed`
+
+### Migration Status
+
+**Completed** (Nov 10, 2025):
+- [x] Database schema with signing URLs and test mode
+- [x] Domain model and repository layer
+- [x] Webhook handler converted to database-based
+- [x] ContractSigner saves all required fields
+- [x] Migration applied locally on Mac
+
+**Remaining** (Dell deployment):
+- [ ] Run Prisma migration: `npx prisma migrate deploy`
+- [ ] Verify environment variables in `/home/kimonokittens/.env`
+- [ ] Configure Zigned webhook URLs in admin dashboard
+- [ ] Test contract creation and webhook delivery
+
+### Testing Approach
+
+**Safe testing workflow**:
+1. Create test tenant in database (your email only)
+2. Generate contract with `test_mode: true, send_emails: false`
+3. Manual link testing (no unwanted emails sent)
+4. Webhook will fail until domain migration complete (expected)
+
+**Full flow testing** (after domain migration):
+1. SSL certificates installed on Dell
+2. Nginx configured for public access
+3. Port forwarding updated to Dell
+4. Zigned webhooks can reach Dell
+5. End-to-end contract signing workflow
+
+### Documentation
+
+- **Migration Analysis**: `docs/PI_TO_DELL_MIGRATION_ANALYSIS.md` (dependency mapping, blockers)
+- **Migration Checklist**: `docs/DOMAIN_MIGRATION_CHECKLIST.md` (step-by-step execution)
+- **Model Architecture**: `docs/MODEL_ARCHITECTURE.md` (domain layer API reference)
+
+---
+
 ## 📚 HISTORICAL: Initial Production Deployment (September-October 2025)
 
 **Status**: ✅ COMPLETED - Database fully operational in production since October 6, 2025
