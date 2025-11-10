@@ -35,19 +35,19 @@ data[:tenants].each do |tenant_data|
     room_adjustment: tenant_data[:room_adjustment]
   )
 
-  saved = repo.save(tenant)
-
-  if saved
-    puts "✅ Imported: #{tenant.name}"
-    puts "   ID: #{tenant.id}"
-    puts "   Email: #{tenant.email}"
-    puts "   Phone: #{tenant.phone}"
-    puts "   Personnummer: #{tenant.personnummer}"
-    puts "   Deposit: #{tenant.deposit} kr"
-    puts "   Furnishing: #{tenant.furnishing_deposit} kr"
-    puts "   Start: #{tenant.start_date}"
-  else
+  begin
+    created = repo.create(tenant)
+    puts "✅ Imported: #{created.name}"
+    puts "   ID: #{created.id}"
+    puts "   Email: #{created.email}"
+    puts "   Phone: #{created.phone}"
+    puts "   Personnummer: #{created.personnummer}"
+    puts "   Deposit: #{created.deposit} kr"
+    puts "   Furnishing: #{created.furnishing_deposit} kr"
+    puts "   Start: #{created.start_date}"
+  rescue => e
     puts "❌ Failed to import: #{tenant_data[:name]}"
+    puts "   Error: #{e.message}"
   end
 end
 

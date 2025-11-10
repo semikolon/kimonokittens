@@ -419,6 +419,7 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 - [ ] Add backup/restore functionality for SQLite databases
 - [ ] Add data validation and cleanup tools
 - [ ] Add monitoring for database size and performance
+- [ ] **Update all Tenant contact details** (personnummer, phone) for existing tenants (Fredrik, Adam, Rasmus, etc.) to enable contract generation for all
 
 ## Future Enhancements
 
