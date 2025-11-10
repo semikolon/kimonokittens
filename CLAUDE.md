@@ -1121,18 +1121,22 @@ The Puma architecture is designed for:
 
 ### Production Requirements ⚠️
 
-**Environment variables** (must be set in `/home/kimonokittens/.env` on Dell):
+**Environment variables** (required in `/home/kimonokittens/.env` on Dell):
 ```bash
-WEBHOOK_BASE_URL=https://kimonokittens.com
+# Required
 ZIGNED_API_KEY='your_api_key_here'
 ZIGNED_WEBHOOK_SECRET_REAL='production_webhook_secret'
 ZIGNED_WEBHOOK_SECRET_TEST='test_webhook_secret'
+
+# Optional (only if NOT using dashboard webhooks)
+# WEBHOOK_BASE_URL=https://kimonokittens.com
 ```
 
-**Zigned dashboard configuration**:
+**Zigned dashboard configuration** (recommended approach):
 - **Production webhook**: `https://kimonokittens.com/api/webhooks/zigned`
 - **Test webhook**: `https://kimonokittens.com/api/webhooks/zigned` (same endpoint, different secrets)
 - Events enabled: `case.created`, `case.signed`, `case.completed`
+- **Note**: Dashboard webhooks eliminate need for WEBHOOK_BASE_URL env var
 
 ### Migration Status
 

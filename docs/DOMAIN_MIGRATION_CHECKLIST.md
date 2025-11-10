@@ -35,9 +35,6 @@ nano /home/kimonokittens/.env
 
 **Required variables:**
 ```bash
-# Webhook base URL (for Zigned callbacks)
-WEBHOOK_BASE_URL=https://kimonokittens.com
-
 # Zigned API credentials
 ZIGNED_API_KEY='your_api_key_here'
 ZIGNED_WEBHOOK_SECRET_REAL='your_real_webhook_secret'
@@ -47,16 +44,23 @@ ZIGNED_WEBHOOK_SECRET_TEST='your_test_webhook_secret'
 DATABASE_URL='postgresql://user:pass@localhost:5432/kimonokittens_production'
 ```
 
-**Verification:**
+**Optional variables:**
 ```bash
-# Check all required vars exist
-grep -E '(WEBHOOK_BASE_URL|ZIGNED)' /home/kimonokittens/.env
+# Only needed if NOT using Zigned dashboard webhooks
+# WEBHOOK_BASE_URL=https://kimonokittens.com
 ```
 
-**Why WEBHOOK_BASE_URL is required:**
-- Contract signing code constructs webhook URL from this var
-- Without it, Zigned can't notify Dell of signature events
-- Contracts will hang (created but never complete)
+**Verification:**
+```bash
+# Check required vars exist
+grep -E 'ZIGNED' /home/kimonokittens/.env
+```
+
+**About WEBHOOK_BASE_URL:**
+- **NOT REQUIRED** if you configured webhooks in Zigned dashboard (recommended approach)
+- Zigned will use dashboard URL for all contracts
+- Only needed for: local development testing, ngrok tunnels, or multi-tenant systems
+- **For production**: Leave unset, use dashboard webhooks
 
 ---
 
