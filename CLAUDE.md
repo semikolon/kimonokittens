@@ -1132,7 +1132,7 @@ ZIGNED_WEBHOOK_SECRET_TEST='test_webhook_secret'
 # WEBHOOK_BASE_URL=https://kimonokittens.com
 ```
 
-**Zigned dashboard configuration** (recommended approach):
+**Zigned admin interface configuration** (recommended approach):
 - **Production webhook**: `https://kimonokittens.com/api/webhooks/zigned`
 - **Test webhook**: `https://kimonokittens.com/api/webhooks/zigned` (same endpoint, different secrets)
 - Events enabled: `case.created`, `case.signed`, `case.completed`

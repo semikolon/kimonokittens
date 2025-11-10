@@ -46,7 +46,7 @@ DATABASE_URL='postgresql://user:pass@localhost:5432/kimonokittens_production'
 
 **Optional variables:**
 ```bash
-# Only needed if NOT using Zigned dashboard webhooks
+# Only needed if NOT using Zigned admin interface webhooks
 # WEBHOOK_BASE_URL=https://kimonokittens.com
 ```
 
@@ -57,7 +57,7 @@ grep -E 'ZIGNED' /home/kimonokittens/.env
 ```
 
 **About WEBHOOK_BASE_URL:**
-- **NOT REQUIRED** if you configured webhooks in Zigned dashboard (recommended approach)
+- **NOT REQUIRED** if you configured webhooks in Zigned admin interface (recommended approach)
 - Zigned will use dashboard URL for all contracts
 - Only needed for: local development testing, ngrok tunnels, or multi-tenant systems
 - **For production**: Leave unset, use dashboard webhooks

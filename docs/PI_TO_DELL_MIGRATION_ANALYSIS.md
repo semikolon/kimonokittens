@@ -42,7 +42,7 @@ webhook_url = ENV['WEBHOOK_BASE_URL'] ? "#{ENV['WEBHOOK_BASE_URL']}/api/webhooks
 **What Must Happen:**
 1. Set `WEBHOOK_BASE_URL=https://kimonokittens.com` on production Dell
 2. Update Zigned admin dashboard to point webhook to: `https://kimonokittens.com/api/webhooks/zigned`
-3. Verify ZIGNED_WEBHOOK_SECRET matches between Zigned dashboard and Dell `.env`
+3. Verify ZIGNED_WEBHOOK_SECRET matches between Zigned admin interface and Dell `.env`
 4. Test webhook delivery with Zigned API test endpoint
 
 **Status:** READY (code exists), NEEDS CONFIG (environment variables + Zigned admin update)
