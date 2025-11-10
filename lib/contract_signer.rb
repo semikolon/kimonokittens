@@ -1,8 +1,12 @@
 require_relative 'contract_generator_html'
 require_relative 'zigned_client'
 require_relative 'repositories/tenant_repository'
+require_relative 'repositories/signed_contract_repository'
+require_relative 'models/signed_contract'
+require_relative 'persistence'
 require 'json'
 require 'fileutils'
+require 'securerandom'
 
 # ContractSigner orchestrates the entire contract signing workflow
 #
@@ -118,17 +122,37 @@ class ContractSigner
       signers: signers,
       title: case_title,
       webhook_url: webhook_url,
-      message: "Välkommen till BRF Kimonokittens! Vänligen signera hyresavtalet med ditt BankID.",
+      message: "Välkommen till Kimono Kittens! Vänligen signera hyresavtalet med ditt BankID.",
       send_emails: send_emails
     )
 
     puts "✅ Signing case created: #{zigned_result[:case_id]}"
     puts "📅 Expires at: #{zigned_result[:expires_at]}"
 
-    # Step 3: Print signing links
+    # Step 3: Save to database (replaces file-based metadata)
     landlord_link = zigned_result[:signing_links][LANDLORD[:personnummer].gsub(/\D/, '')]
     tenant_link = zigned_result[:signing_links][tenant.personnummer.gsub(/\D/, '')]
 
+    signed_contract = SignedContract.new(
+      id: SecureRandom.uuid,
+      tenant_id: tenant_id,
+      case_id: zigned_result[:case_id],
+      pdf_url: pdf_path,  # Will be updated to signed PDF path when completed
+      status: 'pending',
+      landlord_signed: false,
+      tenant_signed: false,
+      landlord_signing_url: landlord_link,
+      tenant_signing_url: tenant_link,
+      test_mode: test_mode,
+      expires_at: Time.parse(zigned_result[:expires_at]),
+      created_at: Time.now,
+      updated_at: Time.now
+    )
+
+    Persistence.signed_contracts.save(signed_contract)
+    puts "✅ Contract record saved to database"
+
+    # Step 4: Print signing links
     puts "\n🔗 Signing Links:"
     puts "\nLandlord (#{LANDLORD[:name]}):"
     puts landlord_link
@@ -141,30 +165,6 @@ class ContractSigner
       puts "\n⚠️  Email invitations disabled - share links manually."
     end
 
-    # Step 4: Save metadata for audit trail
-    FileUtils.mkdir_p(METADATA_DIR) unless Dir.exist?(METADATA_DIR)
-
-    metadata = {
-      tenant_id: tenant_id,
-      tenant_name: tenant.name,
-      tenant_personnummer: tenant.personnummer,
-      tenant_email: tenant.email,
-      tenant_phone: tenant.phone,
-      move_in_date: tenant.start_date&.strftime('%Y-%m-%d'),
-      pdf_path: pdf_path,
-      case_id: zigned_result[:case_id],
-      status: zigned_result[:status],
-      created_at: Time.now.strftime('%Y-%m-%d %H:%M:%S'),
-      expires_at: zigned_result[:expires_at],
-      test_mode: test_mode,
-      signing_links: zigned_result[:signing_links]
-    }
-
-    safe_name = tenant.name.gsub(/[^\w\s-]/, '').gsub(/\s+/, '_')
-    metadata_path = File.join(METADATA_DIR, "#{safe_name}_contract_metadata.json")
-    File.write(metadata_path, JSON.pretty_generate(metadata))
-    puts "✅ Metadata saved: #{metadata_path}"
-
     # Return result
     {
       pdf_path: pdf_path,
@@ -174,7 +174,7 @@ class ContractSigner
       tenant_link: tenant_link,
       expires_at: zigned_result[:expires_at],
       status: zigned_result[:status],
-      metadata_path: metadata_path
+      contract_id: signed_contract.id
     }
   end
 
