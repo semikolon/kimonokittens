@@ -89,6 +89,23 @@ class ZignedWebhookHandler
       handle_agreement_expired(agreement_data)
     when 'agreement.lifecycle.cancelled'
       handle_agreement_cancelled(agreement_data)
+
+    # Participant tracking events
+    when 'participant.identity_enforcement.passed'
+      handle_identity_enforcement_passed(agreement_data)
+
+    # PDF validation events
+    when 'agreement.pdf_verification.completed'
+      handle_pdf_verification_completed(agreement_data)
+
+    # Email delivery events
+    when 'email_event.agreement_invitation.delivered'
+      handle_email_invitation_delivered(agreement_data)
+    when 'email_event.agreement_invitation.all_delivered'
+      handle_all_emails_delivered(agreement_data)
+    when 'email_event.agreement_finalized.delivered'
+      handle_finalized_email_delivered(agreement_data)
+
     else
       puts "⚠️  Unhandled webhook event: #{event_type}"
       return { status: 200, message: "Event type not implemented: #{event_type}", event: event_type }
@@ -400,6 +417,116 @@ class ZignedWebhookHandler
       cancelled_at: cancelled_at,
       timestamp: Time.now.to_i
     })
+  end
+
+  # Handle participant.identity_enforcement.passed event
+  def handle_identity_enforcement_passed(data)
+    participant_id = data['id']
+    name = data['name']
+    agreement_id = data['agreement']
+    identity_status = data.dig('identity_enforcement', 'status')
+    enforcement_method = data.dig('identity_enforcement', 'enforcement_method')
+
+    puts "🔐 Identity enforcement passed: #{name}"
+    puts "   Participant ID: #{participant_id}"
+    puts "   Method: #{enforcement_method}"
+    puts "   Status: #{identity_status}"
+
+    # Update participant record
+    participant_repo = Persistence.contract_participants
+    participant = participant_repo.find_by_participant_id(participant_id)
+
+    if participant
+      participant.identity_enforcement_passed = true
+      participant_repo.update(participant)
+      puts "   ✅ Participant identity verified"
+    else
+      puts "   ⚠️  Participant record not found - will be created on fulfillment"
+    end
+  end
+
+  # Handle agreement.pdf_verification.completed event
+  def handle_pdf_verification_completed(data)
+    agreement_id = data['id']
+    status = data['status']
+    updated_at = data['updated_at']
+
+    puts "📋 PDF verification completed: #{agreement_id}"
+    puts "   Status: #{status}"
+    puts "   Verified at: #{updated_at}"
+
+    contract = @repository.find_by_case_id(agreement_id)
+    if contract
+      contract.validation_status = 'completed'
+      contract.validation_completed_at = Time.parse(updated_at) if updated_at
+      @repository.update(contract)
+      puts "   ✅ Contract validation status updated"
+    else
+      puts "   ⚠️  Contract record not found for agreement_id #{agreement_id}"
+    end
+  end
+
+  # Handle email_event.agreement_invitation.delivered event
+  def handle_email_invitation_delivered(data)
+    agreement_id = data['agreement']
+    description = data['description']  # "Invitation to sign successfully delivered to branstrom@gmail.com"
+    created_at = data['created_at']
+
+    # Extract email from description
+    email = description[/to ([^\s]+)/, 1]
+
+    puts "📧 Email invitation delivered: #{agreement_id}"
+    puts "   To: #{email}"
+    puts "   At: #{created_at}"
+
+    # Mark email as delivered for specific participant (by email lookup)
+    if email
+      participant_repo = Persistence.contract_participants
+      contract = @repository.find_by_case_id(agreement_id)
+
+      if contract
+        # Find participant by email
+        participants = participant_repo.find_by_contract_id(contract.id)
+        participant = participants.find { |p| p.email == email }
+
+        if participant
+          participant.email_delivered = true
+          participant.email_delivered_at = Time.parse(created_at) if created_at
+          participant_repo.update(participant)
+          puts "   ✅ Participant email delivery recorded"
+        else
+          puts "   ⚠️  Participant not found for email #{email}"
+        end
+      end
+    end
+  end
+
+  # Handle email_event.agreement_invitation.all_delivered event
+  def handle_all_emails_delivered(data)
+    agreement_id = data['agreement']
+    created_at = data['created_at']
+
+    puts "📬 All invitation emails delivered: #{agreement_id}"
+    puts "   At: #{created_at}"
+
+    contract = @repository.find_by_case_id(agreement_id)
+    if contract
+      contract.email_delivery_status = 'delivered'
+      @repository.update(contract)
+      puts "   ✅ Contract email delivery status updated"
+    end
+  end
+
+  # Handle email_event.agreement_finalized.delivered event
+  def handle_finalized_email_delivered(data)
+    agreement_id = data['agreement']
+    description = data['description']  # "Signed document successfully delivered to branstrom@gmail.com"
+
+    email = description[/to ([^\s]+)/, 1]
+
+    puts "📨 Signed document email delivered: #{agreement_id}"
+    puts "   To: #{email}"
+    puts "   ✅ Final document delivered"
   end
 
   private
