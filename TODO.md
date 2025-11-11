@@ -546,6 +546,10 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
     - Support future features (room-specific rent adjustments, move-in/out workflows)
   - **Priority**: MEDIUM-HIGH - Required before SMS/Swish automation can be implemented
   - **Discovered**: Nov 11, 2025 during contract testing financial number verification
+- [ ] **Store signed contract PDFs as blobs in database instead of filesystem**
+  - **Current**: SignedContract table stores file paths (`pdfUrl` field), actual PDFs in `contracts/signed/` directory
+  - **Future**: Store PDF binary data directly in database for better backup, multi-machine access, and data integrity
+  - **Priority**: LOW - filesystem approach works fine for single-server deployment, but consider for future scaling
 
 ## Future Enhancements
 

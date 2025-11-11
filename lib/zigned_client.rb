@@ -29,17 +29,19 @@ class ZignedClient
   include HTTParty
 
   # Zigned API endpoints
+  # NOTE: Zigned uses the same API endpoint for both test and production.
+  # Test mode is determined by which API key you use (test vs production key),
+  # not by a separate domain. Test keys create invalid signatures for free.
   BASE_URL = 'https://api.zigned.se/v1'
-  TEST_BASE_URL = 'https://api-test.zigned.se/v1'
 
-  # @param api_key [String] Your Zigned API key from dashboard
-  # @param test_mode [Boolean] Use test environment (free, no real signatures)
+  # @param api_key [String] Your Zigned API key from dashboard (test or production)
+  # @param test_mode [Boolean] Documentation flag (doesn't change endpoint - determined by API key)
   def initialize(api_key:, test_mode: false)
     raise ArgumentError, 'API key is required' if api_key.nil? || api_key.empty?
 
     @api_key = api_key
     @test_mode = test_mode
-    @base_url = test_mode ? TEST_BASE_URL : BASE_URL
+    @base_url = BASE_URL  # Always use same endpoint - test/prod determined by API key
 
     self.class.base_uri(@base_url)
     self.class.headers(
