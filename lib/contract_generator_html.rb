@@ -10,7 +10,7 @@ class ContractGeneratorHtml
   MARKDOWN_TEMPLATE_PATH = File.expand_path('../contracts/templates/base_contract.md.erb', __dir__)
   HANDBOOK_PATH = File.expand_path('../handbook/docs/agreements.md', __dir__)
   FONTS_DIR = File.expand_path('../fonts', __dir__)
-  LOGO_PATH = File.expand_path('assets/logo-80pct-saturated-1200w.png', __dir__)  # Optimized 1200px (569KB vs 6.8MB)
+  LOGO_PATH = File.expand_path('assets/logo-80pct-saturated-2000w.png', __dir__)  # Optimized 2000px (1.2MB vs 6.8MB, 82% reduction)
   SWISH_QR_PATH = File.expand_path('swish-qr.png', __dir__)
 
   LANDLORD = {
