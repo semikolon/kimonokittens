@@ -93,16 +93,22 @@ class ZignedWebhookHandler
     # Participant tracking events
     when 'participant.identity_enforcement.passed'
       handle_identity_enforcement_passed(agreement_data)
+    when 'participant.identity_enforcement.failed'
+      handle_identity_enforcement_failed(agreement_data)
 
     # PDF validation events
     when 'agreement.pdf_verification.completed'
       handle_pdf_verification_completed(agreement_data)
+    when 'agreement.pdf_verification.failed'
+      handle_pdf_verification_failed(agreement_data)
 
     # Email delivery events
     when 'email_event.agreement_invitation.delivered'
       handle_email_invitation_delivered(agreement_data)
     when 'email_event.agreement_invitation.all_delivered'
       handle_all_emails_delivered(agreement_data)
+    when 'email_event.agreement_invitation.delivery_failed'
+      handle_email_delivery_failed(agreement_data)
     when 'email_event.agreement_finalized.delivered'
       handle_finalized_email_delivered(agreement_data)
 
@@ -529,6 +535,103 @@ class ZignedWebhookHandler
     puts "   ✅ Final document delivered"
   end
 
+  # Handle participant.identity_enforcement.failed event
+  def handle_identity_enforcement_failed(data)
+    participant_id = data['id']
+    name = data['name']
+    agreement_id = data['agreement']
+    identity_status = data.dig('identity_enforcement', 'status')
+    enforcement_method = data.dig('identity_enforcement', 'enforcement_method')
+    failure_reason = data.dig('identity_enforcement', 'failure_reason')
+
+    puts "❌ Identity enforcement failed: #{name}"
+    puts "   Participant ID: #{participant_id}"
+    puts "   Method: #{enforcement_method}"
+    puts "   Status: #{identity_status}"
+    puts "   Reason: #{failure_reason}" if failure_reason
+
+    # Update participant record
+    participant_repo = Persistence.contract_participants
+    participant = participant_repo.find_by_participant_id(participant_id)
+
+    if participant
+      participant.identity_enforcement_passed = false
+      participant.identity_enforcement_failed_at = Time.now
+      participant_repo.update(participant)
+      puts "   ⚠️  Participant identity verification failed - recorded"
+    else
+      puts "   ⚠️  Participant record not found"
+    end
+  end
+
+  # Handle agreement.pdf_verification.failed event
+  def handle_pdf_verification_failed(data)
+    agreement_id = data['id']
+    status = data['status']
+    updated_at = data['updated_at']
+    error_message = data['error'] || data['validation_error']
+
+    puts "❌ PDF verification failed: #{agreement_id}"
+    puts "   Status: #{status}"
+    puts "   Error: #{error_message}" if error_message
+    puts "   Failed at: #{updated_at}"
+
+    contract = @repository.find_by_case_id(agreement_id)
+    if contract
+      contract.validation_status = 'failed'
+      contract.validation_failed_at = Time.parse(updated_at) if updated_at
+      contract.validation_errors = error_message if error_message
+      @repository.update(contract)
+      puts "   ⚠️  Contract validation failure recorded"
+    else
+      puts "   ⚠️  Contract record not found for agreement_id #{agreement_id}"
+    end
+  end
+
+  # Handle email_event.agreement_invitation.delivery_failed event
+  def handle_email_delivery_failed(data)
+    agreement_id = data['agreement']
+    description = data['description']
+    error_message = data['error'] || data['bounce_reason']
+    created_at = data['created_at']
+
+    # Extract email from description
+    email = description[/to ([^\s]+)/, 1] if description
+
+    puts "❌ Email delivery failed: #{agreement_id}"
+    puts "   To: #{email}" if email
+    puts "   Error: #{error_message}" if error_message
+    puts "   Failed at: #{created_at}"
+
+    # Update participant email delivery failure
+    if email
+      participant_repo = Persistence.contract_participants
+      contract = @repository.find_by_case_id(agreement_id)
+
+      if contract
+        # Find participant by email
+        participants = participant_repo.find_by_contract_id(contract.id)
+        participant = participants.find { |p| p.email == email }
+
+        if participant
+          participant.email_delivered = false
+          participant.email_delivery_failed = true
+          participant.email_delivery_error = error_message if error_message
+          participant_repo.update(participant)
+          puts "   ⚠️  Participant email failure recorded"
+        else
+          puts "   ⚠️  Participant not found for email #{email}"
+        end
+
+        # Also update contract-level email status
+        contract.email_delivery_status = 'failed'
+        contract.email_delivery_failed_at = Time.parse(created_at) if created_at
+        contract.email_delivery_error = error_message if error_message
+        @repository.update(contract)
+      end
+    end
+  end
+
   private
 
   # Create or update participant record from Zigned webhook data
@@ -541,6 +644,9 @@ class ZignedWebhookHandler
     # Webhooks don't send personal_number - look it up from contract + tenant
     personal_number = participant_data['personal_number'] || lookup_personal_number(contract_id, participant_data)
 
+    # Handle field name inconsistency: signing_url vs signing_room_url
+    signing_url = participant_data['signing_url'] || participant_data['signing_room_url']
+
     participant_attrs = {
       contract_id: contract_id,
       participant_id: participant_id,
@@ -549,7 +655,7 @@ class ZignedWebhookHandler
       personal_number: personal_number,
       role: participant_data['role'] || 'signer',
       status: participant_data['status'] || 'pending',
-      signing_url: participant_data['signing_url']
+      signing_url: signing_url
     }
 
     if existing

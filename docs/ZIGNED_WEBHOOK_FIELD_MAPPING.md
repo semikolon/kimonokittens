@@ -18,16 +18,16 @@
 | **generationCompletedAt** | ✅ Yes (hardcoded) | ✅ `agreement.pdf_verification.completed` | When validation passes | `data.updated_at` |
 | **generationFailedAt** | ❌ No | ⚠️ Not seen yet | - | - |
 | **generationError** | ❌ No | ⚠️ Not seen yet | - | - |
-| **validationStatus** | ✅ Yes (hardcoded) | ✅ `agreement.pdf_verification.completed` | When PDF validation completes | Implicit (event existence) |
+| **validationStatus** | ✅ Yes | ✅ `agreement.pdf_verification.completed` | When PDF validation completes | Set to 'completed' or 'failed' |
 | **validationStartedAt** | ❌ No | ⚠️ Not available | - | - |
-| **validationCompletedAt** | ✅ Yes (hardcoded) | ✅ `agreement.pdf_verification.completed` | When validation passes | `data.updated_at` |
-| **validationFailedAt** | ❌ No | ⚠️ Not seen yet | - | - |
-| **validationErrors** | ❌ No | ⚠️ Not seen yet | - | - |
-| **emailDeliveryStatus** | ✅ Yes (hardcoded) | ✅ `email_event.agreement_invitation.delivered` | When invitation emails sent | Implicit (event existence) |
-| **landlordEmailDelivered** | ❌ No | ✅ `email_event.agreement_invitation.delivered` | Per-participant email confirmation | Need to match participant |
-| **tenantEmailDelivered** | ❌ No | ✅ `email_event.agreement_invitation.delivered` | Per-participant email confirmation | Need to match participant |
-| **emailDeliveryFailedAt** | ❌ No | ✅ `email_event.agreement_invitation.delivery_failed` | Email bounce detection | Event timestamp |
-| **emailDeliveryError** | ❌ No | ✅ `email_event.agreement_invitation.delivery_failed` | Email error details | `data.error` or similar |
+| **validationCompletedAt** | ✅ Yes | ✅ `agreement.pdf_verification.completed` | When validation passes | `data.updated_at` |
+| **validationFailedAt** | ✅ Yes | ✅ `agreement.pdf_verification.failed` | When validation fails | `data.updated_at` |
+| **validationErrors** | ✅ Yes | ✅ `agreement.pdf_verification.failed` | Validation error details | `data.error` or `data.validation_error` |
+| **emailDeliveryStatus** | ✅ Yes | ✅ `email_event.agreement_invitation.all_delivered` | When all emails sent | Set to 'delivered' or 'failed' |
+| **landlordEmailDelivered** | ✅ Yes | ✅ `email_event.agreement_invitation.delivered` | Per-participant email confirmation | Match by email (via participant) |
+| **tenantEmailDelivered** | ✅ Yes | ✅ `email_event.agreement_invitation.delivered` | Per-participant email confirmation | Match by email (via participant) |
+| **emailDeliveryFailedAt** | ✅ Yes | ✅ `email_event.agreement_invitation.delivery_failed` | Email bounce detection | `data.created_at` parsed |
+| **emailDeliveryError** | ✅ Yes | ✅ `email_event.agreement_invitation.delivery_failed` | Email error details | `data.error` or `data.bounce_reason` |
 
 ### ContractParticipant Fields
 
@@ -41,14 +41,14 @@
 | **personalNumber** | ❌ **NOT IN WEBHOOK!** | ⚠️ Must extract from initial contract creation | - | **Not sent by Zigned** |
 | **role** | ✅ Yes | ✅ `participant.lifecycle.fulfilled` | "signer" / "observer" | `data.role` |
 | **status** | ✅ Yes | ✅ `participant.lifecycle.fulfilled` | "pending" / "fulfilled" | `data.status` |
-| **signingUrl** | ❌ No | ✅ `participant.lifecycle.fulfilled` | Unique signing room URL | `data.signing_room_url` |
+| **signingUrl** | ✅ Yes | ✅ `participant.lifecycle.fulfilled` | Unique signing room URL | `data.signing_room_url` (or `signing_url`) |
 | **signedAt** | ✅ Yes | ✅ `participant.lifecycle.fulfilled` | BankID signature timestamp | `data.signed_at` |
-| **emailDelivered** | ❌ No | ✅ `email_event.agreement_invitation.delivered` | Email confirmation | Implicit (event existence) |
-| **emailDeliveredAt** | ❌ No | ✅ `email_event.agreement_invitation.delivered` | When email delivered | `request_timestamp` |
-| **emailDeliveryFailed** | ❌ No | ✅ `email_event.agreement_invitation.delivery_failed` | Email bounce | Implicit (event existence) |
-| **emailDeliveryError** | ❌ No | ✅ `email_event.agreement_invitation.delivery_failed` | Error message | `data.error` or similar |
-| **identityEnforcementPassed** | ❌ No | ✅ `participant.identity_enforcement.passed` | Swedish personnummer verified | `data.identity_enforcement.status` |
-| **identityEnforcementFailedAt** | ❌ No | ✅ `participant.identity_enforcement.failed` | Identity check failed | Event timestamp |
+| **emailDelivered** | ✅ Yes | ✅ `email_event.agreement_invitation.delivered` | Email confirmation | Set to `true` when event received |
+| **emailDeliveredAt** | ✅ Yes | ✅ `email_event.agreement_invitation.delivered` | When email delivered | `data.created_at` |
+| **emailDeliveryFailed** | ✅ Yes | ✅ `email_event.agreement_invitation.delivery_failed` | Email bounce | Set to `true` when event received |
+| **emailDeliveryError** | ✅ Yes | ✅ `email_event.agreement_invitation.delivery_failed` | Error message | `data.error` or `data.bounce_reason` |
+| **identityEnforcementPassed** | ✅ Yes | ✅ `participant.identity_enforcement.passed` | Swedish personnummer verified | Set to `true` when passed |
+| **identityEnforcementFailedAt** | ✅ Yes | ✅ `participant.identity_enforcement.failed` | Identity check failed | `Time.now` when failed |
 
 ---
 
@@ -268,23 +268,33 @@ All return HTTP 200 "Event type not implemented" - perfect!
 
 ---
 
-## Implementation Priority
+## Implementation Status (Nov 11, 2025)
 
-### Now (Critical for Core Flow)
-- [x] agreement.lifecycle.pending
-- [x] participant.lifecycle.fulfilled
-- [x] agreement.lifecycle.fulfilled
-- [x] agreement.lifecycle.finalized
+### ✅ FULLY IMPLEMENTED - All Critical Events
+- [x] **agreement.lifecycle.pending** - Sets generation/validation/email delivery status
+- [x] **participant.lifecycle.fulfilled** - Creates participants, updates signatures
+- [x] **agreement.lifecycle.fulfilled** - Marks both parties signed
+- [x] **agreement.lifecycle.finalized** - Auto-downloads PDF, marks completed
+- [x] **agreement.lifecycle.expired** - Marks contract expired
+- [x] **agreement.lifecycle.cancelled** - Marks contract cancelled
 
-### Next (Enhance Existing Fields)
-- [ ] participant.identity_enforcement.passed - Populate identity_enforcement_passed
-- [ ] agreement.pdf_verification.completed - Populate validation_status
-- [ ] Store signature.method in participant record (add field?)
-- [ ] Store signing_room_url in participant record
+### ✅ FULLY IMPLEMENTED - All Tracking Events
+- [x] **participant.identity_enforcement.passed** - Sets identity verification flag
+- [x] **participant.identity_enforcement.failed** - Records identity failure + timestamp
+- [x] **agreement.pdf_verification.completed** - Sets validation completed
+- [x] **agreement.pdf_verification.failed** - Records validation failure + errors
+- [x] **email_event.agreement_invitation.delivered** - Per-participant email tracking
+- [x] **email_event.agreement_invitation.all_delivered** - Contract-level email status
+- [x] **email_event.agreement_invitation.delivery_failed** - Email bounce handling
+- [x] **email_event.agreement_finalized.delivered** - Final PDF delivery confirmation
 
-### Future (When Email Events Arrive)
-- [ ] email_event.agreement_invitation.delivered - Per-participant email tracking
-- [ ] email_event.agreement_invitation.delivery_failed - Email bounce handling
+### ✅ FULLY IMPLEMENTED - All Database Fields
+- [x] Store `signing_room_url` in participant records (handles both field name variants)
+- [x] Per-participant email delivery tracking (delivered/failed/error)
+- [x] Identity enforcement pass/fail tracking
+- [x] PDF validation pass/fail tracking
+- [x] Contract-level email delivery status
+- [x] Personal number lookup (email matching + tenant query)
 
 ---
 
