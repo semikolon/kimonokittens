@@ -103,26 +103,38 @@ class ZignedWebhookHandler
 
   private
 
-  # Verify webhook signature using HMAC-SHA256
-  def valid_signature?(body, signature)
-    return false unless signature
+  # Verify webhook signature using HMAC-SHA256 with timestamp
+  # Zigned uses format: "t=<timestamp>,v1=<signature>"
+  def valid_signature?(body, signature_header)
+    return false unless signature_header
+
+    # Parse timestamped signature format
+    parts = signature_header.split(',').map { |p| p.split('=', 2) }.to_h
+    timestamp = parts['t']
+    received_signature = parts['v1']
+
+    return false unless timestamp && received_signature
+
+    # Construct signed payload: timestamp + . + body
+    signed_payload = "#{timestamp}.#{body}"
 
     expected_signature = OpenSSL::HMAC.hexdigest(
       OpenSSL::Digest.new('sha256'),
       @webhook_secret,
-      body
+      signed_payload
     )
 
     # Debug logging for signature verification
     puts "🔐 Signature Debug:"
-    puts "   Received signature: #{signature}"
+    puts "   Received signature header: #{signature_header}"
+    puts "   Parsed timestamp: #{timestamp}"
+    puts "   Parsed signature (v1): #{received_signature}"
+    puts "   Signed payload: timestamp.body (#{signed_payload.length} bytes)"
     puts "   Expected signature: #{expected_signature}"
-    puts "   Body length: #{body.length} bytes"
-    puts "   Secret length: #{@webhook_secret.length} chars"
-    puts "   Match: #{signature == expected_signature}"
+    puts "   Match: #{received_signature == expected_signature}"
 
     # Constant-time comparison to prevent timing attacks
-    Rack::Utils.secure_compare(signature, expected_signature)
+    Rack::Utils.secure_compare(received_signature, expected_signature)
   end
 
   # Handle agreement.lifecycle.pending event
