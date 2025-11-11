@@ -101,9 +101,11 @@ class ZignedClientV3
       webhook_url: webhook_url,
       send_emails: send_emails
     )
+    puts "DEBUG: Agreement created with ID: #{agreement[:agreement_id]}"
 
     # Step 3: Attach main document
     attach_main_document(agreement[:agreement_id], file[:file_id])
+    puts "DEBUG: Document attached to agreement #{agreement[:agreement_id]}"
 
     # Step 4: Add participants
     participants = add_participants(
@@ -111,8 +113,10 @@ class ZignedClientV3
       signers: signers,
       message: message
     )
+    puts "DEBUG: #{participants.length} participants added to agreement #{agreement[:agreement_id]}"
 
     # Step 5: Activate agreement
+    puts "DEBUG: Attempting to activate agreement #{agreement[:agreement_id]}"
     activated = activate_agreement(agreement[:agreement_id])
 
     # Return format compatible with v1
