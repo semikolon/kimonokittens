@@ -1,9 +1,23 @@
 require 'json'
 require 'openssl'
+require 'logger'
 require_relative '../lib/contract_signer'
 require_relative '../lib/data_broadcaster'
 require_relative '../lib/repositories/signed_contract_repository'
 require_relative '../lib/persistence'
+
+# Dedicated logger for Zigned webhook events
+# Logs to: /var/log/kimonokittens/zigned-webhooks.log
+# Daily rotation, 14 days retention (aligned with planned logrotate config)
+ZIGNED_LOGGER = Logger.new(
+  '/var/log/kimonokittens/zigned-webhooks.log',
+  'daily',
+  14
+)
+ZIGNED_LOGGER.level = Logger::INFO
+ZIGNED_LOGGER.formatter = proc do |severity, datetime, progname, msg|
+  "[#{datetime.strftime('%Y-%m-%d %H:%M:%S')}] #{severity}: #{msg}\n"
+end
 
 # ZignedWebhookHandler processes signing events from Zigned API v3
 #
@@ -113,15 +127,15 @@ class ZignedWebhookHandler
       handle_finalized_email_delivered(agreement_data)
 
     else
-      puts "⚠️  Unhandled webhook event: #{event_type}"
+      ZIGNED_LOGGER.warn "⚠️  Unhandled webhook event: #{event_type}"
       return { status: 200, message: "Event type not implemented: #{event_type}", event: event_type }
     end
 
     { status: 200, message: 'Webhook processed successfully', event: event_type }
 
   rescue => e
-    puts "❌ Webhook error: #{e.message}"
-    puts e.backtrace.join("\n")
+    ZIGNED_LOGGER.error "❌ Webhook error: #{e.message}"
+    ZIGNED_LOGGER.error e.backtrace.join("\n")
     { status: 500, message: "Internal error: #{e.message}", error: true }
   end
 
@@ -149,13 +163,13 @@ class ZignedWebhookHandler
     )
 
     # Debug logging for signature verification
-    puts "🔐 Signature Debug:"
-    puts "   Received signature header: #{signature_header}"
-    puts "   Parsed timestamp: #{timestamp}"
-    puts "   Parsed signature (v1): #{received_signature}"
-    puts "   Signed payload: timestamp.body (#{signed_payload.length} bytes)"
-    puts "   Expected signature: #{expected_signature}"
-    puts "   Match: #{received_signature == expected_signature}"
+    ZIGNED_LOGGER.info "🔐 Signature Debug:"
+    ZIGNED_LOGGER.info "   Received signature header: #{signature_header}"
+    ZIGNED_LOGGER.info "   Parsed timestamp: #{timestamp}"
+    ZIGNED_LOGGER.info "   Parsed signature (v1): #{received_signature}"
+    ZIGNED_LOGGER.info "   Signed payload: timestamp.body (#{signed_payload.length} bytes)"
+    ZIGNED_LOGGER.info "   Expected signature: #{expected_signature}"
+    ZIGNED_LOGGER.info "   Match: #{received_signature == expected_signature}"
 
     # Constant-time comparison to prevent timing attacks
     Rack::Utils.secure_compare(received_signature, expected_signature)
@@ -169,10 +183,10 @@ class ZignedWebhookHandler
     expires_at = data['expires_at']
     participants = data['participants'] || []
 
-    puts "📝 Agreement activated: #{agreement_id} - #{title}"
-    puts "   Test mode: #{test_mode}"
-    puts "   Expires: #{expires_at}"
-    puts "   Participants: #{participants.length}"
+    ZIGNED_LOGGER.info "📝 Agreement activated: #{agreement_id} - #{title}"
+    ZIGNED_LOGGER.info "   Test mode: #{test_mode}"
+    ZIGNED_LOGGER.info "   Expires: #{expires_at}"
+    ZIGNED_LOGGER.info "   Participants: #{participants.length}"
 
     # Update database record
     contract = @repository.find_by_case_id(agreement_id)
@@ -191,9 +205,9 @@ class ZignedWebhookHandler
 
       # Note: Participants array contains only IDs, not full objects
       # Participant records will be created when participant.lifecycle.fulfilled events arrive
-      puts "   📋 Participants (IDs only): #{participants.join(', ')}"
+      ZIGNED_LOGGER.info "   📋 Participants (IDs only): #{participants.join(', ')}"
     else
-      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
+      ZIGNED_LOGGER.warn "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
     end
 
     # Broadcast event
@@ -224,11 +238,11 @@ class ZignedWebhookHandler
     participant = participant_repo.find_by_participant_id(participant_id)
     personal_number = participant&.personal_number
 
-    puts "✍️  Signature received: #{name} (#{email})"
-    puts "   Participant ID: #{participant_id}"
-    puts "   Agreement ID: #{agreement_id}"
-    puts "   Signed at: #{signed_at}"
-    puts "   Role: #{role}, Status: #{status}"
+    ZIGNED_LOGGER.info "✍️  Signature received: #{name} (#{email})"
+    ZIGNED_LOGGER.info "   Participant ID: #{participant_id}"
+    ZIGNED_LOGGER.info "   Agreement ID: #{agreement_id}"
+    ZIGNED_LOGGER.info "   Signed at: #{signed_at}"
+    ZIGNED_LOGGER.info "   Role: #{role}, Status: #{status}"
 
     # Update database record with signature info
     contract = @repository.find_by_case_id(agreement_id)
@@ -238,9 +252,9 @@ class ZignedWebhookHandler
         participant.status = 'fulfilled'
         participant.signed_at = Time.parse(signed_at) if signed_at
         participant_repo.update(participant)
-        puts "   ✅ Participant record updated"
+        ZIGNED_LOGGER.info "   ✅ Participant record updated"
       else
-        puts "   ⚠️  Participant record not found - creating new one"
+        ZIGNED_LOGGER.warn "   ⚠️  Participant record not found - creating new one"
         # Create participant record if it doesn't exist (fallback)
         create_or_update_participant(contract.id, data)
       end
@@ -249,16 +263,16 @@ class ZignedWebhookHandler
       if personal_number && is_landlord?(personal_number)
         contract.landlord_signed = true
         contract.landlord_signed_at = Time.parse(signed_at) if signed_at
-        puts "   ✅ Landlord signature recorded"
+        ZIGNED_LOGGER.info "   ✅ Landlord signature recorded"
       elsif personal_number
         contract.tenant_signed = true
         contract.tenant_signed_at = Time.parse(signed_at) if signed_at
-        puts "   ✅ Tenant signature recorded"
+        ZIGNED_LOGGER.info "   ✅ Tenant signature recorded"
       end
 
       @repository.update(contract)
     else
-      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
+      ZIGNED_LOGGER.warn "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
     end
 
     # Broadcast event
@@ -277,12 +291,12 @@ class ZignedWebhookHandler
     title = data['title']
     fulfilled_at = data['fulfilled_at']
 
-    puts "🎉 Contract fully signed: #{agreement_id} - #{title}"
-    puts "   Fulfilled at: #{fulfilled_at}"
+    ZIGNED_LOGGER.info "🎉 Contract fully signed: #{agreement_id} - #{title}"
+    ZIGNED_LOGGER.info "   Fulfilled at: #{fulfilled_at}"
 
     contract = @repository.find_by_case_id(agreement_id)
     unless contract
-      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
+      ZIGNED_LOGGER.warn "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
       return
     end
 
@@ -319,15 +333,15 @@ class ZignedWebhookHandler
     signed_document_url = signed_document&.dig('url')
     signed_document_filename = signed_document&.dig('filename')
 
-    puts "📥 Contract finalized: #{agreement_id}"
-    puts "   Title: #{title}"
-    puts "   Signed PDF filename: #{signed_document_filename}"
-    puts "   Signed PDF URL: #{signed_document_url}"
-    puts "   Finalized at: #{finalized_at}"
+    ZIGNED_LOGGER.info "📥 Contract finalized: #{agreement_id}"
+    ZIGNED_LOGGER.info "   Title: #{title}"
+    ZIGNED_LOGGER.info "   Signed PDF filename: #{signed_document_filename}"
+    ZIGNED_LOGGER.info "   Signed PDF URL: #{signed_document_url}"
+    ZIGNED_LOGGER.info "   Finalized at: #{finalized_at}"
 
     contract = @repository.find_by_case_id(agreement_id)
     unless contract
-      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
+      ZIGNED_LOGGER.warn "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
       return
     end
 
@@ -342,11 +356,11 @@ class ZignedWebhookHandler
         contract.pdf_url = signed_path
         contract.status = 'completed'
         contract.completed_at = Time.parse(finalized_at) if finalized_at
-        puts "✅ Signed PDF downloaded: #{signed_path}"
+        ZIGNED_LOGGER.info "✅ Signed PDF downloaded: #{signed_path}"
       end
     rescue => e
-      puts "⚠️  Failed to auto-download signed PDF: #{e.message}"
-      puts e.backtrace.join("\n")
+      ZIGNED_LOGGER.warn "⚠️  Failed to auto-download signed PDF: #{e.message}"
+      ZIGNED_LOGGER.warn e.backtrace.join("\n")
     end
 
     @repository.update(contract)
@@ -371,15 +385,15 @@ class ZignedWebhookHandler
     title = data['title']
     expired_at = data['expired_at']
 
-    puts "⏰ Agreement expired: #{agreement_id} - #{title}"
-    puts "   Expired at: #{expired_at}"
+    ZIGNED_LOGGER.info "⏰ Agreement expired: #{agreement_id} - #{title}"
+    ZIGNED_LOGGER.info "   Expired at: #{expired_at}"
 
     contract = @repository.find_by_case_id(agreement_id)
     if contract
       contract.status = 'expired'
       @repository.update(contract)
     else
-      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
+      ZIGNED_LOGGER.warn "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
     end
 
     # Broadcast event
@@ -402,16 +416,16 @@ class ZignedWebhookHandler
     cancellation_reason = data['cancellation_reason']
     cancelled_at = data['cancelled_at']
 
-    puts "🚫 Agreement cancelled: #{agreement_id} - #{title}"
-    puts "   Reason: #{cancellation_reason}" if cancellation_reason
-    puts "   Cancelled at: #{cancelled_at}"
+    ZIGNED_LOGGER.info "🚫 Agreement cancelled: #{agreement_id} - #{title}"
+    ZIGNED_LOGGER.info "   Reason: #{cancellation_reason}" if cancellation_reason
+    ZIGNED_LOGGER.info "   Cancelled at: #{cancelled_at}"
 
     contract = @repository.find_by_case_id(agreement_id)
     if contract
       contract.status = 'cancelled'
       @repository.update(contract)
     else
-      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
+      ZIGNED_LOGGER.warn "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
     end
 
     # Broadcast event
@@ -433,10 +447,10 @@ class ZignedWebhookHandler
     identity_status = data.dig('identity_enforcement', 'status')
     enforcement_method = data.dig('identity_enforcement', 'enforcement_method')
 
-    puts "🔐 Identity enforcement passed: #{name}"
-    puts "   Participant ID: #{participant_id}"
-    puts "   Method: #{enforcement_method}"
-    puts "   Status: #{identity_status}"
+    ZIGNED_LOGGER.info "🔐 Identity enforcement passed: #{name}"
+    ZIGNED_LOGGER.info "   Participant ID: #{participant_id}"
+    ZIGNED_LOGGER.info "   Method: #{enforcement_method}"
+    ZIGNED_LOGGER.info "   Status: #{identity_status}"
 
     # Update participant record
     participant_repo = Persistence.contract_participants
@@ -445,9 +459,9 @@ class ZignedWebhookHandler
     if participant
       participant.identity_enforcement_passed = true
       participant_repo.update(participant)
-      puts "   ✅ Participant identity verified"
+      ZIGNED_LOGGER.info "   ✅ Participant identity verified"
     else
-      puts "   ⚠️  Participant record not found - will be created on fulfillment"
+      ZIGNED_LOGGER.warn "   ⚠️  Participant record not found - will be created on fulfillment"
     end
   end
 
@@ -457,18 +471,18 @@ class ZignedWebhookHandler
     status = data['status']
     updated_at = data['updated_at']
 
-    puts "📋 PDF verification completed: #{agreement_id}"
-    puts "   Status: #{status}"
-    puts "   Verified at: #{updated_at}"
+    ZIGNED_LOGGER.info "📋 PDF verification completed: #{agreement_id}"
+    ZIGNED_LOGGER.info "   Status: #{status}"
+    ZIGNED_LOGGER.info "   Verified at: #{updated_at}"
 
     contract = @repository.find_by_case_id(agreement_id)
     if contract
       contract.validation_status = 'completed'
       contract.validation_completed_at = Time.parse(updated_at) if updated_at
       @repository.update(contract)
-      puts "   ✅ Contract validation status updated"
+      ZIGNED_LOGGER.info "   ✅ Contract validation status updated"
     else
-      puts "   ⚠️  Contract record not found for agreement_id #{agreement_id}"
+      ZIGNED_LOGGER.warn "   ⚠️  Contract record not found for agreement_id #{agreement_id}"
     end
   end
 
@@ -481,9 +495,9 @@ class ZignedWebhookHandler
     # Extract email from description
     email = description[/to ([^\s]+)/, 1]
 
-    puts "📧 Email invitation delivered: #{agreement_id}"
-    puts "   To: #{email}"
-    puts "   At: #{created_at}"
+    ZIGNED_LOGGER.info "📧 Email invitation delivered: #{agreement_id}"
+    ZIGNED_LOGGER.info "   To: #{email}"
+    ZIGNED_LOGGER.info "   At: #{created_at}"
 
     # Mark email as delivered for specific participant (by email lookup)
     if email
@@ -499,9 +513,9 @@ class ZignedWebhookHandler
           participant.email_delivered = true
           participant.email_delivered_at = Time.parse(created_at) if created_at
           participant_repo.update(participant)
-          puts "   ✅ Participant email delivery recorded"
+          ZIGNED_LOGGER.info "   ✅ Participant email delivery recorded"
         else
-          puts "   ⚠️  Participant not found for email #{email}"
+          ZIGNED_LOGGER.warn "   ⚠️  Participant not found for email #{email}"
         end
       end
     end
@@ -512,14 +526,14 @@ class ZignedWebhookHandler
     agreement_id = data['agreement']
     created_at = data['created_at']
 
-    puts "📬 All invitation emails delivered: #{agreement_id}"
-    puts "   At: #{created_at}"
+    ZIGNED_LOGGER.info "📬 All invitation emails delivered: #{agreement_id}"
+    ZIGNED_LOGGER.info "   At: #{created_at}"
 
     contract = @repository.find_by_case_id(agreement_id)
     if contract
       contract.email_delivery_status = 'delivered'
       @repository.update(contract)
-      puts "   ✅ Contract email delivery status updated"
+      ZIGNED_LOGGER.info "   ✅ Contract email delivery status updated"
     end
   end
 
@@ -530,9 +544,9 @@ class ZignedWebhookHandler
 
     email = description[/to ([^\s]+)/, 1]
 
-    puts "📨 Signed document email delivered: #{agreement_id}"
-    puts "   To: #{email}"
-    puts "   ✅ Final document delivered"
+    ZIGNED_LOGGER.info "📨 Signed document email delivered: #{agreement_id}"
+    ZIGNED_LOGGER.info "   To: #{email}"
+    ZIGNED_LOGGER.info "   ✅ Final document delivered"
   end
 
   # Handle participant.identity_enforcement.failed event
@@ -544,11 +558,11 @@ class ZignedWebhookHandler
     enforcement_method = data.dig('identity_enforcement', 'enforcement_method')
     failure_reason = data.dig('identity_enforcement', 'failure_reason')
 
-    puts "❌ Identity enforcement failed: #{name}"
-    puts "   Participant ID: #{participant_id}"
-    puts "   Method: #{enforcement_method}"
-    puts "   Status: #{identity_status}"
-    puts "   Reason: #{failure_reason}" if failure_reason
+    ZIGNED_LOGGER.error "❌ Identity enforcement failed: #{name}"
+    ZIGNED_LOGGER.info "   Participant ID: #{participant_id}"
+    ZIGNED_LOGGER.info "   Method: #{enforcement_method}"
+    ZIGNED_LOGGER.info "   Status: #{identity_status}"
+    ZIGNED_LOGGER.info "   Reason: #{failure_reason}" if failure_reason
 
     # Update participant record
     participant_repo = Persistence.contract_participants
@@ -558,9 +572,9 @@ class ZignedWebhookHandler
       participant.identity_enforcement_passed = false
       participant.identity_enforcement_failed_at = Time.now
       participant_repo.update(participant)
-      puts "   ⚠️  Participant identity verification failed - recorded"
+      ZIGNED_LOGGER.warn "   ⚠️  Participant identity verification failed - recorded"
     else
-      puts "   ⚠️  Participant record not found"
+      ZIGNED_LOGGER.warn "   ⚠️  Participant record not found"
     end
   end
 
@@ -571,10 +585,10 @@ class ZignedWebhookHandler
     updated_at = data['updated_at']
     error_message = data['error'] || data['validation_error']
 
-    puts "❌ PDF verification failed: #{agreement_id}"
-    puts "   Status: #{status}"
-    puts "   Error: #{error_message}" if error_message
-    puts "   Failed at: #{updated_at}"
+    ZIGNED_LOGGER.error "❌ PDF verification failed: #{agreement_id}"
+    ZIGNED_LOGGER.info "   Status: #{status}"
+    ZIGNED_LOGGER.info "   Error: #{error_message}" if error_message
+    ZIGNED_LOGGER.info "   Failed at: #{updated_at}"
 
     contract = @repository.find_by_case_id(agreement_id)
     if contract
@@ -582,9 +596,9 @@ class ZignedWebhookHandler
       contract.validation_failed_at = Time.parse(updated_at) if updated_at
       contract.validation_errors = error_message if error_message
       @repository.update(contract)
-      puts "   ⚠️  Contract validation failure recorded"
+      ZIGNED_LOGGER.warn "   ⚠️  Contract validation failure recorded"
     else
-      puts "   ⚠️  Contract record not found for agreement_id #{agreement_id}"
+      ZIGNED_LOGGER.warn "   ⚠️  Contract record not found for agreement_id #{agreement_id}"
     end
   end
 
@@ -598,10 +612,10 @@ class ZignedWebhookHandler
     # Extract email from description
     email = description[/to ([^\s]+)/, 1] if description
 
-    puts "❌ Email delivery failed: #{agreement_id}"
-    puts "   To: #{email}" if email
-    puts "   Error: #{error_message}" if error_message
-    puts "   Failed at: #{created_at}"
+    ZIGNED_LOGGER.error "❌ Email delivery failed: #{agreement_id}"
+    ZIGNED_LOGGER.info "   To: #{email}" if email
+    ZIGNED_LOGGER.info "   Error: #{error_message}" if error_message
+    ZIGNED_LOGGER.info "   Failed at: #{created_at}"
 
     # Update participant email delivery failure
     if email
@@ -618,9 +632,9 @@ class ZignedWebhookHandler
           participant.email_delivery_failed = true
           participant.email_delivery_error = error_message if error_message
           participant_repo.update(participant)
-          puts "   ⚠️  Participant email failure recorded"
+          ZIGNED_LOGGER.warn "   ⚠️  Participant email failure recorded"
         else
-          puts "   ⚠️  Participant not found for email #{email}"
+          ZIGNED_LOGGER.warn "   ⚠️  Participant not found for email #{email}"
         end
 
         # Also update contract-level email status
@@ -681,7 +695,7 @@ class ZignedWebhookHandler
       participant.signed_at = Time.parse(participant_data['signed_at']) if participant_data['signed_at']
       participant_repo.update(participant)
     else
-      puts "⚠️  Warning: Participant not found: #{participant_id}"
+      ZIGNED_LOGGER.warn "⚠️  Warning: Participant not found: #{participant_id}"
     end
   end
 
@@ -705,7 +719,7 @@ class ZignedWebhookHandler
     end
 
     # Fallback: nil (will cause validation error, but with better logging)
-    puts "⚠️  Warning: Could not lookup personal_number for #{email} (contract #{contract_id})"
+    ZIGNED_LOGGER.warn "⚠️  Warning: Could not lookup personal_number for #{email} (contract #{contract_id})"
     nil
   end
 
