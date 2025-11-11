@@ -538,12 +538,15 @@ class ZignedWebhookHandler
     participant_id = participant_data['id']
     existing = participant_repo.find_by_participant_id(participant_id)
 
+    # Webhooks don't send personal_number - look it up from contract + tenant
+    personal_number = participant_data['personal_number'] || lookup_personal_number(contract_id, participant_data)
+
     participant_attrs = {
       contract_id: contract_id,
       participant_id: participant_id,
       name: participant_data['name'],
       email: participant_data['email'],
-      personal_number: participant_data['personal_number'],
+      personal_number: personal_number,
       role: participant_data['role'] || 'signer',
       status: participant_data['status'] || 'pending',
       signing_url: participant_data['signing_url']
@@ -574,6 +577,30 @@ class ZignedWebhookHandler
     else
       puts "⚠️  Warning: Participant not found: #{participant_id}"
     end
+  end
+
+  # Look up personal_number from contract + tenant data
+  # Webhooks don't send personal_number, so we match by email
+  def lookup_personal_number(contract_id, participant_data)
+    email = participant_data['email']
+
+    # Landlord email (hardcoded in ContractSigner)
+    LANDLORD_EMAIL = 'branstrom@gmail.com'
+    LANDLORD_PERSONNUMMER = '8604230717'
+
+    # Check if this is the landlord
+    return LANDLORD_PERSONNUMMER if email&.downcase == LANDLORD_EMAIL
+
+    # Otherwise look up tenant personnummer from contract
+    contract = @repository.find_by_id(contract_id)
+    if contract
+      tenant = Persistence.tenants.find_by_id(contract.tenant_id)
+      return tenant.personnummer if tenant
+    end
+
+    # Fallback: nil (will cause validation error, but with better logging)
+    puts "⚠️  Warning: Could not lookup personal_number for #{email} (contract #{contract_id})"
+    nil
   end
 
   # Determine if participant is landlord (for legacy field updates)
