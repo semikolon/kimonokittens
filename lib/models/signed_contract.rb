@@ -16,7 +16,14 @@ class SignedContract
               :landlord_signing_url, :tenant_signing_url,
               :test_mode,
               :completed_at, :expires_at,
-              :created_at, :updated_at
+              :created_at, :updated_at,
+              # Lifecycle tracking fields
+              :generation_status, :generation_started_at, :generation_completed_at,
+              :generation_failed_at, :generation_error,
+              :validation_status, :validation_started_at, :validation_completed_at,
+              :validation_failed_at, :validation_errors,
+              :email_delivery_status, :landlord_email_delivered, :tenant_email_delivered,
+              :email_delivery_failed_at, :email_delivery_error
 
   def initialize(id: nil, tenant_id:, case_id:, pdf_url:, status: 'pending',
                  landlord_signed: false, tenant_signed: false,
@@ -24,7 +31,14 @@ class SignedContract
                  landlord_signing_url: nil, tenant_signing_url: nil,
                  test_mode: false,
                  completed_at: nil, expires_at: nil,
-                 created_at: nil, updated_at: nil)
+                 created_at: nil, updated_at: nil,
+                 # Lifecycle tracking parameters
+                 generation_status: 'pending', generation_started_at: nil, generation_completed_at: nil,
+                 generation_failed_at: nil, generation_error: nil,
+                 validation_status: 'pending', validation_started_at: nil, validation_completed_at: nil,
+                 validation_failed_at: nil, validation_errors: nil,
+                 email_delivery_status: 'pending', landlord_email_delivered: false, tenant_email_delivered: false,
+                 email_delivery_failed_at: nil, email_delivery_error: nil)
     @id = id || generate_id
     @tenant_id = tenant_id
     @case_id = case_id
@@ -41,18 +55,61 @@ class SignedContract
     @expires_at = expires_at
     @created_at = created_at || Time.now
     @updated_at = updated_at || Time.now
+    # Lifecycle tracking fields
+    @generation_status = generation_status
+    @generation_started_at = generation_started_at
+    @generation_completed_at = generation_completed_at
+    @generation_failed_at = generation_failed_at
+    @generation_error = generation_error
+    @validation_status = validation_status
+    @validation_started_at = validation_started_at
+    @validation_completed_at = validation_completed_at
+    @validation_failed_at = validation_failed_at
+    @validation_errors = validation_errors
+    @email_delivery_status = email_delivery_status
+    @landlord_email_delivered = landlord_email_delivered
+    @tenant_email_delivered = tenant_email_delivered
+    @email_delivery_failed_at = email_delivery_failed_at
+    @email_delivery_error = email_delivery_error
 
     validate!
   end
 
   # Writer methods for mutable fields
   attr_writer :pdf_url, :status, :landlord_signed, :tenant_signed,
-              :landlord_signed_at, :tenant_signed_at, :completed_at
+              :landlord_signed_at, :tenant_signed_at, :completed_at,
+              # Lifecycle tracking writers
+              :generation_status, :generation_started_at, :generation_completed_at,
+              :generation_failed_at, :generation_error,
+              :validation_status, :validation_started_at, :validation_completed_at,
+              :validation_failed_at, :validation_errors,
+              :email_delivery_status, :landlord_email_delivered, :tenant_email_delivered,
+              :email_delivery_failed_at, :email_delivery_error
 
   # Query methods
 
   def completed?
     status == 'completed'
+  end
+
+  # Lifecycle query methods
+
+  def generation_failed?
+    generation_status == 'failed'
+  end
+
+  def validation_failed?
+    validation_status == 'failed'
+  end
+
+  def emails_delivered?
+    landlord_email_delivered && tenant_email_delivered
+  end
+
+  def ready_for_signing?
+    generation_status == 'completed' &&
+    validation_status == 'completed' &&
+    email_delivery_status == 'delivered'
   end
 
   def expired?
@@ -96,7 +153,7 @@ class SignedContract
     raise ArgumentError, "case_id is required" if case_id.nil? || case_id.empty?
     raise ArgumentError, "pdf_url is required" if pdf_url.nil? || pdf_url.empty?
 
-    valid_statuses = ['pending', 'awaiting_signatures', 'completed', 'expired', 'cancelled']
+    valid_statuses = ['pending', 'awaiting_signatures', 'fulfilled', 'completed', 'expired', 'cancelled']
     unless valid_statuses.include?(status)
       raise ArgumentError, "status must be one of: #{valid_statuses.join(', ')}"
     end
