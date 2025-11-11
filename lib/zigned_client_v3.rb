@@ -249,7 +249,8 @@ class ZignedClientV3
           name: participant['name'],
           email: participant['email'],
           personal_number: participant['personal_number'],
-          signing_url: participant['signing_url'],
+          signing_url: participant['signing_url'] || participant['signing_room_url'],
+          signing_room_url: participant['signing_room_url'] || participant['signing_url'],
           role: participant['role']
         }
       end
@@ -409,7 +410,9 @@ class ZignedClientV3
   # Returns hash: { 'personnummer' => 'signing_url' }
   def extract_signing_links(participants, signers)
     participants.each_with_object({}) do |participant, hash|
-      hash[participant[:personal_number]] = participant[:signing_url]
+      # Zigned API inconsistency: field can be 'signing_url' or 'signing_room_url'
+      url = participant[:signing_url] || participant[:signing_room_url]
+      hash[participant[:personal_number]] = url if url
     end
   end
 
