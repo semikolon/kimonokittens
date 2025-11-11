@@ -528,6 +528,24 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 - [ ] Add data validation and cleanup tools
 - [ ] Add monitoring for database size and performance
 - [ ] **Update all Tenant contact details** (personnummer, phone) for existing tenants (Fredrik, Adam, Rasmus, etc.) to enable contract generation for all
+- [ ] **Implement Tenant Lifecycle Management System** (BLOCKER for removing hardcoded tenant count)
+  - **Context**: Contract generator currently hardcodes 4 tenants (`contract_generator_html.rb:127`) as safeguard against incomplete data
+  - **Why hardcoded**: Prevents accidental rent miscalculation if departure dates aren't updated immediately
+  - **Future requirement**: SMS reminders + Swish payment matching REQUIRE accurate tenant tracking
+  - **Needed features**:
+    - [ ] Tenant status tracking (active/pending_departure/departed/pending_arrival)
+    - [ ] Automated reminders to update departure dates (email/SMS 30 days before expected departure)
+    - [ ] Dashboard widget showing tenant lifecycle status (who's active, who's leaving, data completeness)
+    - [ ] Validation warnings when generating contracts if tenant data stale (e.g., no departure date after 1 year)
+    - [ ] Historical tenant tracking (past tenants with complete date ranges)
+    - [ ] Room assignment tracking (which tenant in which room, room turnover history)
+  - **Benefits**:
+    - Remove hardcode from contract generator → accurate rent in contracts
+    - Enable SMS rent reminders (need current active tenant list)
+    - Enable Swish payment matching (need tenant count for amount validation)
+    - Support future features (room-specific rent adjustments, move-in/out workflows)
+  - **Priority**: MEDIUM-HIGH - Required before SMS/Swish automation can be implemented
+  - **Discovered**: Nov 11, 2025 during contract testing financial number verification
 
 ## Future Enhancements
 
