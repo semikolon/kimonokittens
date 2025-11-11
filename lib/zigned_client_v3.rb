@@ -138,7 +138,7 @@ class ZignedClientV3
       '/files',
       body: payload,
       headers: {
-        'Authorization' => "Bearer #{@api_key}",
+        'Authorization' => "Bearer #{@access_token}",
         'Accept' => 'application/json'
         # Note: Content-Type omitted - HTTParty sets multipart boundary automatically
       }
@@ -313,7 +313,7 @@ class ZignedClientV3
     # Download signed PDF
     pdf_response = HTTParty.get(
       status[:signed_pdf_url],
-      headers: { 'Authorization' => "Bearer #{@api_key}" }
+      headers: { 'Authorization' => "Bearer #{@access_token}" }
     )
 
     raise "Failed to download PDF: #{pdf_response.code}" unless pdf_response.success?
