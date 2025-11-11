@@ -53,13 +53,16 @@ class ContractGeneratorHtml
     tenant = repo.find_by_id(tenant_id)
     raise ArgumentError, "Tenant not found: #{tenant_id}" unless tenant
 
-    # Default output path: contracts/<Name>_<Surname>_Hyresavtal_<Date>.pdf
+    # Default output path: contracts/generated/<Name>_<Surname>_Hyresavtal_<Date>.pdf
     output_path ||= begin
       name_parts = tenant.name.split(' ')
       surname = name_parts.last
       first_name = name_parts.first
+      # Sanitize filename: Swedish chars → ASCII (ä→a, ö→o, å→a)
+      sanitized_first = first_name.tr('åäöÅÄÖ', 'aaoAAO')
+      sanitized_surname = surname.tr('åäöÅÄÖ', 'aaoAAO')
       date = tenant.start_date&.strftime('%Y-%m-%d') || Date.today.strftime('%Y-%m-%d')
-      File.expand_path("../contracts/#{first_name}_#{surname}_Hyresavtal_#{date}.pdf", __dir__)
+      File.expand_path("../contracts/generated/#{sanitized_first}_#{sanitized_surname}_Hyresavtal_#{date}.pdf", __dir__)
     end
 
     # Prepare template data

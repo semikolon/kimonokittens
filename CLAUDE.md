@@ -62,6 +62,12 @@ lsof -ti :3001 :5175
 - Webhook broken? Fix webhook, don't work around
 - Check: `journalctl -u kimonokittens-webhook -f`
 
+**🔴 STAY IN DEV DIRECTORY - NEVER `cd` TO PRODUCTION:**
+- ❌ **NEVER** `cd /home/kimonokittens/Projects/kimonokittens/` except for read-only verification
+- ✅ **ALWAYS** work from `/home/fredrik/Projects/kimonokittens/` (dev checkout)
+- ✅ **If you need to check production state**: Use full paths or `cd` temporarily then immediately return to dev
+- **Why**: Easy to accidentally edit production files when in prod directory, breaking webhook deployments
+
 ### ✅ Process Management Commands (ONLY Use These)
 
 ```bash

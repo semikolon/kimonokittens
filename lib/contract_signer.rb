@@ -89,7 +89,13 @@ class ContractSigner
     puts ""
 
     # Step 1: Generate PDF from database
-    pdf_filename = "#{tenant.name.gsub(/[^\w\s-]/, '').gsub(/\s+/, '_')}_Hyresavtal_#{tenant.start_date&.strftime('%Y-%m-%d') || 'DRAFT'}.pdf"
+    # Sanitize Swedish characters for filesystem-safe filename
+    name_parts = tenant.name.split(' ')
+    first_name = name_parts.first
+    surname = name_parts.last
+    sanitized_first = first_name.tr('åäöÅÄÖ', 'aaoAAO')
+    sanitized_surname = surname.tr('åäöÅÄÖ', 'aaoAAO')
+    pdf_filename = "#{sanitized_first}_#{sanitized_surname}_Hyresavtal_#{tenant.start_date&.strftime('%Y-%m-%d') || 'DRAFT'}.pdf"
     pdf_path = File.join(GENERATED_DIR, pdf_filename)
 
     puts "📄 Generating contract PDF from database..."

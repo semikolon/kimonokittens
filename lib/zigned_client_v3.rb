@@ -44,6 +44,11 @@ class ZignedClientV3
   OAUTH_URL = 'https://api.zigned.se/oauth/token'
   MAX_FILE_SIZE = 15_728_640  # 15 MB in bytes
 
+  # OAuth token caching (class variables shared across instances)
+  @@cached_token = nil
+  @@token_expires_at = nil
+  @@token_mutex = Mutex.new  # Thread safety for token refresh
+
   # @param client_id [String] Your Zigned OAuth client ID
   # @param client_secret [String] Your Zigned OAuth client secret
   # @param test_mode [Boolean] Documentation flag (actual mode determined by credentials)
@@ -101,9 +106,11 @@ class ZignedClientV3
       webhook_url: webhook_url,
       send_emails: send_emails
     )
+    puts "DEBUG: Agreement created with ID: #{agreement[:agreement_id]}"
 
     # Step 3: Attach main document
     attach_main_document(agreement[:agreement_id], file[:file_id])
+    puts "DEBUG: Document attached to agreement #{agreement[:agreement_id]}"
 
     # Step 4: Add participants
     participants = add_participants(
@@ -111,8 +118,10 @@ class ZignedClientV3
       signers: signers,
       message: message
     )
+    puts "DEBUG: #{participants.length} participants added to agreement #{agreement[:agreement_id]}"
 
     # Step 5: Activate agreement
+    puts "DEBUG: Attempting to activate agreement #{agreement[:agreement_id]}"
     activated = activate_agreement(agreement[:agreement_id])
 
     # Return format compatible with v1
@@ -138,7 +147,7 @@ class ZignedClientV3
       '/files',
       body: payload,
       headers: {
-        'Authorization' => "Bearer #{@api_key}",
+        'Authorization' => "Bearer #{@access_token}",
         'Accept' => 'application/json'
         # Note: Content-Type omitted - HTTParty sets multipart boundary automatically
       }
@@ -215,13 +224,13 @@ class ZignedClientV3
   #
   # @return [Array<Hash>] Participant records with signing URLs
   def add_participants(agreement_id, signers:, message: nil)
-    participants_payload = signers.map.with_index do |signer, index|
+    participants_payload = signers.map do |signer|
       {
         name: signer[:name],
         email: signer[:email],
         role: 'signer',
-        personal_number: signer[:personnummer].gsub(/\D/, ''),  # Remove hyphens
-        order: index  # Sequential signing order
+        personal_number: signer[:personnummer].gsub(/\D/, '')  # Remove hyphens
+        # Note: No order field = parallel signing (landlord and tenant can sign in any order)
       }
     end
 
@@ -320,7 +329,7 @@ class ZignedClientV3
     # Download signed PDF
     pdf_response = HTTParty.get(
       status[:signed_pdf_url],
-      headers: { 'Authorization' => "Bearer #{@api_key}" }
+      headers: { 'Authorization' => "Bearer #{@access_token}" }
     )
 
     raise "Failed to download PDF: #{pdf_response.code}" unless pdf_response.success?
@@ -350,22 +359,37 @@ class ZignedClientV3
 
   private
 
-  # Obtain OAuth access token using client credentials
+  # Obtain OAuth access token using client credentials (with caching)
   def obtain_access_token
-    response = HTTParty.post(
-      OAUTH_URL,
-      body: {
-        grant_type: 'client_credentials',
-        client_id: @client_id,
-        client_secret: @client_secret
-      },
-      headers: { 'Content-Type' => 'application/x-www-form-urlencoded' }
-    )
+    @@token_mutex.synchronize do
+      # Reuse cached token if still valid (5 min buffer before expiry)
+      if @@cached_token && @@token_expires_at && Time.now < (@@token_expires_at - 300)
+        @access_token = @@cached_token
+        return
+      end
 
-    if response.success?
-      @access_token = response.parsed_response['access_token']
-    else
-      raise "OAuth token exchange failed (#{response.code}): #{response.body}"
+      # Fetch fresh token
+      response = HTTParty.post(
+        OAUTH_URL,
+        body: {
+          grant_type: 'client_credentials',
+          client_id: @client_id,
+          client_secret: @client_secret
+        },
+        headers: { 'Content-Type' => 'application/x-www-form-urlencoded' }
+      )
+
+      if response.success?
+        parsed = response.parsed_response
+        @access_token = parsed['access_token']
+
+        # Cache token with expiration (default 74 years, but respect API response)
+        @@cached_token = @access_token
+        expires_in = parsed['expires_in'] || 2_335_680_000  # 74 years in seconds
+        @@token_expires_at = Time.now + expires_in
+      else
+        raise "OAuth token exchange failed (#{response.code}): #{response.body}"
+      end
     end
   end
 
