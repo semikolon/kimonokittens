@@ -276,9 +276,13 @@ class ZignedClientV3
 
     handle_response(response) do |data|
       agreement_data = data['data']
+
+      # Lifecycle endpoint doesn't return expires_at, fetch full agreement details
+      status_response = get_agreement_status(agreement_id)
+
       {
         status: agreement_data['status'],
-        expires_at: agreement_data['expires_at']
+        expires_at: status_response[:expires_at]
       }
     end
   end
