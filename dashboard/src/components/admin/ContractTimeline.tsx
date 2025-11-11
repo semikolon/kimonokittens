@@ -63,7 +63,7 @@ export const ContractTimeline: React.FC<ContractTimelineProps> = ({ contract }) 
   if (contract.status === 'completed') {
     events.push({
       timestamp: new Date(contract.updated_at.getTime() + 60000),
-      label: 'Kontrakt fullt',
+      label: 'Kontrakt komplett',
       actor: 'System'
     })
   }

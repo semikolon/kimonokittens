@@ -70,13 +70,11 @@ export const ContractList: React.FC<ContractListProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Summary line */}
-      <div className="text-sm text-purple-200 mb-3">
-        {getSummary()}
-      </div>
-
-      {/* Filter toggle */}
-      <div className="flex items-center justify-end mb-4">
+      {/* Summary line + Filter toggle on same line */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-sm text-purple-200">
+          {getSummary()}
+        </div>
         <button
           onClick={onFilterToggle}
           className={`

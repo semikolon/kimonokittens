@@ -1,13 +1,13 @@
 // useContracts - Contract data fetching with WebSocket updates
-import { useState, useEffect, useCallback, useContext } from 'react'
-import { DataContext } from '../context/DataContext'
+import { useState, useEffect, useCallback } from 'react'
+import { useData } from '../context/DataContext'
 import type { SignedContract } from '../views/AdminDashboard'
 
 export const useContracts = () => {
   const [contracts, setContracts] = useState<SignedContract[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const dataContext = useContext(DataContext)
+  const { state } = useData()
 
   const fetchContracts = useCallback(async () => {
     try {
@@ -20,7 +20,19 @@ export const useContracts = () => {
       }
 
       const data = await response.json()
-      setContracts(data.contracts || [])
+
+      // Parse date strings to Date objects
+      const contractsWithDates = (data.contracts || []).map((c: any) => ({
+        ...c,
+        expires_at: c.expires_at ? new Date(c.expires_at) : null,
+        created_at: new Date(c.created_at),
+        updated_at: new Date(c.updated_at),
+        landlord_signed_at: c.landlord_signed_at ? new Date(c.landlord_signed_at) : null,
+        tenant_signed_at: c.tenant_signed_at ? new Date(c.tenant_signed_at) : null,
+        completed_at: c.completed_at ? new Date(c.completed_at) : null
+      }))
+
+      setContracts(contractsWithDates)
     } catch (err) {
       console.error('Failed to fetch contracts:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch contracts')
@@ -39,18 +51,13 @@ export const useContracts = () => {
   }, [fetchContracts])
 
   // Subscribe to WebSocket contract updates
+  // Note: The DataContext handles all WebSocket messages, but we don't have
+  // a specific contract_update type in the state yet. This will need to be
+  // added when webhook integration is complete. For now, we rely on manual refresh.
   useEffect(() => {
-    if (!dataContext?.data) return
-
-    const wsData = dataContext.data
-
-    // Listen for contract_update events from webhook handler
-    if (wsData.type === 'contract_update') {
-      console.log('Contract update received:', wsData.payload)
-      // Refresh contract list when any contract changes
-      refreshContracts()
-    }
-  }, [dataContext?.data, refreshContracts])
+    // TODO: Add contract_update handling to DataContext state
+    // For now, manual refreshContracts() will be called by admin UI
+  }, [state, refreshContracts])
 
   return {
     contracts,

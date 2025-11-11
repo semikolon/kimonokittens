@@ -50,11 +50,11 @@ const getStatusLabel = (status: string) => {
   const labels = {
     completed: 'Klar',
     pending: 'Väntar',
-    landlord_signed: 'Hyresvärd Signerad',
-    tenant_signed: 'Hyresgäst Signerad',
-    failed: 'Misslyckad',
-    cancelled: 'Avbruten',
-    expired: 'Utgången'
+    landlord_signed: 'Signerat av hyresvärd',
+    tenant_signed: 'Signerat av hyresgäst',
+    failed: 'Misslyckat',
+    cancelled: 'Avbrutet',
+    expired: 'Utgånget'
   }
   return labels[status as keyof typeof labels] || 'Väntar'
 }
@@ -76,8 +76,8 @@ export const ContractRow: React.FC<ContractRowProps> = ({
       className={`
         rounded-lg border transition-all duration-200
         ${isSelected
-          ? 'border-purple-500/50 bg-purple-900/20'
-          : 'border-purple-900/10 bg-slate-900/40'
+          ? 'border-purple-400/30 bg-purple-900/20'
+          : 'border-purple-500/20 bg-slate-900/40'
         }
         hover:bg-purple-900/10
       `}
@@ -140,10 +140,11 @@ export const ContractRow: React.FC<ContractRowProps> = ({
 
       {/* Expanded details */}
       {isExpanded && (
-        <div className="border-t border-purple-900/10">
+        <div className="border-t border-purple-500/20">
           <ContractDetails contract={contract} />
         </div>
       )}
     </div>
   )
 }
+

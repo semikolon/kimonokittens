@@ -118,18 +118,36 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
         {contract.pdf_url && (
           <button
             onClick={() => window.open(`/api/contracts/${contract.id}/pdf`, '_blank')}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+            className="px-4 py-2 bg-[#ffaa88] hover:bg-[#ff9977] text-slate-900 rounded-lg text-sm font-medium transition-colors shadow-sm"
+            style={{
+              background: 'linear-gradient(135deg, #ffaa88 0%, #ff9977 100%)'
+            }}
           >
             Visa PDF
           </button>
         )}
-        <button className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-purple-200 rounded-lg text-sm font-medium transition-colors">
+        <button
+          className="px-4 py-2 text-purple-100 rounded-lg text-sm font-medium transition-colors shadow-sm hover:opacity-90"
+          style={{
+            background: 'linear-gradient(135deg, #4a2b87 0%, #3d1f70 100%)'
+          }}
+        >
           Skicka igen
         </button>
-        <button className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-purple-200 rounded-lg text-sm font-medium transition-colors">
+        <button
+          className="px-4 py-2 text-purple-100 rounded-lg text-sm font-medium transition-colors shadow-sm hover:opacity-90"
+          style={{
+            background: 'linear-gradient(135deg, #4a2b87 0%, #3d1f70 100%)'
+          }}
+        >
           Avbryt
         </button>
-        <button className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-purple-200 rounded-lg text-sm font-medium transition-colors">
+        <button
+          className="px-4 py-2 text-purple-100 rounded-lg text-sm font-medium transition-colors shadow-sm hover:opacity-90"
+          style={{
+            background: 'linear-gradient(135deg, #4a2b87 0%, #3d1f70 100%)'
+          }}
+        >
           Kopiera länkar
         </button>
       </div>
