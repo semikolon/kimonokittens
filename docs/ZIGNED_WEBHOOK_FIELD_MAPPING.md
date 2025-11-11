@@ -315,6 +315,18 @@ data.dig('documents', 'signed_document', 'data', 'url')
 ```
 Not flat `data['signed_document_url']` as one might expect.
 
+### 5. **Signing URL Field Name Inconsistency**
+Zigned API uses different field names for signing URLs in different endpoints:
+- **Batch participant creation** (`POST /agreements/{id}/participants/batch`): May return `signing_url`
+- **Webhook participant events** (`participant.lifecycle.fulfilled`): Returns `signing_room_url`
+
+**Solution**: Always check both field names with fallback:
+```ruby
+url = participant['signing_url'] || participant['signing_room_url']
+```
+
+Without this fallback, signing URLs appeared as empty strings in contract creation output and `nil` in database, even though Zigned provided them in the API response.
+
 ---
 
 ## Recommendations
