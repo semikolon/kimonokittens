@@ -64,6 +64,14 @@ class SignedContractRepository
     signed_contract
   end
 
+  # Update (must exist)
+  def update(signed_contract)
+    data = dehydrate(signed_contract)
+    rows_affected = @db.class.db[:SignedContract].where(id: signed_contract.id).update(data)
+    raise "Update failed: contract not found #{signed_contract.id}" if rows_affected == 0
+    signed_contract
+  end
+
   # Delete contract
   def delete(id)
     @db.class.db[:SignedContract].where(id: id).delete
