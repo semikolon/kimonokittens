@@ -253,8 +253,15 @@ class ZignedClientV3
   #
   # @return [Hash] { status:, expires_at: }
   def activate_agreement(agreement_id)
+    payload = {
+      lifecycle_state: {
+        status: 'pending'
+      }
+    }
+
     response = self.class.post(
-      "/agreements/#{agreement_id}/lifecycle/activate",
+      "/agreements/#{agreement_id}/lifecycle",
+      body: payload.to_json,
       headers: default_headers
     )
 
