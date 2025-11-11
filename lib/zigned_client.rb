@@ -223,13 +223,37 @@ class ZignedClient
       raise "Zigned API authentication failed - check your API key"
     when 404
       raise "Resource not found - case may not exist"
+    when 413
+      # Payload too large - extract message if available
+      error_msg = extract_error_message(response) || "PDF file too large for upload"
+      raise "Zigned API error (413 Payload Too Large): #{error_msg}"
     when 422
       errors = response.parsed_response['errors']&.join(', ') || 'Validation failed'
       raise "Zigned API validation error: #{errors}"
     when 500..599
       raise "Zigned API server error (#{response.code})"
     else
-      raise "Zigned API error (#{response.code}): #{response.body}"
+      # Try to extract structured error message
+      error_msg = extract_error_message(response)
+      raise "Zigned API error (#{response.code}): #{error_msg || response.body}"
     end
+  end
+
+  # Extract error message from response (tries JSON, falls back to body)
+  def extract_error_message(response)
+    return nil unless response.body
+
+    # Try to parse as JSON
+    parsed = response.parsed_response
+    if parsed.is_a?(Hash)
+      # Common error message fields
+      parsed['error'] || parsed['message'] || parsed['detail'] || parsed['errors']&.join(', ')
+    else
+      # Fallback to raw body if not JSON
+      response.body.length > 200 ? "#{response.body[0..200]}..." : response.body
+    end
+  rescue JSON::ParserError
+    # If JSON parsing fails, return truncated body
+    response.body.length > 200 ? "#{response.body[0..200]}..." : response.body
   end
 end
