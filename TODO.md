@@ -270,7 +270,7 @@ Located at `config/sleep_schedule.json`:
 **Technical Notes:**
 - Built as separate view within existing dashboard (not separate app)
 - Uses same DataContext/WebSocket infrastructure
-- Keyboard hotkey (e.g., Ctrl+Shift+A) to toggle admin view
+- **Tab key** to toggle between public dashboard and admin view
 - Requires authentication (implement after core features working)
 
 **Dependencies:**
