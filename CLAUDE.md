@@ -92,6 +92,28 @@ bin/dev nuke         # Nuclear cleanup (last resort)
 
 ---
 
+## 📚 ZIGNED E-SIGNATURE API
+
+**Status**: v3 API (Nov 11, 2025) | **Docs**: Use REF tool for lookups
+
+**CRITICAL: Always use REF tool for Zigned API documentation:**
+- REF has accurate crawl of official v3 API docs
+- Base URL: `https://api.zigned.se/rest/v3`
+- Primary resource: `/agreements` (NOT `/cases` - that's deprecated v1)
+- File uploads: `POST /files` with multipart/form-data (15MB limit)
+- OpenAPI spec: Available in `~/Downloads/Zigned REST API Specification.yaml`
+
+**Quick reference:**
+```bash
+# REF tool usage for API lookups
+mcp__REF__ref_search_documentation "Zigned API create agreement"
+mcp__REF__ref_read_url "https://docs.zigned.se/agreements/create-agreement"
+```
+
+**Implementation**: `lib/zigned_client.rb` - v3 API client with proper multipart upload workflow
+
+---
+
 ## ⚠️ CRITICAL: GIT SAFETY PROTOCOL
 
 **🔥 NEVER AMEND OR FORCE PUSH - THESE DESTROY HISTORY! 🔥**
