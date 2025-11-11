@@ -44,6 +44,11 @@ class ZignedClientV3
   OAUTH_URL = 'https://api.zigned.se/oauth/token'
   MAX_FILE_SIZE = 15_728_640  # 15 MB in bytes
 
+  # OAuth token caching (class variables shared across instances)
+  @@cached_token = nil
+  @@token_expires_at = nil
+  @@token_mutex = Mutex.new  # Thread safety for token refresh
+
   # @param client_id [String] Your Zigned OAuth client ID
   # @param client_secret [String] Your Zigned OAuth client secret
   # @param test_mode [Boolean] Documentation flag (actual mode determined by credentials)
@@ -347,22 +352,37 @@ class ZignedClientV3
 
   private
 
-  # Obtain OAuth access token using client credentials
+  # Obtain OAuth access token using client credentials (with caching)
   def obtain_access_token
-    response = HTTParty.post(
-      OAUTH_URL,
-      body: {
-        grant_type: 'client_credentials',
-        client_id: @client_id,
-        client_secret: @client_secret
-      },
-      headers: { 'Content-Type' => 'application/x-www-form-urlencoded' }
-    )
+    @@token_mutex.synchronize do
+      # Reuse cached token if still valid (5 min buffer before expiry)
+      if @@cached_token && @@token_expires_at && Time.now < (@@token_expires_at - 300)
+        @access_token = @@cached_token
+        return
+      end
 
-    if response.success?
-      @access_token = response.parsed_response['access_token']
-    else
-      raise "OAuth token exchange failed (#{response.code}): #{response.body}"
+      # Fetch fresh token
+      response = HTTParty.post(
+        OAUTH_URL,
+        body: {
+          grant_type: 'client_credentials',
+          client_id: @client_id,
+          client_secret: @client_secret
+        },
+        headers: { 'Content-Type' => 'application/x-www-form-urlencoded' }
+      )
+
+      if response.success?
+        parsed = response.parsed_response
+        @access_token = parsed['access_token']
+
+        # Cache token with expiration (default 74 years, but respect API response)
+        @@cached_token = @access_token
+        expires_in = parsed['expires_in'] || 2_335_680_000  # 74 years in seconds
+        @@token_expires_at = Time.now + expires_in
+      else
+        raise "OAuth token exchange failed (#{response.code}): #{response.body}"
+      end
     end
   end
 
