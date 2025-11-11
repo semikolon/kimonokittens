@@ -151,6 +151,37 @@ Authorization: Bearer <access_token>
 
 ---
 
+## ⚠️ CRITICAL: RUBY SCRIPT EXECUTION PROTOCOL
+
+**🔥 ALWAYS USE `bundle exec` FOR RUBY SCRIPTS 🔥**
+
+This project uses **`--deployment` mode with `vendor/bundle`** for gem isolation. Ruby scripts MUST run via `bundle exec` to access installed gems.
+
+### ✅ CORRECT EXECUTION:
+```bash
+bundle exec ruby script.rb
+bundle exec ruby -e "require_relative 'lib/contract_signer'; ..."
+bundle exec rspec
+```
+
+### ❌ WRONG EXECUTION (Will fail with LoadError):
+```bash
+ruby script.rb          # Can't find gems in vendor/bundle
+ruby -e "..."           # Can't load bundled dependencies
+rspec                   # Wrong gem versions or missing gems
+```
+
+### 🚨 WHY THIS MATTERS:
+- **Without `bundle exec`**: Ruby uses system gems, ignoring `vendor/bundle`
+- **Result**: `LoadError: cannot load such file` even though gems are installed
+- **Production context**: All production code uses bundler's isolated gem environment
+
+**Rule of thumb**: If the project has a `Gemfile` and `vendor/bundle`, ALWAYS prefix with `bundle exec`.
+
+**Lesson learned**: Nov 12, 2025 - Repeatedly failed to run contract signing scripts without `bundle exec` despite `vendor/bundle` clearly existing.
+
+---
+
 ## ⚠️ CRITICAL: DATABASE AND DATA OPERATIONS
 
 **Query Before Scripting**: When writing scripts that depend on specific records:
