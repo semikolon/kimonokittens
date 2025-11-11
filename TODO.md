@@ -6,6 +6,26 @@
 This document provides a detailed, step-by-step implementation plan for the Kimonokittens monorepo projects. It is designed to be executed by an AI assistant with minimal context loss. Execute tasks sequentially unless marked as `(BLOCKED)`.
 
 ---
+
+## ⚠️ HIGH PRIORITY - Deposit Formula Mismatch
+
+**CRITICAL:** Deposit formula in code (6,746 kr) doesn't match social convention (6,200 kr)!
+
+**Current state:**
+- `Tenant.calculate_deposit(4)` returns **6,746 kr** (formula: 110% of per-person rent)
+- Social convention/practice is **6,200 kr** (historical, "floating around between mouths and memories")
+- Formula exists in `lib/models/tenant.rb:164` but is **NEVER CALLED** in codebase
+- Risk: Future code could call formula and set wrong deposit amount
+
+**Action needed:**
+- [ ] Decide: Remove formula OR update to return 6,200 kr OR document as "theoretical only"
+- [ ] If keeping formula: Add explicit warning that social convention overrides formula
+- [ ] Consider: Should formula be dynamic based on tenant count? (5 tenants = recalculate?)
+- [ ] Document: Where is the "real" deposit amount stored/defined as source of truth?
+
+**Context:** Discovered Nov 10, 2025 during contract testing prep. Formula gives 546 kr higher than actual practice.
+
+---
 ## 🚀 PRODUCTION DEPLOYMENT - Dell Optiplex Kiosk ✅ COMPLETE
 
 **Goal:** Deploy Kimonokittens dashboard as production kiosk on Dell Optiplex
