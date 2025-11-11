@@ -21,7 +21,8 @@ $stderr.sync = true
 if ENV['RACK_ENV'] == 'production'
   log_dir = '/var/log/kimonokittens'
   FileUtils.mkdir_p(log_dir) unless Dir.exist?(log_dir)
-  $logger = Logger.new(File.join(log_dir, 'webhook.log'))
+  # Daily rotation, keep 14 days
+  $logger = Logger.new(File.join(log_dir, 'webhook.log'), 'daily', 14)
 else
   $logger = Logger.new(STDOUT)
 end
@@ -132,15 +133,10 @@ class WebhookHandler
   end
 
   def handle_status_check(env)
+    # Silent success - this endpoint is polled frequently, logging pollutes the log
+    # Only log errors
     begin
-      $logger.info("Status check requested")
-
-      # Test each component separately to isolate the error
-      $logger.info("Getting deployment status...")
       deployment_status = @deployment_handler.deployment_status
-      $logger.info("Deployment status retrieved: #{deployment_status}")
-
-      $logger.info("Building status object...")
       status = {
         status: 'running',
         timestamp: Time.now.iso8601,
@@ -151,9 +147,7 @@ class WebhookHandler
         deployment: deployment_status
       }
 
-      $logger.info("Status object created, converting to JSON...")
       response_json = status.to_json
-      $logger.info("JSON conversion successful")
 
       [200, json_headers, [response_json]]
     rescue => e
