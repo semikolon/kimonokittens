@@ -1171,77 +1171,128 @@ The Puma architecture is designed for:
 
 ## 📝 CONTRACT SIGNING SYSTEM (Zigned Integration)
 
-**Status**: ✅ **READY FOR TESTING** (Nov 10, 2025) - Database-based webhook handler deployed
+**Status**: ✅ **PRODUCTION READY** (Nov 11, 2025) - Complete webhook handler with all 14 event types
 
-### Architecture
+### Architecture Overview
 
-**Contract Workflow**:
-1. **Generation** (`lib/contract_signer.rb`): Create PDF → Send to Zigned for e-signing
-2. **Webhook Events** (`handlers/zigned_webhook_handler.rb`): Receive signature updates
-3. **Database Storage** (`lib/models/signed_contract.rb`): Track signing progress
-4. **Completion**: Auto-download signed PDF when both parties sign
+**Contract Lifecycle**:
+1. **Creation** (`lib/contract_signer.rb`) → Generate PDF + Send to Zigned API v3
+2. **Webhooks** (`handlers/zigned_webhook_handler.rb`) → Receive 14 event types from Zigned
+3. **Storage** (`lib/models/`, `lib/repositories/`) → Track contracts + participants in database
+4. **Completion** → Auto-download signed PDF + Update records
 
-### Key Components ✅
+### Key Files & Components
 
-- **Database schema**: `SignedContract` table with signing URLs, test mode flag, timestamps
-- **Webhook handler**: Database-based (not file-based) for cross-machine compatibility
-- **Test/production separation**: `testMode` field enables safe testing without real BankID signatures
-- **SMS reminders**: Signing URLs stored for future notification features
+**Core Implementation**:
+- `handlers/zigned_webhook_handler.rb` - Complete event handler (14 event types, personal_number lookup, signature verification)
+- `lib/contract_signer.rb` - PDF generation + Zigned API client integration
+- `lib/models/signed_contract.rb` - Contract domain model with lifecycle tracking
+- `lib/models/contract_participant.rb` - Per-participant tracking (email, signatures, identity verification)
+- `lib/repositories/signed_contract_repository.rb` - Contract persistence with `update()` and `save()` methods
+- `lib/repositories/contract_participant_repository.rb` - Participant persistence
+- `lib/persistence.rb` - Centralized repository access (`Persistence.contract_participants`, etc.)
 
-### Production Requirements ⚠️
+**Database Schema** (Prisma):
+- `SignedContract` - Main contract record (test mode, lifecycle status, timestamps, email delivery)
+- `ContractParticipant` - Per-signer tracking (signing URLs, email delivery, identity enforcement, personal numbers)
 
-**Environment variables** (required in `/home/kimonokittens/.env` on Dell):
+**Documentation** (all in `docs/`):
+- `ZIGNED_WEBHOOK_FIELD_MAPPING.md` - Real payload analysis mapping webhook events → database fields
+- `ZIGNED_WEBHOOK_TESTING_STATUS.md` - Bug fixes log (Nov 11: repository.update + personal_number lookup)
+- `ZIGNED_V3_MIGRATION_PLAN.md` - Migration from v1 → v3 API
+- `zigned-api-spec.yaml` - Complete OpenAPI 3.0 spec (21,571 lines)
+
+### Webhook Events (Complete Coverage ✅)
+
+**Lifecycle Events** (6):
+- `agreement.lifecycle.pending` - Contract ready for signing
+- `participant.lifecycle.fulfilled` - Individual signer completed
+- `agreement.lifecycle.fulfilled` - All parties signed
+- `agreement.lifecycle.finalized` - Signed PDF ready (auto-downloads)
+- `agreement.lifecycle.expired` - Contract expired
+- `agreement.lifecycle.cancelled` - Contract cancelled
+
+**Tracking Events** (8):
+- `participant.identity_enforcement.passed` - Swedish personnummer verified
+- `participant.identity_enforcement.failed` - Identity check failed
+- `agreement.pdf_verification.completed` - PDF validation passed
+- `agreement.pdf_verification.failed` - PDF validation failed
+- `email_event.agreement_invitation.delivered` - Per-participant email confirmation
+- `email_event.agreement_invitation.all_delivered` - All invitation emails sent
+- `email_event.agreement_invitation.delivery_failed` - Email bounce detection
+- `email_event.agreement_finalized.delivered` - Final PDF email delivered
+
+### Critical Implementation Details
+
+**Personal Number Lookup** (Bug #2 fix - Nov 11):
+- Zigned webhooks **don't send personal_number** field
+- Handler implements fallback: landlord email match + tenant database query
+- Location: `handlers/zigned_webhook_handler.rb:682-708`
+
+**Signing URL Field Variants** (commit 25be98d):
+- Zigned API uses both `signing_url` AND `signing_room_url` in different endpoints
+- Handler checks both with `||` fallback operator
+- Location: `handlers/zigned_webhook_handler.rb:661`
+
+**Signature Verification** (Stripe-style HMAC-SHA256):
+- Validates `x-zigned-request-signature` header format: `t={timestamp},v1={signature}`
+- Uses timestamped payload to prevent replay attacks
+- Location: `handlers/zigned_webhook_handler.rb:137-163`
+
+### Logging & Monitoring
+
+**All webhook events logged to systemd journal:**
 ```bash
-# Required
-ZIGNED_API_KEY='your_api_key_here'
-ZIGNED_WEBHOOK_SECRET_REAL='production_webhook_secret'
-ZIGNED_WEBHOOK_SECRET_TEST='test_webhook_secret'
+# Real-time Zigned events
+journalctl -u kimonokittens-dashboard -f | grep -E "(📝|✍️|🎉|📥|❌|⚠️)"
 
-# Optional (only if NOT using dashboard webhooks)
-# WEBHOOK_BASE_URL=https://kimonokittens.com
+# All contract events
+journalctl -u kimonokittens-dashboard | grep -E "(agreement|participant|email_event)"
+
+# Specific event type
+journalctl -u kimonokittens-dashboard | grep "participant.lifecycle.fulfilled"
+
+# Webhook errors
+journalctl -u kimonokittens-dashboard | grep "❌ Webhook error"
 ```
 
-**Zigned admin interface configuration** (recommended approach):
-- **Production webhook**: `https://kimonokittens.com/api/webhooks/zigned`
-- **Test webhook**: `https://kimonokittens.com/api/webhooks/zigned` (same endpoint, different secrets)
-- Events enabled: `case.created`, `case.signed`, `case.completed`
-- **Note**: Dashboard webhooks eliminate need for WEBHOOK_BASE_URL env var
+**Event indicators**:
+- 📝 Agreement activated
+- ✍️ Signature received
+- 🎉 Contract fully signed
+- 📥 Contract finalized (PDF ready)
+- 📧 Email delivered
+- 🔐 Identity verified
+- ❌ Errors (identity/PDF/email failures)
+- ⚠️ Warnings (missing records, unknown events)
 
-### Migration Status
+### Production Requirements
 
-**Completed** (Nov 10, 2025):
-- [x] Database schema with signing URLs and test mode
-- [x] Domain model and repository layer
-- [x] Webhook handler converted to database-based
-- [x] ContractSigner saves all required fields
-- [x] Migration applied locally on Mac
+**Environment variables** (already configured in `/home/kimonokittens/.env`):
+```bash
+ZIGNED_API_KEY='{production_api_key}'
+ZIGNED_WEBHOOK_SECRET_REAL='{production_webhook_secret}'
+ZIGNED_WEBHOOK_SECRET_TEST='{test_webhook_secret}'
+```
 
-**Remaining** (Dell deployment):
-- [ ] Run Prisma migration: `npx prisma migrate deploy`
-- [ ] Verify environment variables in `/home/kimonokittens/.env`
-- [ ] Configure Zigned webhook URLs in admin dashboard
-- [ ] Test contract creation and webhook delivery
+**Webhook endpoint**: `POST /api/webhooks/zigned` (port 3001, handled by puma_server.rb)
 
-### Testing Approach
+### Recent Work (Nov 11, 2025)
 
-**Safe testing workflow**:
-1. Create test tenant in database (your email only)
-2. Generate contract with `test_mode: true, send_emails: false`
-3. Manual link testing (no unwanted emails sent)
-4. Webhook will fail until domain migration complete (expected)
+**Bug Fixes**:
+- eff6ccf - Complete webhook handler (all 14 events, signing URL fallback, failure handlers)
+- 1a1d4de - Personal number lookup (email matching + tenant query)
+- 281c137 - Add `update()` method to SignedContractRepository
 
-**Full flow testing** (after domain migration):
-1. SSL certificates installed on Dell
-2. Nginx configured for public access
-3. Port forwarding updated to Dell
-4. Zigned webhooks can reach Dell
-5. End-to-end contract signing workflow
+**Features**:
+- 7261f44 - All tracking events (identity, PDF verification, email delivery)
+- 3d11c95 - Adapt to real Zigned payloads (not docs - actual webhook data)
+- b98a41c - Field mapping document (comprehensive payload analysis)
 
-### Documentation
-
-- **Migration Analysis**: `docs/PI_TO_DELL_MIGRATION_ANALYSIS.md` (dependency mapping, blockers)
-- **Migration Checklist**: `docs/DOMAIN_MIGRATION_CHECKLIST.md` (step-by-step execution)
-- **Model Architecture**: `docs/MODEL_ARCHITECTURE.md` (domain layer API reference)
+**Testing** (Nov 11):
+- Test contract `cmhuyr9pt010x4cqk5tova6bd` revealed both critical bugs
+- Both fixed and deployed within hours
+- Ready for webhook replay testing in Zigned dashboard
 
 ---
 
