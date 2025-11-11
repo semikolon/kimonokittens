@@ -69,6 +69,21 @@ class DataBroadcaster
     puts "DataBroadcaster: All scheduled tasks stopped"
   end
 
+  # Broadcast contract update event (called by webhook handler)
+  def broadcast_contract_update(contract_id, event_type, details = {})
+    message = {
+      type: 'contract_update',
+      payload: {
+        contract_id: contract_id,
+        event: event_type,
+        details: details,
+        timestamp: Time.now.to_i
+      }
+    }.to_json
+    @pubsub.publish(message)
+    puts "DataBroadcaster: contract_update broadcast (#{event_type})"
+  end
+
   private
 
   def periodic(interval_sec, &block)

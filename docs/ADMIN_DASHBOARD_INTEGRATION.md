@@ -43,6 +43,10 @@ dashboard/src/
 - Backdrop blur and rounded-2xl borders
 
 ### 3. **Contract List (✅ Functional)**
+- **Summary Line**: Displays contract statistics in Swedish below "Kontrakt" title
+  - Examples: "3 signerade kontrakt - inväntar signaturer för 2 st"
+  - "Inga kontrakt" (empty state)
+  - Matches font size of train/rent widget one-liners
 - Single filter toggle: "All" vs "Active Only"
 - Displays contract count
 - Status icons from Lucide React:
@@ -104,34 +108,44 @@ interface ContractParticipant {
 }
 ```
 
-## Sample Data (Development)
+## Backend Integration (✅ COMPLETE)
 
-Three sample contracts included in `useContracts.tsx`:
-1. **contract-001**: Pending (landlord signed, tenant pending)
-2. **contract-002**: Completed (both signed, test mode)
-3. **contract-003**: Failed (PDF generation timeout error)
+The admin dashboard now fetches real contract data from the backend API.
 
-## Backend Integration (TODO)
+### Implemented API Endpoints
 
-When backend is ready, update `useContracts.tsx`:
+**✅ GET /api/admin/contracts**
+- Returns all contracts with enriched tenant names and participants
+- Handler: `handlers/admin_contracts_handler.rb`
+- Response includes full contract details + lifecycle tracking + participants
+- Empty string path_info handled (Rack strips matched prefix)
+
+**✅ WebSocket Real-time Updates**
+- `DataBroadcaster.broadcast_contract_update(contract_id, event_type, details)`
+- Frontend subscribes to `contract_update` message type
+- Auto-refreshes contract list when webhook events fire
+- 6 webhook events integrated: pending, fulfilled, finalized, expired, cancelled
+
+**✅ GET /api/contracts/:id/pdf**
+- Serves contract PDFs directly (browser security workaround)
+- Handler: `handlers/contract_pdf_handler.rb`
+
+### Frontend Implementation
 
 ```typescript
+// useContracts.tsx - REAL DATA (no mock data)
 const fetchContracts = async () => {
   const response = await fetch('/api/admin/contracts')
   const data = await response.json()
-  setContracts(data.contracts)
+  setContracts(data.contracts || [])
 }
-```
 
-### Required API Endpoints
-
-```
-GET  /api/admin/contracts?status=pending&test_mode=false
-GET  /api/admin/contracts/:id
-POST /api/admin/contracts/:id/resend-email
-POST /api/admin/contracts/:id/cancel
-GET  /api/admin/contracts/:id/pdf
-GET  /api/admin/contracts/stats
+// WebSocket subscription
+useEffect(() => {
+  if (wsData.type === 'contract_update') {
+    refreshContracts() // Auto-refresh on updates
+  }
+}, [dataContext?.data])
 ```
 
 ### Response Format
@@ -141,12 +155,21 @@ interface ContractsResponse {
   contracts: SignedContract[]
   total: number
   statistics: {
-    pending: number
+    total: number
     completed: number
-    failed: number
+    pending: number
     expired: number
+    cancelled: number
   }
 }
+```
+
+### TODO: Action Button Handlers
+
+```
+POST /api/admin/contracts/:id/resend-email
+POST /api/admin/contracts/:id/cancel
+GET  /api/admin/contracts/:id (single contract details)
 ```
 
 ## Testing Checklist
@@ -194,15 +217,15 @@ const adminTheme = {
 
 ## Next Steps
 
-1. **Backend Development** (Dell agent):
-   - Implement `/api/admin/contracts` endpoints
-   - Set up WebSocket broadcast for contract events
-   - Integrate with Zigned webhook receiver
-
-2. **Action Button Handlers**:
-   - Implement "Resend Email" functionality
-   - Implement "Cancel" contract functionality
+1. **Action Button Handlers** (TODO):
+   - Implement POST `/api/admin/contracts/:id/resend-email`
+   - Implement POST `/api/admin/contracts/:id/cancel`
    - Implement "Copy Links" clipboard functionality
+
+2. **Visual Testing**:
+   - Verify summary line displays correctly with real data
+   - Test empty state ("Inga kontrakt")
+   - Confirm WebSocket updates work when webhook fires
 
 3. **Enhanced Features** (Future):
    - Contract statistics dashboard
@@ -225,10 +248,9 @@ const adminTheme = {
 
 ## Known Limitations
 
-1. **Sample Data Only**: Currently using mock contracts until backend is ready
-2. **Action Buttons Non-functional**: Resend Email, Cancel, Copy Links need backend handlers
-3. **No Pagination**: Will need implementation when contract count grows
-4. **Simplified Timeline**: Uses approximations until backend provides detailed event timestamps
+1. **Action Buttons Non-functional**: Resend Email, Cancel, Copy Links need backend handlers
+2. **No Pagination**: Will need implementation when contract count grows
+3. **Summary Line Logic**: Implemented in ContractList.tsx with Swedish translations
 
 ## References
 

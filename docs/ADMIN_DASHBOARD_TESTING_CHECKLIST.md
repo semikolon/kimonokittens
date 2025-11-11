@@ -67,7 +67,21 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 3: Filter Toggle Functionality
+### Test 3: Summary Line Display
+- [ ] **Start**: Admin view visible with contracts
+- [ ] **Verify**: Summary line appears below "Kontrakt" title
+- [ ] **Verify**: Displays contract statistics in Swedish
+- [ ] **Examples**:
+  - "3 signerade kontrakt - inväntar signaturer för 2 st"
+  - "Inga kontrakt" (if empty)
+  - "Inväntar signatur för ett kontrakt" (if 1 pending)
+- [ ] **Verify**: Font size matches train/rent widget one-liners
+- [ ] **Verify**: Text color is purple-200
+- [ ] **Pass/Fail**: ___________
+
+---
+
+### Test 4: Filter Toggle Functionality
 - [ ] **Start**: Admin view visible
 - [ ] **Verify**: Default shows "All" button active
 - [ ] **Verify**: Shows "3 contracts" count
@@ -81,7 +95,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 4: Keyboard Navigation (Arrow Keys)
+### Test 5: Keyboard Navigation (Arrow Keys)
 - [ ] **Start**: Admin view with 3 contracts visible
 - [ ] **Action**: Press `Arrow Down` key
 - [ ] **Expected**: First contract row highlights (purple background)
@@ -95,7 +109,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 5: Expand/Collapse with Enter Key
+### Test 6: Expand/Collapse with Enter Key
 - [ ] **Start**: Admin view, navigate to first contract (Arrow Down)
 - [ ] **Action**: Press `Enter` key
 - [ ] **Expected**: Contract expands showing:
@@ -110,7 +124,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 6: Mouse Click Expand/Collapse
+### Test 7: Mouse Click Expand/Collapse
 - [ ] **Start**: Admin view with contracts collapsed
 - [ ] **Action**: Click anywhere on first contract row
 - [ ] **Expected**: Contract expands with full details
@@ -124,7 +138,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ## Visual Design Tests
 
-### Test 7: Widget Styling Matches Existing Widgets
+### Test 8: Widget Styling Matches Existing Widgets
 - [ ] **Compare**: Admin widget vs WeatherWidget/TrainWidget
 - [ ] **Verify**: Same glass-morphism effect (backdrop-blur)
 - [ ] **Verify**: Same rounded corners (rounded-2xl)
@@ -135,7 +149,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 8: Horsemen Font Renders
+### Test 9: Horsemen Font Renders
 - [ ] **Verify**: "Contract Management" title uses Horsemen font
 - [ ] **Verify**: Font is bold, uppercase, with letter-spacing
 - [ ] **Verify**: Title color is purple-200 (accent mode)
@@ -143,7 +157,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 9: Status Icons Display Correctly
+### Test 10: Status Icons Display Correctly
 - [ ] **Verify**: contract-001 shows Clock icon (pending)
 - [ ] **Verify**: contract-002 shows CheckCircle2 icon (completed)
 - [ ] **Verify**: contract-003 shows XCircle icon (failed)
@@ -155,7 +169,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 10: Status Badges Display
+### Test 11: Status Badges Display
 - [ ] **Verify**: Each contract shows status badge
 - [ ] **Verify**: Badge colors match status:
   - Blue for `landlord_signed`
@@ -168,7 +182,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ## Expanded Content Tests
 
-### Test 11: Email Status Section
+### Test 12: Email Status Section
 - [ ] **Action**: Expand contract-002 (completed, test mode)
 - [ ] **Verify**: "Email Status:" header visible
 - [ ] **Verify**: Shows "Landlord: Delivered" with green checkmark
@@ -178,7 +192,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 12: Signing Status Section
+### Test 13: Signing Status Section
 - [ ] **Action**: Expand contract-002 (completed)
 - [ ] **Verify**: "Signing Status:" header visible
 - [ ] **Verify**: Shows "Fredrik Brännström - Signed" with green checkmark
@@ -190,7 +204,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 13: Timeline Section
+### Test 14: Timeline Section
 - [ ] **Action**: Expand contract-002
 - [ ] **Verify**: "Timeline:" header visible
 - [ ] **Verify**: Events listed chronologically:
@@ -205,7 +219,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 14: Error Display (Failed Contract)
+### Test 15: Error Display (Failed Contract)
 - [ ] **Start**: contract-003 visible (failed status)
 - [ ] **Verify**: Red XCircle icon shows
 - [ ] **Verify**: Status badge shows "failed" in red
@@ -215,7 +229,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 15: Action Buttons Present
+### Test 16: Action Buttons Present
 - [ ] **Action**: Expand any contract
 - [ ] **Verify**: Three buttons visible at bottom:
   - "Resend Email" (purple)
@@ -228,7 +242,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ## Responsive Design Tests
 
-### Test 16: Browser Window Resize
+### Test 17: Browser Window Resize
 - [ ] **Action**: Resize browser to narrow width (mobile simulation)
 - [ ] **Verify**: Admin widget scales down gracefully
 - [ ] **Verify**: Contract rows stack vertically
@@ -241,7 +255,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ## Performance Tests
 
-### Test 17: Smooth Animations
+### Test 18: Smooth Animations
 - [ ] **Action**: Expand/collapse contracts multiple times
 - [ ] **Verify**: Chevron rotation is smooth (200ms)
 - [ ] **Verify**: Content expand/collapse is smooth
@@ -250,7 +264,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 18: Keyboard Navigation Performance
+### Test 19: Keyboard Navigation Performance
 - [ ] **Action**: Rapidly press Arrow keys
 - [ ] **Verify**: Highlight updates immediately
 - [ ] **Verify**: No lag or input delay
@@ -260,7 +274,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ## Integration Tests
 
-### Test 19: Background Animations Continue
+### Test 20: Background Animations Continue
 - [ ] **Action**: Switch to admin view (Tab)
 - [ ] **Verify**: Purple gradient blobs continue animating
 - [ ] **Verify**: Background matches public dashboard
@@ -269,7 +283,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 20: DeploymentBanner Shows
+### Test 21: DeploymentBanner Shows
 - [ ] **Verify**: Deployment banner visible at top of admin view
 - [ ] **Verify**: Banner matches public dashboard banner
 - [ ] **Pass/Fail**: ___________
@@ -278,7 +292,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ## WebSocket Tests (When Backend Ready)
 
-### Test 21: WebSocket Connection
+### Test 22: WebSocket Connection
 - [ ] **Backend Required**: Start Ruby backend server
 - [ ] **Verify**: WebSocket connects to `ws://localhost:3001`
 - [ ] **Verify**: No connection errors in browser console
@@ -286,7 +300,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 22: Real-time Contract Updates
+### Test 23: Real-time Contract Updates
 - [ ] **Backend Required**: Trigger Zigned webhook event
 - [ ] **Action**: Watch admin dashboard
 - [ ] **Expected**: Contract list auto-refreshes
@@ -297,7 +311,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ## Browser Console Tests
 
-### Test 23: No JavaScript Errors
+### Test 24: No JavaScript Errors
 - [ ] **Action**: Open browser DevTools (F12)
 - [ ] **Action**: Navigate to admin view
 - [ ] **Verify**: Console tab shows no errors
@@ -307,7 +321,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 24: Component Mounting
+### Test 25: Component Mounting
 - [ ] **Action**: Watch React DevTools (if installed)
 - [ ] **Verify**: AdminDashboard component mounts
 - [ ] **Verify**: ContractList → ContractRow hierarchy visible
@@ -318,7 +332,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ## Accessibility Tests (Future Enhancement)
 
-### Test 25: Keyboard-Only Navigation
+### Test 26: Keyboard-Only Navigation
 - [ ] **Action**: Use only keyboard (no mouse)
 - [ ] **Verify**: Can toggle views with Tab
 - [ ] **Verify**: Can navigate contracts with arrows
@@ -330,7 +344,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ## Edge Cases
 
-### Test 26: Empty Contract List
+### Test 27: Empty Contract List
 - [ ] **Setup**: Modify `useContracts.tsx` to return empty array
 - [ ] **Verify**: Shows "0 contracts" message
 - [ ] **Verify**: No JavaScript errors
@@ -338,7 +352,7 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ---
 
-### Test 27: Many Contracts (Scroll Test)
+### Test 28: Many Contracts (Scroll Test)
 - [ ] **Setup**: Add 10+ sample contracts to `useContracts.tsx`
 - [ ] **Verify**: List scrolls correctly
 - [ ] **Verify**: Filter toggle still works
@@ -349,12 +363,17 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
 
 ## Known Issues / Limitations
 
-1. **Sample Data Only**: Using mock contracts until backend ready
-2. **Action Buttons Non-functional**: Need backend API endpoints
-3. **No Pagination**: Will need when contract count grows
-4. **Simplified Timeline**: Approximations until backend provides detailed timestamps
-5. **No Search**: Post-MVP feature
-6. **No Statistics Panel**: Post-MVP feature
+1. **Action Buttons Non-functional**: Need backend API endpoints (resend email, cancel, copy links)
+2. **No Pagination**: Will need when contract count grows
+3. **No Search**: Post-MVP feature
+4. **No Statistics Panel**: Post-MVP feature
+
+## ✅ COMPLETED: Real Data Integration
+
+- Backend API `/api/admin/contracts` implemented and working
+- WebSocket real-time updates configured via `DataBroadcaster`
+- Frontend fetches real contract data (no mock data)
+- Summary line displays contract statistics in Swedish
 
 ---
 
@@ -381,11 +400,11 @@ ssh -L 5175:localhost:5175 -L 3001:localhost:3001 kimonokittens
    - Review component implementation
    - Re-test after fixes
 
-3. **Backend Integration**:
-   - Update `useContracts.tsx` with real API endpoint
-   - Test WebSocket updates
-   - Implement action button handlers
-   - Test with production Zigned webhook data
+3. **Backend Integration** (✅ COMPLETE):
+   - ✅ `useContracts.tsx` updated with real API endpoint
+   - ✅ WebSocket updates configured
+   - TODO: Implement action button handlers
+   - TODO: Test with production Zigned webhook data
 
 ---
 

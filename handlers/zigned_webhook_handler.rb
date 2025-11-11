@@ -211,14 +211,11 @@ class ZignedWebhookHandler
     end
 
     # Broadcast event
-    @broadcaster&.broadcast_data('contract_status', {
-      case_id: agreement_id,
-      event: 'pending',
+    @broadcaster&.broadcast_contract_update(agreement_id, 'pending', {
       title: title,
       test_mode: test_mode,
       expires_at: expires_at,
-      participant_count: participants.length,
-      timestamp: Time.now.to_i
+      participant_count: participants.length
     })
   end
 
@@ -276,12 +273,9 @@ class ZignedWebhookHandler
     end
 
     # Broadcast event
-    @broadcaster&.broadcast_data('contract_status', {
-      case_id: agreement_id,
-      event: 'participant_signed',
+    @broadcaster&.broadcast_contract_update(agreement_id, 'participant_signed', {
       participant_name: name,
-      participant_id: participant_id,
-      timestamp: Time.now.to_i
+      participant_id: participant_id
     })
   end
 
@@ -313,12 +307,9 @@ class ZignedWebhookHandler
     @repository.update(contract)
 
     # Broadcast event
-    @broadcaster&.broadcast_data('contract_status', {
-      case_id: agreement_id,
-      event: 'fulfilled',
+    @broadcaster&.broadcast_contract_update(agreement_id, 'fulfilled', {
       title: title,
-      fulfilled_at: fulfilled_at,
-      timestamp: Time.now.to_i
+      fulfilled_at: fulfilled_at
     })
   end
 
@@ -366,13 +357,10 @@ class ZignedWebhookHandler
     @repository.update(contract)
 
     # Broadcast completion event
-    @broadcaster&.broadcast_data('contract_status', {
-      case_id: agreement_id,
-      event: 'completed',
+    @broadcaster&.broadcast_contract_update(agreement_id, 'completed', {
       title: title,
       signed_pdf_path: contract.pdf_url,
-      finalized_at: finalized_at,
-      timestamp: Time.now.to_i
+      finalized_at: finalized_at
     })
 
     # Future: Send notification emails/SMS
@@ -397,12 +385,9 @@ class ZignedWebhookHandler
     end
 
     # Broadcast event
-    @broadcaster&.broadcast_data('contract_status', {
-      case_id: agreement_id,
-      event: 'expired',
+    @broadcaster&.broadcast_contract_update(agreement_id, 'expired', {
       title: title,
-      expired_at: expired_at,
-      timestamp: Time.now.to_i
+      expired_at: expired_at
     })
 
     # Future: Send expiration notification
@@ -429,13 +414,10 @@ class ZignedWebhookHandler
     end
 
     # Broadcast event
-    @broadcaster&.broadcast_data('contract_status', {
-      case_id: agreement_id,
-      event: 'cancelled',
+    @broadcaster&.broadcast_contract_update(agreement_id, 'cancelled', {
       title: title,
       cancellation_reason: cancellation_reason,
-      cancelled_at: cancelled_at,
-      timestamp: Time.now.to_i
+      cancelled_at: cancelled_at
     })
   end
 

@@ -47,8 +47,34 @@ export const ContractList: React.FC<ContractListProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedId, expandedId, contracts])
 
+  // Calculate contract statistics
+  const completedCount = contracts.filter(c => c.status === 'completed').length
+  const pendingCount = contracts.filter(c => c.status === 'pending' || c.status === 'landlord_signed' || c.status === 'tenant_signed').length
+
+  // Generate summary message
+  const getSummary = () => {
+    if (completedCount === 0 && pendingCount === 0) {
+      return 'Inga kontrakt'
+    } else if (completedCount === 0 && pendingCount === 1) {
+      return 'Inväntar signatur för ett kontrakt'
+    } else if (completedCount === 0) {
+      return `Inväntar signaturer för ${pendingCount} st`
+    } else if (pendingCount === 0) {
+      return `${completedCount} ${completedCount === 1 ? 'signerat kontrakt' : 'signerade kontrakt'}`
+    } else if (pendingCount === 1) {
+      return `${completedCount} ${completedCount === 1 ? 'signerat kontrakt' : 'signerade kontrakt'} - inväntar signatur för ett`
+    } else {
+      return `${completedCount} ${completedCount === 1 ? 'signerat kontrakt' : 'signerade kontrakt'} - inväntar signaturer för ${pendingCount} st`
+    }
+  }
+
   return (
     <div className="space-y-4">
+      {/* Summary line */}
+      <div className="text-sm text-purple-200 mb-3">
+        {getSummary()}
+      </div>
+
       {/* Filter toggle */}
       <div className="flex items-center justify-end mb-4">
         <button
