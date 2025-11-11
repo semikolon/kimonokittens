@@ -705,11 +705,11 @@ class ZignedWebhookHandler
     email = participant_data['email']
 
     # Landlord email (hardcoded in ContractSigner)
-    LANDLORD_EMAIL = 'branstrom@gmail.com'
-    LANDLORD_PERSONNUMMER = '8604230717'
+    landlord_email = 'branstrom@gmail.com'
+    landlord_personnummer = '8604230717'
 
     # Check if this is the landlord
-    return LANDLORD_PERSONNUMMER if email&.downcase == LANDLORD_EMAIL
+    return landlord_personnummer if email&.downcase == landlord_email
 
     # Otherwise look up tenant personnummer from contract
     contract = @repository.find_by_id(contract_id)
