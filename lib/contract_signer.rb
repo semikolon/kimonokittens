@@ -1,5 +1,5 @@
 require_relative 'contract_generator_html'
-require_relative 'zigned_client'
+require_relative 'zigned_client_v3'
 require_relative 'repositories/tenant_repository'
 require_relative 'repositories/signed_contract_repository'
 require_relative 'models/signed_contract'
@@ -99,7 +99,7 @@ class ContractSigner
     # Step 2: Create Zigned signing case
     puts "\n🔐 Creating Zigned signing case..."
 
-    zigned = ZignedClient.new(
+    zigned = ZignedClientV3.new(
       api_key: ENV['ZIGNED_API_KEY'] || raise('ZIGNED_API_KEY not set in environment'),
       test_mode: test_mode
     )
@@ -117,7 +117,7 @@ class ContractSigner
     ]
 
     # send_emails parameter controls whether Zigned sends email invitations
-    zigned_result = zigned.create_signing_case(
+    zigned_result = zigned.create_and_activate(
       pdf_path: pdf_path,
       signers: signers,
       title: case_title,
@@ -182,7 +182,7 @@ class ContractSigner
   def initialize(test_mode: false)
     @test_mode = test_mode
     @generator = ContractGenerator.new
-    @zigned = ZignedClient.new(
+    @zigned = ZignedClientV3.new(
       api_key: ENV['ZIGNED_API_KEY'] || raise('ZIGNED_API_KEY not set in environment'),
       test_mode: test_mode
     )
@@ -224,12 +224,13 @@ class ContractSigner
       { name: tenant[:name], personnummer: tenant[:personnummer], email: tenant[:email] }
     ]
 
-    zigned_result = @zigned.create_signing_case(
+    zigned_result = @zigned.create_and_activate(
       pdf_path: pdf_path,
       signers: signers,
       title: case_title,
       webhook_url: webhook_url,
-      message: "Välkommen till BRF Kimonokittens! Vänligen signera hyresavtalet med ditt BankID."
+      message: "Välkommen till BRF Kimonokittens! Vänligen signera hyresavtalet med ditt BankID.",
+      send_emails: send_emails
     )
 
     puts "✅ Signing case created: #{zigned_result[:case_id]}"
@@ -285,25 +286,25 @@ class ContractSigner
 
   # Check signing status for a contract
   #
-  # @param case_id [String] The Zigned case ID
+  # @param case_id [String] The Zigned case ID (agreement_id in v3)
   #
   # @return [Hash] Status information including signer progress
   def check_status(case_id)
-    @zigned.get_case_status(case_id)
+    @zigned.get_agreement_status(case_id)
   end
 
   # Download signed PDF when signing is complete
   #
-  # @param case_id [String] The Zigned case ID
+  # @param case_id [String] The Zigned case ID (agreement_id in v3)
   # @param tenant_name [String] Tenant name for filename
   #
   # @return [String] Path to downloaded signed PDF
   #
   # @raise [RuntimeError] If signing is not complete yet
   def download_signed_contract(case_id, tenant_name)
-    status = @zigned.get_case_status(case_id)
+    status = @zigned.get_agreement_status(case_id)
 
-    raise "Contract not fully signed yet (status: #{status[:status]})" unless status[:status] == 'completed'
+    raise "Contract not fully signed yet (status: #{status[:status]})" unless status[:status] == 'fulfilled'
 
     # Generate filename for signed PDF
     safe_name = tenant_name.gsub(/[^\w\s-]/, '').gsub(/\s+/, '_')
@@ -322,11 +323,11 @@ class ContractSigner
 
   # Cancel a pending signing case
   #
-  # @param case_id [String] The Zigned case ID
+  # @param case_id [String] The Zigned case ID (agreement_id in v3)
   #
   # @return [Boolean] True if cancelled successfully
   def cancel_contract(case_id)
-    @zigned.cancel_case(case_id)
+    @zigned.cancel_agreement(case_id)
   end
 
   private
