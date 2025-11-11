@@ -783,9 +783,9 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Problem**: `/var/log/kimonokittens/webhook.log` is 303MB (Nov 11, 2025) - will consume disk space over time
   - **Solution**: Configure logrotate for all kimonokittens log files
   - **Files to rotate**:
-    - `webhook.log` (GitHub deployment webhook - very verbose)
+    - `webhook.log` (GitHub deployment webhook - very verbose, 303MB as of Nov 11)
     - `frontend.log` (frontend error logging)
-    - Future: `zigned-webhooks.log` (when separate Zigned logging implemented)
+    - `zigned-webhooks.log` (Zigned contract signing events - implemented Nov 11, 2025)
   - **Recommended config**:
     - Rotate daily
     - Keep 14 days of logs (2 weeks for debugging)
