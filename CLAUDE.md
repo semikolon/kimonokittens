@@ -109,7 +109,7 @@ bin/dev nuke         # Nuclear cleanup (last resort)
 - OAuth: `https://api.zigned.se/oauth/token` (client credentials flow)
 - Primary resource: `/agreements` (NOT `/cases` - that's deprecated v1)
 - File uploads: `POST /files` with multipart/form-data (15MB limit)
-- OpenAPI spec: Available in `~/Downloads/Zigned REST API Specification.yaml`
+- **OpenAPI spec**: `docs/zigned-api-spec.yaml` (authoritative source for endpoints, schemas, authentication)
 
 **Authentication**: v3 uses OAuth 2.0 with client credentials
 ```ruby
