@@ -264,6 +264,7 @@ class ZignedClientV3
   def activate_agreement(agreement_id)
     response = self.class.post(
       "/agreements/#{agreement_id}/lifecycle/activate",
+      body: {}.to_json,
       headers: default_headers
     )
 
