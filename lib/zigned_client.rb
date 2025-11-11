@@ -249,11 +249,16 @@ class ZignedClient
       # Common error message fields
       parsed['error'] || parsed['message'] || parsed['detail'] || parsed['errors']&.join(', ')
     else
-      # Fallback to raw body if not JSON
-      response.body.length > 200 ? "#{response.body[0..200]}..." : response.body
+      # HTML error page - extract text from <pre> tag if present
+      if response.body =~ /<pre>([^<]+)<\/pre>/
+        $1.strip
+      else
+        # Fallback to truncated body
+        response.body.length > 100 ? "#{response.body[0..100]}..." : response.body
+      end
     end
   rescue JSON::ParserError
     # If JSON parsing fails, return truncated body
-    response.body.length > 200 ? "#{response.body[0..200]}..." : response.body
+    response.body.length > 100 ? "#{response.body[0..100]}..." : response.body
   end
 end
