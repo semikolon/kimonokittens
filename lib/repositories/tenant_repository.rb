@@ -116,7 +116,11 @@ class TenantRepository < BaseRepository
   def update(tenant)
     raise ArgumentError, "Cannot update tenant without ID" unless tenant.id
 
-    dataset.where(id: tenant.id).update(
+    # Verify record exists before attempting update
+    existing = dataset.where(id: tenant.id).first
+    raise ArgumentError, "Tenant not found: #{tenant.id}" unless existing
+
+    rows_affected = dataset.where(id: tenant.id).update(
       name: tenant.name,
       email: tenant.email,
       facebookId: tenant.facebook_id,
@@ -131,6 +135,8 @@ class TenantRepository < BaseRepository
       deposit: tenant.deposit,
       furnishingDeposit: tenant.furnishing_deposit
     )
+
+    raise "Update failed: database returned 0 rows affected for tenant #{tenant.id} (record exists but update was rejected)" if rows_affected == 0
 
     tenant
   end

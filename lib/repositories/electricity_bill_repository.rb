@@ -158,13 +158,19 @@ class ElectricityBillRepository < BaseRepository
   def update(bill)
     raise ArgumentError, "Cannot update bill without ID" unless bill.id
 
-    dataset.where(id: bill.id).update(
+    # Verify record exists before attempting update
+    existing = dataset.where(id: bill.id).first
+    raise ArgumentError, "Bill not found: #{bill.id}" unless existing
+
+    rows_affected = dataset.where(id: bill.id).update(
       provider: bill.provider,
       billDate: bill.bill_date,
       amount: bill.amount,
       billPeriod: bill.bill_period,
       updatedAt: now_utc
     )
+
+    raise "Update failed: database returned 0 rows affected for bill #{bill.id} (record exists but update was rejected)" if rows_affected == 0
 
     bill
   end

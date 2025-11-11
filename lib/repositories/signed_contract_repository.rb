@@ -54,9 +54,11 @@ class SignedContractRepository
     existing = @db.class.db[:SignedContract].where(id: signed_contract.id).first
 
     if existing
-      @db.class.db[:SignedContract].where(id: signed_contract.id).update(data)
+      rows_affected = @db.class.db[:SignedContract].where(id: signed_contract.id).update(data)
+      raise "Update failed: no rows affected for contract #{signed_contract.id}" if rows_affected == 0
     else
-      @db.class.db[:SignedContract].insert(data)
+      result = @db.class.db[:SignedContract].insert(data)
+      raise "Insert failed: no result returned for contract #{signed_contract.id}" if result.nil?
     end
 
     signed_contract

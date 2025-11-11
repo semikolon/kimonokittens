@@ -172,12 +172,18 @@ class RentConfigRepository < BaseRepository
   def update(config)
     raise ArgumentError, "Cannot update config without ID" unless config.id
 
-    dataset.where(id: config.id).update(
+    # Verify record exists before attempting update
+    existing = dataset.where(id: config.id).first
+    raise ArgumentError, "Config not found: #{config.id}" unless existing
+
+    rows_affected = dataset.where(id: config.id).update(
       key: config.key,
       value: config.value,
       period: config.period,
       updatedAt: now_utc
     )
+
+    raise "Update failed: database returned 0 rows affected for config #{config.id} (record exists but update was rejected)" if rows_affected == 0
 
     config
   end
