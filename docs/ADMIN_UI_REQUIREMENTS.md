@@ -46,24 +46,68 @@ const [viewMode, setViewMode] = useState<'public' | 'admin'>('public')
 
 ## 2. Admin View Layout
 
-**Simple single-list view** (no expandable rows, all info always visible):
+**CRITICAL: Use existing Widget component structure**
+
+The admin view should be wrapped in the same `<Widget>` component used by WeatherWidget, TrainWidget, etc.:
+
+```typescript
+<Widget
+  title="Kontrakt"  // Swedish title
+  horsemenFont={true}  // Use Horsemen font for title
+  className="..."
+>
+  {/* Contract list accordion here */}
+</Widget>
+```
+
+**Language**: All text in Swedish (matching existing dashboard widgets)
+
+**Match existing widgets exactly:**
+- Same outer container styling (glass-morphism, rounded-2xl, backdrop-blur)
+- Same padding (p-8)
+- Same title styling with Horsemen font
+- Same accent colors option if needed
+
+**Expandable row accordion** (collapsed by default, arrow keys or click to expand):
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ Contract Management                                          │
+│ Kontrakt                                                     │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  [All] [Active Only]    ← Single filter toggle              │
+│  [Alla] [Aktiva]    ← Filter pills (capitalized)            │
 │                                                              │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │ All contract rows fully expanded (4-5 contracts max) │   │
-│  │ - Status with icon                                   │   │
-│  │ - Tenant name, date, test/prod flag                  │   │
-│  │ - Signing status (landlord/tenant)                   │   │
-│  │ - Action buttons inline                              │   │
-│  └──────────────────────────────────────────────────────┘   │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ ► [icon] Fredrik Brännström      11 november  Klar    │ │ ← Collapsed
+│  ├────────────────────────────────────────────────────────┤ │
+│  │ ▼ [icon] Sanna Juni Benemar     10 november  Väntar  │ │ ← Expanded
+│  │                                                         │ │
+│  │   E-poststatus:                                        │ │
+│  │   ✓ Hyresvärd: Levererad (10 november 12:36)          │ │
+│  │   ✓ Hyresgäst: Levererad (10 november 12:36)          │ │
+│  │                                                         │ │
+│  │   Signeringsstatus:                                    │ │
+│  │   ✓ Fredrik Brännström - Signerad (10 november 14:22) │ │
+│  │   ⏳ Sanna Juni Benemar - Väntar (30 dagar kvar)      │ │
+│  │                                                         │ │
+│  │   Tidslinje:                                           │ │
+│  │   10 november 12:34  Kontrakt genererat                │ │
+│  │   10 november 12:35  Överenskommelse skapad (Zigned)  │ │
+│  │   10 november 12:36  E-post skickad                    │ │
+│  │   10 november 14:22  Hyresvärd signerade               │ │
+│  │                                                         │ │
+│  │   [Skicka Om E-post] [Avbryt] [Kopiera Länkar]        │ │
+│  ├────────────────────────────────────────────────────────┤ │
+│  │ ► [icon] Adam Nilsson            9 november  Misslyckad│ │ ← Collapsed
+│  │   Fel: PDF-generering timeout                          │ │
+│  └────────────────────────────────────────────────────────┘ │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**Navigation:**
+- **Arrow Up/Down**: Navigate between contracts (highlight row)
+- **Enter or Click**: Expand/collapse selected contract
+- **Mouse**: Click anywhere on row to expand/collapse
 
 ## 3. Contract List Component
 
@@ -91,25 +135,52 @@ interface SignedContract {
 }
 ```
 
-**List Item Design** (fully expanded, no click-to-expand):
+**List Item States**:
+
+**Collapsed state** (default):
 ```
-┌──────────────────────────────────────────────────────────────┐
-│ [CheckCircle2] Fredrik Brännström              2025-11-11   │
-│ Completed • Test Mode                                        │
-│ ✓ Landlord signed  ✓ Tenant signed                           │
-│ [View PDF] [Copy Links]                                      │
-├──────────────────────────────────────────────────────────────┤
-│ [Clock] Sanna Juni Benemar                     2025-11-10   │
-│ Pending • Production                                         │
-│ ✓ Landlord signed  ⏳ Tenant pending (30 days left)         │
-│ [Resend Email] [Cancel] [Copy Links]                         │
-├──────────────────────────────────────────────────────────────┤
-│ [XCircle] Adam Nilsson                         2025-11-09   │
-│ Failed • Production                                          │
-│ Generation error: PDF timeout                                │
-│ [Retry] [View Logs]                                          │
-└──────────────────────────────────────────────────────────────┘
+► [CheckCircle2] Fredrik Brännström      11 november   Klar  Test
 ```
+
+**Expanded state** (when selected):
+```
+▼ [CheckCircle2] Fredrik Brännström      11 november   Klar  Test
+
+  E-poststatus:
+  ✓ Hyresvärd: Levererad (11 november 12:36)
+  ✓ Hyresgäst: Levererad (11 november 12:36)
+
+  Signeringsstatus:
+  ✓ Fredrik Brännström - Signerad (11 november 14:22)
+  ✓ Hyresgäst - Signerad (11 november 15:45)
+
+  Tidslinje:
+  11 november 12:34  Kontrakt genererat
+  11 november 12:35  Överenskommelse skapad (Zigned)
+  11 november 12:36  E-post skickad
+  11 november 14:22  Hyresvärd signerade
+  11 november 15:45  Hyresgäst signerade
+  11 november 15:46  Kontrakt fullt
+
+  [Visa PDF] [Skicka igen] [Avbryt] [Kopiera länkar]
+```
+
+**With errors** (show brief error in collapsed state):
+```
+► [XCircle] Adam Nilsson               9 november   Misslyckad
+  Fel: PDF generation timeout after 30s
+```
+
+**Data to display**:
+- **Email Status**: Per-participant delivery tracking from `ContractParticipant.emailDelivered`
+- **Signing Status**: Per-participant signing progress from `ContractParticipant.status` and `signedAt`
+- **Timeline**: Lifecycle events from `SignedContract` timestamps:
+  - `generationCompletedAt` → "Contract generated"
+  - Agreement created timestamp
+  - `emailDeliveredAt` → "Emails sent"
+  - Each participant's `signedAt` → "X signed"
+  - Contract fulfilled timestamp
+- **Errors**: Brief messages from `generationError`, `validationErrors`, `emailDeliveryError`
 
 **Filter behavior**:
 - **All**: Shows all contracts (completed, pending, failed, cancelled, expired)
@@ -119,21 +190,40 @@ interface SignedContract {
 ```typescript
 import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck } from 'lucide-react'
 ```
-- `CheckCircle2` - Completed (both signed)
-- `Clock` - Pending (awaiting signatures)
-- `UserCheck` - Landlord signed only
-- `UserCheck` - Tenant signed only (different color)
-- `XCircle` - Failed (generation/email errors)
-- `Ban` - Cancelled
-- `AlertTriangle` - Expired (past expiration date)
+- `CheckCircle2` - Klar (both signed)
+- `Clock` - Väntar (awaiting signatures)
+- `UserCheck` - Hyresvärd Signerad (landlord signed only)
+- `UserCheck` - Hyresgäst Signerad (tenant signed only, different color)
+- `XCircle` - Misslyckad (generation/email errors)
+- `Ban` - Avbruten (cancelled)
+- `AlertTriangle` - Utgången (expired, past expiration date)
+
+**Status Label Translations** (Swedish):
+```typescript
+completed: 'Klar'
+pending: 'Väntar'
+landlord_signed: 'Hyresvärd Signerad'
+tenant_signed: 'Hyresgäst Signerad'
+failed: 'Misslyckad'
+cancelled: 'Avbruten'
+expired: 'Utgången'
+```
 
 ## 4. Keyboard Navigation
 
-**Simple shortcuts**:
+**Global shortcuts**:
 - **Tab**: Toggle between public dashboard and admin view
-- **ESC**: Return to public dashboard
+- **ESC**: Return to public dashboard (or collapse expanded row if in admin)
 
-(No complex navigation needed - all contracts visible, click buttons directly)
+**List navigation**:
+- **Arrow Up/Down**: Navigate between contracts (highlight current row)
+- **Enter or Right Arrow**: Expand/collapse selected contract
+- **Left Arrow**: Collapse expanded contract
+- **ESC**: Collapse expanded contract (return to list view)
+
+**Interaction**:
+- Mouse click anywhere on row: Expand/collapse
+- Action buttons: Click to trigger (resend email, cancel, etc.)
 
 ## 5. Real-time Updates
 
@@ -233,7 +323,7 @@ const sampleContracts: SignedContract[] = [
 
 ## 6. Component File Structure
 
-**Simplified structure** (no separate details/timeline components):
+**Accordion pattern structure**:
 ```
 dashboard/src/
 ├── views/
@@ -241,12 +331,20 @@ dashboard/src/
 │   └── AdminDashboard.tsx         # NEW: Admin view container
 ├── components/
 │   └── admin/
-│       ├── ContractList.tsx       # NEW: Simple list with filter toggle
-│       └── ContractRow.tsx        # NEW: Fully expanded row with inline actions
+│       ├── ContractList.tsx       # NEW: List with filter + keyboard nav
+│       ├── ContractRow.tsx        # NEW: Collapsible row with expand/collapse
+│       ├── ContractDetails.tsx    # NEW: Expanded content (email, signing, timeline)
+│       └── ContractTimeline.tsx   # NEW: Event timeline display
 └── hooks/
-    ├── useKeyboardNav.tsx         # NEW: Tab/ESC shortcuts only
-    └── useContracts.tsx           # NEW: Contract data fetching
+    ├── useKeyboardNav.tsx         # NEW: Tab + arrow keys + Enter/ESC
+    └── useContracts.tsx           # NEW: Contract data fetching + participants
 ```
+
+**State management**:
+- `selectedContractId` - Currently highlighted contract
+- `expandedContractId` - Currently expanded contract (null if all collapsed)
+- Arrow keys update `selectedContractId`
+- Enter toggles `expandedContractId` for selected contract
 
 ## 7. API Endpoints
 
@@ -324,9 +422,16 @@ const adminTheme = {
 ## 10. Success Criteria
 
 ✅ Admin view accessible via Tab key
-✅ Matches existing dashboard visual style (purple/slate glass-morphism)
-✅ All contracts visible with status icons (Lucide React)
-✅ Single filter toggle: All vs Active Only
-✅ Action buttons inline per contract (no separate details view)
+✅ **Uses existing Widget component** (same as WeatherWidget/TrainWidget)
+✅ **Title uses Horsemen font** with same styling as other widgets
+✅ **Exact padding/margins** match existing widgets (p-8)
+✅ Glass-morphism aesthetic (purple/slate, backdrop-blur, rounded-2xl)
+✅ Expandable rows with arrow key navigation (Up/Down, Enter/Right to expand, Left/ESC to collapse)
+✅ Email status, signing status, and timeline visible when expanded
+✅ Lucide React icons for status indicators
+✅ Single filter toggle: Alla vs Aktiva (capitalized Swedish)
 ✅ Real-time WebSocket updates for contract status changes
-✅ Simple, clean layout matching Widget component pattern
+✅ **All UI text in Swedish** (E-poststatus, Signeringsstatus, Tidslinje, status labels)
+✅ **Full month names** in dates (11 november, not nov.)
+✅ **Action buttons**: Visa PDF, Skicka igen, Avbryt, Kopiera länkar
+✅ **PDF viewer button** only appears when contract has PDF

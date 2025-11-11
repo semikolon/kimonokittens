@@ -12,6 +12,8 @@ import { RentWidget, AnomalySparklineBar } from './components/RentWidget'
 import { DeploymentBanner } from './components/DeploymentBanner'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import AnoAI from './components/ui/animated-shader-background'
+import { AdminDashboard } from './views/AdminDashboard'
+import { useKeyboardNav } from './hooks/useKeyboardNav'
 
 // Refined widget component with organic, magazine-style design
 const Widget = ({
@@ -149,10 +151,44 @@ function BackendDataWidgets() {
 
 function DashboardContent() {
   const { state: sleepState } = useSleepSchedule();
+  const { viewMode } = useKeyboardNav();
 
   // Pause CSS animations ONLY when fully asleep
   const shouldPauseAnimations = sleepState.currentState === 'sleeping';
 
+  // Show admin view if Tab key toggled
+  if (viewMode === 'admin') {
+    return (
+      <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(28,22,35)_0%,_rgb(25,18,32)_100%)] overflow-x-clip relative">
+        <DeploymentBanner />
+        <FadeOverlay />
+
+        {/* Same animated background as public view */}
+        <div
+          className="gradients-container fixed inset-0 h-full w-full opacity-35 blur-[50px]"
+          style={{
+            zIndex: 2,
+            animationPlayState: shouldPauseAnimations ? 'paused' : 'running'
+          }}
+        >
+          <div className="absolute w-[60%] h-[60%] top-[10%] left-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(68,25,150,0.38)_0%,_rgba(68,25,150,0)_70%)] mix-blend-screen animate-dashboard-first" />
+          <div className="absolute w-[50%] h-[70%] top-[15%] right-[5%] bg-[radial-gradient(ellipse_at_center,_rgba(89,45,170,0.33)_0%,_rgba(89,45,170,0)_70%)] mix-blend-screen animate-dashboard-second" />
+          <div className="absolute w-[70%] h-[50%] top-[35%] left-[20%] bg-[radial-gradient(ellipse_at_center,_rgba(110,35,160,0.30)_0%,_rgba(110,35,160,0)_70%)] mix-blend-screen animate-dashboard-third" />
+          <div className="absolute w-[55%] h-[65%] bottom-[10%] left-[15%] bg-[radial-gradient(ellipse_at_center,_rgba(48,12,80,0.33)_0%,_rgba(48,12,80,0)_70%)] mix-blend-screen animate-dashboard-fourth" />
+          <div className="absolute w-[65%] h-[55%] bottom-[15%] right-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(130,90,200,0.26)_0%,_rgba(130,90,200,0)_70%)] mix-blend-screen animate-dashboard-fifth" />
+        </div>
+
+        {/* Admin dashboard content */}
+        <div className="w-full px-4 py-12 min-w-0 relative z-10">
+          <ErrorBoundary>
+            <AdminDashboard />
+          </ErrorBoundary>
+        </div>
+      </div>
+    )
+  }
+
+  // Public dashboard view (default)
   return (
     <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(28,22,35)_0%,_rgb(25,18,32)_100%)] overflow-x-clip relative">
       <DeploymentBanner />
