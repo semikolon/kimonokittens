@@ -983,3 +983,34 @@ ruby -e "require 'dotenv/load'; require_relative 'lib/contract_generator_html'; 
 # Send for signature
 ruby -e "require 'dotenv/load'; require_relative 'lib/contract_signer'; ContractSigner.create_and_send(tenant_id: 'TENANT_ID')"
 ```
+
+---
+
+## UPDATE: November 11, 2025 01:50 UTC
+
+### Status: READY FOR TESTING
+
+**Major Milestones Completed:**
+- ✅ Domain migration COMPLETE (kimonokittens.com → Dell)
+- ✅ SSL certificates obtained (manual DNS-01, expires Feb 8, 2026)
+- ✅ Nginx split config deployed (public webhooks + localhost dashboard)
+- ✅ Port forwarding updated (Dell accessible externally)
+- ✅ Database migrations applied (all 6 migrations up to date)
+- ✅ Zigned webhook handler fixed (DataBroadcaster dependency injection)
+- ✅ Fredrik Bränström tenant record populated with contract metadata
+- ✅ Tenant model setters added for ergonomic updates (pending deployment)
+- ✅ Repository error handling fixed (all update methods now validate rows_affected)
+
+**Pending Deployment:**
+- Commit 3976f54: Tenant model setters
+- Commits pending: Repository error handling fixes
+
+**Ready to Test:**
+- Test contract generation: `ContractSigner.create_and_send(tenant_id: 'cmcp56en7000myzpivjxfmxcc', test_mode: true, send_emails: false)`
+- Webhook endpoint live at: `https://kimonokittens.com/api/webhooks/zigned`
+- Full end-to-end flow possible (domain migration complete)
+
+**Critical Fixes Applied:**
+- Repository update methods now raise errors on silent failures (0 rows affected)
+- Pre-existence checks added to distinguish "not found" from "update rejected"
+- Tenant model now has attr_writer for contract fields (phone, personnummer, deposits)

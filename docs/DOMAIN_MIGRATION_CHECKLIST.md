@@ -458,3 +458,38 @@ sudo systemctl status ddclient
 - Update documentation (CLAUDE.md)
 - Consider moving electricity cron jobs to Dell
 - Design new homepage with Magic MCP (optional)
+
+---
+
+## November 11, 2025 Update - Contract Signing Infrastructure Verified
+
+**All infrastructure components verified working for contract signing system:**
+
+### SSL & Network Access ✅
+- Domain: kimonokittens.com → Dell (192.168.4.84)
+- SSL certificates: Valid until 2026-02-08
+- Port forwarding: 80/443 → Dell nginx
+- External accessibility: Verified from different networks
+
+### Webhook Routing ✅
+- `/api/webhooks/zigned` → localhost:3001 (main Puma)
+- `/api/webhooks/deploy` → localhost:49123 (deploy webhook)
+- Both endpoints externally accessible via HTTPS
+
+### Database Schema ✅
+- SignedContract table deployed (migration 20251108_add_signed_contract_table)
+- Tenant contract fields populated (6 migrations total applied)
+- Test tenant ready: Fredrik Bränström (cmcp56en7000myzpivjxfmxcc)
+
+### Code Quality Improvements (Nov 11)
+- Repository error handling: All update() methods now validate rows_affected
+- Model mutability: Tenant model setters added for contract workflow
+- Clear error messages: Distinguish "not found" vs "update rejected"
+
+### Remaining Tasks for Contract Testing
+1. Verify Zigned credentials in production .env
+2. Configure Zigned webhook URL in admin dashboard
+3. Test contract generation with Fredrik's test tenant
+4. Verify webhook receives events from Zigned
+
+**Status**: Infrastructure complete, ready for end-to-end contract signing tests.

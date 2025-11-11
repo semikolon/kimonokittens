@@ -1,6 +1,8 @@
 # Contract Signing System - Usage Guide
 
-**Status**: ✅ Implementation complete, ready for testing once Zigned account is created
+**Status**: ✅ **INFRASTRUCTURE COMPLETE** (Nov 11, 2025) - Domain migrated, test tenant ready, awaiting Zigned webhook config
+
+**Latest Update**: Repository error handling fixed, Fredrik's tenant record populated with all contract metadata
 
 ## Quick Start
 
@@ -347,3 +349,152 @@ ls -lh dashboard/public/logo.png
   - ContractSigner: `lib/contract_signer.rb`
   - CLI Script: `bin/send_contract.rb`
   - Webhook Handler: `handlers/zigned_webhook_handler.rb`
+
+---
+
+## November 11, 2025 Status Update
+
+### Infrastructure Deployment Complete ✅
+
+**Domain Migration:**
+- kimonokittens.com → Dell Optiplex (192.168.4.84)
+- SSL certificates active (expires 2026-02-08)
+- Nginx configured with webhook routing
+- External accessibility verified
+
+**Database Schema:**
+- 6 migrations applied to production
+- SignedContract table ready
+- Tenant contract fields populated
+- Test tenant ready: Fredrik Bränström (cmcp56en7000myzpivjxfmxcc)
+
+**Webhook Endpoints:**
+- `https://kimonokittens.com/api/webhooks/zigned` → localhost:3001 (main Puma)
+- Externally accessible and ready to receive events
+- DataBroadcaster properly injected into handler
+
+**Code Quality Fixes (Nov 11):**
+- Repository error handling: All update() methods validate database operations
+- Clear error messages: Distinguish "not found" vs "update rejected"
+- Tenant model: Added setters for contract field updates
+
+### Current Test Workflow Available
+
+**Safe test mode (no emails, free signatures):**
+```ruby
+require_relative 'lib/persistence'
+require_relative 'lib/services/contract_signer'
+
+# Test with Fredrik's tenant record
+result = ContractSigner.create_and_send(
+  tenant_id: 'cmcp56en7000myzpivjxfmxcc',  # Fredrik Bränström
+  test_mode: true,
+  send_emails: false
+)
+
+# Returns:
+# - case_id: Zigned case identifier
+# - signing_links: Hash of personnummer → URL
+# - pdf_path: Generated contract path
+```
+
+**What this tests:**
+1. ✅ Database tenant loading
+2. ✅ Contract generation with correct rent calculation
+3. ✅ PDF upload to Zigned API
+4. ✅ Case creation with 2 signers
+5. ✅ Signing link generation
+6. ✅ Test mode works (development API key)
+
+**What requires Zigned webhook config:**
+- Signature event reception (case.signed)
+- Completion event reception (case.completed)
+- Automatic signed PDF download
+- Database tracking of signature status
+
+### Pre-Testing Checklist
+
+**Before running ContractSigner.create_and_send():**
+1. ✅ Domain migration complete
+2. ✅ SSL certificates installed
+3. ✅ Database schema up to date
+4. ✅ Test tenant populated with metadata
+5. ✅ Repository error handling fixed
+6. ⏳ Verify Zigned credentials in `/home/kimonokittens/.env`:
+   - `ZIGNED_CLIENT_ID` (development or production)
+   - `ZIGNED_API_KEY` (corresponding key)
+7. ⏳ Configure Zigned webhook in admin dashboard:
+   - URL: `https://kimonokittens.com/api/webhooks/zigned`
+   - Events: case.created, case.signed, case.completed
+   - Secret: Match `ZIGNED_WEBHOOK_SECRET` in .env
+
+### Testing Sequence (Recommended)
+
+**Phase 1: Local Generation Test**
+```bash
+# SSH to production
+ssh pop
+
+# Verify environment
+grep ZIGNED /home/kimonokittens/.env
+
+# Run test contract generation (Ruby console)
+cd /home/kimonokittens/Projects/kimonokittens
+ruby -e "
+require 'dotenv/load'
+require_relative 'lib/persistence'
+require_relative 'lib/services/contract_signer'
+
+result = ContractSigner.create_and_send(
+  tenant_id: 'cmcp56en7000myzpivjxfmxcc',
+  test_mode: true,
+  send_emails: false
+)
+
+puts '✅ Contract generated!'
+puts 'Case ID: ' + result[:case_id]
+puts 'PDF: ' + result[:pdf_path]
+puts 'Signing links: ' + result[:signing_links].inspect
+"
+```
+
+**Phase 2: Webhook Event Test**
+- Configure webhook URL in Zigned admin
+- Trigger test event from Zigned dashboard
+- Monitor logs: `tail -f /var/log/kimonokittens/webhook.log | grep zigned`
+- Verify handler processes event correctly
+
+**Phase 3: End-to-End Test**
+- Send contract to Fredrik (test mode, no emails)
+- Open signing link in browser
+- Complete test signature
+- Verify webhook receives case.signed event
+- Verify database tracking updates
+
+**Phase 4: Production Test**
+- Switch to production API key
+- Send contract to Fredrik (real BankID signature)
+- Complete signing flow
+- Verify signed PDF downloads automatically
+
+### Known Limitations
+
+**File-based metadata no longer needed:**
+- Old workflow used `contracts/metadata/*.json` files
+- New workflow uses database (SignedContract table)
+- Webhook handler queries database by case_id, not filesystem
+
+**Cross-machine testing:**
+- Mac development can test contract generation
+- Full webhook flow requires production Dell (database access)
+- Incremental testing approach recommended (see CONTRACT_SIGNING_STATUS.md)
+
+### Next Steps
+
+1. User verifies Zigned environment variables in production
+2. User configures webhook URL in Zigned admin interface
+3. Run Phase 1 test (local generation)
+4. Run Phase 2 test (webhook events)
+5. Run Phase 3 test (end-to-end with test signatures)
+6. Run Phase 4 test (production signatures)
+7. Document results in CONTRACT_SIGNING_STATUS.md
