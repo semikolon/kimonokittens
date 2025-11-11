@@ -215,13 +215,13 @@ class ZignedClientV3
   #
   # @return [Array<Hash>] Participant records with signing URLs
   def add_participants(agreement_id, signers:, message: nil)
-    participants_payload = signers.map.with_index do |signer, index|
+    participants_payload = signers.map do |signer|
       {
         name: signer[:name],
         email: signer[:email],
         role: 'signer',
-        personal_number: signer[:personnummer].gsub(/\D/, ''),  # Remove hyphens
-        order: index  # Sequential signing order
+        personal_number: signer[:personnummer].gsub(/\D/, '')  # Remove hyphens
+        # Note: No order field = parallel signing (landlord and tenant can sign in any order)
       }
     end
 
