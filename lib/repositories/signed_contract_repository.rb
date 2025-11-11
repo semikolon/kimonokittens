@@ -99,7 +99,23 @@ class SignedContractRepository
       completed_at: row[:completedAt],
       expires_at: row[:expiresAt],
       created_at: row[:createdAt],
-      updated_at: row[:updatedAt]
+      updated_at: row[:updatedAt],
+      # Lifecycle tracking fields
+      generation_status: row[:generationStatus] || 'pending',
+      generation_started_at: row[:generationStartedAt],
+      generation_completed_at: row[:generationCompletedAt],
+      generation_failed_at: row[:generationFailedAt],
+      generation_error: row[:generationError],
+      validation_status: row[:validationStatus] || 'pending',
+      validation_started_at: row[:validationStartedAt],
+      validation_completed_at: row[:validationCompletedAt],
+      validation_failed_at: row[:validationFailedAt],
+      validation_errors: row[:validationErrors],
+      email_delivery_status: row[:emailDeliveryStatus] || 'pending',
+      landlord_email_delivered: row[:landlordEmailDelivered] || false,
+      tenant_email_delivered: row[:tenantEmailDelivered] || false,
+      email_delivery_failed_at: row[:emailDeliveryFailedAt],
+      email_delivery_error: row[:emailDeliveryError]
     )
   end
 
@@ -120,7 +136,23 @@ class SignedContractRepository
       completedAt: contract.completed_at,
       expiresAt: contract.expires_at,
       createdAt: contract.created_at,
-      updatedAt: Time.now
+      updatedAt: Time.now,
+      # Lifecycle tracking fields
+      generationStatus: contract.generation_status,
+      generationStartedAt: contract.generation_started_at,
+      generationCompletedAt: contract.generation_completed_at,
+      generationFailedAt: contract.generation_failed_at,
+      generationError: contract.generation_error,
+      validationStatus: contract.validation_status,
+      validationStartedAt: contract.validation_started_at,
+      validationCompletedAt: contract.validation_completed_at,
+      validationFailedAt: contract.validation_failed_at,
+      validationErrors: contract.validation_errors,
+      emailDeliveryStatus: contract.email_delivery_status,
+      landlordEmailDelivered: contract.landlord_email_delivered,
+      tenantEmailDelivered: contract.tenant_email_delivered,
+      emailDeliveryFailedAt: contract.email_delivery_failed_at,
+      emailDeliveryError: contract.email_delivery_error
     }
   end
 end
