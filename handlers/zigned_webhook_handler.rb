@@ -332,4 +332,56 @@ class ZignedWebhookHandler
       timestamp: Time.now.to_i
     })
   end
+
+  private
+
+  # Create or update participant record from Zigned webhook data
+  def create_or_update_participant(contract_id, participant_data)
+    participant_repo = Persistence.contract_participants
+
+    participant_id = participant_data['id']
+    existing = participant_repo.find_by_participant_id(participant_id)
+
+    participant_attrs = {
+      contract_id: contract_id,
+      participant_id: participant_id,
+      name: participant_data['name'],
+      email: participant_data['email'],
+      personal_number: participant_data['personal_number'],
+      role: participant_data['role'] || 'signer',
+      status: participant_data['status'] || 'pending',
+      signing_url: participant_data['signing_url']
+    }
+
+    if existing
+      # Update existing participant
+      participant_attrs.each { |k, v| existing.send("#{k}=", v) if existing.respond_to?("#{k}=") && v }
+      participant_repo.update(existing)
+    else
+      # Create new participant
+      participant = ContractParticipant.new(**participant_attrs)
+      participant_repo.save(participant)
+    end
+  end
+
+  # Update participant fulfillment status from webhook event
+  def update_participant_fulfillment(participant_data)
+    participant_repo = Persistence.contract_participants
+
+    participant_id = participant_data['id']
+    participant = participant_repo.find_by_participant_id(participant_id)
+
+    if participant
+      participant.status = 'fulfilled'
+      participant.signed_at = Time.parse(participant_data['signed_at']) if participant_data['signed_at']
+      participant_repo.update(participant)
+    else
+      puts "⚠️  Warning: Participant not found: #{participant_id}"
+    end
+  end
+
+  # Determine if participant is landlord (for legacy field updates)
+  def is_landlord?(personal_number)
+    personal_number&.gsub(/\D/, '') == '8604230717'
+  end
 end
