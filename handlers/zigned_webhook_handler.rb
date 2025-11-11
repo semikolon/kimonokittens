@@ -5,18 +5,19 @@ require_relative '../lib/data_broadcaster'
 require_relative '../lib/repositories/signed_contract_repository'
 require_relative '../lib/persistence'
 
-# ZignedWebhookHandler processes signing events from Zigned API
+# ZignedWebhookHandler processes signing events from Zigned API v3
 #
-# Zigned sends webhooks for these events:
-# - case.created - New signing case created
-# - case.signed - A signer completed their signature
-# - case.completed - All signers have signed
-# - case.expired - Case expired without completion
-# - case.cancelled - Case was cancelled
+# Zigned v3 sends webhooks for these events:
+# - agreement.lifecycle.pending - Agreement activated (ready for signing)
+# - participant.lifecycle.fulfilled - Individual signer completed
+# - agreement.lifecycle.fulfilled - All signers have signed
+# - agreement.lifecycle.finalized - Signed PDF ready for download
+# - agreement.lifecycle.expired - Agreement expired without completion
+# - agreement.lifecycle.cancelled - Agreement was cancelled
 #
 # Security:
-# - Validates webhook signature using HMAC-SHA256
-# - Rejects requests with invalid signatures
+# - Validates webhook signature using HMAC-SHA256 (x-zigned-request-signature header)
+# - FAIL-CLOSED: Rejects requests if webhook secret not configured
 #
 # Integration Points:
 # - Updates SignedContract database records
@@ -51,12 +52,15 @@ class ZignedWebhookHandler
     body = request.body.read
     request.body.rewind
 
-    # Verify signature if secret is configured
-    if @webhook_secret
-      signature = request.env['HTTP_X_ZIGNED_SIGNATURE']
-      unless valid_signature?(body, signature)
-        return { status: 401, message: 'Invalid webhook signature', error: true }
-      end
+    # Fail-closed security: Reject if webhook secret not configured
+    unless @webhook_secret
+      return { status: 500, message: 'Webhook secret not configured - refusing request', error: true }
+    end
+
+    # Verify signature (v3 uses x-zigned-request-signature header)
+    signature = request.env['HTTP_X_ZIGNED_REQUEST_SIGNATURE']
+    unless valid_signature?(body, signature)
+      return { status: 401, message: 'Invalid webhook signature', error: true }
     end
 
     # Parse webhook payload
@@ -66,23 +70,27 @@ class ZignedWebhookHandler
       return { status: 400, message: "Invalid JSON: #{e.message}", error: true }
     end
 
-    event_type = payload['event']
-    case_data = payload['data']
+    # V3 payload structure: { version, event_type, resource_type, data }
+    event_type = payload['event_type']  # v3 uses 'event_type' not 'event'
+    agreement_data = payload['data']
 
-    # Process event
+    # Process event (v3 terminology)
     case event_type
-    when 'case.created'
-      handle_case_created(case_data)
-    when 'case.signed'
-      handle_case_signed(case_data)
-    when 'case.completed'
-      handle_case_completed(case_data)
-    when 'case.expired'
-      handle_case_expired(case_data)
-    when 'case.cancelled'
-      handle_case_cancelled(case_data)
+    when 'agreement.lifecycle.pending'
+      handle_agreement_pending(agreement_data)
+    when 'participant.lifecycle.fulfilled'
+      handle_participant_fulfilled(agreement_data)
+    when 'agreement.lifecycle.fulfilled'
+      handle_agreement_fulfilled(agreement_data)
+    when 'agreement.lifecycle.finalized'
+      handle_agreement_finalized(agreement_data)
+    when 'agreement.lifecycle.expired'
+      handle_agreement_expired(agreement_data)
+    when 'agreement.lifecycle.cancelled'
+      handle_agreement_cancelled(agreement_data)
     else
-      return { status: 400, message: "Unknown event type: #{event_type}", error: true }
+      puts "⚠️  Unhandled webhook event: #{event_type}"
+      return { status: 200, message: "Event type not implemented: #{event_type}", event: event_type }
     end
 
     { status: 200, message: 'Webhook processed successfully', event: event_type }
@@ -109,76 +117,125 @@ class ZignedWebhookHandler
     Rack::Utils.secure_compare(signature, expected_signature)
   end
 
-  # Handle case.created event
-  def handle_case_created(data)
-    case_id = data['id']
+  # Handle agreement.lifecycle.pending event
+  def handle_agreement_pending(data)
+    agreement_id = data['id']
     title = data['title']
+    test_mode = data['test_mode']
+    expires_at = data['expires_at']
 
-    puts "📝 New signing case created: #{case_id} - #{title}"
+    puts "📝 Agreement activated: #{agreement_id} - #{title}"
+    puts "   Test mode: #{test_mode}"
+    puts "   Expires: #{expires_at}"
 
     # Update database record
-    contract = @repository.find_by_case_id(case_id)
+    contract = @repository.find_by_case_id(agreement_id)
     if contract
       contract.status = 'awaiting_signatures'
       @repository.update(contract)
     else
-      puts "⚠️  Warning: SignedContract record not found for case_id #{case_id}"
+      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
     end
 
     # Broadcast event
     @broadcaster&.broadcast_data('contract_status', {
-      case_id: case_id,
-      event: 'created',
+      case_id: agreement_id,
+      event: 'pending',
       title: title,
+      test_mode: test_mode,
+      expires_at: expires_at,
       timestamp: Time.now.to_i
     })
   end
 
-  # Handle case.signed event (one signer completed)
-  def handle_case_signed(data)
-    case_id = data['id']
-    signer = data['signer']
+  # Handle participant.lifecycle.fulfilled event (one signer completed)
+  def handle_participant_fulfilled(data)
+    participant_data = data['participant']
+    agreement_id = data['agreement_id']
 
-    puts "✍️  Signature received: #{signer['name']} signed case #{case_id}"
+    participant_id = participant_data['id']
+    name = participant_data['name']
+    personal_number = participant_data['personal_number']
+    signed_at = participant_data['signed_at']
+
+    puts "✍️  Signature received: #{name} (#{personal_number})"
+    puts "   Participant ID: #{participant_id}"
+    puts "   Signed at: #{signed_at}"
 
     # Update database record with signature info
-    contract = @repository.find_by_case_id(case_id)
+    contract = @repository.find_by_case_id(agreement_id)
     if contract
       # Determine if landlord or tenant signed (simplified - assumes Fredrik is landlord)
-      is_landlord = signer['personal_number']&.gsub(/\D/, '') == '8604230717'
+      is_landlord = personal_number&.gsub(/\D/, '') == '8604230717'
 
       if is_landlord
         contract.landlord_signed = true
-        contract.landlord_signed_at = Time.parse(signer['signed_at'])
+        contract.landlord_signed_at = Time.parse(signed_at) if signed_at
       else
         contract.tenant_signed = true
-        contract.tenant_signed_at = Time.parse(signer['signed_at'])
+        contract.tenant_signed_at = Time.parse(signed_at) if signed_at
       end
 
       @repository.update(contract)
     else
-      puts "⚠️  Warning: SignedContract record not found for case_id #{case_id}"
+      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
     end
 
     # Broadcast event
     @broadcaster&.broadcast_data('contract_status', {
-      case_id: case_id,
-      event: 'signed',
-      signer_name: signer['name'],
+      case_id: agreement_id,
+      event: 'participant_signed',
+      participant_name: name,
+      participant_id: participant_id,
       timestamp: Time.now.to_i
     })
   end
 
-  # Handle case.completed event (all signers done)
-  def handle_case_completed(data)
-    case_id = data['id']
+  # Handle agreement.lifecycle.fulfilled event (all signers done)
+  def handle_agreement_fulfilled(data)
+    agreement_id = data['id']
     title = data['title']
+    fulfilled_at = data['fulfilled_at']
 
-    puts "🎉 Contract fully signed: #{case_id} - #{title}"
+    puts "🎉 Contract fully signed: #{agreement_id} - #{title}"
+    puts "   Fulfilled at: #{fulfilled_at}"
 
-    contract = @repository.find_by_case_id(case_id)
+    contract = @repository.find_by_case_id(agreement_id)
     unless contract
-      puts "⚠️  Warning: SignedContract record not found for case_id #{case_id}"
+      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
+      return
+    end
+
+    # Update contract status - NOT 'completed' yet (waiting for finalized event)
+    contract.status = 'fulfilled'
+    contract.landlord_signed = true
+    contract.tenant_signed = true
+    @repository.update(contract)
+
+    # Broadcast event
+    @broadcaster&.broadcast_data('contract_status', {
+      case_id: agreement_id,
+      event: 'fulfilled',
+      title: title,
+      fulfilled_at: fulfilled_at,
+      timestamp: Time.now.to_i
+    })
+  end
+
+  # Handle agreement.lifecycle.finalized event (signed PDF ready)
+  def handle_agreement_finalized(data)
+    agreement_id = data['id']
+    title = data['title']
+    signed_document_url = data['signed_document_url']
+    finalized_at = data['finalized_at']
+
+    puts "📥 Contract finalized: #{agreement_id}"
+    puts "   Signed PDF URL: #{signed_document_url}"
+    puts "   Finalized at: #{finalized_at}"
+
+    contract = @repository.find_by_case_id(agreement_id)
+    unless contract
+      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
       return
     end
 
@@ -186,29 +243,29 @@ class ZignedWebhookHandler
     begin
       tenant = Persistence.tenants.find_by_id(contract.tenant_id)
       if tenant
-        # TODO: Determine test mode from contract metadata
-        signer = ContractSigner.new(test_mode: false)
+        signer = ContractSigner.new(test_mode: contract.test_mode)
+        signed_path = signer.download_signed_contract(agreement_id, tenant.name)
 
-        signed_path = signer.download_signed_contract(case_id, tenant.name)
-
-        # Update contract with signed PDF URL (for now, local path)
+        # Update contract with signed PDF path and mark as completed
         contract.pdf_url = signed_path
+        contract.status = 'completed'
+        contract.completed_at = Time.parse(finalized_at) if finalized_at
         puts "✅ Signed PDF downloaded: #{signed_path}"
       end
     rescue => e
       puts "⚠️  Failed to auto-download signed PDF: #{e.message}"
+      puts e.backtrace.join("\n")
     end
 
-    # Update contract status
-    contract.status = 'completed'
-    contract.completed_at = Time.now
     @repository.update(contract)
 
-    # Broadcast event
+    # Broadcast completion event
     @broadcaster&.broadcast_data('contract_status', {
-      case_id: case_id,
+      case_id: agreement_id,
       event: 'completed',
       title: title,
+      signed_pdf_path: contract.pdf_url,
+      finalized_at: finalized_at,
       timestamp: Time.now.to_i
     })
 
@@ -216,26 +273,29 @@ class ZignedWebhookHandler
     # send_completion_notification(contract)
   end
 
-  # Handle case.expired event
-  def handle_case_expired(data)
-    case_id = data['id']
+  # Handle agreement.lifecycle.expired event
+  def handle_agreement_expired(data)
+    agreement_id = data['id']
     title = data['title']
+    expired_at = data['expired_at']
 
-    puts "⏰ Contract expired: #{case_id} - #{title}"
+    puts "⏰ Agreement expired: #{agreement_id} - #{title}"
+    puts "   Expired at: #{expired_at}"
 
-    contract = @repository.find_by_case_id(case_id)
+    contract = @repository.find_by_case_id(agreement_id)
     if contract
       contract.status = 'expired'
       @repository.update(contract)
     else
-      puts "⚠️  Warning: SignedContract record not found for case_id #{case_id}"
+      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
     end
 
     # Broadcast event
     @broadcaster&.broadcast_data('contract_status', {
-      case_id: case_id,
+      case_id: agreement_id,
       event: 'expired',
       title: title,
+      expired_at: expired_at,
       timestamp: Time.now.to_i
     })
 
@@ -243,26 +303,32 @@ class ZignedWebhookHandler
     # send_expiration_notification(contract)
   end
 
-  # Handle case.cancelled event
-  def handle_case_cancelled(data)
-    case_id = data['id']
+  # Handle agreement.lifecycle.cancelled event
+  def handle_agreement_cancelled(data)
+    agreement_id = data['id']
     title = data['title']
+    cancellation_reason = data['cancellation_reason']
+    cancelled_at = data['cancelled_at']
 
-    puts "🚫 Contract cancelled: #{case_id} - #{title}"
+    puts "🚫 Agreement cancelled: #{agreement_id} - #{title}"
+    puts "   Reason: #{cancellation_reason}" if cancellation_reason
+    puts "   Cancelled at: #{cancelled_at}"
 
-    contract = @repository.find_by_case_id(case_id)
+    contract = @repository.find_by_case_id(agreement_id)
     if contract
       contract.status = 'cancelled'
       @repository.update(contract)
     else
-      puts "⚠️  Warning: SignedContract record not found for case_id #{case_id}"
+      puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
     end
 
     # Broadcast event
     @broadcaster&.broadcast_data('contract_status', {
-      case_id: case_id,
+      case_id: agreement_id,
       event: 'cancelled',
       title: title,
+      cancellation_reason: cancellation_reason,
+      cancelled_at: cancelled_at,
       timestamp: Time.now.to_i
     })
   end
