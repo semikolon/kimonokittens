@@ -17,6 +17,8 @@
 **Currently Handled:** 0 (all event names are wrong)
 **Plan Coverage:** 15 critical events (32% - high-value subset)
 
+**Testing Priority:** Fresh test contract creation (`ContractSigner.create_and_send`) preferred over curl mocking - most realistic end-to-end validation.
+
 ---
 
 ## Phase 1: Critical Fixes (IMMEDIATE - Day 1)
@@ -148,7 +150,9 @@ end
 
 **New Migration**: `20251111_add_contract_lifecycle_tracking.sql`
 
-**Goal**: Track generation, validation, and email delivery states
+**Goal**: Track generation, validation, and email delivery states with full lifecycle visibility
+
+**Rationale**: Admin dashboard needs real-time visibility into "PDF generating...", "Validation complete", failures, etc.
 
 **Schema Changes**:
 ```sql
@@ -158,13 +162,13 @@ ALTER TABLE "SignedContract"
   ADD COLUMN "generationStartedAt" TIMESTAMP(3),
   ADD COLUMN "generationCompletedAt" TIMESTAMP(3),
   ADD COLUMN "generationFailedAt" TIMESTAMP(3),
-  ADD COLUMN "generationError" TEXT,
+  ADD COLUMN "generationError" JSONB,  -- Structured error data {code, message, details}
 
   ADD COLUMN "validationStatus" TEXT DEFAULT 'pending',
   ADD COLUMN "validationStartedAt" TIMESTAMP(3),
   ADD COLUMN "validationCompletedAt" TIMESTAMP(3),
   ADD COLUMN "validationFailedAt" TIMESTAMP(3),
-  ADD COLUMN "validationErrors" TEXT,
+  ADD COLUMN "validationErrors" JSONB,  -- Array of validation errors from Zigned
 
   ADD COLUMN "emailDeliveryStatus" TEXT DEFAULT 'pending',
   ADD COLUMN "landlordEmailDelivered" BOOLEAN DEFAULT false,
@@ -192,10 +196,12 @@ ALTER TABLE "SignedContract"
 COMMENT ON COLUMN "SignedContract"."generationStatus" IS 'PDF generation lifecycle: pending → started → completed/failed';
 COMMENT ON COLUMN "SignedContract"."validationStatus" IS 'Document validation lifecycle: pending → started → completed/failed';
 COMMENT ON COLUMN "SignedContract"."emailDeliveryStatus" IS 'Email delivery lifecycle: pending → delivering → delivered/failed';
-COMMENT ON COLUMN "SignedContract"."generationError" IS 'Error message if PDF generation failed';
-COMMENT ON COLUMN "SignedContract"."validationErrors" IS 'JSON array of validation errors from Zigned';
+COMMENT ON COLUMN "SignedContract"."generationError" IS 'JSONB structured error if generation failed: {code, message, details}';
+COMMENT ON COLUMN "SignedContract"."validationErrors" IS 'JSONB array of validation errors from Zigned API';
 COMMENT ON COLUMN "SignedContract"."emailDeliveryError" IS 'Error message if email delivery failed';
 ```
+
+**Why JSONB:** Errors from Zigned API contain structured data (error code, message, details). JSONB allows querying specific error types in admin dashboard.
 
 **Action Items**:
 - [ ] Create migration file
@@ -211,7 +217,15 @@ COMMENT ON COLUMN "SignedContract"."emailDeliveryError" IS 'Error message if ema
 
 **Goal**: Track individual participant (signer) state separately from contract
 
-**Why**: Need to distinguish landlord vs tenant signing events without hardcoded checks
+**Why**:
+- Future handbook feature may involve multi-tenant agreements (3-4 signers per contract)
+- Remove hardcoded personnummer checks for landlord identification
+- Per-participant email/identity tracking (whose email bounced? whose BankID failed?)
+
+**Migration Strategy (Gradual)**:
+- Phase 2: Add ContractParticipant table, keep existing landlord/tenant fields
+- Phase 3: Webhook writes to BOTH participant table AND old fields (backwards compat)
+- Phase 7: Admin dashboard fully migrated to participant table, deprecate old fields
 
 **Schema**:
 ```sql
@@ -322,6 +336,8 @@ end
 ---
 
 ## Phase 3: Webhook Event Handlers (Day 2-3)
+
+**Real-Time Updates:** ALL handlers include WebSocket broadcasts for live admin dashboard visibility. Admin sees contracts being signed, emails delivering, errors appearing - all in real-time.
 
 ### 3.1 Agreement Lifecycle Events
 
