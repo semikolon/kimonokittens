@@ -123,16 +123,37 @@ class ZignedWebhookHandler
     title = data['title']
     test_mode = data['test_mode']
     expires_at = data['expires_at']
+    participants = data['participants'] || []
 
     puts "📝 Agreement activated: #{agreement_id} - #{title}"
     puts "   Test mode: #{test_mode}"
     puts "   Expires: #{expires_at}"
+    puts "   Participants: #{participants.length}"
 
     # Update database record
     contract = @repository.find_by_case_id(agreement_id)
     if contract
+      # Update contract status
       contract.status = 'awaiting_signatures'
+
+      # Update lifecycle tracking - PDF generated, validated, emails being sent
+      contract.generation_status = 'completed'
+      contract.generation_completed_at = Time.now
+      contract.validation_status = 'completed'
+      contract.validation_completed_at = Time.now
+      contract.email_delivery_status = 'delivering'
+
       @repository.update(contract)
+
+      # Create participant records for multi-party tracking
+      participants.each do |participant_data|
+        begin
+          create_or_update_participant(contract.id, participant_data)
+          puts "   ✅ Participant created: #{participant_data['name']}"
+        rescue => e
+          puts "   ⚠️  Failed to create participant #{participant_data['name']}: #{e.message}"
+        end
+      end
     else
       puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
     end
@@ -144,6 +165,7 @@ class ZignedWebhookHandler
       title: title,
       test_mode: test_mode,
       expires_at: expires_at,
+      participant_count: participants.length,
       timestamp: Time.now.to_i
     })
   end
@@ -165,10 +187,11 @@ class ZignedWebhookHandler
     # Update database record with signature info
     contract = @repository.find_by_case_id(agreement_id)
     if contract
-      # Determine if landlord or tenant signed (simplified - assumes Fredrik is landlord)
-      is_landlord = personal_number&.gsub(/\D/, '') == '8604230717'
+      # Update participant record (new tracking system)
+      update_participant_fulfillment(participant_data)
 
-      if is_landlord
+      # Update legacy landlord/tenant fields (for backward compatibility)
+      if is_landlord?(personal_number)
         contract.landlord_signed = true
         contract.landlord_signed_at = Time.parse(signed_at) if signed_at
       else
@@ -210,6 +233,12 @@ class ZignedWebhookHandler
     contract.status = 'fulfilled'
     contract.landlord_signed = true
     contract.tenant_signed = true
+
+    # Mark email delivery as successful (all signers received and responded)
+    contract.email_delivery_status = 'delivered'
+    contract.landlord_email_delivered = true
+    contract.tenant_email_delivered = true
+
     @repository.update(contract)
 
     # Broadcast event
