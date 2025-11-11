@@ -151,7 +151,7 @@ class ContractSigner
       landlord_signing_url: landlord_link,
       tenant_signing_url: tenant_link,
       test_mode: test_mode,
-      expires_at: Time.parse(zigned_result[:expires_at]),
+      expires_at: zigned_result[:expires_at] ? Time.parse(zigned_result[:expires_at]) : Time.now + (30 * 24 * 60 * 60),  # Default 30 days for test mode
       created_at: Time.now,
       updated_at: Time.now
     )
