@@ -1169,130 +1169,42 @@ The Puma architecture is designed for:
 
 ---
 
-## 📝 CONTRACT SIGNING SYSTEM (Zigned Integration)
+## 📝 CONTRACT SIGNING SYSTEM (Zigned E-Signature Integration)
 
-**Status**: ✅ **PRODUCTION READY** (Nov 11, 2025) - Complete webhook handler with all 14 event types
+**Status**: ✅ **PRODUCTION READY** (Nov 11, 2025) - All 14 webhook event types implemented
 
-### Architecture Overview
-
-**Contract Lifecycle**:
-1. **Creation** (`lib/contract_signer.rb`) → Generate PDF + Send to Zigned API v3
-2. **Webhooks** (`handlers/zigned_webhook_handler.rb`) → Receive 14 event types from Zigned
-3. **Storage** (`lib/models/`, `lib/repositories/`) → Track contracts + participants in database
-4. **Completion** → Auto-download signed PDF + Update records
-
-### Key Files & Components
-
-**Core Implementation**:
-- `handlers/zigned_webhook_handler.rb` - Complete event handler (14 event types, personal_number lookup, signature verification)
-- `lib/contract_signer.rb` - PDF generation + Zigned API client integration
-- `lib/models/signed_contract.rb` - Contract domain model with lifecycle tracking
-- `lib/models/contract_participant.rb` - Per-participant tracking (email, signatures, identity verification)
-- `lib/repositories/signed_contract_repository.rb` - Contract persistence with `update()` and `save()` methods
-- `lib/repositories/contract_participant_repository.rb` - Participant persistence
-- `lib/persistence.rb` - Centralized repository access (`Persistence.contract_participants`, etc.)
-
-**Database Schema** (Prisma):
-- `SignedContract` - Main contract record (test mode, lifecycle status, timestamps, email delivery)
-- `ContractParticipant` - Per-signer tracking (signing URLs, email delivery, identity enforcement, personal numbers)
-
-**Documentation** (all in `docs/`):
-- `ZIGNED_WEBHOOK_FIELD_MAPPING.md` - Real payload analysis mapping webhook events → database fields
-- `ZIGNED_WEBHOOK_TESTING_STATUS.md` - Bug fixes log (Nov 11: repository.update + personal_number lookup)
-- `ZIGNED_V3_MIGRATION_PLAN.md` - Migration from v1 → v3 API
-- `zigned-api-spec.yaml` - Complete OpenAPI 3.0 spec (21,571 lines)
-
-### Webhook Events (Complete Coverage ✅)
-
-**Lifecycle Events** (6):
-- `agreement.lifecycle.pending` - Contract ready for signing
-- `participant.lifecycle.fulfilled` - Individual signer completed
-- `agreement.lifecycle.fulfilled` - All parties signed
-- `agreement.lifecycle.finalized` - Signed PDF ready (auto-downloads)
-- `agreement.lifecycle.expired` - Contract expired
-- `agreement.lifecycle.cancelled` - Contract cancelled
-
-**Tracking Events** (8):
-- `participant.identity_enforcement.passed` - Swedish personnummer verified
-- `participant.identity_enforcement.failed` - Identity check failed
-- `agreement.pdf_verification.completed` - PDF validation passed
-- `agreement.pdf_verification.failed` - PDF validation failed
-- `email_event.agreement_invitation.delivered` - Per-participant email confirmation
-- `email_event.agreement_invitation.all_delivered` - All invitation emails sent
-- `email_event.agreement_invitation.delivery_failed` - Email bounce detection
-- `email_event.agreement_finalized.delivered` - Final PDF email delivered
+### Key Files
+- `handlers/zigned_webhook_handler.rb` - Webhook handler (14 events, HMAC-SHA256 signature verification)
+- `lib/contract_signer.rb` - PDF generation + Zigned API v3 client
+- `lib/models/signed_contract.rb`, `lib/models/contract_participant.rb` - Domain models
+- `lib/repositories/signed_contract_repository.rb`, `lib/repositories/contract_participant_repository.rb` - Persistence
+- Database: `SignedContract`, `ContractParticipant` tables (Prisma schema)
 
 ### Critical Implementation Details
+- **Personal number lookup**: Zigned webhooks don't send `personal_number` - handler uses email matching + tenant DB query (`handlers/zigned_webhook_handler.rb:682-708`)
+- **Signing URL variants**: Zigned API uses both `signing_url` AND `signing_room_url` - handler checks both with `||` fallback (`handlers/zigned_webhook_handler.rb:661`)
+- **Webhook endpoint**: `POST /api/webhooks/zigned` (port 3001)
+- **Signature verification**: Stripe-style timestamped HMAC-SHA256 prevents replay attacks
 
-**Personal Number Lookup** (Bug #2 fix - Nov 11):
-- Zigned webhooks **don't send personal_number** field
-- Handler implements fallback: landlord email match + tenant database query
-- Location: `handlers/zigned_webhook_handler.rb:682-708`
-
-**Signing URL Field Variants** (commit 25be98d):
-- Zigned API uses both `signing_url` AND `signing_room_url` in different endpoints
-- Handler checks both with `||` fallback operator
-- Location: `handlers/zigned_webhook_handler.rb:661`
-
-**Signature Verification** (Stripe-style HMAC-SHA256):
-- Validates `x-zigned-request-signature` header format: `t={timestamp},v1={signature}`
-- Uses timestamped payload to prevent replay attacks
-- Location: `handlers/zigned_webhook_handler.rb:137-163`
-
-### Logging & Monitoring
-
-**All webhook events logged to systemd journal:**
+### Monitoring
 ```bash
-# Real-time Zigned events
-journalctl -u kimonokittens-dashboard -f | grep -E "(📝|✍️|🎉|📥|❌|⚠️)"
+# Real-time contract events
+journalctl -u kimonokittens-dashboard -f | grep -E "(📝|✍️|🎉|📥|❌)"
 
-# All contract events
+# All Zigned webhooks
 journalctl -u kimonokittens-dashboard | grep -E "(agreement|participant|email_event)"
-
-# Specific event type
-journalctl -u kimonokittens-dashboard | grep "participant.lifecycle.fulfilled"
-
-# Webhook errors
-journalctl -u kimonokittens-dashboard | grep "❌ Webhook error"
 ```
 
-**Event indicators**:
-- 📝 Agreement activated
-- ✍️ Signature received
-- 🎉 Contract fully signed
-- 📥 Contract finalized (PDF ready)
-- 📧 Email delivered
-- 🔐 Identity verified
-- ❌ Errors (identity/PDF/email failures)
-- ⚠️ Warnings (missing records, unknown events)
-
-### Production Requirements
-
-**Environment variables** (already configured in `/home/kimonokittens/.env`):
-```bash
-ZIGNED_API_KEY='{production_api_key}'
-ZIGNED_WEBHOOK_SECRET_REAL='{production_webhook_secret}'
-ZIGNED_WEBHOOK_SECRET_TEST='{test_webhook_secret}'
-```
-
-**Webhook endpoint**: `POST /api/webhooks/zigned` (port 3001, handled by puma_server.rb)
+### Documentation
+- `docs/ZIGNED_WEBHOOK_FIELD_MAPPING.md` - Real payload analysis → database field mapping
+- `docs/ZIGNED_WEBHOOK_TESTING_STATUS.md` - Bug fixes log (Nov 11: repository.update, personal_number lookup)
+- `docs/zigned-api-spec.yaml` - Complete OpenAPI 3.0 spec (21,571 lines)
 
 ### Recent Work (Nov 11, 2025)
-
-**Bug Fixes**:
-- eff6ccf - Complete webhook handler (all 14 events, signing URL fallback, failure handlers)
-- 1a1d4de - Personal number lookup (email matching + tenant query)
-- 281c137 - Add `update()` method to SignedContractRepository
-
-**Features**:
-- 7261f44 - All tracking events (identity, PDF verification, email delivery)
-- 3d11c95 - Adapt to real Zigned payloads (not docs - actual webhook data)
-- b98a41c - Field mapping document (comprehensive payload analysis)
-
-**Testing** (Nov 11):
-- Test contract `cmhuyr9pt010x4cqk5tova6bd` revealed both critical bugs
-- Both fixed and deployed within hours
-- Ready for webhook replay testing in Zigned dashboard
+- Fixed 2 critical bugs revealed by test contract `cmhuyr9pt010x4cqk5tova6bd`
+- Implemented all failure handlers (identity, PDF validation, email delivery)
+- Complete 14-event coverage: 6 lifecycle + 8 tracking events
+- Commits: eff6ccf (complete handler), 1a1d4de (personal_number), 281c137 (repository.update)
 
 ---
 
