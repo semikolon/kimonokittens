@@ -100,7 +100,8 @@ class ContractSigner
     puts "\n🔐 Creating Zigned signing case..."
 
     zigned = ZignedClientV3.new(
-      api_key: ENV['ZIGNED_API_KEY'] || raise('ZIGNED_API_KEY not set in environment'),
+      client_id: ENV['ZIGNED_CLIENT_ID'] || raise('ZIGNED_CLIENT_ID not set in environment'),
+      client_secret: ENV['ZIGNED_API_KEY'] || raise('ZIGNED_API_KEY not set in environment'),
       test_mode: test_mode
     )
 
@@ -183,7 +184,8 @@ class ContractSigner
     @test_mode = test_mode
     @generator = ContractGenerator.new
     @zigned = ZignedClientV3.new(
-      api_key: ENV['ZIGNED_API_KEY'] || raise('ZIGNED_API_KEY not set in environment'),
+      client_id: ENV['ZIGNED_CLIENT_ID'] || raise('ZIGNED_CLIENT_ID not set in environment'),
+      client_secret: ENV['ZIGNED_API_KEY'] || raise('ZIGNED_API_KEY not set in environment'),
       test_mode: test_mode
     )
 

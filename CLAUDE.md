@@ -94,23 +94,30 @@ bin/dev nuke         # Nuclear cleanup (last resort)
 
 ## 📚 ZIGNED E-SIGNATURE API
 
-**Status**: v3 API (Nov 11, 2025) | **Docs**: Use REF tool for lookups
+**Status**: v3 API (Nov 11, 2025) | **Docs**: Use REF read_url for lookups
 
-**CRITICAL: Always use REF tool for Zigned API documentation:**
-- REF has accurate crawl of official v3 API docs
+**CRITICAL: Always use REF read_url tool for Zigned API documentation:**
+- Start with: `mcp__REF__ref_read_url "https://docs.zigned.se/"`
+- Navigate to specific sections via links in the response
 - Base URL: `https://api.zigned.se/rest/v3`
+- OAuth: `https://api.zigned.se/oauth/token` (client credentials flow)
 - Primary resource: `/agreements` (NOT `/cases` - that's deprecated v1)
 - File uploads: `POST /files` with multipart/form-data (15MB limit)
 - OpenAPI spec: Available in `~/Downloads/Zigned REST API Specification.yaml`
 
-**Quick reference:**
-```bash
-# REF tool usage for API lookups
-mcp__REF__ref_search_documentation "Zigned API create agreement"
-mcp__REF__ref_read_url "https://docs.zigned.se/agreements/create-agreement"
+**Authentication**: v3 uses OAuth 2.0 with client credentials
+```ruby
+# Exchange client_id + client_secret for access_token
+POST https://api.zigned.se/oauth/token
+  grant_type=client_credentials
+  client_id=YOUR_CLIENT_ID
+  client_secret=YOUR_CLIENT_SECRET
+
+# Use access_token as Bearer token in API requests
+Authorization: Bearer <access_token>
 ```
 
-**Implementation**: `lib/zigned_client.rb` - v3 API client with proper multipart upload workflow
+**Implementation**: `lib/zigned_client_v3.rb` - v3 API client with OAuth + multipart upload
 
 ---
 

@@ -41,19 +41,27 @@ class ZignedClientV3
 
   # Zigned API v3 endpoint
   BASE_URL = 'https://api.zigned.se/rest/v3'
+  OAUTH_URL = 'https://api.zigned.se/oauth/token'
   MAX_FILE_SIZE = 15_728_640  # 15 MB in bytes
 
-  # @param api_key [String] Your Zigned API key (test or production)
-  # @param test_mode [Boolean] Documentation flag (actual mode determined by API key)
-  def initialize(api_key:, test_mode: false)
-    raise ArgumentError, 'API key is required' if api_key.nil? || api_key.empty?
+  # @param client_id [String] Your Zigned OAuth client ID
+  # @param client_secret [String] Your Zigned OAuth client secret
+  # @param test_mode [Boolean] Documentation flag (actual mode determined by credentials)
+  def initialize(client_id:, client_secret:, test_mode: false)
+    raise ArgumentError, 'Client ID is required' if client_id.nil? || client_id.empty?
+    raise ArgumentError, 'Client secret is required' if client_secret.nil? || client_secret.empty?
 
-    @api_key = api_key
+    @client_id = client_id
+    @client_secret = client_secret
     @test_mode = test_mode
     @base_url = BASE_URL
+    @access_token = nil
 
     self.class.base_uri(@base_url)
     self.class.default_options.update(verify: true)
+
+    # Get OAuth access token
+    obtain_access_token
   end
 
   # High-level method: Upload PDF and create activated agreement
@@ -335,9 +343,28 @@ class ZignedClientV3
 
   private
 
+  # Obtain OAuth access token using client credentials
+  def obtain_access_token
+    response = HTTParty.post(
+      OAUTH_URL,
+      body: {
+        grant_type: 'client_credentials',
+        client_id: @client_id,
+        client_secret: @client_secret
+      },
+      headers: { 'Content-Type' => 'application/x-www-form-urlencoded' }
+    )
+
+    if response.success?
+      @access_token = response.parsed_response['access_token']
+    else
+      raise "OAuth token exchange failed (#{response.code}): #{response.body}"
+    end
+  end
+
   def default_headers
     {
-      'Authorization' => "Bearer #{@api_key}",
+      'Authorization' => "Bearer #{@access_token}",
       'Content-Type' => 'application/json',
       'Accept' => 'application/json'
     }
