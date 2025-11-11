@@ -70,9 +70,9 @@ class ZignedWebhookHandler
       return { status: 400, message: "Invalid JSON: #{e.message}", error: true }
     end
 
-    # V3 payload structure: { version, event_type, resource_type, data }
-    # Note: Ignore v1 events (field: 'event') to avoid duplicate processing
-    event_type = payload['event_type']  # v3 uses 'event_type' not 'event'
+    # Zigned API quirk: v3 event names sent with v1 field structure
+    # Field name: 'event' (v1), Event names: 'participant.lifecycle.fulfilled' (v3)
+    event_type = payload['event_type'] || payload['event']
     agreement_data = payload['data']
 
     # Process event (v3 terminology)
@@ -166,15 +166,9 @@ class ZignedWebhookHandler
 
       @repository.update(contract)
 
-      # Create participant records for multi-party tracking
-      participants.each do |participant_data|
-        begin
-          create_or_update_participant(contract.id, participant_data)
-          puts "   ✅ Participant created: #{participant_data['name']}"
-        rescue => e
-          puts "   ⚠️  Failed to create participant #{participant_data['name']}: #{e.message}"
-        end
-      end
+      # Note: Participants array contains only IDs, not full objects
+      # Participant records will be created when participant.lifecycle.fulfilled events arrive
+      puts "   📋 Participants (IDs only): #{participants.join(', ')}"
     else
       puts "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
     end
@@ -193,31 +187,50 @@ class ZignedWebhookHandler
 
   # Handle participant.lifecycle.fulfilled event (one signer completed)
   def handle_participant_fulfilled(data)
-    participant_data = data['participant']
-    agreement_id = data['agreement_id']
+    # In actual v3 webhooks, data IS the participant (not data.participant)
+    participant_id = data['id']
+    name = data['name']
+    email = data['email']
+    agreement_id = data['agreement']  # Field is 'agreement', not 'agreement_id'
+    signed_at = data['signed_at']
+    status = data['status']
+    role = data['role']
 
-    participant_id = participant_data['id']
-    name = participant_data['name']
-    personal_number = participant_data['personal_number']
-    signed_at = participant_data['signed_at']
+    # Look up personal_number from existing participant record
+    participant_repo = Persistence.contract_participants
+    participant = participant_repo.find_by_participant_id(participant_id)
+    personal_number = participant&.personal_number
 
-    puts "✍️  Signature received: #{name} (#{personal_number})"
+    puts "✍️  Signature received: #{name} (#{email})"
     puts "   Participant ID: #{participant_id}"
+    puts "   Agreement ID: #{agreement_id}"
     puts "   Signed at: #{signed_at}"
+    puts "   Role: #{role}, Status: #{status}"
 
     # Update database record with signature info
     contract = @repository.find_by_case_id(agreement_id)
     if contract
       # Update participant record (new tracking system)
-      update_participant_fulfillment(participant_data)
+      if participant
+        participant.status = 'fulfilled'
+        participant.signed_at = Time.parse(signed_at) if signed_at
+        participant_repo.update(participant)
+        puts "   ✅ Participant record updated"
+      else
+        puts "   ⚠️  Participant record not found - creating new one"
+        # Create participant record if it doesn't exist (fallback)
+        create_or_update_participant(contract.id, data)
+      end
 
       # Update legacy landlord/tenant fields (for backward compatibility)
-      if is_landlord?(personal_number)
+      if personal_number && is_landlord?(personal_number)
         contract.landlord_signed = true
         contract.landlord_signed_at = Time.parse(signed_at) if signed_at
-      else
+        puts "   ✅ Landlord signature recorded"
+      elsif personal_number
         contract.tenant_signed = true
         contract.tenant_signed_at = Time.parse(signed_at) if signed_at
+        puts "   ✅ Tenant signature recorded"
       end
 
       @repository.update(contract)
@@ -276,10 +289,16 @@ class ZignedWebhookHandler
   def handle_agreement_finalized(data)
     agreement_id = data['id']
     title = data['title']
-    signed_document_url = data['signed_document_url']
-    finalized_at = data['finalized_at']
+    finalized_at = data['updated_at']  # Use updated_at as finalized timestamp
+
+    # Extract signed document URL from nested structure
+    signed_document = data.dig('documents', 'signed_document', 'data')
+    signed_document_url = signed_document&.dig('url')
+    signed_document_filename = signed_document&.dig('filename')
 
     puts "📥 Contract finalized: #{agreement_id}"
+    puts "   Title: #{title}"
+    puts "   Signed PDF filename: #{signed_document_filename}"
     puts "   Signed PDF URL: #{signed_document_url}"
     puts "   Finalized at: #{finalized_at}"
 
