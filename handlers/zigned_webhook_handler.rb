@@ -71,6 +71,7 @@ class ZignedWebhookHandler
     end
 
     # V3 payload structure: { version, event_type, resource_type, data }
+    # Note: Ignore v1 events (field: 'event') to avoid duplicate processing
     event_type = payload['event_type']  # v3 uses 'event_type' not 'event'
     agreement_data = payload['data']
 
