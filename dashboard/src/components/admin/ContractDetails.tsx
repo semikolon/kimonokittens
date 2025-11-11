@@ -117,7 +117,7 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
       <div className="flex gap-3 pt-2">
         {contract.pdf_url && (
           <button
-            onClick={() => window.open(contract.pdf_url, '_blank')}
+            onClick={() => window.open(`/api/contracts/${contract.id}/pdf`, '_blank')}
             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
           >
             Visa PDF

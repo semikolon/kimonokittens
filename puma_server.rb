@@ -50,6 +50,7 @@ require_relative 'handlers/electricity_price_handler'
 require_relative 'handlers/electricity_stats_handler'
 require_relative 'handlers/screenshot_handler'
 require_relative 'handlers/zigned_webhook_handler'
+require_relative 'handlers/contract_pdf_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
@@ -67,6 +68,7 @@ handbook_handler = HandbookHandler.new
 weather_handler = WeatherHandler.new
 temperature_handler = TemperatureHandler.new
 todos_handler = TodosHandler.new
+contract_pdf_handler = ContractPdfHandler.new
 
 # --- WebSocket Pub/Sub Manager ---
 class PubSub
@@ -296,6 +298,11 @@ app = Rack::Builder.new do
 
   map "/api/screenshot" do
     run screenshot_handler
+  end
+
+  # Contract PDF serving endpoint
+  map "/api/contracts" do
+    run contract_pdf_handler
   end
 
   # Zigned webhook endpoint for contract signing events

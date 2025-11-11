@@ -30,6 +30,7 @@ lsof -ti :3001 :5175
 **Safe to expose (authenticated):**
 - `/api/webhooks/deploy` - GitHub signature verification protects against unauthorized deployments
 - `/api/webhooks/zigned` - Zigned webhook secret verification ensures only legitimate contract status updates
+- `/api/contracts/:id/pdf` - Serves signed contract PDFs via HTTP (required because browsers block file:// URLs from HTTP pages for security)
 
 **DANGEROUS to expose (unauthenticated):**
 - `PUT /api/rent/config` - Anyone could modify rent amounts, electricity costs, utilities (financial fraud risk)
