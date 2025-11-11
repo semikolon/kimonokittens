@@ -223,6 +223,69 @@ Located at `config/sleep_schedule.json`:
 **Details:** See `docs/DASHBOARD_SLEEP_SCHEDULE_IMPLEMENTATION.md` for architecture
 
 ---
+
+## 🔐 ADMIN DASHBOARD & CONTRACT MANAGEMENT
+
+**Goal:** Build comprehensive admin interface for managing contracts, tenant applications, and signing progress tracking
+
+**Status:** 📋 **PLANNED** - Future feature after Zigned webhook v3 implementation complete
+
+### Core Features
+
+**Admin View Integration:**
+- [ ] **Keyboard-navigable view switching** in hallway dashboard
+  - Hotkey to toggle between public display and admin view
+  - Seamless transitions without page reload
+  - Admin view hidden from passive hallway display
+  - Visual indicator for which view is active
+
+**Contract Management UI:**
+- [ ] **Signing progress monitoring** (real-time webhook updates)
+  - View all pending contracts with status
+  - Track participant signing status (landlord + tenant)
+  - Monitor agreement lifecycle (draft → pending → fulfilled → finalized)
+  - Display expiration warnings and time remaining
+  - Email delivery status and failures
+  - Generation/validation error tracking
+  - **In-dashboard alerts** for critical events (generation failures, email bounces, expirations)
+    - Note: No SMS backend integration yet - alerts display in admin dashboard only
+    - Future: Integrate with SMS system when available (see "SMS Reminders and Swish Integration" section)
+- [ ] **Tenant application workflow** (when public signup implemented)
+  - View pending applications from `/meow` signup form
+  - Approve/reject applicants with notes
+  - Assign room and set move-in date
+  - Preview rent calculation before contract generation
+  - One-click contract generation and Zigned submission
+- [ ] **Historical contract archive**
+  - Browse past contracts with search/filter
+  - Download signed PDFs
+  - View signing timeline and participant details
+  - Export contract metadata (CSV/JSON)
+
+**Testing Priorities:**
+- [ ] Real-time webhook integration (contract status updates via WebSocket)
+- [ ] Keyboard navigation accessibility (tab order, hotkeys, screen reader)
+- [ ] Database query performance (pagination for large contract lists)
+
+**Technical Notes:**
+- Built as separate view within existing dashboard (not separate app)
+- Uses same DataContext/WebSocket infrastructure
+- Keyboard hotkey (e.g., Ctrl+Shift+A) to toggle admin view
+- Requires authentication (implement after core features working)
+
+**Dependencies:**
+- ✅ Zigned webhook v3 implementation (Phase 1-5 from ZIGNED_WEBHOOK_IMPLEMENTATION_PLAN.md)
+- ⏳ Database schema extensions for participant tracking
+- ⏳ Public tenant signup form (`/meow` endpoint)
+
+**Priority:** FUTURE - Implement after Zigned webhook critical fixes complete
+
+**Related Docs:**
+- `docs/ZIGNED_WEBHOOK_IMPLEMENTATION_PLAN.md` (Phase 6: Admin Dashboard)
+- `handlers/zigned_webhook_handler.rb` (webhook event processing)
+- `lib/repositories/signed_contract_repository.rb` (contract data access)
+
+---
 ## Immediate Tasks & Repository Hygiene
 
 **Goal:** Address outstanding technical debt and improve overall code quality.
