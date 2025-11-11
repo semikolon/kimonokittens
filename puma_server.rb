@@ -304,7 +304,7 @@ app = Rack::Builder.new do
       req = Rack::Request.new(env)
 
       if req.post?
-        handler = ZignedWebhookHandler.new
+        handler = ZignedWebhookHandler.new(broadcaster: $data_broadcaster)
         result = handler.handle(req)
 
         status = result[:status]

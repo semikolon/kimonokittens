@@ -34,9 +34,10 @@ require_relative '../lib/persistence'
 #   end
 class ZignedWebhookHandler
   # @param webhook_secret [String] Secret key from Zigned dashboard for signature verification
-  def initialize(webhook_secret: ENV['ZIGNED_WEBHOOK_SECRET'])
+  # @param broadcaster [DataBroadcaster, nil] Optional broadcaster for WebSocket notifications
+  def initialize(webhook_secret: ENV['ZIGNED_WEBHOOK_SECRET'], broadcaster: nil)
     @webhook_secret = webhook_secret
-    @broadcaster = DataBroadcaster.instance
+    @broadcaster = broadcaster
     @repository = Persistence.signed_contracts
   end
 
@@ -125,7 +126,7 @@ class ZignedWebhookHandler
     end
 
     # Broadcast event
-    @broadcaster.broadcast_data('contract_status', {
+    @broadcaster&.broadcast_data('contract_status', {
       case_id: case_id,
       event: 'created',
       title: title,
@@ -160,7 +161,7 @@ class ZignedWebhookHandler
     end
 
     # Broadcast event
-    @broadcaster.broadcast_data('contract_status', {
+    @broadcaster&.broadcast_data('contract_status', {
       case_id: case_id,
       event: 'signed',
       signer_name: signer['name'],
@@ -204,7 +205,7 @@ class ZignedWebhookHandler
     @repository.update(contract)
 
     # Broadcast event
-    @broadcaster.broadcast_data('contract_status', {
+    @broadcaster&.broadcast_data('contract_status', {
       case_id: case_id,
       event: 'completed',
       title: title,
@@ -231,7 +232,7 @@ class ZignedWebhookHandler
     end
 
     # Broadcast event
-    @broadcaster.broadcast_data('contract_status', {
+    @broadcaster&.broadcast_data('contract_status', {
       case_id: case_id,
       event: 'expired',
       title: title,
@@ -258,7 +259,7 @@ class ZignedWebhookHandler
     end
 
     # Broadcast event
-    @broadcaster.broadcast_data('contract_status', {
+    @broadcaster&.broadcast_data('contract_status', {
       case_id: case_id,
       event: 'cancelled',
       title: title,

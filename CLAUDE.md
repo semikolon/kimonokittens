@@ -54,8 +54,11 @@ lsof -ti :3001 :5175
 - Pushing = Immediate production deployment via webhook
 - User may want to review changes locally before production rollout
 
-**Webhook deployments MANDATORY** - never `git pull` or edit production checkout directly:
-- Commit to dev → push to trigger webhook (ONLY after user authorization)
+**Webhook deployments MANDATORY** - never edit production checkout directly:
+- ❌ **NEVER** run `git pull` in `/home/kimonokittens/Projects/kimonokittens/`
+- ❌ **NEVER** edit files in `/home/kimonokittens/Projects/kimonokittens/` directly
+- ✅ **ALWAYS** edit in dev checkout: `/home/fredrik/Projects/kimonokittens/`
+- ✅ **ALWAYS** commit to dev → push to trigger webhook (ONLY after user authorization)
 - Webhook broken? Fix webhook, don't work around
 - Check: `journalctl -u kimonokittens-webhook -f`
 
