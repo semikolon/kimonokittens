@@ -113,6 +113,14 @@ class ZignedWebhookHandler
       body
     )
 
+    # Debug logging for signature verification
+    puts "🔐 Signature Debug:"
+    puts "   Received signature: #{signature}"
+    puts "   Expected signature: #{expected_signature}"
+    puts "   Body length: #{body.length} bytes"
+    puts "   Secret length: #{@webhook_secret.length} chars"
+    puts "   Match: #{signature == expected_signature}"
+
     # Constant-time comparison to prevent timing attacks
     Rack::Utils.secure_compare(signature, expected_signature)
   end
