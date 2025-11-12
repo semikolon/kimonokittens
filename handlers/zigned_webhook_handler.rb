@@ -164,10 +164,12 @@ class ZignedWebhookHandler
 
     # Debug logging for signature verification
     ZIGNED_LOGGER.info "🔐 Signature Debug:"
+    ZIGNED_LOGGER.info "   Webhook secret: #{@webhook_secret[0..2]}...#{@webhook_secret[-3..-1]} (#{@webhook_secret.length} chars)"
     ZIGNED_LOGGER.info "   Received signature header: #{signature_header}"
     ZIGNED_LOGGER.info "   Parsed timestamp: #{timestamp}"
     ZIGNED_LOGGER.info "   Parsed signature (v1): #{received_signature}"
     ZIGNED_LOGGER.info "   Signed payload: timestamp.body (#{signed_payload.length} bytes)"
+    ZIGNED_LOGGER.info "   Signed payload first 50 chars: #{signed_payload[0..49]}"
     ZIGNED_LOGGER.info "   Expected signature: #{expected_signature}"
     ZIGNED_LOGGER.info "   Match: #{received_signature == expected_signature}"
 
