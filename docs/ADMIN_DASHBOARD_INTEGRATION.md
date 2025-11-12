@@ -276,25 +276,25 @@ interface TenantMember {
 }
 ```
 
-### TODO: DataContext Migration
+### ✅ DataContext Migration COMPLETE (Nov 12, 2025)
 
-**Current State** (Inconsistent):
-- AdminDashboard creates separate WebSocket connection
-- Listens for `contract_list_changed` events → triggers HTTP GET
-- Other widgets use DataContext pattern
+**Implementation**: All 6 steps completed and tested.
 
-**Target State** (Consistent):
-1. Add `adminContractsData` to DataContext state
-2. Add `SET_ADMIN_CONTRACTS_DATA` reducer action
-3. DataContext handles `admin_contracts_data` WebSocket messages
-4. Update `useContracts.tsx` to read from DataContext state
-5. Remove separate WebSocket connection from AdminDashboard.tsx
-6. DataBroadcaster sends `admin_contracts_data` on all contract/tenant modifications
+1. ✅ Added `adminContractsData` to DataContext state with Member[] type
+2. ✅ Added `SET_ADMIN_CONTRACTS_DATA` reducer action with timestamp tracking
+3. ✅ DataContext handles `admin_contracts_data` WebSocket messages (line 483)
+4. ✅ Updated `useContracts.tsx` to read from DataContext via `useData()` hook
+5. ✅ Removed separate WebSocket connection from AdminDashboard.tsx
+6. ✅ All backend handlers broadcast fresh data immediately:
+   - Tenant creation: `tenant_handler.rb` lines 65, 118
+   - Departure date: `admin_contracts_handler.rb` line 379
+   - DataBroadcaster: Fetches + sends payload when `broadcast_contract_list_changed` called
 
-**Benefits**:
-- Single WebSocket for entire app (saves resources)
-- Consistent architecture (easier to maintain)
+**Benefits Realized**:
+- Single WebSocket for entire app (reduced connections)
+- Consistent architecture across all widgets
 - React-optimized updates (only changed components re-render)
+- Real-time updates work for: contract creation, Zigned webhooks, departure dates, manual DB changes
 
 ## Testing Checklist
 
@@ -377,15 +377,13 @@ const adminTheme = {
 - ✅ Real-time WebSocket updates (via broadcast_contract_list_changed)
 
 ### In Progress 🚧
-- 🚧 **DataContext migration**: Move to centralized pattern (see TODO section)
-- 🚧 **Contract creation**: "Skapa kontrakt" button handler
+- 🚧 **Contract creation**: "Skapa kontrakt" button handler (UI exists, backend TODO)
 
 ## Known Limitations
 
-1. **Inconsistent Architecture**: AdminDashboard uses separate WebSocket (should use DataContext)
-2. **Contract Creation Flow**: Button exists but handler not yet implemented
-3. **No Pagination**: Will need implementation when contract count grows (>50 members)
-4. **Copy Links Feature**: Not implemented (low priority)
+1. **Contract Creation Flow**: Button exists but handler not yet implemented
+2. **No Pagination**: Will need implementation when contract count grows (>50 members)
+3. **Copy Links Feature**: Not implemented (low priority)
 
 ## References
 
