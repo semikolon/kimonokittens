@@ -36,6 +36,14 @@ class ContractParticipantRepository
     query.map { |row| hydrate(row) }
   end
 
+  # Find participant by contract ID and email (used for sign_event webhook matching)
+  def find_by_contract_and_email(contract_id, email)
+    row = @db.class.db[:ContractParticipant]
+      .where(contractId: contract_id, email: email)
+      .first
+    row ? hydrate(row) : nil
+  end
+
   # Find fulfilled (signed) participants for a contract
   def find_fulfilled(contract_id)
     @db.class.db[:ContractParticipant]

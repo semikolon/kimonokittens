@@ -133,6 +133,20 @@ class ZignedWebhookHandler
     when 'email_event.agreement_finalized.delivered'
       handle_finalized_email_delivered(agreement_data)
 
+    # Sign event tracking (participant engagement)
+    when 'sign_event.signing_room.entered'
+      handle_sign_event_viewing(agreement_data)
+    when 'sign_event.document.loaded'
+      handle_sign_event_document_loaded(agreement_data)
+    when 'sign_event.document.began_scroll'
+      handle_sign_event_reading(agreement_data)
+    when 'sign_event.document.scrolled_to_bottom'
+      handle_sign_event_reviewed(agreement_data)
+    when 'sign_event.sign.initiated_sign'
+      handle_sign_event_signing(agreement_data)
+    when 'sign_event.sign.completed_sign'
+      handle_sign_event_signed(agreement_data)
+
     else
       ZIGNED_LOGGER.warn "⚠️  Unhandled webhook event: #{event_type}"
       return { status: 200, message: "Event type not implemented: #{event_type}", event: event_type }
@@ -718,5 +732,130 @@ class ZignedWebhookHandler
   # Determine if participant is landlord (for legacy field updates)
   def is_landlord?(personal_number)
     personal_number&.gsub(/\D/, '') == '8604230717'
+  end
+
+  # ========== SIGN EVENT HANDLERS (Participant Engagement Tracking) ==========
+
+  # Generic helper to update participant status from sign events
+  def update_participant_status_from_sign_event(data, new_status, log_emoji, log_message)
+    agreement_id = data['agreement_id']
+    participant_email = data['participant_email']
+    occurred_at = data['occurred_at']
+
+    contract = @repository.find_by_case_id(agreement_id)
+    unless contract
+      ZIGNED_LOGGER.warn "⚠️  Warning: Contract not found for sign_event (#{agreement_id})"
+      return
+    end
+
+    # Find participant by email
+    participant_repo = Persistence.contract_participants
+    participant = participant_repo.find_by_contract_and_email(contract.id, participant_email)
+
+    unless participant
+      ZIGNED_LOGGER.warn "⚠️  Warning: Participant not found for email #{participant_email} (contract #{contract.id})"
+      return
+    end
+
+    # Update status
+    participant.status = new_status
+    participant_repo.update(participant)
+
+    ZIGNED_LOGGER.info "#{log_emoji} #{log_message}: #{participant.name} (#{participant_email})"
+    ZIGNED_LOGGER.info "   Agreement: #{agreement_id}"
+    ZIGNED_LOGGER.info "   Status: #{participant.status}"
+    ZIGNED_LOGGER.info "   Time: #{occurred_at}"
+
+    # Broadcast real-time update
+    @broadcaster&.broadcast_contract_update(agreement_id, 'participant_status_updated', {
+      participant_id: participant.id,
+      participant_name: participant.name,
+      status: new_status,
+      occurred_at: occurred_at
+    })
+  end
+
+  # Handle signing room entered (participant opened link)
+  def handle_sign_event_viewing(data)
+    update_participant_status_from_sign_event(
+      data,
+      'viewing',
+      '👀',
+      'Participant opened signing room'
+    )
+  end
+
+  # Handle document loaded (PDF rendered in viewer)
+  def handle_sign_event_document_loaded(data)
+    # Don't change status - this is just a technical event
+    ZIGNED_LOGGER.info "📄 Document loaded by #{data['participant_email']}"
+  end
+
+  # Handle document scroll started (participant is reading)
+  def handle_sign_event_reading(data)
+    update_participant_status_from_sign_event(
+      data,
+      'reading',
+      '📖',
+      'Participant started reading'
+    )
+  end
+
+  # Handle scrolled to bottom (participant reviewed entire contract)
+  def handle_sign_event_reviewed(data)
+    update_participant_status_from_sign_event(
+      data,
+      'reviewed',
+      '✅',
+      'Participant reviewed entire contract'
+    )
+  end
+
+  # Handle BankID authentication initiated
+  def handle_sign_event_signing(data)
+    update_participant_status_from_sign_event(
+      data,
+      'signing',
+      '🔐',
+      'Participant initiated BankID signing'
+    )
+  end
+
+  # Handle BankID signature completed
+  def handle_sign_event_signed(data)
+    agreement_id = data['agreement_id']
+    participant_email = data['participant_email']
+    occurred_at = data['occurred_at']
+
+    contract = @repository.find_by_case_id(agreement_id)
+    unless contract
+      ZIGNED_LOGGER.warn "⚠️  Warning: Contract not found for sign_event (#{agreement_id})"
+      return
+    end
+
+    # Find participant by email
+    participant_repo = Persistence.contract_participants
+    participant = participant_repo.find_by_contract_and_email(contract.id, participant_email)
+
+    unless participant
+      ZIGNED_LOGGER.warn "⚠️  Warning: Participant not found for email #{participant_email} (contract #{contract.id})"
+      return
+    end
+
+    # Update status AND set signed_at timestamp
+    participant.status = 'signed'
+    participant.signed_at = Time.parse(occurred_at) if occurred_at
+    participant_repo.update(participant)
+
+    ZIGNED_LOGGER.info "🎉 Participant completed BankID signature: #{participant.name}"
+    ZIGNED_LOGGER.info "   Agreement: #{agreement_id}"
+    ZIGNED_LOGGER.info "   Signed at: #{participant.signed_at}"
+
+    # Broadcast real-time update
+    @broadcaster&.broadcast_contract_update(agreement_id, 'participant_signed', {
+      participant_id: participant.id,
+      participant_name: participant.name,
+      signed_at: participant.signed_at&.iso8601
+    })
   end
 end

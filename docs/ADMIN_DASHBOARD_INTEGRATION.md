@@ -362,19 +362,90 @@ const adminTheme = {
 - WebSocket updates for real-time changes
 - No complex optimizations needed
 
+## Granular Participant Status Tracking (Nov 12, 2025)
+
+**Status**: ✅ COMPLETE - sign_event webhook handlers implemented
+
+### Overview
+
+The `ContractParticipant.status` field is being enhanced to track fine-grained engagement during the signing process. Instead of just `pending` → `signed`, the system will now track each step of participant interaction.
+
+### Status Flow
+
+```
+pending          # Initial state (contract created)
+↓
+invited          # Email delivered (existing: email_delivered_at set)
+↓
+viewing          # Participant opened signing room (sign_event.signing_room.entered)
+↓
+reading          # Started scrolling document (sign_event.document.began_scroll)
+↓
+reviewed         # Scrolled to bottom - saw entire contract! (sign_event.document.scrolled_to_bottom)
+↓
+signing          # Started BankID authentication (sign_event.sign.initiated_sign)
+↓
+signed           # Completed BankID signature (sign_event.sign.completed_sign)
+↓
+completed        # Agreement fulfilled (agreement.lifecycle.fulfilled)
+```
+
+### Implementation Details
+
+**Zigned Webhook Events** (mapped to status updates):
+- `sign_event.signing_room.entered` → status = `'viewing'`
+- `sign_event.document.loaded` → (no status change, just loaded event)
+- `sign_event.document.began_scroll` → status = `'reading'`
+- `sign_event.document.scrolled_to_bottom` → status = `'reviewed'` ⭐
+- `sign_event.sign.initiated_sign` → status = `'signing'`
+- `sign_event.sign.completed_sign` → status = `'signed'` + set `signed_at`
+
+**Key Insight**: The `reviewed` status is particularly valuable - it shows the participant has read the entire contract before signing, not just clicked through blindly.
+
+**Database**: No schema changes needed - reusing existing `ContractParticipant.status` field (already indexed on line 151 of schema.prisma).
+
+**Frontend Benefits**:
+- Timeline automatically shows richer events: "Frida är nu **läser avtalet**" → "Frida **granskade hela avtalet**" → "Frida **signerar med BankID**"
+- Status badges can show current engagement state
+- Admins can see if someone is actively reviewing vs just opened the link
+
+**WebSocket Broadcasting**: Each status update triggers `DataBroadcaster.broadcast_contract_update()` for real-time UI updates.
+
+### Sign Event Payload Structure
+
+All `sign_event.*` webhooks include:
+```json
+{
+  "type": "sign_event.document.scrolled_to_bottom",
+  "data": {
+    "id": "participant_id",
+    "agreement_id": "case_id",
+    "participant_email": "email@example.com",
+    "occurred_at": "2025-11-12T14:22:46Z"
+  }
+}
+```
+
+**Participant Lookup**: Events provide `participant_email` but not `personal_number`. Handler matches against `ContractParticipant.email` to find the correct participant record to update.
+
 ## Next Steps
 
-1. **DataContext Migration** (HIGH PRIORITY):
-   - Migrate AdminDashboard to use DataContext pattern (see TODO section above)
-   - Remove duplicate WebSocket connection
-   - Ensure all update triggers broadcast `admin_contracts_data` with fresh payload
+1. ✅ **DataContext Migration** (COMPLETE):
+   - ~~Migrate AdminDashboard to use DataContext pattern~~
+   - ~~Remove duplicate WebSocket connection~~
+   - ~~Ensure all update triggers broadcast with fresh payload~~
 
-2. **Contract Creation Flow** (TODO):
+2. ✅ **Granular Status Tracking** (COMPLETE):
+   - ~~Implement sign_event webhook handlers for participant status updates~~
+   - Test with retried historical events
+   - Update frontend timeline display with new status labels (if needed)
+
+3. **Contract Creation Flow** (TODO):
    - Implement "Skapa kontrakt" button handler
    - Create contract via API → trigger Zigned workflow
    - Broadcast update to refresh UI immediately
 
-3. **Enhanced Features** (Future):
+4. **Enhanced Features** (Future):
    - Contract statistics dashboard
    - Filtering by date range, status, tenant name
    - Search functionality
