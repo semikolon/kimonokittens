@@ -1,6 +1,7 @@
 // Tenant Form Component - Add new tenants with or without contracts
 import React, { useState } from 'react'
 import { UserPlus, FileSignature, Loader2 } from 'lucide-react'
+import { useAdminAuth } from '../../contexts/AdminAuthContext'
 
 interface TenantFormData {
   name: string
@@ -28,6 +29,7 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const { ensureAuth } = useAdminAuth()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -44,7 +46,7 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
     if (!formData.email.trim()) return 'E-post krävs'
     if (!formData.email.includes('@')) return 'Ogiltig e-postadress'
     if (requireStartDate && !formData.startDate) return 'Startdatum krävs för att skapa kontrakt'
-    if (!formData.personnummer.trim()) return 'Personnummer rekommenderas starkt för kontraktsskapande'
+    if (!formData.personnummer.trim()) return 'Personnummer krävs för kontraktsskapande'
     return null
   }
 
@@ -58,13 +60,21 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
       return
     }
 
+    const adminToken = await ensureAuth()
+    if (!adminToken) {
+      return
+    }
+
     setLoading(true)
 
     try {
       const endpoint = withContract ? '/api/tenants/with-contract' : '/api/tenants'
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Token': adminToken
+        },
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
@@ -123,7 +133,7 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
       {/* Form fields - large and wide */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Name field */}
-        <div className="md:col-span-2">
+        <div>
           <label className="block text-purple-200 text-sm font-medium mb-2">
             Namn <span className="text-red-400">*</span>
           </label>
@@ -132,17 +142,17 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full px-6 py-4 text-lg bg-slate-900/60 border border-purple-900/30 rounded-xl
+            className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
                      text-purple-100 placeholder-purple-300/40
                      focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20
                      transition-all"
-            placeholder="Fredrik Bränström"
+            placeholder="Karlsson på Taket"
             disabled={loading}
           />
         </div>
 
         {/* Email field */}
-        <div className="md:col-span-2">
+        <div>
           <label className="block text-purple-200 text-sm font-medium mb-2">
             E-post <span className="text-red-400">*</span>
           </label>
@@ -151,11 +161,11 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-6 py-4 text-lg bg-slate-900/60 border border-purple-900/30 rounded-xl
+            className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
                      text-purple-100 placeholder-purple-300/40
                      focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20
                      transition-all"
-            placeholder="fredrik@example.com"
+            placeholder="karlsson@kimonokittens.com"
             disabled={loading}
           />
         </div>
@@ -163,14 +173,14 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
         {/* Personal number */}
         <div>
           <label className="block text-purple-200 text-sm font-medium mb-2">
-            Personnummer <span className="text-purple-300/60">(rekommenderas för kontrakt)</span>
+            Personnummer <span className="text-red-400">*</span> <span className="text-purple-300/60">(obligatoriskt för kontrakt)</span>
           </label>
           <input
             type="text"
             name="personnummer"
             value={formData.personnummer}
             onChange={handleChange}
-            className="w-full px-6 py-4 text-lg bg-slate-900/60 border border-purple-900/30 rounded-xl
+            className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
                      text-purple-100 placeholder-purple-300/40
                      focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20
                      transition-all"
@@ -189,7 +199,7 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full px-6 py-4 text-lg bg-slate-900/60 border border-purple-900/30 rounded-xl
+            className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
                      text-purple-100 placeholder-purple-300/40
                      focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20
                      transition-all"
@@ -208,7 +218,7 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
             name="startDate"
             value={formData.startDate}
             onChange={handleChange}
-            className="w-full px-6 py-4 text-lg bg-slate-900/60 border border-purple-900/30 rounded-xl
+            className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
                      text-purple-100
                      focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20
                      transition-all"
@@ -226,7 +236,7 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
             name="departureDate"
             value={formData.departureDate}
             onChange={handleChange}
-            className="w-full px-6 py-4 text-lg bg-slate-900/60 border border-purple-900/30 rounded-xl
+            className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
                      text-purple-100
                      focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20
                      transition-all"
@@ -241,14 +251,16 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
           onClick={() => handleSubmit(false)}
           disabled={loading}
           className="flex-1 flex items-center justify-center gap-3 px-8 py-4 text-lg font-medium
-                   bg-purple-600/80 hover:bg-purple-600 text-white rounded-xl
-                   transition-all disabled:opacity-50 disabled:cursor-not-allowed
+                   text-white/70 rounded-xl transition-all button-cursor-glow button-glow-default button-hover-brighten disabled:opacity-50 disabled:cursor-not-allowed
                    focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+          style={{
+            backgroundImage: 'linear-gradient(180deg, rgba(82, 43, 127, 0.92) 0%, rgba(66, 30, 105, 0.92) 100%)'
+          }}
         >
           {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
+            <Loader2 className="w-5 h-5 animate-spin text-white/70" />
           ) : (
-            <UserPlus className="w-5 h-5" />
+            <UserPlus className="w-5 h-5 text-white/70" />
           )}
           Lägg till hyresgäst
         </button>
@@ -257,24 +269,21 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
           onClick={() => handleSubmit(true)}
           disabled={loading}
           className="flex-1 flex items-center justify-center gap-3 px-8 py-4 text-lg font-medium
-                   bg-cyan-600/80 hover:bg-cyan-600 text-white rounded-xl
-                   transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                   focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                   text-white rounded-xl transition-all button-cursor-glow button-glow-orange button-hover-brighten disabled:opacity-50 disabled:cursor-not-allowed
+                   focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+          style={{
+            backgroundImage: 'linear-gradient(180deg, #cb6f38 0%, #903f14 100%)'
+          }}
         >
           {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
+            <Loader2 className="w-5 h-5 animate-spin text-white" />
           ) : (
-            <FileSignature className="w-5 h-5" />
+            <FileSignature className="w-5 h-5 text-white" />
           )}
           Lägg till hyresgäst + kontrakt
         </button>
       </div>
 
-      {/* Helper text */}
-      <p className="text-purple-300/60 text-sm text-center pt-2">
-        <span className="text-red-400">*</span> obligatoriska fält •
-        Personnummer krävs för kontraktsskapande
-      </p>
     </div>
   )
 }

@@ -53,6 +53,7 @@ require_relative 'handlers/zigned_webhook_handler'
 require_relative 'handlers/contract_pdf_handler'
 require_relative 'handlers/admin_contracts_handler'
 require_relative 'handlers/tenant_handler'
+require_relative 'handlers/admin_auth_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
@@ -73,6 +74,7 @@ todos_handler = TodosHandler.new
 contract_pdf_handler = ContractPdfHandler.new
 admin_contracts_handler = AdminContractsHandler.new
 tenant_handler = TenantHandler.new
+admin_auth_handler = AdminAuthHandler.new
 
 # --- WebSocket Pub/Sub Manager ---
 class PubSub
@@ -307,6 +309,10 @@ app = Rack::Builder.new do
   # Admin contracts API
   map "/api/admin/contracts" do
     run admin_contracts_handler
+  end
+
+  map "/api/admin/auth" do
+    run admin_auth_handler
   end
 
   # Contract PDF serving endpoint

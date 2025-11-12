@@ -793,3 +793,6 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
     - Max size 100MB (force rotation if exceeded)
   - **Implementation**: Create `/etc/logrotate.d/kimonokittens` config file
   - **Priority**: Medium (not urgent, but prevents disk space issues) 
+## 🎨 Design System & UI Consistency
+
+- [ ] Draft a shared style guide covering typography (uppercase headings, dot separators), gradients, color palette (logo-derived), spacing, and motion. Document reusable tokens so admin/dashboard widgets stay consistent.

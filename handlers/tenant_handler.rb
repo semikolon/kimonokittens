@@ -5,6 +5,7 @@ require_relative '../lib/persistence'
 require_relative '../lib/models/tenant'
 require_relative '../lib/contract_signer'
 require_relative '../lib/data_broadcaster'
+require_relative '../lib/admin_auth'
 
 class TenantHandler
   def call(env)
@@ -35,6 +36,10 @@ class TenantHandler
   private
 
   def create_tenant(req)
+    if (auth_error = require_admin_token(req))
+      return auth_error
+    end
+
     body = req.body.read
     data = JSON.parse(body)
 
@@ -77,6 +82,10 @@ class TenantHandler
   end
 
   def create_tenant_with_contract(req)
+    if (auth_error = require_admin_token(req))
+      return auth_error
+    end
+
     body = req.body.read
     data = JSON.parse(body)
 
@@ -170,6 +179,17 @@ class TenantHandler
       status,
       { 'Content-Type' => 'application/json' },
       [JSON.generate({ error: message })]
+    ]
+  end
+
+  def require_admin_token(req)
+    token = req.get_header('HTTP_X_ADMIN_TOKEN')
+    return nil if AdminAuth.authorized?(token)
+
+    [
+      401,
+      { 'Content-Type' => 'application/json' },
+      [JSON.generate({ error: 'Admin PIN krävs för denna åtgärd' })]
     ]
   end
 

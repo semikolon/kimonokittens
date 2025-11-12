@@ -2,6 +2,7 @@
 import React from 'react'
 import { DataProvider, useData } from './context/DataContext' // WebSocket data provider
 import { SleepScheduleProvider, useSleepSchedule } from './contexts/SleepScheduleContext'
+import { AdminAuthProvider } from './contexts/AdminAuthContext'
 import { FadeOverlay } from './components/SleepSchedule/FadeOverlay'
 import { ClockWidget } from './components/ClockWidget'
 import { WeatherWidget } from './components/WeatherWidget'
@@ -14,6 +15,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import AnoAI from './components/ui/animated-shader-background'
 import { AdminDashboard } from './views/AdminDashboard'
 import { useKeyboardNav } from './hooks/useKeyboardNav'
+import { AdminUnlockIndicator } from './components/admin/AdminUnlockIndicator'
 
 // Refined widget component with organic, magazine-style design
 const Widget = ({
@@ -193,6 +195,8 @@ function DashboardContent() {
             <AdminDashboard />
           </ErrorBoundary>
         </div>
+
+        <AdminUnlockIndicator />
       </div>
     )
   }
@@ -257,7 +261,9 @@ function App() {
   return (
     <SleepScheduleProvider>
       <DataProvider>
-        <DashboardContent />
+        <AdminAuthProvider>
+          <DashboardContent />
+        </AdminAuthProvider>
       </DataProvider>
     </SleepScheduleProvider>
   )

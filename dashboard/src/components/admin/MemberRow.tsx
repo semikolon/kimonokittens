@@ -4,6 +4,7 @@ import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, ChevronRig
 import { ContractDetails } from './ContractDetails'
 import { TenantDetails } from './TenantDetails'
 import type { Member, SignedContract, TenantMember } from '../../views/AdminDashboard'
+import { useAdminAuth } from '../../contexts/AdminAuthContext'
 
 interface MemberRowProps {
   member: Member
@@ -69,6 +70,53 @@ const getStatusLabel = (status: string) => {
   return labels[status as keyof typeof labels] || 'Aktiv'
 }
 
+const formatDurationBetween = (startDate?: Date | null, endDate?: Date | null) => {
+  if (!startDate) return null
+  const start = new Date(startDate)
+  const finish = endDate ? new Date(endDate) : new Date()
+  if (isNaN(start.getTime()) || isNaN(finish.getTime()) || finish < start) return null
+
+  const diffMs = finish.getTime() - start.getTime()
+  const diffDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)))
+
+  if (diffDays < 7) {
+    const days = Math.max(diffDays, 1)
+    return days === 1 ? '1 dag' : `${days} dagar`
+  }
+
+  if (diffDays < 30) {
+    const weeks = Math.max(1, Math.floor(diffDays / 7))
+    return weeks === 1 ? '1 vecka' : `${weeks} veckor`
+  }
+
+  let years = finish.getFullYear() - start.getFullYear()
+  let months = finish.getMonth() - start.getMonth()
+  const dayDiff = finish.getDate() - start.getDate()
+
+  if (dayDiff < 0) {
+    months -= 1
+  }
+  if (months < 0) {
+    years -= 1
+    months += 12
+  }
+
+  if (years <= 0) {
+    if (months <= 0) {
+      return '1 mån'
+    }
+    return months === 1 ? '1 mån' : `${months} mån`
+  }
+
+  if (months <= 0) {
+    return years === 1 ? '1 år' : `${years} år`
+  }
+
+  return years === 1
+    ? `1 år, ${months} mån`
+    : `${years} år, ${months} mån`
+}
+
 // Format date range for tenant stay
 const formatDateRange = (startDate?: Date, departureDate?: Date): string => {
   if (!startDate) return ''
@@ -105,6 +153,7 @@ export const MemberRow: React.FC<MemberRowProps> = ({
   onToggle,
   onSelect
 }) => {
+  const { ensureAuth } = useAdminAuth()
   const dateRange = formatDateRange(member.tenant_start_date, member.tenant_departure_date)
   const isContract = member.type === 'contract'
   const isTenant = member.type === 'tenant'
@@ -113,10 +162,24 @@ export const MemberRow: React.FC<MemberRowProps> = ({
   const today = new Date()
   today.setHours(0, 0, 0, 0) // Start of today
   const hasDeparted = member.tenant_departure_date && member.tenant_departure_date < today
+  const notStarted = member.tenant_start_date && member.tenant_start_date > today
   const shouldShowCreateButton = isTenant && !hasDeparted
+  const shouldShowRent = !(hasDeparted || notStarted)
+  const timeLivedLabel = shouldShowRent ? formatDurationBetween(member.tenant_start_date || null, null) : null
+  const timeStayedLabel = hasDeparted ? formatDurationBetween(member.tenant_start_date || null, member.tenant_departure_date || null) : null
 
   // Compute tenant status
   const tenantStatus = isTenant ? (hasDeparted ? 'departed' : 'active') : 'active'
+
+  const contractStatus = isContract ? (member as SignedContract).status : null
+  const showTimeLabel = isContract
+    ? contractStatus === 'completed' && timeLivedLabel
+    : timeLivedLabel
+  const statusLabel = hasDeparted && timeStayedLabel
+    ? `Utflyttad: ${timeStayedLabel}`
+    : (showTimeLabel
+        ? showTimeLabel
+        : getStatusLabel(isContract ? (contractStatus as string) : tenantStatus))
 
   const [creatingContract, setCreatingContract] = React.useState(false)
   const [toast, setToast] = React.useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -127,10 +190,18 @@ export const MemberRow: React.FC<MemberRowProps> = ({
   }
 
   const handleCreateContract = async () => {
-    setCreatingContract(true)
     try {
+      const adminToken = await ensureAuth()
+      if (!adminToken) {
+        return
+      }
+
+      setCreatingContract(true)
       const response = await fetch(`/api/admin/contracts/tenants/${member.tenant_id}/create-contract`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'X-Admin-Token': adminToken
+        }
       })
       const data = await response.json()
 
@@ -147,13 +218,32 @@ export const MemberRow: React.FC<MemberRowProps> = ({
     }
   }
 
+  const detailsRef = React.useRef<HTMLDivElement>(null)
+  const [contentHeight, setContentHeight] = React.useState(0)
+
+  React.useLayoutEffect(() => {
+    if (isExpanded && detailsRef.current) {
+      setContentHeight(detailsRef.current.scrollHeight)
+    }
+  }, [isExpanded, member])
+
+  const detailsStyle: React.CSSProperties = {
+    maxHeight: isExpanded ? `${contentHeight}px` : '0px',
+    opacity: isExpanded ? 1 : 0,
+    overflow: 'hidden',
+    transition: 'max-height 0.5s linear, opacity 0.5s linear',
+    borderTopWidth: isExpanded ? 1 : 0,
+    borderTopStyle: 'solid',
+    borderTopColor: isExpanded ? 'rgba(168, 85, 247, 0.2)' : 'transparent'
+  }
+
   return (
     <div
       className={`
-        rounded-lg border transition-all duration-200
+        rounded-2xl border transition-all duration-200
         ${isSelected
-          ? 'border-purple-400/30 bg-purple-900/20'
-          : 'border-purple-500/20 bg-slate-900/40'
+          ? 'border-purple-500/15 bg-purple-900/25'
+          : 'border-purple-500/10 bg-slate-900/40'
         }
         hover:bg-purple-900/10
       `}
@@ -203,7 +293,7 @@ export const MemberRow: React.FC<MemberRowProps> = ({
               px-3 py-1 rounded-full text-xs font-medium border
               ${getStatusColor(isContract ? (member as SignedContract).status : tenantStatus)}
             `}>
-              {getStatusLabel(isContract ? (member as SignedContract).status : tenantStatus)}
+              {statusLabel}
             </span>
 
             {/* Test mode badge */}
@@ -221,12 +311,14 @@ export const MemberRow: React.FC<MemberRowProps> = ({
                   handleCreateContract()
                 }}
                 disabled={creatingContract}
-                className="flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-medium
-                         bg-cyan-600/80 hover:bg-cyan-600 text-white
-                         transition-all border border-cyan-500/30
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium
+                         text-white transition-all button-cursor-glow button-glow-orange button-hover-brighten
                          disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  backgroundImage: 'linear-gradient(180deg, #c86c34 0%, #8f3c10 100%)'
+                }}
               >
-                <FileSignature className="w-3 h-3" />
+                <FileSignature className="w-3 h-3 text-white" />
                 {creatingContract ? 'Skapar...' : 'Skapa kontrakt'}
               </button>
             )}
@@ -242,15 +334,16 @@ export const MemberRow: React.FC<MemberRowProps> = ({
       )}
 
       {/* Expanded details (for all rows) */}
-      {isExpanded && (
-        <div className="border-t border-purple-500/20">
-          {isContract ? (
-            <>
+      <div style={detailsStyle}>
+        {isContract ? (
+          <>
+            <div ref={detailsRef}>
               <ContractDetails contract={member as SignedContract} />
               {/* Also show tenant details for contracts */}
-              <TenantDetails tenant={{
-                type: 'tenant',
-                id: (member as SignedContract).tenant_id,
+              <TenantDetails
+                tenant={{
+                  type: 'tenant',
+                  id: (member as SignedContract).tenant_id,
                 tenant_id: (member as SignedContract).tenant_id,
                 tenant_name: (member as SignedContract).tenant_name,
                 tenant_email: (member as SignedContract).tenant_email,
@@ -259,15 +352,19 @@ export const MemberRow: React.FC<MemberRowProps> = ({
                 tenant_start_date: (member as SignedContract).tenant_start_date,
                 tenant_departure_date: (member as SignedContract).tenant_departure_date,
                 current_rent: (member as SignedContract).current_rent,
-                status: 'active',
-                created_at: (member as SignedContract).created_at
-              }} />
-            </>
-          ) : (
-            <TenantDetails tenant={member as TenantMember} />
-          )}
-        </div>
-      )}
+                  status: 'active',
+                  created_at: (member as SignedContract).created_at
+                }}
+                showRent={shouldShowRent}
+              />
+            </div>
+          </>
+        ) : (
+          <div ref={detailsRef}>
+            <TenantDetails tenant={member as TenantMember} showRent={shouldShowRent} />
+          </div>
+        )}
+      </div>
 
       {/* Toast Notification */}
       {toast && (

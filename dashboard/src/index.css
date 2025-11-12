@@ -251,6 +251,31 @@
   animation: heatingGlowResidual 3s ease-in-out infinite alternate;
 }
 
+
+.button-cursor-glow {
+  transition: box-shadow 0.4s linear, filter 0.2s linear;
+}
+
+.button-cursor-glow:hover,
+.button-cursor-glow:focus-visible {
+  /* no lift - just glow */
+}
+
+.button-glow-default:hover,
+.button-glow-default:focus-visible {
+  box-shadow: 0 0 10px rgba(58, 31, 82, 0.46), 0 0 24px rgba(58, 31, 82, 0.34);
+}
+
+.button-glow-orange:hover,
+.button-glow-orange:focus-visible {
+  box-shadow: 0 0 10px rgba(139, 66, 23, 0.43), 0 0 22px rgba(139, 66, 23, 0.31);
+}
+
+.button-hover-brighten:hover,
+.button-hover-brighten:focus-visible {
+  filter: brightness(1.05);
+}
+
 .heatpump-status {
   transition: color 0.5s ease-in-out, text-shadow 0.3s ease-out;
 }

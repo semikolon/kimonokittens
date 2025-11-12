@@ -1,6 +1,6 @@
 // Admin Dashboard - Contract Management View
 // Matches existing dashboard Widget component pattern with purple/slate glass-morphism
-import React, { useState } from 'react'
+import React from 'react'
 import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, Wifi, WifiOff } from 'lucide-react'
 import { ContractList } from '../components/admin/ContractList'
 import { TenantForm } from '../components/admin/TenantForm'
@@ -116,16 +116,12 @@ const Widget = ({
 export const AdminDashboard: React.FC = () => {
   const { state } = useData()
   const { contracts, loading, error } = useContracts()
-  const [filterActive, setFilterActive] = useState(false)
-
   // Track connection status for UI feedback
   const isConnected = state.connectionStatus === 'open'
   const isReconnecting = state.connectionStatus === 'connecting'
 
   // Filter contracts based on active toggle
-  const displayContracts = filterActive
-    ? contracts.filter(c => c.status === 'pending' || c.status === 'landlord_signed' || c.status === 'tenant_signed')
-    : contracts
+  const displayContracts = contracts
 
   // Real-time updates via DataContext - no separate WebSocket needed
   // Backend handlers call DataBroadcaster.broadcast_contract_list_changed which sends fresh data
@@ -172,11 +168,7 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       <Widget title="Medlemmar" horsemenFont={true} accent={true}>
-        <ContractList
-          contracts={displayContracts}
-          filterActive={filterActive}
-          onFilterToggle={() => setFilterActive(!filterActive)}
-        />
+        <ContractList contracts={displayContracts} />
       </Widget>
 
       {/* Tenant creation form - darker style matching electricity anomaly widget */}

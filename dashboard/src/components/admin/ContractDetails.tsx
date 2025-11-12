@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { CheckCircle2, Clock, XCircle, Mail, AlertCircle } from 'lucide-react'
 import { ContractTimeline } from './ContractTimeline'
 import type { SignedContract } from '../../views/AdminDashboard'
+import { useAdminAuth } from '../../contexts/AdminAuthContext'
 
 interface ContractDetailsProps {
   contract: SignedContract
@@ -21,6 +22,7 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
   const [cancelling, setCancelling] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const { ensureAuth } = useAdminAuth()
 
   // Button disabled logic based on contract status
   const canResendEmail = contract.status !== 'completed' && contract.status !== 'cancelled' && contract.status !== 'expired'
@@ -35,10 +37,18 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
 
   // Resend email handler
   const handleResendEmail = async () => {
-    setResendingEmail(true)
     try {
+      const adminToken = await ensureAuth()
+      if (!adminToken) {
+        return
+      }
+
+      setResendingEmail(true)
       const response = await fetch(`/api/admin/contracts/${contract.id}/resend-email`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'X-Admin-Token': adminToken
+        }
       })
       const data = await response.json()
 
@@ -56,10 +66,18 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
 
   // Cancel contract handler
   const handleCancel = async () => {
-    setCancelling(true)
     try {
+      const adminToken = await ensureAuth()
+      if (!adminToken) {
+        return
+      }
+
+      setCancelling(true)
       const response = await fetch(`/api/admin/contracts/${contract.id}/cancel`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'X-Admin-Token': adminToken
+        }
       })
       const data = await response.json()
 

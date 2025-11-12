@@ -2,25 +2,34 @@
 import React, { useState } from 'react'
 import { DollarSign, TrendingDown, TrendingUp, Calendar } from 'lucide-react'
 import type { TenantMember } from '../../views/AdminDashboard'
+import { useAdminAuth } from '../../contexts/AdminAuthContext'
 
 interface TenantDetailsProps {
   tenant: TenantMember
+  showRent?: boolean
 }
 
-export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant }) => {
+export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent = true }) => {
   const currentRent = tenant.current_rent || 0
   const roomAdjustment = tenant.tenant_room_adjustment || 0
   const [isSettingDepartureDate, setIsSettingDepartureDate] = useState(false)
   const [departureDate, setDepartureDate] = useState('')
+  const { ensureAuth } = useAdminAuth()
 
   const handleSetDepartureDate = async () => {
     if (!departureDate) return
 
     try {
+      const adminToken = await ensureAuth()
+      if (!adminToken) {
+        return
+      }
+
       const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/departure-date`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Admin-Token': adminToken
         },
         body: JSON.stringify({ date: departureDate })
       })
@@ -66,21 +75,22 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant }) => {
         </div>
       )}
 
-      {/* Current Rent */}
-      <div>
-        <h4 className="text-sm font-semibold text-purple-200 mb-3">Aktuell hyra:</h4>
-        <div className="flex items-center gap-3">
-          <DollarSign className="w-5 h-5 text-purple-300" />
-          <div>
-            <div className="text-2xl font-semibold text-purple-100">
-              {currentRent.toLocaleString('sv-SE')} kr
-            </div>
-            <div className="text-xs text-purple-300/60 mt-1">
-              per månad (inkl. el, internet, avgifter)
+      {showRent && (
+        <div>
+          <h4 className="text-sm font-semibold text-purple-200 mb-3">Aktuell hyra:</h4>
+          <div className="flex items-center gap-3">
+            <DollarSign className="w-5 h-5 text-purple-300" />
+            <div>
+              <div className="text-2xl font-semibold text-purple-100">
+                {currentRent.toLocaleString('sv-SE')} kr
+              </div>
+              <div className="text-xs text-purple-300/60 mt-1">
+                per månad (inkl. el, internet, avgifter)
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Departure date section */}
       <div className="pt-4 border-t border-purple-500/10">
@@ -141,10 +151,11 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant }) => {
         )}
       </div>
 
-      {/* Info note */}
-      <div className="text-xs text-purple-300/50 pt-4 border-t border-purple-500/10">
-        Hyran beräknas från aktuella elkostnader och delad grundhyra mellan aktiva hyresgäster.
-      </div>
+      {showRent && (
+        <div className="text-xs text-purple-300/50 pt-4 border-t border-purple-500/10">
+          Hyran beräknas från aktuella elkostnader och delad grundhyra mellan aktiva hyresgäster.
+        </div>
+      )}
     </div>
   )
 }

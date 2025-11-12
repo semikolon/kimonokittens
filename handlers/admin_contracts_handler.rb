@@ -5,6 +5,7 @@ class AdminContractsHandler
     require_relative '../lib/persistence'
     require_relative '../rent'
     require_relative '../lib/models/rent_config'
+    require_relative '../lib/admin_auth'
   end
 
   def call(env)
@@ -239,6 +240,10 @@ class AdminContractsHandler
   end
 
   def resend_email(req, contract_id)
+    if (auth_error = require_admin_token(req))
+      return auth_error
+    end
+
     # Find contract
     contract_repo = Persistence.signed_contracts
     contract = contract_repo.find_by_id(contract_id)
@@ -291,6 +296,10 @@ class AdminContractsHandler
   end
 
   def cancel_contract(req, contract_id)
+    if (auth_error = require_admin_token(req))
+      return auth_error
+    end
+
     # Find contract
     contract_repo = Persistence.signed_contracts
     contract = contract_repo.find_by_id(contract_id)
@@ -353,6 +362,10 @@ class AdminContractsHandler
   end
 
   def set_tenant_departure_date(req, tenant_id)
+    if (auth_error = require_admin_token(req))
+      return auth_error
+    end
+
     # Parse JSON body
     begin
       body = Oj.load(req.body.read)
@@ -415,6 +428,10 @@ class AdminContractsHandler
   end
 
   def create_contract_for_tenant(req, tenant_id)
+    if (auth_error = require_admin_token(req))
+      return auth_error
+    end
+
     # Find tenant
     tenant_repo = Persistence.tenants
     tenant = tenant_repo.find_by_id(tenant_id)
@@ -487,5 +504,16 @@ class AdminContractsHandler
 
   def internal_error(message)
     [500, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: message })]]
+  end
+
+  def require_admin_token(req)
+    token = req.get_header('HTTP_X_ADMIN_TOKEN')
+    return nil if AdminAuth.authorized?(token)
+
+    [
+      401,
+      { 'Content-Type' => 'application/json' },
+      [Oj.dump({ error: 'Admin PIN krävs för denna åtgärd' })]
+    ]
   end
 end
