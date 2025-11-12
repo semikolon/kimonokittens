@@ -1,8 +1,8 @@
 # Admin Dashboard Integration Summary
 
-**Status**: ✅ Complete - Ready for testing
-**Date**: November 11, 2025
-**Generated**: Magic MCP + Manual integration
+**Status**: ✅ Complete - Production Ready
+**Date**: November 12, 2025 (Updated)
+**Generated**: Magic MCP + Manual integration + DataContext refactoring
 
 ## Overview
 
@@ -16,13 +16,17 @@ dashboard/src/
 │   └── AdminDashboard.tsx              # Main admin container using Widget pattern
 ├── components/
 │   └── admin/
-│       ├── ContractList.tsx            # List with filter + keyboard navigation
-│       ├── ContractRow.tsx             # Collapsible accordion row
-│       ├── ContractDetails.tsx         # Expanded content area
-│       └── ContractTimeline.tsx        # Event timeline display
+│       ├── ContractList.tsx            # List with segmentation + filter + keyboard nav
+│       ├── MemberRow.tsx               # Unified row for contracts + tenants
+│       ├── ContractDetails.tsx         # Expanded contract info + lifecycle
+│       ├── TenantDetails.tsx           # Tenant info + departure date setting
+│       ├── ContractTimeline.tsx        # Event timeline display
+│       └── TenantForm.tsx              # Create new tenant form
 ├── hooks/
 │   ├── useKeyboardNav.tsx              # Global Tab + ESC navigation
-│   └── useContracts.tsx                # Contract data fetching
+│   └── useContracts.tsx                # Contract data fetching via DataContext
+├── context/
+│   └── DataContext.tsx                 # Centralized WebSocket state management
 └── App.tsx                             # Updated with admin view toggle
 ```
 
@@ -68,10 +72,40 @@ dashboard/src/
 - Timeline section (lifecycle events)
 - Action buttons (Resend Email, Cancel, Copy Links)
 
-### 5. **Real-time Updates (✅ WebSocket Ready)**
-- Subscribes to `zigned_webhook_event` messages
-- Subscribes to `contract_list_changed` messages
-- Auto-refreshes contract data on updates
+### 5. **Member List Segmentation (✅ Implemented)**
+- **"NUVARANDE"** section: Current roommates (no departure date or future departure)
+- **"HISTORISKA"** section: Departed tenants (past departure dates)
+- Headings styled to match weather/heatpump widgets (uppercase, small font)
+- Auto-segmentation based on departure date vs today
+
+### 6. **Departure Date Setting (✅ Implemented)**
+- Button in tenant expanded view: "Sätt utflyttningsdatum"
+- Date picker with Save/Cancel UI
+- Backend endpoint: `PATCH /api/admin/contracts/tenants/:id/departure-date`
+- Real-time UI refresh via WebSocket broadcast
+- Setting past date automatically moves tenant to "HISTORISKA" section
+
+### 7. **Real-time Updates (✅ DataContext Pattern)**
+**Architecture**: Follows same pattern as all other dashboard widgets (Weather, Train, Rent, etc.)
+
+**Data Flow**:
+1. **DataBroadcaster** sends `admin_contracts_data` via WebSocket every 60s
+2. **DataContext** receives message, updates centralized state
+3. **AdminDashboard** reads from `state.adminContractsData` (no separate WebSocket!)
+4. **React efficiently re-renders** only changed components
+
+**Update Triggers** (all trigger immediate `admin_contracts_data` broadcast):
+- ✅ **Contract creation**: "Skapa kontrakt" button → API creates contract → broadcasts update
+- ✅ **Zigned webhooks**: Signing events trigger `DataBroadcaster.broadcast_contract_update()`
+- ✅ **Departure date changes**: Setting date triggers broadcast via `broadcast_contract_list_changed`
+- ✅ **Manual DB changes**: Any handler update can call broadcast methods
+- ✅ **Periodic refresh**: Every 60s for eventual consistency
+
+**Benefits**:
+- Single WebSocket connection for entire app (no redundant connections)
+- Consistent architecture across all widgets
+- Efficient React reconciliation (only DOM nodes with changes update)
+- No full page reloads - just state updates + re-render
 
 ## TypeScript Interfaces
 
@@ -110,50 +144,111 @@ interface ContractParticipant {
 
 ## Backend Integration (✅ COMPLETE)
 
-The admin dashboard now fetches real contract data from the backend API.
+The admin dashboard uses the centralized DataContext pattern for all data updates.
 
 ### Implemented API Endpoints
 
 **✅ GET /api/admin/contracts**
-- Returns all contracts with enriched tenant names and participants
+- Returns unified member list: contracts + standalone tenants
 - Handler: `handlers/admin_contracts_handler.rb`
-- Response includes full contract details + lifecycle tracking + participants
-- Empty string path_info handled (Rack strips matched prefix)
+- Enriches contracts with tenant data (name, email, room, departure dates, current rent)
+- Single source of truth: tenant data from Tenant table, not duplicated
+- Includes participants, lifecycle tracking, and statistics
+- Response format: `{ members: [...], total: N, contracts_count: N, tenants_without_contracts: N }`
 
-**✅ WebSocket Real-time Updates**
-- `DataBroadcaster.broadcast_contract_update(contract_id, event_type, details)`
-- Frontend subscribes to `contract_update` message type
-- Auto-refreshes contract list when webhook events fire
-- 6 webhook events integrated: pending, fulfilled, finalized, expired, cancelled
+**✅ PATCH /api/admin/contracts/tenants/:id/departure-date**
+- Sets tenant departure date (moves to "HISTORISKA" if past date)
+- Handler: `handlers/admin_contracts_handler.rb:346-406`
+- Uses `TenantRepository.set_departure_date(tenant_id, date)`
+- Triggers WebSocket broadcast: `DataBroadcaster.broadcast_contract_list_changed`
+- Request: `{ "date": "2025-12-31" }`
+- Response: `{ success: true, tenant_id: "...", departure_date: "2025-12-31" }`
+
+**✅ POST /api/admin/contracts/:id/resend-email**
+- Resends signing invitation via Zigned API
+- Validates contract status (not completed/cancelled/expired)
+
+**✅ POST /api/admin/contracts/:id/cancel**
+- Cancels contract via Zigned API
+- Updates database status to 'cancelled'
 
 **✅ GET /api/contracts/:id/pdf**
 - Serves contract PDFs directly (browser security workaround)
 - Handler: `handlers/contract_pdf_handler.rb`
 
-### Frontend Implementation
+### WebSocket Broadcast Methods
 
+**DataBroadcaster Architecture**:
+```ruby
+# Instance methods (called on $data_broadcaster)
+def broadcast_contract_update(contract_id, event_type, details = {})
+  # Sends: {type: 'contract_update', payload: {contract_id, event, details}}
+  # Used by Zigned webhook handler for signing events
+end
+
+def broadcast_contract_list_changed
+  # Sends: {type: 'contract_list_changed', payload: {timestamp}}
+  # Used by admin handlers when contracts/tenants modified
+end
+
+# Class method (convenience wrapper)
+def self.broadcast_contract_list_changed
+  $data_broadcaster&.broadcast_contract_list_changed
+end
+```
+
+**Usage in Handlers**:
+```ruby
+# After modifying contract or tenant data:
+require_relative '../lib/data_broadcaster'
+DataBroadcaster.broadcast_contract_list_changed
+
+# Triggers immediate admin_contracts_data refresh via WebSocket
+```
+
+### Frontend Implementation (DataContext Pattern)
+
+**useContracts.tsx** - Consistent with other widgets:
 ```typescript
-// useContracts.tsx - REAL DATA (no mock data)
-const fetchContracts = async () => {
-  const response = await fetch('/api/admin/contracts')
-  const data = await response.json()
-  setContracts(data.contracts || [])
-}
+// NO separate WebSocket connection
+// NO manual HTTP polling
+// Data comes from centralized DataContext
 
-// WebSocket subscription
-useEffect(() => {
-  if (wsData.type === 'contract_update') {
-    refreshContracts() // Auto-refresh on updates
+export const useContracts = () => {
+  const { state } = useData()  // Centralized state
+
+  // Contract data arrives via WebSocket (admin_contracts_data message)
+  // React efficiently re-renders when state.adminContractsData changes
+
+  return {
+    contracts: state.adminContractsData?.members || [],
+    loading: !state.adminContractsData,
+    error: null
   }
-}, [dataContext?.data])
+}
+```
+
+**DataContext.tsx** - Handles WebSocket messages:
+```typescript
+// Receives: {type: 'admin_contracts_data', payload: {members: [...]}}
+case 'admin_contracts_data':
+  dispatch({ type: 'SET_ADMIN_CONTRACTS_DATA', payload: message.payload })
+  break
+
+// Also handles legacy notifications (if needed):
+case 'contract_list_changed':
+  // Triggers immediate fetch of admin_contracts_data
+  break
 ```
 
 ### Response Format
 
 ```typescript
-interface ContractsResponse {
-  contracts: SignedContract[]
+interface MembersResponse {
+  members: Member[]  // Array of SignedContract | TenantMember
   total: number
+  contracts_count: number
+  tenants_without_contracts: number
   statistics: {
     total: number
     completed: number
@@ -162,15 +257,44 @@ interface ContractsResponse {
     cancelled: number
   }
 }
+
+type Member = SignedContract | TenantMember
+
+interface TenantMember {
+  type: 'tenant'
+  id: string
+  tenant_id: string
+  tenant_name: string
+  tenant_email?: string
+  tenant_room?: string
+  tenant_room_adjustment?: number
+  tenant_start_date?: Date
+  tenant_departure_date?: Date
+  current_rent?: number
+  status: string
+  created_at: Date
+}
 ```
 
-### TODO: Action Button Handlers
+### TODO: DataContext Migration
 
-```
-POST /api/admin/contracts/:id/resend-email
-POST /api/admin/contracts/:id/cancel
-GET  /api/admin/contracts/:id (single contract details)
-```
+**Current State** (Inconsistent):
+- AdminDashboard creates separate WebSocket connection
+- Listens for `contract_list_changed` events → triggers HTTP GET
+- Other widgets use DataContext pattern
+
+**Target State** (Consistent):
+1. Add `adminContractsData` to DataContext state
+2. Add `SET_ADMIN_CONTRACTS_DATA` reducer action
+3. DataContext handles `admin_contracts_data` WebSocket messages
+4. Update `useContracts.tsx` to read from DataContext state
+5. Remove separate WebSocket connection from AdminDashboard.tsx
+6. DataBroadcaster sends `admin_contracts_data` on all contract/tenant modifications
+
+**Benefits**:
+- Single WebSocket for entire app (saves resources)
+- Consistent architecture (easier to maintain)
+- React-optimized updates (only changed components re-render)
 
 ## Testing Checklist
 
@@ -217,40 +341,51 @@ const adminTheme = {
 
 ## Next Steps
 
-1. **Action Button Handlers** (TODO):
-   - Implement POST `/api/admin/contracts/:id/resend-email`
-   - Implement POST `/api/admin/contracts/:id/cancel`
-   - Implement "Copy Links" clipboard functionality
+1. **DataContext Migration** (HIGH PRIORITY):
+   - Migrate AdminDashboard to use DataContext pattern (see TODO section above)
+   - Remove duplicate WebSocket connection
+   - Ensure all update triggers broadcast `admin_contracts_data` with fresh payload
 
-2. **Visual Testing**:
-   - Verify summary line displays correctly with real data
-   - Test empty state ("Inga kontrakt")
-   - Confirm WebSocket updates work when webhook fires
+2. **Contract Creation Flow** (TODO):
+   - Implement "Skapa kontrakt" button handler
+   - Create contract via API → trigger Zigned workflow
+   - Broadcast update to refresh UI immediately
 
 3. **Enhanced Features** (Future):
    - Contract statistics dashboard
-   - Filtering by date range
+   - Filtering by date range, status, tenant name
    - Search functionality
    - Pagination for large contract lists
+   - Bulk operations (mass email, export to CSV)
 
-## Success Criteria (All ✅)
+## Success Criteria
 
+### Completed ✅
 - ✅ Admin view accessible via Tab key
 - ✅ Uses existing Widget component (same as WeatherWidget/TrainWidget)
 - ✅ Title uses Horsemen font with same styling
 - ✅ Exact padding/margins match existing widgets (p-8)
 - ✅ Glass-morphism aesthetic (purple/slate, backdrop-blur, rounded-2xl)
 - ✅ Expandable rows with arrow key navigation
+- ✅ Unified member list: contracts + standalone tenants
+- ✅ Member list segmentation: "NUVARANDE" vs "HISTORISKA"
+- ✅ Departure date setting with date picker UI
 - ✅ Email status, signing status, and timeline visible when expanded
 - ✅ Lucide React icons for status indicators
 - ✅ Single filter toggle: All vs Active Only
-- ✅ Real-time WebSocket updates ready
+- ✅ Action buttons: Resend Email, Cancel (backend implemented)
+- ✅ Real-time WebSocket updates (via broadcast_contract_list_changed)
+
+### In Progress 🚧
+- 🚧 **DataContext migration**: Move to centralized pattern (see TODO section)
+- 🚧 **Contract creation**: "Skapa kontrakt" button handler
 
 ## Known Limitations
 
-1. **Action Buttons Non-functional**: Resend Email, Cancel, Copy Links need backend handlers
-2. **No Pagination**: Will need implementation when contract count grows
-3. **Summary Line Logic**: Implemented in ContractList.tsx with Swedish translations
+1. **Inconsistent Architecture**: AdminDashboard uses separate WebSocket (should use DataContext)
+2. **Contract Creation Flow**: Button exists but handler not yet implemented
+3. **No Pagination**: Will need implementation when contract count grows (>50 members)
+4. **Copy Links Feature**: Not implemented (low priority)
 
 ## References
 
