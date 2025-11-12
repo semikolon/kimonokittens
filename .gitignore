@@ -61,6 +61,7 @@ logs/
 .claude/settings.local.json
 .claude/tier2_analyses/
 /contracts/generated/
+/contracts/signed/
 
 # Generated contract PDFs (keep source .md files)
 /contracts/*.pdf
