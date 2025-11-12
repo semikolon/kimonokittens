@@ -404,8 +404,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       const oneMinute = 60 * 1000
 
       if (disconnectedDuration >= oneMinute) {
-        console.log('⚠️ WebSocket disconnected for 1+ minute. Reloading page...')
-        window.location.reload()
+        console.log('⚠️ WebSocket disconnected for 1+ minute. Smooth reload...')
+
+        // Smooth fade out transition before reload
+        document.body.style.transition = 'opacity 300ms ease-out'
+        document.body.style.opacity = '0'
+
+        // Reload after fade completes
+        setTimeout(() => window.location.reload(), 300)
       }
     }, 10000) // Check every 10 seconds
 
@@ -493,8 +499,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             // Record this reload
             localStorage.setItem(LAST_RELOAD_KEY, now.toString())
 
-            console.log('Reloading page...')
-            window.location.reload()
+            console.log('New deployment detected - smooth reload in 300ms...')
+
+            // Smooth fade out transition before reload
+            document.body.style.transition = 'opacity 300ms ease-out'
+            document.body.style.opacity = '0'
+
+            // Reload after fade completes
+            setTimeout(() => window.location.reload(), 300)
             break
           case 'deployment_status':
             dispatch({ type: 'SET_DEPLOYMENT_STATUS', payload: message.payload })
