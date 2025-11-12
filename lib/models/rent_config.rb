@@ -105,11 +105,13 @@ class RentConfig
     result = {}
 
     # Period-specific keys: exact match only, no carry-forward
-    # PRESERVED from rent_db.rb:161-168
+    # OPTIMIZED: Batch query instead of N queries (4 keys → 1 query)
     #
     # ENHANCED: Auto-populate quarterly invoice projections
+    period_configs = repository.find_by_keys_and_period(PERIOD_SPECIFIC_KEYS, target_time)
+
     PERIOD_SPECIFIC_KEYS.each do |key|
-      config = repository.find_by_key_and_period(key, target_time)
+      config = period_configs[key]
 
       # Auto-populate quarterly invoice projection if missing
       if key == 'drift_rakning' && (!config || config.value.to_i == 0)
@@ -126,9 +128,11 @@ class RentConfig
     end
 
     # Persistent keys: use most recent value where period <= target
-    # PRESERVED from rent_db.rb:171-180
+    # OPTIMIZED: Batch query instead of N queries (5 keys → 1 query)
+    persistent_configs = repository.find_latest_for_keys(PERSISTENT_KEYS, end_of_month)
+
     PERSISTENT_KEYS.each do |key|
-      config = repository.find_latest_for_key(key, end_of_month)
+      config = persistent_configs[key]
       default_value = DEFAULTS[key.to_sym] || 0
       value = config ? config.value : default_value.to_s
       result[key] = value

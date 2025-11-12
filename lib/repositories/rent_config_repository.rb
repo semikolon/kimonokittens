@@ -26,6 +26,21 @@ class RentConfigRepository < BaseRepository
     row && hydrate(row)
   end
 
+  # Batch query: Find configs for multiple keys with exact period match
+  # Optimized for period-specific keys (el, drift_rakning, saldo_innan, extra_in)
+  # @param keys [Array<String>] Configuration keys
+  # @param period [Time] Period (normalized to month start)
+  # @return [Hash<String, RentConfig>] Map of key => config
+  def find_by_keys_and_period(keys, period)
+    normalized_period = normalize_period(period)
+    rows = dataset.where(key: keys, period: normalized_period).all
+
+    # Build hash of key => config
+    rows.each_with_object({}) do |row, hash|
+      hash[row[:key]] = hydrate(row)
+    end
+  end
+
   # Find most recent config for key before/at given period
   # Used for persistent keys (kallhyra, bredband, etc.)
   # @param key [String] Configuration key
@@ -39,6 +54,30 @@ class RentConfigRepository < BaseRepository
       .first
 
     row && hydrate(row)
+  end
+
+  # Batch query: Find most recent configs for multiple keys before/at given period
+  # Optimized for persistent keys (kallhyra, bredband, vattenavgift, va, larm)
+  # @param keys [Array<String>] Configuration keys
+  # @param before_period [Time] Upper bound period
+  # @return [Hash<String, RentConfig>] Map of key => config (most recent per key)
+  def find_latest_for_keys(keys, before_period)
+    # Subquery to find max period per key (where period <= before_period)
+    max_periods = dataset
+      .select(:key, Sequel.as(Sequel.function(:max, :period), :max_period))
+      .where(key: keys)
+      .where { period <= before_period }
+      .group(:key)
+
+    # Join with original table to get full rows for those max periods
+    rows = dataset
+      .join(max_periods, key: :key, period: :max_period)
+      .all
+
+    # Build hash of key => config
+    rows.each_with_object({}) do |row, hash|
+      hash[row[:key]] = hydrate(row)
+    end
   end
 
   # Find all configs for a specific period
