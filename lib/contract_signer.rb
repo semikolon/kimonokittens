@@ -188,7 +188,7 @@ class ContractSigner
   # @param test_mode [Boolean] Use Zigned test environment (free, no real signatures)
   def initialize(test_mode: false)
     @test_mode = test_mode
-    @generator = ContractGenerator.new
+    @generator = nil  # Lazy-loaded when needed (only for PDF generation, not downloads)
     @zigned = ZignedClientV3.new(
       client_id: ENV['ZIGNED_CLIENT_ID'] || raise('ZIGNED_CLIENT_ID not set in environment'),
       client_secret: ENV['ZIGNED_API_KEY'] || raise('ZIGNED_API_KEY not set in environment'),
@@ -219,6 +219,7 @@ class ContractSigner
     pdf_path = File.join(GENERATED_DIR, pdf_filename)
 
     puts "📄 Generating contract PDF..."
+    @generator ||= ContractGenerator.new  # Lazy-load generator only when needed
     @generator.generate(tenant: tenant, output_path: pdf_path)
     puts "✅ PDF generated: #{pdf_path}"
 
