@@ -138,6 +138,78 @@ interface ElectricityDailyCostsData {
   generated_at?: string
 }
 
+// Admin contracts interfaces (unified member list: contracts + tenants)
+interface SignedContract {
+  type: 'contract'
+  id: string
+  tenant_id: string
+  tenant_name: string
+  tenant_email?: string
+  tenant_personnummer?: string
+  tenant_room?: string
+  tenant_room_adjustment?: number
+  tenant_start_date?: string
+  tenant_departure_date?: string
+  current_rent?: number
+  case_id: string
+  pdf_url: string
+  status: 'pending' | 'landlord_signed' | 'tenant_signed' | 'completed' | 'expired' | 'cancelled' | 'failed'
+  landlord_signed: boolean
+  tenant_signed: boolean
+  landlord_signing_url: string
+  tenant_signing_url: string
+  test_mode: boolean
+  expires_at: string
+  created_at: string
+  updated_at: string
+  generation_status?: 'draft' | 'generated' | 'validated' | 'failed'
+  email_status?: 'pending' | 'sent' | 'bounced' | 'failed'
+  error_message?: string
+  participants?: Array<{
+    id: string
+    name: string
+    email: string
+    role: string
+    status: string
+    signed_at?: string
+    signing_url: string
+    email_delivered: boolean
+    email_delivered_at?: string
+  }>
+}
+
+interface TenantMember {
+  type: 'tenant'
+  id: string
+  tenant_id: string
+  tenant_name: string
+  tenant_email?: string
+  tenant_room?: string
+  tenant_room_adjustment?: number
+  tenant_start_date?: string
+  tenant_departure_date?: string
+  current_rent?: number
+  status: string
+  created_at: string
+}
+
+type Member = SignedContract | TenantMember
+
+interface AdminContractsData {
+  members: Member[]
+  total: number
+  contracts_count: number
+  tenants_without_contracts: number
+  statistics: {
+    total: number
+    completed: number
+    pending: number
+    expired: number
+    cancelled: number
+  }
+  generated_at?: string
+}
+
 // Define the state shape
 interface DeploymentStatus {
   pending: boolean
@@ -154,6 +226,7 @@ interface DashboardState {
   todoData: TodoData[] | null
   electricityPriceData: ElectricityPriceData | null
   electricityDailyCostsData: ElectricityDailyCostsData | null
+  adminContractsData: AdminContractsData | null
   deploymentStatus: DeploymentStatus | null
   connectionStatus: 'connecting' | 'open' | 'closed'
   lastUpdated: {
@@ -165,6 +238,7 @@ interface DashboardState {
     todo: number | null
     electricity: number | null
     electricityDailyCosts: number | null
+    adminContracts: number | null
   }
 }
 
@@ -178,6 +252,7 @@ type DashboardAction =
   | { type: 'SET_TODO_DATA'; payload: TodoData[] }
   | { type: 'SET_ELECTRICITY_PRICE_DATA'; payload: ElectricityPriceData }
   | { type: 'SET_ELECTRICITY_DAILY_COSTS_DATA'; payload: ElectricityDailyCostsData }
+  | { type: 'SET_ADMIN_CONTRACTS_DATA'; payload: AdminContractsData }
   | { type: 'SET_DEPLOYMENT_STATUS'; payload: DeploymentStatus }
   | { type: 'SET_CONNECTION_STATUS'; payload: 'connecting' | 'open' | 'closed' }
 
@@ -191,6 +266,7 @@ const initialState: DashboardState = {
   todoData: null,
   electricityPriceData: null,
   electricityDailyCostsData: null,
+  adminContractsData: null,
   deploymentStatus: null,
   connectionStatus: 'connecting',
   lastUpdated: {
@@ -201,7 +277,8 @@ const initialState: DashboardState = {
     rent: null,
     todo: null,
     electricity: null,
-    electricityDailyCosts: null
+    electricityDailyCosts: null,
+    adminContracts: null
   }
 }
 
@@ -255,6 +332,12 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         ...state,
         electricityDailyCostsData: action.payload,
         lastUpdated: { ...state.lastUpdated, electricityDailyCosts: Date.now() }
+      }
+    case 'SET_ADMIN_CONTRACTS_DATA':
+      return {
+        ...state,
+        adminContractsData: action.payload,
+        lastUpdated: { ...state.lastUpdated, adminContracts: Date.now() }
       }
     case 'SET_DEPLOYMENT_STATUS':
       return {
@@ -396,6 +479,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 generated_at: message.timestamp?.toString()
               }
             })
+            break
+          case 'admin_contracts_data':
+            dispatch({ type: 'SET_ADMIN_CONTRACTS_DATA', payload: message.payload })
             break
           case 'reload':
             console.log('Reload message received from server')

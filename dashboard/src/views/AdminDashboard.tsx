@@ -1,6 +1,6 @@
 // Admin Dashboard - Contract Management View
 // Matches existing dashboard Widget component pattern with purple/slate glass-morphism
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck } from 'lucide-react'
 import { ContractList } from '../components/admin/ContractList'
 import { TenantForm } from '../components/admin/TenantForm'
@@ -100,7 +100,7 @@ const Widget = ({
 }
 
 export const AdminDashboard: React.FC = () => {
-  const { contracts, loading, error, refreshContracts } = useContracts()
+  const { contracts, loading, error } = useContracts()
   const [filterActive, setFilterActive] = useState(false)
 
   // Filter contracts based on active toggle
@@ -108,26 +108,8 @@ export const AdminDashboard: React.FC = () => {
     ? contracts.filter(c => c.status === 'pending' || c.status === 'landlord_signed' || c.status === 'tenant_signed')
     : contracts
 
-  // WebSocket updates for real-time contract status changes
-  useEffect(() => {
-    const ws = new WebSocket('ws://localhost:3001')
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-
-      if (data.type === 'zigned_webhook_event') {
-        // Update contract status in real-time
-        refreshContracts()
-      }
-
-      if (data.type === 'contract_list_changed') {
-        // Refresh contract list
-        refreshContracts()
-      }
-    }
-
-    return () => ws.close()
-  }, [refreshContracts])
+  // Real-time updates via DataContext - no separate WebSocket needed
+  // Backend handlers call DataBroadcaster.broadcast_contract_list_changed which sends fresh data
 
   if (loading) {
     return (
@@ -157,7 +139,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Tenant creation form - darker style matching electricity anomaly widget */}
       <div className="mt-6 backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md border border-purple-900/10 p-8">
-        <TenantForm onSuccess={refreshContracts} />
+        <TenantForm />
       </div>
     </>
   )

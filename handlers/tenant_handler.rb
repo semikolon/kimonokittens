@@ -4,6 +4,7 @@ require 'json'
 require_relative '../lib/persistence'
 require_relative '../lib/models/tenant'
 require_relative '../lib/contract_signer'
+require_relative '../lib/data_broadcaster'
 
 class TenantHandler
   def call(env)
@@ -60,6 +61,9 @@ class TenantHandler
 
     created = repo.create(tenant)
 
+    # Broadcast update to WebSocket clients (triggers admin dashboard refresh)
+    DataBroadcaster.broadcast_contract_list_changed
+
     success_response({
       id: created.id,
       name: created.name,
@@ -109,6 +113,9 @@ class TenantHandler
       test_mode: ENV['CONTRACT_TEST_MODE'] != 'false', # Default to test mode unless explicitly disabled
       send_emails: ENV['CONTRACT_SEND_EMAILS'] == 'true' # Default to no emails unless explicitly enabled
     )
+
+    # Broadcast update to WebSocket clients (triggers admin dashboard refresh)
+    DataBroadcaster.broadcast_contract_list_changed
 
     success_response({
       tenant: {

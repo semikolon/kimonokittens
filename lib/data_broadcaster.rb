@@ -88,7 +88,12 @@ class DataBroadcaster
   end
 
   # Broadcast contract list changed event (for tenant/contract modifications)
+  # Sends immediate admin_contracts_data with fresh payload for DataContext
   def broadcast_contract_list_changed
+    # Send fresh data immediately (for DataContext pattern)
+    fetch_and_publish('admin_contracts_data', "#{@base_url}/api/admin/contracts")
+
+    # Also send legacy notification for any old listeners
     message = {
       type: 'contract_list_changed',
       payload: {
@@ -96,7 +101,7 @@ class DataBroadcaster
       }
     }.to_json
     @pubsub.publish(message)
-    puts "DataBroadcaster: contract_list_changed broadcast"
+    puts "DataBroadcaster: contract_list_changed broadcast (with fresh data)"
   end
 
   # Class method to access global broadcaster instance
