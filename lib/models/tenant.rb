@@ -33,7 +33,7 @@ class Tenant
               :deposit, :furnishing_deposit
 
   # Writer methods for mutable contract fields
-  attr_writer :personnummer, :phone, :deposit, :furnishing_deposit
+  attr_writer :personnummer, :phone, :deposit, :furnishing_deposit, :room, :departure_date
 
   def initialize(id: nil, name:, email:, facebook_id: nil, avatar_url: nil,
                  room_adjustment: nil, room: nil, start_date: nil, departure_date: nil,
