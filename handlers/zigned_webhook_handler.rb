@@ -653,7 +653,8 @@ class ZignedWebhookHandler
       personal_number: personal_number,
       role: participant_data['role'] || 'signer',
       status: participant_data['status'] || 'pending',
-      signing_url: signing_url
+      signing_url: signing_url,
+      signed_at: participant_data['signed_at'] ? Time.parse(participant_data['signed_at']) : nil
     }
 
     if existing
