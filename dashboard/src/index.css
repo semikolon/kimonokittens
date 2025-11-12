@@ -44,9 +44,10 @@
     /* overflow: hidden removed - controlled per-environment via body class */
   }
 
-  /* Production kiosk mode: prevent scrolling entirely */
+  /* Production kiosk mode: allow scrolling but hide scrollbars */
   body.kiosk-mode {
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   /* Hide scrollbars globally but keep scrolling functionality */
