@@ -14,6 +14,11 @@ interface MemberRowProps {
 
 // Status icon mapping for contracts
 const getStatusIcon = (contract: SignedContract) => {
+  // If tenant IS the landlord (match on personnummer), landlord signature is implicit/automatic
+  const LANDLORD_PERSONNUMMER = '8604230717'
+  const isLandlord = contract.tenant_personnummer?.replace(/\D/g, '') === LANDLORD_PERSONNUMMER
+  const landlordSigned = isLandlord || contract.landlord_signed
+
   if (contract.status === 'completed') {
     return <CheckCircle2 className="w-5 h-5 text-cyan-400" />
   } else if (contract.status === 'failed') {
@@ -22,9 +27,9 @@ const getStatusIcon = (contract: SignedContract) => {
     return <AlertTriangle className="w-5 h-5 text-orange-400" />
   } else if (contract.status === 'cancelled') {
     return <Ban className="w-5 h-5 text-red-400" />
-  } else if (contract.landlord_signed && !contract.tenant_signed) {
+  } else if (landlordSigned && !contract.tenant_signed) {
     return <UserCheck className="w-5 h-5 text-blue-400" />
-  } else if (!contract.landlord_signed && contract.tenant_signed) {
+  } else if (!landlordSigned && contract.tenant_signed) {
     return <UserCheck className="w-5 h-5 text-yellow-400" />
   } else {
     return <Clock className="w-5 h-5 text-yellow-400" />

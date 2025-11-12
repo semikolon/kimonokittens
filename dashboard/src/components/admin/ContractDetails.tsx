@@ -11,6 +11,11 @@ interface ContractDetailsProps {
 export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) => {
   const daysLeft = Math.ceil((new Date(contract.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
 
+  // If tenant IS the landlord (match on personnummer), landlord signature is implicit/automatic
+  const LANDLORD_PERSONNUMMER = '8604230717'
+  const isLandlord = contract.tenant_personnummer?.replace(/\D/g, '') === LANDLORD_PERSONNUMMER
+  const landlordSigned = isLandlord || contract.landlord_signed
+
   // State for button actions
   const [resendingEmail, setResendingEmail] = useState(false)
   const [cancelling, setCancelling] = useState(false)
@@ -139,16 +144,16 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
         <h4 className="text-sm font-semibold text-purple-200 mb-3">Signeringsstatus:</h4>
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
-            {contract.landlord_signed ? (
+            {landlordSigned ? (
               <>
-                <CheckCircle2 className="w-4 h-4 text-green-400" />
+                <CheckCircle2 className="w-4 h-4 text-cyan-400" />
                 <span className="text-purple-100">
-                  Fredrik Brännström - Signerad ({new Date(contract.updated_at).toLocaleString('sv-SE', {
+                  Fredrik Brännström - Signerad {isLandlord ? '(automatisk)' : `(${new Date(contract.updated_at).toLocaleString('sv-SE', {
                     month: 'long',
                     day: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
-                  })})
+                  })})`}
                 </span>
               </>
             ) : (
@@ -161,7 +166,7 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
           <div className="flex items-center gap-2">
             {contract.tenant_signed ? (
               <>
-                <CheckCircle2 className="w-4 h-4 text-green-400" />
+                <CheckCircle2 className="w-4 h-4 text-cyan-400" />
                 <span className="text-purple-100">
                   Hyresgäst - Signerad ({new Date(contract.updated_at).toLocaleString('sv-SE', {
                     month: 'long',

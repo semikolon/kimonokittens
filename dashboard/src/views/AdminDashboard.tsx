@@ -14,6 +14,7 @@ export interface SignedContract {
   tenant_id: string            // Foreign key to tenant
   tenant_name: string          // Tenant full name
   tenant_email?: string        // Tenant email
+  tenant_personnummer?: string // Tenant personnummer for landlord detection
   tenant_room?: string         // Room assignment
   tenant_room_adjustment?: number // Room adjustment in kr
   tenant_start_date?: Date     // Move-in date

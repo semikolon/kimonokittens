@@ -78,6 +78,7 @@ class AdminContractsHandler
         tenant_id: contract[:tenantId],
         tenant_name: tenant&.name || 'Unknown',
         tenant_email: tenant&.email,
+        tenant_personnummer: tenant&.personnummer,
         tenant_room: tenant&.room,
         tenant_room_adjustment: tenant&.room_adjustment,
         tenant_start_date: tenant&.start_date,
