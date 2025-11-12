@@ -35,38 +35,41 @@ RSpec.describe RentCalculator::Config do
         va: 300,
         larm: 150
       )
-      
-      expected = 1_600 + 400 + 375 + 300 + 150
+
+      # Virtual pot: monthly fees + gas baseline (83 kr)
+      expected = 1_600 + 400 + 375 + 300 + 150 + 83
       expect(config.drift_total).to eq(expected)
     end
 
-    it 'uses drift_rakning instead of monthly fees when present' do
+    it 'ignores drift_rakning and uses monthly accruals (virtual pot system)' do
       config = described_class.new(
         el: 1_600,
         bredband: 400,
-        vattenavgift: 375,  # Should be ignored
-        va: 300,            # Should be ignored
-        larm: 150,          # Should be ignored
-        drift_rakning: 2_612
+        vattenavgift: 375,  # Used (not ignored - virtual pot system)
+        va: 300,            # Used (not ignored - virtual pot system)
+        larm: 150,          # Used (not ignored - virtual pot system)
+        drift_rakning: 2_612  # STORED but NOT used in calculations
       )
-      
-      expected = 1_600 + 400 + 2_612
+
+      # Virtual pot system: NEVER use drift_rakning amount, always use monthly accruals
+      expected = 1_600 + 400 + 375 + 300 + 150 + 83
       expect(config.drift_total).to eq(expected)
     end
   end
 
   describe '#total_rent' do
-    it 'calculates total rent correctly' do
+    it 'calculates total rent correctly with virtual pot system' do
       config = described_class.new(
         kallhyra: 24_530,
         el: 1_600,
         bredband: 400,
-        drift_rakning: 2_612,
+        drift_rakning: 2_612,  # STORED but NOT used (virtual pot)
         saldo_innan: 150,
         extra_in: 200
       )
-      
-      expected = 24_530 + 1_600 + 400 + 2_612 - 150 - 200
+
+      # Virtual pot: drift_rakning ignored, defaults apply for building ops (754) + gas (83)
+      expected = 24_530 + 1_600 + 400 + 754 + 83 - 150 - 200
       expect(config.total_rent).to eq(expected)
     end
   end

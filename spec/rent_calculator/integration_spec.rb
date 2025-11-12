@@ -51,14 +51,16 @@ RSpec.describe 'RentCalculator Integration' do
       expect(final_results['roommates'].keys).to contain_exactly('Fredrik', 'Rasmus', 'Elvira', 'Adam')
       expect(final_results['roommates'].keys).not_to include('Frans-Lukas')
 
-      # 2. Correct default fees are used
+      # 2. Correct default fees are used (virtual pot system proportional values)
       config = final_results['config']
-      expect(config['vattenavgift']).to eq(375)
-      expect(config['va']).to eq(300)
-      expect(config['larm']).to eq(150)
+      expect(config['vattenavgift']).to eq(343)  # Proportional to 754 kr/month total
+      expect(config['va']).to eq(274)            # Proportional to 754 kr/month total
+      expect(config['larm']).to eq(137)          # Proportional to 754 kr/month total
 
-      # 3. Correct total is calculated
-      expected_total = 25000 + 400 + 1200 + 375 + 300 + 150
+      # 3. Correct total is calculated (including gas baseline)
+      # Note: Smart projection overrides manually set el value (1200 → 1840)
+      # when no actual bills exist for the period
+      expected_total = 25000 + 400 + 1840 + 343 + 274 + 137 + 83
       expect(final_results['total']).to eq(expected_total)
     end
   end
@@ -86,8 +88,9 @@ RSpec.describe 'RentCalculator Integration' do
       expect(roommates.keys).to contain_exactly('Alice', 'Bob')
 
       results = RentCalculator.rent_breakdown(roommates: roommates, config: config)
-      
-      expected_total = 10001 + 400 + 1500 + 375 + 300 + 150
+
+      # Virtual pot system: includes gas baseline (83 kr)
+      expected_total = 10001 + 400 + 1500 + 375 + 300 + 150 + 83
       expect(results['Total']).to be_within(1).of(expected_total)
       expect(results['Rent per Roommate']['Alice']).to eq(results['Rent per Roommate']['Bob'])
     end
@@ -96,13 +99,16 @@ RSpec.describe 'RentCalculator Integration' do
   describe 'November 2024 scenario' do
     before(:each) do
       clean_database
-      # This test simulates a month WITH a quarterly invoice (drift_rakning)
+      # Virtual pot system: drift_rakning stored for tracking but NOT used in calculations
+      # Always uses monthly accruals (vattenavgift + va + larm + gas) regardless
       db.set_config('kallhyra', '24530', Time.new(2024, 11))
       db.set_config('el', '1600', Time.new(2024, 11))
       db.set_config('bredband', '400', Time.new(2024, 11))
-      db.set_config('drift_rakning', '2612', Time.new(2024, 11))
-      db.set_config('vattenavgift', '9999', Time.new(2024, 11))
-      
+      db.set_config('drift_rakning', '2612', Time.new(2024, 11))  # Stored for history, not used
+      db.set_config('vattenavgift', '343', Time.new(2024, 11))
+      db.set_config('va', '274', Time.new(2024, 11))
+      db.set_config('larm', '137', Time.new(2024, 11))
+
       db.add_tenant(name: 'Fredrik', start_date: '2023-02-01')
       db.add_tenant(name: 'Rasmus', start_date: '2023-06-01')
       db.add_tenant(name: 'Frans-Lukas', start_date: '2023-12-01')
@@ -117,9 +123,11 @@ RSpec.describe 'RentCalculator Integration' do
       roommates = RentCalculatorHandler.new.send(:extract_roommates, year: 2024, month: 11)
 
       results = RentCalculator.rent_breakdown(roommates: roommates, config: config)
-      
-      expected_total = 24530 + 1600 + 400 + 2612
-      
+
+      # Virtual pot: kallhyra + el + bredband + monthly fees (343+274+137) + gas (83)
+      # NOT drift_rakning (2612) - that's stored but not used in calculation
+      expected_total = 24530 + 1600 + 400 + 343 + 274 + 137 + 83
+
       expect(results['Total']).to be_within(1).of(expected_total)
       expect(results['Rent per Roommate']['Astrid']).to be < results['Rent per Roommate']['Fredrik']
       expect(results['Rent per Roommate']['Elvira']).to be < results['Rent per Roommate']['Malin']

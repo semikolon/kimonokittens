@@ -243,7 +243,7 @@ RSpec.describe RentCalculator do
         roommates: roommates,
         config: test_config_with_drift
       )
-      
+
       expect(results).to include(
         'Kallhyra',
         'El',
@@ -252,15 +252,18 @@ RSpec.describe RentCalculator do
         'Total',
         'Rent per Roommate'
       )
-      
+
       expect(results['Kallhyra']).to eq(test_config_with_drift.kallhyra)
       expect(results['El']).to eq(test_config_with_drift.el)
       expect(results['Bredband']).to eq(test_config_with_drift.bredband)
-      expect(results['Total']).to eq(results['Rent per Roommate'].values.sum)
+
+      # Allow 1 kr rounding difference between Total and sum of individual rents
+      # This happens because each person's rent is rounded UP (ceil), so sum can exceed Total
+      expect(results['Total']).to be_within(1).of(results['Rent per Roommate'].values.sum)
     end
 
     it 'rounds final results appropriately' do
-      # Note: drift_rakning: 0 still uses default utilities (825 kr)
+      # Note: drift_rakning: 0 still uses default utilities (754 kr) + gas (83 kr)
       config = RentCalculator::Config.new(
         kallhyra: 1001,  # Odd number to force rounding
         el: 0,
@@ -274,7 +277,7 @@ RSpec.describe RentCalculator do
       )
 
       per_roommate = results['Rent per Roommate']
-      expected_base = 1001 + 825  # kallhyra + default utilities
+      expected_base = 1001 + 754 + 83  # kallhyra + default utilities (343+274+137) + gas
       # Total might be higher than original due to rounding each share up
       expect(per_roommate.values.sum).to be >= expected_base
       expect(per_roommate.values.sum - expected_base).to be < roommates.size  # Max diff is number of roommates

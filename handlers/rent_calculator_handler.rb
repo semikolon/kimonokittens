@@ -385,12 +385,16 @@ class RentCalculatorHandler
   #   # Calculates rent for October 2025 (due September 27)
   #
   # @return [Hash] Configuration hash with symbolized keys for RentCalculator
-  def extract_config(year:, month:)
+  def extract_config(year:, month:, with_projection: true)
     repo = Persistence.rent_configs
 
     config_hash = begin
-      RentConfig.for_period(year: year, month: month, repository: repo)
-        .transform_keys(&:to_sym)
+      RentConfig.for_period(
+        year: year,
+        month: month,
+        repository: repo,
+        with_projection: with_projection
+      ).transform_keys(&:to_sym)
     rescue StandardError => e
       warn "WARNING: RentConfig lookup failed for #{year}-#{month}: #{e.message}"
       {}
@@ -554,14 +558,8 @@ class RentCalculatorHandler
     month = params['month']&.first&.to_i || now.month
 
     begin
-      config = extract_config(year: year, month: month)
+      config = extract_config(year: year, month: month)  # Projection now handled automatically
       roommates = extract_roommates(year: year, month: month)
-
-      # Override electricity cost with projection if not set
-      if config[:el].to_i == 0
-        historical_el = get_historical_electricity_cost(year: year, month: month)
-        config[:el] = historical_el if historical_el > 0
-      end
 
       # Determine electricity data source for transparency
       data_source = determine_electricity_data_source(config, year, month)

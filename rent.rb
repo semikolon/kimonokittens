@@ -545,6 +545,64 @@ module RentCalculator
 
       "#{header}\n\n#{message_lines.join("\n")}"
     end
+
+    # Convenience method for handlers - fetches everything automatically
+    #
+    # @param year [Integer] Config period year (defaults to current)
+    # @param month [Integer] Config period month (defaults to current)
+    # @param repository [Object] Config repository (defaults to Persistence)
+    # @return [Hash] Complete rent breakdown
+    #
+    # @example Current month rent (zero params)
+    #   breakdown = RentCalculator.rent_breakdown_for_period
+    #   # Uses current year/month, fetches config + roommates automatically
+    #
+    # @example Historical rent (testing/debugging)
+    #   breakdown = RentCalculator.rent_breakdown_for_period(year: 2025, month: 9)
+    def rent_breakdown_for_period(
+      year: Time.now.year,
+      month: Time.now.month,
+      repository: Persistence.rent_configs
+    )
+      # Fetch config with automatic projection
+      config = RentConfig.for_period(
+        year: year,
+        month: month,
+        repository: repository,
+        with_projection: true
+      ).transform_keys(&:to_sym).transform_values(&:to_i)
+
+      # Fetch roommates automatically
+      roommates = extract_roommates_for_period(year, month)
+
+      # Calculate breakdown
+      rent_breakdown(roommates: roommates, config: config)
+    end
+
+    private
+
+    # Extract roommates for a specific period
+    # @param year [Integer] Config period year
+    # @param month [Integer] Config period month
+    # @return [Hash] Roommates hash for RentCalculator
+    def extract_roommates_for_period(year, month)
+      tenants = Persistence.tenants.all
+
+      raise "Cannot calculate rent - no tenants found in database" if tenants.empty?
+
+      period_start = Date.new(year, month, 1)
+      period_end = Date.new(year, month, Helpers.days_in_month(year, month))
+
+      tenants.each_with_object({}) do |tenant, hash|
+        days_stayed = tenant.days_stayed_in_period(period_start, period_end)
+        next if days_stayed <= 0
+
+        hash[tenant.name] = {
+          days: days_stayed,
+          room_adjustment: (tenant.room_adjustment || 0).to_i
+        }
+      end
+    end
   end
 end
 

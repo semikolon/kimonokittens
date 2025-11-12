@@ -91,11 +91,9 @@ class AdminContractsHandler
     end
 
     # Get config and calculate rent breakdown once
+    # Projection is handled automatically by rent_breakdown_for_period
     rent_breakdown = if roommates.any?
-      config_hash = RentConfig.for_period(year: year, month: month, repository: Persistence.rent_configs)
-        .transform_keys(&:to_sym)
-        .transform_values(&:to_i)  # Convert string values to integers for RentCalculator
-      breakdown = RentCalculator.rent_breakdown(roommates: roommates, config: config_hash)
+      breakdown = RentCalculator.rent_breakdown_for_period(year: year, month: month)
       puts "DEBUG admin_contracts: rent_breakdown = #{breakdown.inspect}"
       breakdown
     else

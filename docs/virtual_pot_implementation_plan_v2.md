@@ -1,25 +1,47 @@
 # Virtual Pot Implementation Plan v2 (Simplified)
 
 **Date**: October 28, 2025
-**Status**: Awaiting Final Approval
+**Status**: ✅ **IMPLEMENTED** (November 1, 2025)
+**Last Updated**: November 12, 2025
 
 ---
 
-## Core Problem
+## Implementation Status
 
-**Current System:**
-- Database stores actual invoice amounts (2,797 kr in October 2025)
-- Rent calculation uses those amounts directly
-- Creates spikes: 7,067 kr normal → 7,577 kr invoice months
+**✅ Core System Implemented** (November 1, 2025):
+- Monthly accruals (754 kr utilities + 83 kr gas) always used in calculations
+- Quarterly invoices (drift_rakning) stored in database but NEVER used in billing
+- Consistent rent calculations eliminate spikes
+- Gas baseline (83 kr/month = 500 kr/6 months) included in all calculations
+
+**🔄 Future Work** (not yet implemented):
+- Virtual pot dashboard display (lines 246-332)
+- Savings status tracker
+- Upcoming bill warnings
+
+**📊 Current Buffer Consideration** (November 12, 2025):
+- Current accrual: 837 kr/month (754 kr utilities + 83 kr gas)
+- User considering: Increase to 900 kr/month for peace of mind
+- Rationale: Extra buffer against unforeseen costs, simpler mental math
+- Decision: Pending
+
+---
+
+## Core Problem (Historical Context)
+
+**Old System** (pre-November 1, 2025):
+- Database stored actual invoice amounts (2,797 kr in October 2025)
+- Rent calculation used those amounts directly
+- Created spikes: 7,067 kr normal → 7,577 kr invoice months
 - Annual total collected: 15,177 kr
 - Actual invoice costs: 8,371 kr
 - Difference (6,806 kr) was historically spent on gas/household misc
 
-**Goal for 2026+:**
-- Advertise accurate average rent to new roommates
-- Maintain financial discipline (don't spend savings)
-- Track actual invoices for transparency
-- Provide early warning when bills approach
+**Goals Achieved**:
+- ✅ Advertise accurate average rent to new roommates (~7,100 kr/person)
+- ✅ Maintain financial discipline (consistent billing, no surprise spending)
+- ✅ Track actual invoices for transparency (stored in drift_rakning field)
+- 🔄 Provide early warning when bills approach (future: dashboard display)
 
 ---
 
@@ -450,18 +472,70 @@ interface RentData {
 
 ---
 
-## Approval Checklist
+## Key Clarifications (November 12, 2025 Session)
 
-Before implementation, Fredrik confirms:
+### drift_rakning Storage vs Usage
 
-- [ ] Rent calculation always uses 754 kr building ops (no invoice spikes)
-- [ ] Gas baseline 83 kr/month (500 kr / 6 months) acceptable for now
-- [ ] Two simple text lines in dashboard (no colors, no complexity)
-- [ ] Quarterly invoices kept in database (for records/projections)
-- [ ] No admin UI needed (terminal management continues)
-- [ ] No separate bank account tracking (virtual pot only)
-- [ ] Communicate change to roommates before December rent
-- [ ] Annual average rent (~7,100 kr) is TRUE average (no double-counting)
+**Critical Understanding Confirmed:**
+- `drift_rakning` field **IS stored** in RentConfig database table for each period when invoice arrives
+- Example: October 2025 actual invoice = 2,797 kr → stored in drift_rakning field
+- **NEVER used in rent calculations** - not even for that specific month
+- Purpose: Historical tracking, projection accuracy, transparency only
+
+**Why store if not used?**
+1. **Historical records** - Know what actual costs were
+2. **Projection improvement** - ElectricityProjector and QuarterlyInvoiceProjector use historical data
+3. **Transparency** - Can verify actual vs accrued amounts
+4. **Future dashboard** - Will show "Invoice arrived: 2,797 kr, Pot balance: 2,262 kr, Shortfall: 535 kr"
+
+### Timing: When to Start Saving?
+
+**Question:** Just paid quarterly invoice in October 2025 - should we immediately start saving 900 kr/month or wait?
+
+**Answer:** START IMMEDIATELY
+
+**Why:**
+- October 2025 invoice paid: 2,797 kr (actual)
+- System bills: 754 kr/month (current accrual)
+- Next invoice: January 2026 (3 months away)
+- Savings by Jan: 754 × 3 = 2,262 kr
+- Expected invoice: ~2,800 kr (projected)
+- **Shortfall: 538 kr** (would need extra transfer)
+
+**With 900 kr/month buffer:**
+- Savings by Jan: 900 × 3 = 2,700 kr
+- Expected invoice: ~2,800 kr
+- **Shortfall: 100 kr** (much safer)
+
+**Conclusion:** Virtual pot is NOT a one-time reserve you draw down - it's **continuous accrual** that builds up again immediately after each payment.
+
+### Average Rent Reality Check
+
+**Estimated ~7,100 kr/person** based on:
+- Base costs: 24,530 + 400 + 754 + 83 = 25,767 kr/month (constant)
+- Electricity: ~1,800 kr/month average (variable)
+- **Total: 27,567 kr/month**
+- **Per person (4 roommates): 6,892 kr**
+
+**Wait, that's lower than 7,100 kr!** The 7,100 kr figure may be:
+- Outdated from when electricity was more expensive
+- Including some buffer/rounding
+- Accounting for peak winter months (February electricity ~2,400 kr)
+
+**User task:** Investigate actual annual average (see section below)
+
+## Approval Checklist (November 1, 2025 - Completed)
+
+Fredrik confirmed before implementation:
+
+- [✅] Rent calculation always uses 754 kr building ops (no invoice spikes)
+- [✅] Gas baseline 83 kr/month (500 kr / 6 months) acceptable for now
+- [🔄] Two simple text lines in dashboard (future work, not yet implemented)
+- [✅] Quarterly invoices kept in database (for records/projections)
+- [✅] No admin UI needed (terminal management continues)
+- [✅] No separate bank account tracking (virtual pot only)
+- [🔄] Communicate change to roommates (ongoing as system used)
+- [❓] Annual average rent (~7,100 kr) - needs verification with actual data
 
 ---
 

@@ -79,9 +79,13 @@ class RentConfig
   # **AUTO-POPULATION**: Quarterly invoice projections (drift_rakning) are automatically
   # created for quarterly months (Apr/Jul/Oct) when no actual value exists.
   #
+  # **SMART ELECTRICITY PROJECTION**: When with_projection: true (default), automatically
+  # projects electricity costs when no actual bills exist yet (el: 0).
+  #
   # @param year [Integer] The configuration period year
   # @param month [Integer] The configuration period month (1-12)
   # @param repository [RentConfigRepository] Repository instance
+  # @param with_projection [Boolean] Enable smart electricity projection (default: true)
   #
   # @return [Hash] Configuration hash with 'key' and 'value' string fields
   #   (matches current API contract for backward compatibility)
@@ -95,7 +99,11 @@ class RentConfig
   #   config = RentConfig.for_period(year: 2026, month: 4, repository: repo)
   #   # Auto-creates drift_rakning: 3030 (projected) if not exists
   #   config['drift_rakning']  # => "3030" (growth-adjusted projection)
-  def self.for_period(year:, month:, repository:)
+  #
+  # @example Electricity projection disabled (debugging)
+  #   config = RentConfig.for_period(year: 2025, month: 11, repository: repo, with_projection: false)
+  #   config['el']  # => "0" (raw database value, no projection)
+  def self.for_period(year:, month:, repository:, with_projection: true)
     require_relative '../services/quarterly_invoice_projector'
 
     target_date = Date.new(year, month, 1)
@@ -136,6 +144,16 @@ class RentConfig
       default_value = DEFAULTS[key.to_sym] || 0
       value = config ? config.value : default_value.to_s
       result[key] = value
+    end
+
+    # Smart electricity projection (enabled by default)
+    # When no actual bills exist yet (el: 0), use ElectricityProjector
+    # to provide intelligent estimation based on historical data + seasonal patterns
+    if with_projection && result['el'].to_s == '0'
+      require_relative '../electricity_projector'
+      projector = ElectricityProjector.new(repo: repository)
+      projected_el = projector.project(config_year: year, config_month: month)
+      result['el'] = projected_el.to_s if projected_el > 0
     end
 
     result
