@@ -388,32 +388,23 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       }
     },
     shouldReconnect: () => true,
-    reconnectAttempts: 10,
-    reconnectInterval: (attemptNumber) => {
-      // Exponential backoff: 500ms, 1s, 2s, 4s, 8s, 16s, 30s (max)
-      const baseDelay = 500
-      const exponentialDelay = Math.min(baseDelay * Math.pow(2, attemptNumber), 30000)
-      // Add jitter to prevent thundering herd
-      const jitter = Math.random() * 1000
-      const delay = exponentialDelay + jitter
-      console.log(`WebSocket reconnection attempt ${attemptNumber + 1} in ${Math.round(delay)}ms`)
-      return delay
-    },
+    reconnectAttempts: Infinity, // Never give up reconnecting
+    reconnectInterval: 5000, // Constant 5s retry interval (not exponential)
     onReconnectStop: (numAttempts) => {
       console.log(`WebSocket reconnection stopped after ${numAttempts} attempts`)
     },
   })
 
-  // Self-healing: Reload page if disconnected for 5 minutes
+  // Self-healing: Reload page if disconnected for 1 minute (aggressive recovery)
   React.useEffect(() => {
     if (disconnectStartTime === null) return
 
     const checkInterval = setInterval(() => {
       const disconnectedDuration = Date.now() - disconnectStartTime
-      const fiveMinutes = 5 * 60 * 1000
+      const oneMinute = 60 * 1000
 
-      if (disconnectedDuration >= fiveMinutes) {
-        console.log('⚠️ WebSocket disconnected for 5+ minutes. Reloading page...')
+      if (disconnectedDuration >= oneMinute) {
+        console.log('⚠️ WebSocket disconnected for 1+ minute. Reloading page...')
         window.location.reload()
       }
     }, 10000) // Check every 10 seconds
