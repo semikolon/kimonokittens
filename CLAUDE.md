@@ -69,6 +69,9 @@ lsof -ti :3001 :5175
 - ✅ **If you need to check production state**: Use full paths or `cd` temporarily then immediately return to dev
 - **Why**: Easy to accidentally edit production files when in prod directory, breaking webhook deployments
 
+**⚠️ SYSTEMD ENVIRONMENTFILE REMOVED (Nov 12, 2025):**
+Systemd's `EnvironmentFile` doesn't support `${VAR}` expansion - it loads literal strings. Services now use `require 'dotenv/load'` exclusively for .env loading. This enables variable substitution (`ZIGNED_WEBHOOK_SECRET=${ZIGNED_WEBHOOK_SECRET_REAL}`) and prevents systemd from overriding dotenv values. **Never re-add EnvironmentFile to service files.**
+
 ### ✅ Process Management Commands (ONLY Use These)
 
 ```bash
