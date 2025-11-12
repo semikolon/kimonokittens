@@ -226,6 +226,70 @@ sanna = repo.find_by_id('cmhqe9enc0000wopipuxgc3kw')  # SUCCESS
 
 ---
 
+### 📊 DATABASE QUERY QUICK REFERENCE
+
+**Essential commands for querying the persistence layer without confusion.**
+
+#### Quick List All Contracts
+```bash
+cd /home/kimonokittens/Projects/kimonokittens && ruby -e "
+require 'dotenv/load'
+require_relative 'lib/persistence'
+
+RentDb.instance.class.db[:SignedContract].order(Sequel.desc(:createdAt)).each do |c|
+  tenant = Persistence.tenants.find_by_id(c[:tenantId])
+  created = c[:createdAt].strftime('%m-%d %H:%M')
+  puts \"#{created} | #{tenant&.name || 'Unknown'} | #{c[:caseId]} | test: #{c[:testMode]} | status: #{c[:status]}\"
+end
+"
+```
+
+#### Repository Access Patterns
+```ruby
+require 'dotenv/load'
+require_relative 'lib/persistence'
+
+# Get repositories
+contract_repo = Persistence.signed_contracts
+tenant_repo = Persistence.tenants
+
+# Find by case ID (Zigned's identifier)
+contract = contract_repo.find_by_case_id('cmhvx172q067g4cqks8wpyd5h')
+
+# Find by tenant
+contracts = contract_repo.find_by_tenant_id(tenant_id)
+
+# Raw Sequel queries (returns hashes with camelCase keys)
+all_contracts = RentDb.instance.class.db[:SignedContract]
+  .order(Sequel.desc(:createdAt))
+  .all
+
+# Filter by test mode
+prod_contracts = RentDb.instance.class.db[:SignedContract]
+  .where(testMode: false)
+  .all
+```
+
+#### Key Field Mapping
+- **Raw Sequel** (hashes): `:testMode`, `:caseId`, `:tenantId`, `:createdAt`
+- **Repository** (models): `.test_mode`, `.case_id`, `.tenant_id`, `.created_at`
+
+#### Available Repository Methods
+```ruby
+repo.find_by_id(id)                  # => SignedContract or nil
+repo.find_by_case_id(case_id)       # => SignedContract or nil
+repo.find_by_tenant_id(tenant_id)   # => Array<SignedContract>
+repo.find_completed                  # => Array (status: completed)
+repo.find_expiring_soon(days: 7)    # => Array (pending + expires soon)
+repo.statistics                      # => Hash with counts by status
+```
+
+**Important**: Always `require 'dotenv/load'` first to load DATABASE_URL from .env. Repository methods return domain models; raw Sequel returns hashes.
+
+**Created**: Nov 12, 2025 - After repeated confusion about correct query syntax.
+
+---
+
 ### 🧹 Cache Cleanup After Major Changes
 
 **CRITICAL: After major dependency changes (React version jumps, etc.), always clean build caches:**
