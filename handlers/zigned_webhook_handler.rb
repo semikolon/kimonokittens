@@ -7,10 +7,17 @@ require_relative '../lib/repositories/signed_contract_repository'
 require_relative '../lib/persistence'
 
 # Dedicated logger for Zigned webhook events
-# Logs to: /var/log/kimonokittens/zigned-webhooks.log
+# Production: /var/log/kimonokittens/zigned-webhooks.log
+# Development: log/zigned-webhooks.log (local project directory)
 # Daily rotation, 14 days retention (aligned with planned logrotate config)
+ZIGNED_LOG_PATH = if File.directory?('/var/log/kimonokittens')
+  '/var/log/kimonokittens/zigned-webhooks.log'
+else
+  File.join(__dir__, '..', 'log', 'zigned-webhooks.log')
+end
+
 ZIGNED_LOGGER = Logger.new(
-  '/var/log/kimonokittens/zigned-webhooks.log',
+  ZIGNED_LOG_PATH,
   'daily',
   14
 )
