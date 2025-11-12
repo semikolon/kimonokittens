@@ -275,10 +275,10 @@ export const MemberRow: React.FC<MemberRowProps> = ({
           <div
             className={`
               px-4 py-3 rounded-lg shadow-lg flex items-center gap-2
-              ${toast.type === 'success'
-                ? 'bg-green-600 text-white'
+            ${toast.type === 'success'
+                ? 'bg-cyan-600 text-white'
                 : 'bg-red-600 text-white'
-              }
+            }
             `}
           >
             {toast.type === 'success' ? (

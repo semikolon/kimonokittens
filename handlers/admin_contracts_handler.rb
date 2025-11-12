@@ -433,7 +433,7 @@ class AdminContractsHandler
     # Check if tenant already has a contract
     contract_repo = Persistence.signed_contracts
     existing = contract_repo.find_by_tenant_id(tenant_id)
-    if existing
+    if existing.any?
       return [409, { 'Content-Type' => 'application/json' }, [Oj.dump({
         error: 'Tenant already has a contract'
       })]]
