@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck } from 'lucide-react'
 import { ContractList } from '../components/admin/ContractList'
+import { TenantForm } from '../components/admin/TenantForm'
 import { useContracts } from '../hooks/useContracts'
 import { useKeyboardNav } from '../hooks/useKeyboardNav'
 
@@ -122,12 +123,22 @@ export const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <Widget title="Kontrakt" horsemenFont={true} accent={true}>
-      <ContractList
-        contracts={displayContracts}
-        filterActive={filterActive}
-        onFilterToggle={() => setFilterActive(!filterActive)}
-      />
-    </Widget>
+    <>
+      <Widget title="Kontrakt" horsemenFont={true} accent={true}>
+        <ContractList
+          contracts={displayContracts}
+          filterActive={filterActive}
+          onFilterToggle={() => setFilterActive(!filterActive)}
+        />
+      </Widget>
+
+      {/* Tenant creation form - darker style matching electricity anomaly widget */}
+      <div className="mt-6 backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md border border-purple-900/10 p-8">
+        <h3 className="text-2xl font-medium text-purple-100 mb-6 tracking-wide uppercase font-[Horsemen]">
+          Lägg till hyresgäst
+        </h3>
+        <TenantForm onSuccess={refreshContracts} />
+      </div>
+    </>
   )
 }
