@@ -68,10 +68,11 @@ class RentConfigRepository < BaseRepository
       .where(key: keys)
       .where { period <= before_period }
       .group(:key)
+      .as(:t1)
 
     # Join with original table to get full rows for those max periods
     rows = dataset
-      .join(max_periods, key: :key, period: :max_period)
+      .join(max_periods, {Sequel[:RentConfig][:key] => Sequel[:t1][:key], Sequel[:RentConfig][:period] => Sequel[:t1][:max_period]})
       .all
 
     # Build hash of key => config

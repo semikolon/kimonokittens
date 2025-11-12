@@ -80,8 +80,12 @@ class AdminContractsHandler
     rent_breakdown = if roommates.any?
       config_hash = RentConfig.for_period(year: year, month: month, repository: Persistence.rent_configs)
         .transform_keys(&:to_sym)
-      RentCalculator.rent_breakdown(roommates: roommates, config: config_hash)
+        .transform_values(&:to_i)  # Convert string values to integers for RentCalculator
+      breakdown = RentCalculator.rent_breakdown(roommates: roommates, config: config_hash)
+      puts "DEBUG admin_contracts: rent_breakdown = #{breakdown.inspect}"
+      breakdown
     else
+      puts "DEBUG admin_contracts: No active roommates for period #{year}-#{month}"
       {}
     end
 
@@ -175,7 +179,7 @@ class AdminContractsHandler
         tenant_room_adjustment: tenant.room_adjustment,
         tenant_start_date: tenant.start_date,
         tenant_departure_date: tenant.departure_date,
-        current_rent: rent_breakdown[tenant.name] || 0,
+        current_rent: rent_breakdown.dig("rents", tenant.name) || 0,
         status: tenant.status || 'active',
         created_at: tenant.created_at
       }
