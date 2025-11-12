@@ -219,7 +219,24 @@ export const MemberRow: React.FC<MemberRowProps> = ({
       {isExpanded && (
         <div className="border-t border-purple-500/20">
           {isContract ? (
-            <ContractDetails contract={member as SignedContract} />
+            <>
+              <ContractDetails contract={member as SignedContract} />
+              {/* Also show tenant details for contracts */}
+              <TenantDetails tenant={{
+                type: 'tenant',
+                id: (member as SignedContract).tenant_id,
+                tenant_id: (member as SignedContract).tenant_id,
+                tenant_name: (member as SignedContract).tenant_name,
+                tenant_email: (member as SignedContract).tenant_email,
+                tenant_room: (member as SignedContract).tenant_room,
+                tenant_room_adjustment: (member as SignedContract).tenant_room_adjustment,
+                tenant_start_date: (member as SignedContract).tenant_start_date,
+                tenant_departure_date: (member as SignedContract).tenant_departure_date,
+                current_rent: (member as SignedContract).current_rent,
+                status: 'active',
+                created_at: (member as SignedContract).created_at
+              }} />
+            </>
           ) : (
             <TenantDetails tenant={member as TenantMember} />
           )}

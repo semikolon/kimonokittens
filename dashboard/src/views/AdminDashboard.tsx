@@ -19,6 +19,7 @@ export interface SignedContract {
   tenant_room_adjustment?: number // Room adjustment in kr
   tenant_start_date?: Date     // Move-in date
   tenant_departure_date?: Date // Move-out date (nullable)
+  current_rent?: number        // Current rent for tenant
   case_id: string              // Zigned agreement ID
   pdf_url: string              // Generated PDF path
   status: 'pending' | 'landlord_signed' | 'tenant_signed' | 'completed' | 'expired' | 'cancelled' | 'failed'
