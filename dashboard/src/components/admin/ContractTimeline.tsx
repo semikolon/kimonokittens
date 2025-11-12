@@ -13,7 +13,7 @@ interface TimelineEvent {
 }
 
 export const ContractTimeline: React.FC<ContractTimelineProps> = ({ contract }) => {
-  // Build timeline from contract data
+  // Build timeline from contract data (includes participant engagement events)
   const events: TimelineEvent[] = []
 
   // Contract generated
