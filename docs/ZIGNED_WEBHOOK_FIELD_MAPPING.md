@@ -339,9 +339,96 @@ Without this fallback, signing URLs appeared as empty strings in contract creati
 
 ---
 
+## Admin Action APIs (POST/DELETE Endpoints)
+
+**Date Added**: 2025-11-12
+**Source**: Direct API testing for admin dashboard action buttons
+
+### 1. Send Reminder API ✅
+
+**Endpoint**: `POST /agreements/{agreement_id}/reminders`
+**Purpose**: Send reminder emails to unsigned participants
+**Authentication**: OAuth2 Bearer token
+
+**When to use**:
+- Contract status is NOT completed, cancelled, or expired
+- Want to nudge unsigned participants
+
+**Response**:
+```json
+{
+  "data": [
+    {
+      "status": "sent",
+      "participant": {
+        "id": "participant_id",
+        "name": "Participant Name",
+        "email": "email@example.com"
+      }
+    }
+  ]
+}
+```
+
+**Special cases**:
+- Returns empty array `[]` if all participants already signed
+- Returns reminders only for unsigned participants
+- Zigned controls reminder frequency/throttling internally
+
+**Test result (Nov 12, 2025)**:
+- ✅ API accepts completed agreements
+- ✅ Returns empty array when no participants need reminding
+- ✅ No error for "already signed" - graceful empty response
+
+---
+
+### 2. Cancel Agreement API ✅
+
+**Endpoint**: `DELETE /agreements/{agreement_id}`
+**Purpose**: Cancel/delete an agreement (irreversible)
+**Authentication**: OAuth2 Bearer token
+
+**When to use**:
+- Contract status is "open" or "draft" ONLY
+- Cannot cancel fulfilled/completed agreements
+
+**Response**:
+```json
+{
+  "version": "1.0",
+  "result_type": "deleted",
+  "resource_type": "agreement"
+}
+```
+
+**Error response** (for non-cancellable states):
+```json
+{
+  "type": "input_validation_error",
+  "code": 400,
+  "message": "status: You can only edit agreements which are in open or draft status"
+}
+```
+
+**Business rules** (Nov 12, 2025 testing):
+- ❌ Cannot cancel "fulfilled" agreements (returns 400 error)
+- ❌ Cannot cancel agreements that have been signed by anyone
+- ✅ Can cancel "pending" agreements that are awaiting signatures
+- ✅ Can cancel "draft" agreements before activation
+
+**Implementation notes**:
+- Check `result_type == 'deleted'` for success (not `status == 'cancelled'`)
+- Update local database status to 'cancelled' on successful deletion
+- Show confirmation dialog before calling (irreversible action)
+
+**Common mistake**: Originally tried `POST /agreements/{id}/lifecycle/cancel` - this endpoint doesn't exist! Must use `DELETE /agreements/{id}`.
+
+---
+
 ## Recommendations
 
 1. **Add new handlers** for identity_enforcement and pdf_verification events
 2. **Expand participant record** to store signing_url and signature_method
 3. **Wait for email events** - haven't received any real payloads yet to reverse-engineer
 4. **Document all findings** in this file as we discover more webhook quirks
+5. **Admin action validation**: Always check contract status before attempting reminder/cancel actions

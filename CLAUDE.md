@@ -326,6 +326,9 @@ Handlers → Services → Domain Models + Repositories → Database
     Persistence (centralized access)
 ```
 
+### Single Source of Truth (SSoT)
+**Tenant is the master data source** - all handlers fetch tenant data (name, startDate, departureDate, etc.) live from `Tenant` table via repository at request time. No duplication, no cache. Admin contracts handler enriches contract data with tenant fields on-the-fly, ensuring changes to tenant records immediately reflect in all views.
+
 ### Quick Reference
 
 **Access repositories:**

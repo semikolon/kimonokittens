@@ -29,7 +29,9 @@ export const useContracts = () => {
         updated_at: new Date(c.updated_at),
         landlord_signed_at: c.landlord_signed_at ? new Date(c.landlord_signed_at) : null,
         tenant_signed_at: c.tenant_signed_at ? new Date(c.tenant_signed_at) : null,
-        completed_at: c.completed_at ? new Date(c.completed_at) : null
+        completed_at: c.completed_at ? new Date(c.completed_at) : null,
+        tenant_start_date: c.tenant_start_date ? new Date(c.tenant_start_date) : null,
+        tenant_departure_date: c.tenant_departure_date ? new Date(c.tenant_departure_date) : null
       }))
 
       setContracts(contractsWithDates)

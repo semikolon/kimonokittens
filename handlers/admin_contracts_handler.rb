@@ -22,7 +22,24 @@ class AdminContractsHandler
         method_not_allowed
       end
     else
-      not_found
+      # Handle contract-specific actions: /contracts/:id/action
+      if req.path_info =~ %r{^/contracts/([a-z0-9\-]+)/resend-email$}
+        contract_id = $1
+        if req.post?
+          resend_email(req, contract_id)
+        else
+          method_not_allowed
+        end
+      elsif req.path_info =~ %r{^/contracts/([a-z0-9\-]+)/cancel$}
+        contract_id = $1
+        if req.post?
+          cancel_contract(req, contract_id)
+        else
+          method_not_allowed
+        end
+      else
+        not_found
+      end
     end
   end
 
@@ -51,6 +68,8 @@ class AdminContractsHandler
         id: contract[:id],
         tenant_id: contract[:tenantId],
         tenant_name: tenant&.name || 'Unknown',
+        tenant_start_date: tenant&.start_date,
+        tenant_departure_date: tenant&.departure_date,
         case_id: contract[:caseId],
         pdf_url: contract[:pdfUrl],
         status: contract[:status],
@@ -128,6 +147,116 @@ class AdminContractsHandler
   rescue => e
     puts "❌ Error fetching statistics: #{e.message}"
     internal_error(e.message)
+  end
+
+  def resend_email(req, contract_id)
+    # Find contract
+    contract_repo = Persistence.signed_contracts
+    contract = contract_repo.find_by_id(contract_id)
+
+    unless contract
+      return [404, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Contract not found' })]]
+    end
+
+    # Check if contract is in a state where reminders make sense
+    if contract.status == 'completed'
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Cannot send reminder for completed contract' })]]
+    end
+
+    if contract.status == 'cancelled'
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Cannot send reminder for cancelled contract' })]]
+    end
+
+    if contract.status == 'expired'
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Cannot send reminder for expired contract' })]]
+    end
+
+    # Send reminder via Zigned API
+    require_relative '../lib/zigned_client_v3'
+    client = ZignedClientV3.new(
+      client_id: ENV['ZIGNED_CLIENT_ID'],
+      client_secret: ENV['ZIGNED_API_KEY'],
+      test_mode: contract.test_mode
+    )
+
+    begin
+      result = client.send_reminder(contract.case_id)
+
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({
+          success: true,
+          message: 'Reminder sent successfully',
+          reminders: result
+        }, mode: :compat)]
+      ]
+    rescue => e
+      puts "❌ Error sending reminder: #{e.message}"
+      [
+        500,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ error: "Failed to send reminder: #{e.message}" })]
+      ]
+    end
+  end
+
+  def cancel_contract(req, contract_id)
+    # Find contract
+    contract_repo = Persistence.signed_contracts
+    contract = contract_repo.find_by_id(contract_id)
+
+    unless contract
+      return [404, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Contract not found' })]]
+    end
+
+    # Check if contract is in a state where cancellation makes sense
+    if contract.status == 'completed'
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Cannot cancel completed contract' })]]
+    end
+
+    if contract.status == 'cancelled'
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Contract already cancelled' })]]
+    end
+
+    # Cancel via Zigned API
+    require_relative '../lib/zigned_client_v3'
+    client = ZignedClientV3.new(
+      client_id: ENV['ZIGNED_CLIENT_ID'],
+      client_secret: ENV['ZIGNED_API_KEY'],
+      test_mode: contract.test_mode
+    )
+
+    begin
+      success = client.cancel_agreement(contract.case_id)
+
+      if success
+        # Update contract status in database
+        contract_repo.update(contract_id, { status: 'cancelled' })
+
+        [
+          200,
+          { 'Content-Type' => 'application/json' },
+          [Oj.dump({
+            success: true,
+            message: 'Contract cancelled successfully'
+          }, mode: :compat)]
+        ]
+      else
+        [
+          500,
+          { 'Content-Type' => 'application/json' },
+          [Oj.dump({ error: 'Failed to cancel contract' })]
+        ]
+      end
+    rescue => e
+      puts "❌ Error cancelling contract: #{e.message}"
+      [
+        500,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ error: "Failed to cancel contract: #{e.message}" })]
+      ]
+    end
   end
 
   def not_found

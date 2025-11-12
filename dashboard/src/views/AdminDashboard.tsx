@@ -10,6 +10,9 @@ import { useKeyboardNav } from '../hooks/useKeyboardNav'
 export interface SignedContract {
   id: string                    // UUID
   tenant_id: string            // Foreign key to tenant
+  tenant_name: string          // Tenant full name
+  tenant_start_date?: Date     // Move-in date
+  tenant_departure_date?: Date // Move-out date (nullable)
   case_id: string              // Zigned agreement ID
   pdf_url: string              // Generated PDF path
   status: 'pending' | 'landlord_signed' | 'tenant_signed' | 'completed' | 'expired' | 'cancelled' | 'failed'

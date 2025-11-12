@@ -345,20 +345,37 @@ class ZignedClientV3
     output_path
   end
 
+  # Send reminder to unsigned participants
+  #
+  # @param agreement_id [String] The agreement ID
+  #
+  # @return [Hash] Response with reminder status and participant info
+  def send_reminder(agreement_id)
+    response = self.class.post(
+      "/agreements/#{agreement_id}/reminders",
+      headers: default_headers
+    )
+
+    handle_response(response) do |data|
+      # Returns array of reminders with status and participant info
+      data['data']
+    end
+  end
+
   # Cancel a pending agreement
   #
   # @param agreement_id [String] The agreement ID
   #
   # @return [Boolean] True if cancelled successfully
   def cancel_agreement(agreement_id)
-    response = self.class.post(
-      "/agreements/#{agreement_id}/lifecycle/cancel",
+    response = self.class.delete(
+      "/agreements/#{agreement_id}",
       headers: default_headers
     )
 
     handle_response(response) do |data|
-      agreement_data = data['data']
-      agreement_data['status'] == 'cancelled'
+      # DELETE returns result_type: "deleted"
+      data['result_type'] == 'deleted'
     end
   end
 

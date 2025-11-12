@@ -59,6 +59,32 @@ const getStatusLabel = (status: string) => {
   return labels[status as keyof typeof labels] || 'Väntar'
 }
 
+// Format date range for tenant stay
+const formatDateRange = (startDate?: Date, departureDate?: Date): string => {
+  if (!startDate) return ''
+
+  const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+
+  const formatDate = (date: Date, includeYear: boolean = false) => {
+    const day = date.getDate()
+    const month = monthNames[date.getMonth()]
+    const year = includeYear ? ` ${date.getFullYear()}` : ''
+    return `${day} ${month}${year}`
+  }
+
+  const startStr = formatDate(startDate)
+
+  if (!departureDate) {
+    return `${startStr} → ?`
+  }
+
+  // Include year if departure year is different from start year
+  const includeYear = departureDate.getFullYear() !== startDate.getFullYear()
+  const endStr = formatDate(departureDate, includeYear)
+
+  return `${startStr} → ${endStr}`
+}
+
 export const ContractRow: React.FC<ContractRowProps> = ({
   contract,
   isExpanded,
@@ -66,10 +92,7 @@ export const ContractRow: React.FC<ContractRowProps> = ({
   onToggle,
   onSelect
 }) => {
-  const formattedDate = new Date(contract.created_at).toLocaleDateString('sv-SE', {
-    month: 'long',
-    day: 'numeric'
-  })
+  const dateRange = formatDateRange(contract.tenant_start_date, contract.tenant_departure_date)
 
   return (
     <div
@@ -105,11 +128,13 @@ export const ContractRow: React.FC<ContractRowProps> = ({
         <div className="flex-1 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span className="text-purple-100 font-medium">
-              {contract.tenant_id}
+              {contract.tenant_name}
             </span>
-            <span className="text-purple-300/60 text-sm">
-              {formattedDate}
-            </span>
+            {dateRange && (
+              <span className="text-purple-300/60 text-sm">
+                {dateRange}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-3">

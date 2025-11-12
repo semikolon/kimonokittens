@@ -280,21 +280,29 @@ const DataContext = createContext<{
 // Provider component
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(dashboardReducer, initialState)
-  
+  const [disconnectStartTime, setDisconnectStartTime] = React.useState<number | null>(null)
+
   const socketUrl = '/dashboard/ws'
 
   const { lastMessage, connectionStatus, readyState } = useWebSocket(socketUrl, {
     onOpen: () => {
       console.log('Dashboard WebSocket connection established.')
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'open' })
+      setDisconnectStartTime(null) // Clear disconnect timer
     },
     onClose: () => {
       console.log('Dashboard WebSocket connection closed.')
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'closed' })
+      if (disconnectStartTime === null) {
+        setDisconnectStartTime(Date.now()) // Start disconnect timer
+      }
     },
     onError: (event) => {
       console.error('Dashboard WebSocket error:', event)
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'closed' })
+      if (disconnectStartTime === null) {
+        setDisconnectStartTime(Date.now()) // Start disconnect timer
+      }
     },
     shouldReconnect: () => true,
     reconnectAttempts: 10,
@@ -312,6 +320,23 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       console.log(`WebSocket reconnection stopped after ${numAttempts} attempts`)
     },
   })
+
+  // Self-healing: Reload page if disconnected for 5 minutes
+  React.useEffect(() => {
+    if (disconnectStartTime === null) return
+
+    const checkInterval = setInterval(() => {
+      const disconnectedDuration = Date.now() - disconnectStartTime
+      const fiveMinutes = 5 * 60 * 1000
+
+      if (disconnectedDuration >= fiveMinutes) {
+        console.log('⚠️ WebSocket disconnected for 5+ minutes. Reloading page...')
+        window.location.reload()
+      }
+    }, 10000) // Check every 10 seconds
+
+    return () => clearInterval(checkInterval)
+  }, [disconnectStartTime])
 
   // Handle incoming WebSocket messages
   useEffect(() => {
