@@ -17,37 +17,57 @@ data[:tenants].each do |tenant_data|
   existing = repo.find_by_id(tenant_data[:id])
 
   if existing
-    puts "⚠️  Tenant already exists: #{tenant_data[:name]} (#{tenant_data[:id]})"
-    puts "   Skipping import. Use update script if changes needed."
-    next
-  end
+    # Update existing tenant
+    puts "📝 Updating existing tenant: #{tenant_data[:name]}"
+    puts "   Before:"
+    puts "     Phone: #{existing.phone || '[EMPTY]'}"
+    puts "     Personnummer: #{existing.personnummer || '[EMPTY]'}"
+    puts "     Deposits: #{existing.deposit || 0} + #{existing.furnishing_deposit || 0} kr"
 
-  # Create tenant
-  tenant = Tenant.new(
-    id: tenant_data[:id],
-    name: tenant_data[:name],
-    email: tenant_data[:email],
-    personnummer: tenant_data[:personnummer],
-    phone: tenant_data[:phone],
-    deposit: tenant_data[:deposit],
-    furnishing_deposit: tenant_data[:furnishing_deposit],
-    start_date: tenant_data[:start_date] ? Date.parse(tenant_data[:start_date]) : nil,
-    room_adjustment: tenant_data[:room_adjustment]
-  )
+    # Update fields
+    existing.phone = tenant_data[:phone]
+    existing.personnummer = tenant_data[:personnummer]
+    existing.deposit = tenant_data[:deposit]
+    existing.furnishing_deposit = tenant_data[:furnishing_deposit]
 
-  begin
-    created = repo.create(tenant)
-    puts "✅ Imported: #{created.name}"
-    puts "   ID: #{created.id}"
-    puts "   Email: #{created.email}"
-    puts "   Phone: #{created.phone}"
-    puts "   Personnummer: #{created.personnummer}"
-    puts "   Deposit: #{created.deposit} kr"
-    puts "   Furnishing: #{created.furnishing_deposit} kr"
-    puts "   Start: #{created.start_date}"
-  rescue => e
-    puts "❌ Failed to import: #{tenant_data[:name]}"
-    puts "   Error: #{e.message}"
+    begin
+      updated = repo.update(existing)
+      puts "   After:"
+      puts "     Phone: #{updated.phone}"
+      puts "     Personnummer: #{updated.personnummer}"
+      puts "     Deposits: #{updated.deposit} + #{updated.furnishing_deposit} kr"
+      puts "   ✅ Updated successfully"
+    rescue => e
+      puts "   ❌ Update failed: #{e.message}"
+    end
+  else
+    # Create new tenant
+    tenant = Tenant.new(
+      id: tenant_data[:id],
+      name: tenant_data[:name],
+      email: tenant_data[:email],
+      personnummer: tenant_data[:personnummer],
+      phone: tenant_data[:phone],
+      deposit: tenant_data[:deposit],
+      furnishing_deposit: tenant_data[:furnishing_deposit],
+      start_date: tenant_data[:start_date] ? Date.parse(tenant_data[:start_date]) : nil,
+      room_adjustment: tenant_data[:room_adjustment]
+    )
+
+    begin
+      created = repo.create(tenant)
+      puts "✅ Created: #{created.name}"
+      puts "   ID: #{created.id}"
+      puts "   Email: #{created.email}"
+      puts "   Phone: #{created.phone}"
+      puts "   Personnummer: #{created.personnummer}"
+      puts "   Deposit: #{created.deposit} kr"
+      puts "   Furnishing: #{created.furnishing_deposit} kr"
+      puts "   Start: #{created.start_date}"
+    rescue => e
+      puts "❌ Failed to create: #{tenant_data[:name]}"
+      puts "   Error: #{e.message}"
+    end
   end
 end
 
