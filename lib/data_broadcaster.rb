@@ -87,6 +87,23 @@ class DataBroadcaster
     puts "DataBroadcaster: contract_update broadcast (#{event_type})"
   end
 
+  # Broadcast contract list changed event (for tenant/contract modifications)
+  def broadcast_contract_list_changed
+    message = {
+      type: 'contract_list_changed',
+      payload: {
+        timestamp: Time.now.to_i
+      }
+    }.to_json
+    @pubsub.publish(message)
+    puts "DataBroadcaster: contract_list_changed broadcast"
+  end
+
+  # Class method to access global broadcaster instance
+  def self.broadcast_contract_list_changed
+    $data_broadcaster&.broadcast_contract_list_changed
+  end
+
   private
 
   def periodic(interval_sec, &block)
