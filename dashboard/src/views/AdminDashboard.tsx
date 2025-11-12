@@ -47,6 +47,7 @@ export interface TenantMember {
   tenant_room_adjustment?: number
   tenant_start_date?: Date
   tenant_departure_date?: Date
+  current_rent?: number
   status: string
   created_at: Date
 }

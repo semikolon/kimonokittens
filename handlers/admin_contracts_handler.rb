@@ -3,6 +3,8 @@
 class AdminContractsHandler
   def initialize
     require_relative '../lib/persistence'
+    require_relative '../rent'
+    require_relative '../lib/models/rent_config'
   end
 
   def call(env)
@@ -53,6 +55,35 @@ class AdminContractsHandler
 
     # Get all tenants
     all_tenants = tenant_repo.all
+
+    # Calculate current rent ONCE for all active tenants (optimization: 10 queries instead of 80)
+    now = Time.now
+    year = now.year
+    month = now.month
+
+    # Build roommates hash for current period
+    period_start = Date.new(year, month, 1)
+    period_end = Date.new(year, month, RentCalculator::Helpers.days_in_month(year, month))
+
+    roommates = {}
+    all_tenants.each do |tenant|
+      days_stayed = tenant.days_stayed_in_period(period_start, period_end)
+      next if days_stayed <= 0
+
+      roommates[tenant.name] = {
+        days: days_stayed,
+        room_adjustment: (tenant.room_adjustment || 0).to_i
+      }
+    end
+
+    # Get config and calculate rent breakdown once
+    rent_breakdown = if roommates.any?
+      config_hash = RentConfig.for_period(year: year, month: month, repository: Persistence.rent_configs)
+        .transform_keys(&:to_sym)
+      RentCalculator.rent_breakdown(roommates: roommates, config: config_hash)
+    else
+      {}
+    end
 
     # Get all contracts ordered by creation date (newest first)
     contracts = RentDb.instance.class.db[:SignedContract]
@@ -144,6 +175,7 @@ class AdminContractsHandler
         tenant_room_adjustment: tenant.room_adjustment,
         tenant_start_date: tenant.start_date,
         tenant_departure_date: tenant.departure_date,
+        current_rent: rent_breakdown[tenant.name] || 0,
         status: tenant.status || 'active',
         created_at: tenant.created_at
       }

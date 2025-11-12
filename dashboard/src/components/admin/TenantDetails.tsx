@@ -8,9 +8,7 @@ interface TenantDetailsProps {
 }
 
 export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant }) => {
-  // TODO: Fetch actual current rent from backend
-  // For now showing placeholder - will be implemented with API endpoint
-  const currentRent = 7045 // Placeholder
+  const currentRent = tenant.current_rent || 0
   const roomAdjustment = tenant.tenant_room_adjustment || 0
 
   return (
