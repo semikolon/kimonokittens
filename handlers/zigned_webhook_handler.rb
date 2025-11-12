@@ -477,7 +477,7 @@ class ZignedWebhookHandler
     created_at = data['created_at']
 
     # Extract email from description
-    email = description[/to ([^\s]+)/, 1]
+    email = description[/delivered to ([^\s]+)/, 1]
 
     ZIGNED_LOGGER.info "📧 Email invitation delivered: #{agreement_id}"
     ZIGNED_LOGGER.info "   To: #{email}"
@@ -526,7 +526,7 @@ class ZignedWebhookHandler
     agreement_id = data['agreement']
     description = data['description']  # "Signed document successfully delivered to branstrom@gmail.com"
 
-    email = description[/to ([^\s]+)/, 1]
+    email = description[/delivered to ([^\s]+)/, 1]
 
     ZIGNED_LOGGER.info "📨 Signed document email delivered: #{agreement_id}"
     ZIGNED_LOGGER.info "   To: #{email}"
@@ -594,7 +594,7 @@ class ZignedWebhookHandler
     created_at = data['created_at']
 
     # Extract email from description
-    email = description[/to ([^\s]+)/, 1] if description
+    email = description[/delivered to ([^\s]+)/, 1] if description
 
     ZIGNED_LOGGER.error "❌ Email delivery failed: #{agreement_id}"
     ZIGNED_LOGGER.info "   To: #{email}" if email
