@@ -1,11 +1,11 @@
 // ContractList - List with filter toggle and keyboard navigation
 import React, { useState } from 'react'
 import { Filter } from 'lucide-react'
-import { ContractRow } from './ContractRow'
-import type { SignedContract } from '../../views/AdminDashboard'
+import { MemberRow } from './MemberRow'
+import type { Member } from '../../views/AdminDashboard'
 
 interface ContractListProps {
-  contracts: SignedContract[]
+  contracts: Member[]  // Now accepts both contracts and tenants
   filterActive: boolean
   onFilterToggle: () => void
 }
@@ -47,24 +47,27 @@ export const ContractList: React.FC<ContractListProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedId, expandedId, contracts])
 
-  // Calculate contract statistics
-  const completedCount = contracts.filter(c => c.status === 'completed').length
-  const pendingCount = contracts.filter(c => c.status === 'pending' || c.status === 'landlord_signed' || c.status === 'tenant_signed').length
+  // Calculate member statistics
+  const contractMembers = contracts.filter(m => m.type === 'contract')
+  const tenantMembers = contracts.filter(m => m.type === 'tenant')
+  const completedCount = contractMembers.filter(c => c.type === 'contract' && c.status === 'completed').length
+  const pendingCount = contractMembers.filter(c => c.type === 'contract' && (c.status === 'pending' || c.status === 'landlord_signed' || c.status === 'tenant_signed')).length
 
   // Generate summary message
   const getSummary = () => {
-    if (completedCount === 0 && pendingCount === 0) {
-      return 'Inga kontrakt'
-    } else if (completedCount === 0 && pendingCount === 1) {
-      return 'Inväntar signatur för ett kontrakt'
-    } else if (completedCount === 0) {
-      return `Inväntar signaturer för ${pendingCount} st`
-    } else if (pendingCount === 0) {
-      return `${completedCount} ${completedCount === 1 ? 'signerat kontrakt' : 'signerade kontrakt'}`
-    } else if (pendingCount === 1) {
-      return `${completedCount} ${completedCount === 1 ? 'signerat kontrakt' : 'signerade kontrakt'} - inväntar signatur för ett`
+    const totalMembers = contracts.length
+    const withoutContracts = tenantMembers.length
+
+    if (totalMembers === 0) {
+      return 'Inga medlemmar'
+    } else if (withoutContracts === 0 && completedCount === contractMembers.length) {
+      return `${totalMembers} ${totalMembers === 1 ? 'medlem' : 'medlemmar'} - alla har signerade kontrakt`
+    } else if (withoutContracts > 0) {
+      return `${totalMembers} ${totalMembers === 1 ? 'medlem' : 'medlemmar'} - ${withoutContracts} utan kontrakt`
+    } else if (pendingCount > 0) {
+      return `${totalMembers} ${totalMembers === 1 ? 'medlem' : 'medlemmar'} - ${pendingCount} inväntar signatur`
     } else {
-      return `${completedCount} ${completedCount === 1 ? 'signerat kontrakt' : 'signerade kontrakt'} - inväntar signaturer för ${pendingCount} st`
+      return `${totalMembers} ${totalMembers === 1 ? 'medlem' : 'medlemmar'}`
     }
   }
 
@@ -92,16 +95,16 @@ export const ContractList: React.FC<ContractListProps> = ({
         </button>
       </div>
 
-      {/* Contract rows */}
+      {/* Member rows */}
       <div className="space-y-2">
-        {contracts.map((contract) => (
-          <ContractRow
-            key={contract.id}
-            contract={contract}
-            isExpanded={expandedId === contract.id}
-            isSelected={selectedId === contract.id}
-            onToggle={() => setExpandedId(expandedId === contract.id ? null : contract.id)}
-            onSelect={() => setSelectedId(contract.id)}
+        {contracts.map((member) => (
+          <MemberRow
+            key={member.id}
+            member={member}
+            isExpanded={expandedId === member.id}
+            isSelected={selectedId === member.id}
+            onToggle={() => setExpandedId(expandedId === member.id ? null : member.id)}
+            onSelect={() => setSelectedId(member.id)}
           />
         ))}
       </div>

@@ -66,7 +66,7 @@ CREATE UNIQUE INDEX "Tenant_facebookId_key" ON "Tenant"("facebookId");
 CREATE UNIQUE INDEX "Tenant_email_key" ON "Tenant"("email");
 
 -- CreateIndex
-CREATE INDEX "rentconfig_key_period_desc_idx" ON "RentConfig"("key", "period" DESC);
+CREATE INDEX "RentConfig_key_period_idx" ON "RentConfig"("key", "period" DESC);
 
 -- CreateIndex
 CREATE UNIQUE INDEX "rentconfig_key_period_month_uniq" ON "RentConfig"("key", "period_month");

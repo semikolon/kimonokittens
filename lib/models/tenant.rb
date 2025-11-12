@@ -26,8 +26,8 @@ require_relative 'period'
 #   # => 16 days (from March 16 to March 31, inclusive)
 class Tenant
   attr_reader :id, :name, :email, :facebook_id, :avatar_url,
-              :room_adjustment, :start_date, :departure_date,
-              :created_at, :updated_at,
+              :room_adjustment, :room, :start_date, :departure_date,
+              :status, :created_at, :updated_at,
               # Contract fields:
               :personnummer, :phone,
               :deposit, :furnishing_deposit
@@ -36,8 +36,8 @@ class Tenant
   attr_writer :personnummer, :phone, :deposit, :furnishing_deposit
 
   def initialize(id: nil, name:, email:, facebook_id: nil, avatar_url: nil,
-                 room_adjustment: nil, start_date: nil, departure_date: nil,
-                 created_at: nil, updated_at: nil,
+                 room_adjustment: nil, room: nil, start_date: nil, departure_date: nil,
+                 status: nil, created_at: nil, updated_at: nil,
                  # Contract fields:
                  personnummer: nil, phone: nil,
                  deposit: nil, furnishing_deposit: nil)
@@ -47,8 +47,10 @@ class Tenant
     @facebook_id = facebook_id
     @avatar_url = avatar_url
     @room_adjustment = room_adjustment.to_f if room_adjustment
+    @room = room
     @start_date = parse_date(start_date)
     @departure_date = parse_date(departure_date)
+    @status = status || 'active'
     @created_at = created_at
     @updated_at = updated_at
     # Contract fields
@@ -184,8 +186,10 @@ class Tenant
       facebookId: facebook_id,
       avatarUrl: avatar_url,
       roomAdjustment: room_adjustment,
+      room: room,
       startDate: start_date,
       departureDate: departure_date,
+      status: status,
       createdAt: created_at,
       updatedAt: updated_at,
       # Contract fields

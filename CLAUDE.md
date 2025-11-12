@@ -46,6 +46,31 @@ lsof -ti :3001 :5175
 - ⚠️ **MUST implement CAPTCHA** or similar bot prevention (hCaptcha, Cloudflare Turnstile, etc.)
 - Creates pending tenant record → admin approval → contract generation → Zigned e-signing flow
 
+## 🎨 UI COLOR SCHEME
+
+**CRITICAL: Never use green or emerald colors for success states, buttons, or positive indicators.**
+
+**Approved Color Palette:**
+- **Primary**: Purple (`purple-100` through `purple-900`) - Main brand color, headings, accents
+- **Background**: Slate (`slate-700` through `slate-900`) - Dark backgrounds, surfaces
+- **Success/Positive**: Cyan (`cyan-300` through `cyan-600`) - Turquoise/aqua tone, NOT green/emerald
+- **Warning/Pending**: Yellow (`yellow-300` through `yellow-600`) - Pending states, warnings
+- **Error/Negative**: Red (`red-300` through `red-600`) - Errors, failures, negative adjustments
+- **Info/Secondary**: Blue (`blue-300` through `blue-600`) - Informational states
+- **Neutral**: Slate (`slate-300` through `slate-600`) - Neutral/inactive states
+- **Alert**: Orange (`orange-300` through `orange-600`) - Alerts, expirations
+
+**Forbidden Colors:**
+- ❌ **Green** (`green-*`) - Never use for any purpose
+- ❌ **Emerald** (`emerald-*`) - Never use for any purpose
+- ❌ **Lime** (`lime-*`) - Never use for any purpose
+
+**Examples:**
+- ✅ Completed status: `text-cyan-400`, `bg-cyan-400/20 border-cyan-400/30`
+- ✅ Action button: `bg-cyan-600/80 hover:bg-cyan-600`
+- ✅ Room discount: `text-cyan-400` (negative adjustment = discount)
+- ❌ Never: `text-green-400`, `bg-emerald-600`, etc.
+
 ### 🚨 Production Deployment
 
 **🔴 CRITICAL: NEVER PUSH WITHOUT EXPLICIT USER AUTHORIZATION 🔴**
@@ -99,6 +124,88 @@ bin/dev nuke         # Nuclear cleanup (last resort)
 - Status: Run `npm run dev:status` separately AFTER startup, not inline
 
 **Oct 26 simplification**: Removed verification loops that caused hanging - restored pre-Oct 26 reliability.
+
+---
+
+## 🗄️ PRISMA DATABASE MIGRATION PROTOCOL
+
+**Status**: ✅ CRITICAL WORKFLOW - Development shortcuts become production disasters
+
+### Core Principle: Schema and Database Must Always Match
+
+**Development discipline directly determines production reliability.** Careless migration practices in development create technical debt that manifests as data corruption, deployment failures, and emergency incidents in production.
+
+### ✅ The Correct Prisma Migration Workflow
+
+**Always follow this sequence for schema changes:**
+
+1. **Edit `schema.prisma`** - Make your model changes
+2. **Create migration** - `npx prisma migrate dev --name descriptive_name`
+3. **Verify migration** - Review generated SQL in `prisma/migrations/`
+4. **Commit both files** - Schema + migration together, always
+
+**Why this matters:** Prisma migrations are immutable records. Once applied, they become the source of truth. Schema file must reflect what migrations create.
+
+### ❌ What NEVER To Do
+
+**NEVER modify migrations after they're applied** - Creates irreversible drift between migration history and database state. Like editing git commits after pushing - breaks everyone downstream.
+
+**NEVER use `db push` except for rapid prototyping** - Bypasses migration history entirely. Fine for throwaway experiments, dangerous for any code that will be committed.
+
+**NEVER leave schema.prisma out of sync with migrations** - When you create a migration SQL file, you MUST update schema.prisma to match. This is not optional. Drift between schema and database breaks:
+- Future migrations (Prisma can't calculate correct diffs)
+- CI/CD pipelines (fresh database builds fail)
+- Team collaboration (others pull your migrations but schema doesn't match)
+- Production deployments (migration applies but schema expectations differ)
+
+### 🔧 Resolving Migration Drift (When You Discover Mismatch)
+
+**If you discover schema.prisma is out of sync with applied migrations:**
+
+1. **Add missing fields to schema.prisma** - Match what's actually in the database
+2. **Verify with `npx prisma db pull`** - This introspects database and shows what schema SHOULD be
+3. **Create new migration for your actual change** - `npx prisma migrate dev --name your_feature`
+
+**Never use `--skip-generate` or `--accept-data-loss` flags without understanding WHY Prisma is warning you.**
+
+### 📋 Migration Best Practices
+
+**Descriptive migration names** - Use present tense verbs: `add_room_to_tenant`, `add_contract_lifecycle_tracking`, `remove_deprecated_status_field`
+
+**Review generated SQL** - Always read what Prisma created. Catch mistakes before they reach the database.
+
+**Commit migrations immediately** - Don't accumulate uncommitted migrations. Each logical change = one migration = one commit.
+
+**Test migrations locally first** - Run `npx prisma migrate dev` in development before pushing to production.
+
+**Production migrations are manual** - Never auto-migrate in production. Webhook deploys code only. Run `npx prisma migrate deploy` deliberately after reviewing changes.
+
+### 🎯 Development vs Production Commands
+
+**Development** (creates migrations):
+```bash
+npx prisma migrate dev --name descriptive_name  # Create + apply migration
+npx prisma db push                              # Prototype only (no migration files)
+npx prisma db pull                              # Introspect database → update schema
+```
+
+**Production** (applies existing migrations):
+```bash
+npx prisma migrate deploy     # Apply pending migrations (never creates new ones)
+npx prisma migrate status     # Check which migrations need to run
+```
+
+**Never run `migrate dev` in production.** It tries to create migrations, which should only happen in development with developer oversight.
+
+### 💡 Key Insight: Shortcuts Compound
+
+Taking shortcuts in development doesn't save time - it creates time bombs:
+- Skip updating schema.prisma → drift warnings on next migration
+- Ignore drift warnings → migration fails in CI
+- Force through with `db push` → production migration fails
+- Emergency hotfix required → downtime for users
+
+**Sustainable development means:** Every change is done correctly the first time. The "careful way" in development IS the fast way to production.
 
 ---
 

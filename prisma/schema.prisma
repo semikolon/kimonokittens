@@ -30,13 +30,13 @@ model ElectricityBill {
 }
 
 model RentConfig {
-  id            String   @id @default(cuid())
-  key           String
-  value         String
-  period        DateTime @default(now())
-  isProjection  Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(cuid())
+  key          String
+  value        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  period       DateTime @default(now())
+  isProjection Boolean  @default(false)
 
   @@unique([key, period])
   @@index([key, period(sort: Desc)])
@@ -59,48 +59,94 @@ model RentLedger {
 }
 
 model Tenant {
-  id                 String           @id
-  facebookId         String?          @unique
-  name               String
-  email              String           @unique
-  avatarUrl          String?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime
-  roomAdjustment     Float?
-  departureDate      DateTime?
-  startDate          DateTime?
-  // Contract fields
-  personnummer       String?
-  phone              String?
-  baseRent           Decimal?         @db.Decimal(10, 2)
-  deposit            Decimal?         @db.Decimal(10, 2)
-  furnishingDeposit  Decimal?         @db.Decimal(10, 2)
-  status             String?          @default("active")
-  RentLedger         RentLedger[]
-  CoOwnedItem        CoOwnedItem[]    @relation("ItemOwners")
-  SignedContract     SignedContract[]
+  id                String           @id
+  facebookId        String?          @unique
+  name              String
+  email             String           @unique
+  avatarUrl         String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime
+  roomAdjustment    Float?
+  room              String?
+  departureDate     DateTime?
+  startDate         DateTime?
+  personnummer      String?
+  phone             String?
+  baseRent          Decimal?         @db.Decimal(10, 2)
+  deposit           Decimal?         @db.Decimal(10, 2)
+  furnishingDeposit Decimal?         @db.Decimal(10, 2)
+  status            String?          @default("active")
+  RentLedger        RentLedger[]
+  SignedContract    SignedContract[]
+  CoOwnedItem       CoOwnedItem[]    @relation("ItemOwners")
 }
 
 model SignedContract {
-  id                  String    @id
-  tenantId            String
-  caseId              String    @unique
-  pdfUrl              String
-  status              String    @default("pending")
-  landlordSigned      Boolean   @default(false)
-  tenantSigned        Boolean   @default(false)
-  landlordSignedAt    DateTime?
-  tenantSignedAt      DateTime?
-  landlordSigningUrl  String?
-  tenantSigningUrl    String?
-  testMode            Boolean   @default(false)
-  completedAt         DateTime?
-  expiresAt           DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  id                     String                @id
+  tenantId               String
+  caseId                 String                @unique
+  pdfUrl                 String
+  status                 String                @default("pending")
+  landlordSigned         Boolean               @default(false)
+  tenantSigned           Boolean               @default(false)
+  landlordSignedAt       DateTime?
+  tenantSignedAt         DateTime?
+  completedAt            DateTime?
+  expiresAt              DateTime?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  landlordSigningUrl     String?
+  tenantSigningUrl       String?
+  testMode               Boolean               @default(false)
+  generationStatus       String?               @default("pending")
+  generationStartedAt    DateTime?
+  generationCompletedAt  DateTime?
+  generationFailedAt     DateTime?
+  generationError        Json?
+  validationStatus       String?               @default("pending")
+  validationStartedAt    DateTime?
+  validationCompletedAt  DateTime?
+  validationFailedAt     DateTime?
+  validationErrors       Json?
+  emailDeliveryStatus    String?               @default("pending")
+  landlordEmailDelivered Boolean?              @default(false)
+  tenantEmailDelivered   Boolean?              @default(false)
+  emailDeliveryFailedAt  DateTime?
+  emailDeliveryError     String?
+  ContractParticipant    ContractParticipant[]
+  tenant                 Tenant                @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId])
+  @@index([status])
+  @@index([generationStatus])
+  @@index([validationStatus])
+  @@index([emailDeliveryStatus])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ContractParticipant {
+  id                          String         @id
+  contractId                  String
+  participantId               String         @unique
+  name                        String
+  email                       String
+  personalNumber              String
+  role                        String         @default("signer")
+  status                      String         @default("pending")
+  signingUrl                  String?
+  signedAt                    DateTime?
+  emailDelivered              Boolean        @default(false)
+  emailDeliveredAt            DateTime?
+  emailDeliveryFailed         Boolean        @default(false)
+  emailDeliveryError          String?
+  identityEnforcementPassed   Boolean?
+  identityEnforcementFailedAt DateTime?
+  createdAt                   DateTime       @default(now())
+  updatedAt                   DateTime
+  SignedContract              SignedContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([contractId])
+  @@index([personalNumber])
   @@index([status])
 }

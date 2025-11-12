@@ -21,20 +21,20 @@ export const useContracts = () => {
 
       const data = await response.json()
 
-      // Parse date strings to Date objects
-      const contractsWithDates = (data.contracts || []).map((c: any) => ({
-        ...c,
-        expires_at: c.expires_at ? new Date(c.expires_at) : null,
-        created_at: new Date(c.created_at),
-        updated_at: new Date(c.updated_at),
-        landlord_signed_at: c.landlord_signed_at ? new Date(c.landlord_signed_at) : null,
-        tenant_signed_at: c.tenant_signed_at ? new Date(c.tenant_signed_at) : null,
-        completed_at: c.completed_at ? new Date(c.completed_at) : null,
-        tenant_start_date: c.tenant_start_date ? new Date(c.tenant_start_date) : null,
-        tenant_departure_date: c.tenant_departure_date ? new Date(c.tenant_departure_date) : null
+      // Parse date strings to Date objects for members (contracts + tenants)
+      const membersWithDates = (data.members || []).map((m: any) => ({
+        ...m,
+        expires_at: m.expires_at ? new Date(m.expires_at) : null,
+        created_at: m.created_at ? new Date(m.created_at) : null,
+        updated_at: m.updated_at ? new Date(m.updated_at) : null,
+        landlord_signed_at: m.landlord_signed_at ? new Date(m.landlord_signed_at) : null,
+        tenant_signed_at: m.tenant_signed_at ? new Date(m.tenant_signed_at) : null,
+        completed_at: m.completed_at ? new Date(m.completed_at) : null,
+        tenant_start_date: m.tenant_start_date ? new Date(m.tenant_start_date) : null,
+        tenant_departure_date: m.tenant_departure_date ? new Date(m.tenant_departure_date) : null
       }))
 
-      setContracts(contractsWithDates)
+      setContracts(membersWithDates)
     } catch (err) {
       console.error('Failed to fetch contracts:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch contracts')

@@ -1,0 +1,224 @@
+// MemberRow - Unified row for both contracts and standalone tenants
+import React from 'react'
+import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, ChevronRight, User, FileSignature } from 'lucide-react'
+import { ContractDetails } from './ContractDetails'
+import type { Member, SignedContract, TenantMember } from '../../views/AdminDashboard'
+
+interface MemberRowProps {
+  member: Member
+  isExpanded: boolean
+  isSelected: boolean
+  onToggle: () => void
+  onSelect: () => void
+}
+
+// Status icon mapping for contracts
+const getStatusIcon = (contract: SignedContract) => {
+  if (contract.status === 'completed') {
+    return <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+  } else if (contract.status === 'failed') {
+    return <XCircle className="w-5 h-5 text-red-400" />
+  } else if (contract.status === 'expired') {
+    return <AlertTriangle className="w-5 h-5 text-orange-400" />
+  } else if (contract.status === 'cancelled') {
+    return <Ban className="w-5 h-5 text-red-400" />
+  } else if (contract.landlord_signed && !contract.tenant_signed) {
+    return <UserCheck className="w-5 h-5 text-blue-400" />
+  } else if (!contract.landlord_signed && contract.tenant_signed) {
+    return <UserCheck className="w-5 h-5 text-yellow-400" />
+  } else {
+    return <Clock className="w-5 h-5 text-yellow-400" />
+  }
+}
+
+// Status badge color
+const getStatusColor = (status: string) => {
+  const colors = {
+    completed: 'bg-cyan-400/20 text-cyan-300 border-cyan-400/30',
+    pending: 'bg-yellow-400/20 text-yellow-300 border-yellow-400/30',
+    landlord_signed: 'bg-blue-400/20 text-blue-300 border-blue-400/30',
+    tenant_signed: 'bg-yellow-400/20 text-yellow-300 border-yellow-400/30',
+    failed: 'bg-red-400/20 text-red-300 border-red-400/30',
+    cancelled: 'bg-red-400/20 text-red-300 border-red-400/30',
+    expired: 'bg-orange-400/20 text-orange-300 border-orange-400/30',
+    active: 'bg-slate-400/20 text-slate-300 border-slate-400/30'
+  }
+  return colors[status as keyof typeof colors] || colors.active
+}
+
+// Status label translation (Swedish)
+const getStatusLabel = (status: string) => {
+  const labels = {
+    completed: 'Klar',
+    pending: 'Väntar',
+    landlord_signed: 'Signerat av hyresvärd',
+    tenant_signed: 'Signerat av hyresgäst',
+    failed: 'Misslyckat',
+    cancelled: 'Avbrutet',
+    expired: 'Utgånget',
+    active: 'Aktiv'
+  }
+  return labels[status as keyof typeof labels] || 'Aktiv'
+}
+
+// Format date range for tenant stay
+const formatDateRange = (startDate?: Date, departureDate?: Date): string => {
+  if (!startDate) return ''
+
+  const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+  const currentYear = new Date().getFullYear()
+
+  const formatDate = (date: Date, includeYear: boolean = false) => {
+    const day = date.getDate()
+    const month = monthNames[date.getMonth()]
+    const year = includeYear ? ` ${date.getFullYear()}` : ''
+    return `${day} ${month}${year}`
+  }
+
+  // Show year if start date is not current year
+  const showStartYear = startDate.getFullYear() !== currentYear
+  const startStr = formatDate(startDate, showStartYear)
+
+  if (!departureDate) {
+    return `${startStr} → ?`
+  }
+
+  // Show year if departure year differs from start year OR not current year
+  const showEndYear = departureDate.getFullYear() !== startDate.getFullYear() || departureDate.getFullYear() !== currentYear
+  const endStr = formatDate(departureDate, showEndYear)
+
+  return `${startStr} → ${endStr}`
+}
+
+export const MemberRow: React.FC<MemberRowProps> = ({
+  member,
+  isExpanded,
+  isSelected,
+  onToggle,
+  onSelect
+}) => {
+  const dateRange = formatDateRange(member.tenant_start_date, member.tenant_departure_date)
+  const isContract = member.type === 'contract'
+  const isTenant = member.type === 'tenant'
+
+  // Check if tenant has departed (don't show create contract button for past tenants)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0) // Start of today
+  const hasDeparted = member.tenant_departure_date && member.tenant_departure_date < today
+  const shouldShowCreateButton = isTenant && !hasDeparted
+
+  const handleCreateContract = async () => {
+    // TODO: Implement contract creation for existing tenant
+    console.log('Create contract for tenant:', member.tenant_id)
+  }
+
+  return (
+    <div
+      className={`
+        rounded-lg border transition-all duration-200
+        ${isSelected
+          ? 'border-purple-400/30 bg-purple-900/20'
+          : 'border-purple-500/20 bg-slate-900/40'
+        }
+        hover:bg-purple-900/10
+      `}
+    >
+      {/* Collapsed row header */}
+      <button
+        onClick={() => {
+          onSelect()
+          if (isContract) {
+            onToggle()
+          }
+        }}
+        className="w-full p-4 flex items-center gap-4 text-left"
+      >
+        {/* Expand icon (only for contracts) */}
+        {isContract && (
+          <ChevronRight
+            className={`
+              w-4 h-4 text-purple-300 transition-transform duration-200
+              ${isExpanded ? 'rotate-90' : ''}
+            `}
+          />
+        )}
+
+        {/* Status icon */}
+        {isContract ? getStatusIcon(member as SignedContract) : (
+          <User className="w-5 h-5 text-slate-400" />
+        )}
+
+        {/* Member info */}
+        <div className="flex-1 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-purple-100 font-medium">
+              {member.tenant_name}
+            </span>
+            {member.tenant_room && (
+              <span className="text-purple-300/80 text-sm font-medium">
+                {member.tenant_room}
+              </span>
+            )}
+            {dateRange && (
+              <span className="text-purple-300/60 text-sm">
+                {dateRange}
+              </span>
+            )}
+            {member.tenant_room_adjustment && member.tenant_room_adjustment !== 0 && (
+              <span className={`text-sm font-medium ${member.tenant_room_adjustment < 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+                {member.tenant_room_adjustment > 0 ? '+' : ''}{member.tenant_room_adjustment} kr
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Status badge */}
+            <span className={`
+              px-3 py-1 rounded-full text-xs font-medium border
+              ${getStatusColor(isContract ? (member as SignedContract).status : 'active')}
+            `}>
+              {getStatusLabel(isContract ? (member as SignedContract).status : 'active')}
+            </span>
+
+            {/* Test mode badge */}
+            {isContract && (member as SignedContract).test_mode && (
+              <span className="px-2 py-1 rounded text-xs bg-slate-700/50 text-slate-300">
+                Test
+              </span>
+            )}
+
+            {/* Create contract button for active tenants only (not past tenants) */}
+            {shouldShowCreateButton && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleCreateContract()
+                }}
+                className="flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-medium
+                         bg-cyan-600/80 hover:bg-cyan-600 text-white
+                         transition-all border border-cyan-500/30"
+              >
+                <FileSignature className="w-3 h-3" />
+                Skapa kontrakt
+              </button>
+            )}
+          </div>
+        </div>
+      </button>
+
+      {/* Error message in collapsed state */}
+      {isContract && (member as SignedContract).error_message && !isExpanded && (
+        <div className="px-4 pb-3 text-sm text-red-400">
+          Fel: {(member as SignedContract).error_message}
+        </div>
+      )}
+
+      {/* Expanded details (only for contracts) */}
+      {isContract && isExpanded && (
+        <div className="border-t border-purple-500/20">
+          <ContractDetails contract={member as SignedContract} />
+        </div>
+      )}
+    </div>
+  )
+}

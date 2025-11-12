@@ -9,9 +9,13 @@ import { useKeyboardNav } from '../hooks/useKeyboardNav'
 
 // TypeScript interfaces matching requirements
 export interface SignedContract {
+  type: 'contract'
   id: string                    // UUID
   tenant_id: string            // Foreign key to tenant
   tenant_name: string          // Tenant full name
+  tenant_email?: string        // Tenant email
+  tenant_room?: string         // Room assignment
+  tenant_room_adjustment?: number // Room adjustment in kr
   tenant_start_date?: Date     // Move-in date
   tenant_departure_date?: Date // Move-out date (nullable)
   case_id: string              // Zigned agreement ID
@@ -31,6 +35,22 @@ export interface SignedContract {
   email_status?: 'pending' | 'sent' | 'bounced' | 'failed'
   error_message?: string
 }
+
+export interface TenantMember {
+  type: 'tenant'
+  id: string
+  tenant_id: string
+  tenant_name: string
+  tenant_email?: string
+  tenant_room?: string
+  tenant_room_adjustment?: number
+  tenant_start_date?: Date
+  tenant_departure_date?: Date
+  status: string
+  created_at: Date
+}
+
+export type Member = SignedContract | TenantMember
 
 export interface ContractParticipant {
   id: string
@@ -108,15 +128,15 @@ export const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <Widget title="Kontrakt" horsemenFont={true} accent={true}>
-        <div className="text-purple-200">Laddar kontrakt...</div>
+      <Widget title="Medlemmar" horsemenFont={true} accent={true}>
+        <div className="text-purple-200">Laddar medlemmar...</div>
       </Widget>
     )
   }
 
   if (error) {
     return (
-      <Widget title="Kontrakt" horsemenFont={true} accent={true}>
+      <Widget title="Medlemmar" horsemenFont={true} accent={true}>
         <div className="text-red-400">Fel vid laddning: {error}</div>
       </Widget>
     )
@@ -124,7 +144,7 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <>
-      <Widget title="Kontrakt" horsemenFont={true} accent={true}>
+      <Widget title="Medlemmar" horsemenFont={true} accent={true}>
         <ContractList
           contracts={displayContracts}
           filterActive={filterActive}
@@ -134,9 +154,6 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Tenant creation form - darker style matching electricity anomaly widget */}
       <div className="mt-6 backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md border border-purple-900/10 p-8">
-        <h3 className="text-2xl font-medium text-purple-100 mb-6 tracking-wide uppercase font-[Horsemen]">
-          Lägg till hyresgäst
-        </h3>
         <TenantForm onSuccess={refreshContracts} />
       </div>
     </>

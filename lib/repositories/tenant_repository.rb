@@ -74,7 +74,7 @@ class TenantRepository < BaseRepository
   # @return [Array<Tenant>]
   def all
     dataset
-      .select(:id, :name, :email, :startDate, :departureDate, :roomAdjustment)
+      .select(:id, :name, :email, :startDate, :departureDate, :roomAdjustment, :room, :status)
       .order(:name)
       .map { |row| hydrate(row) }
   end
@@ -98,8 +98,10 @@ class TenantRepository < BaseRepository
       facebook_id: tenant.facebook_id,
       avatar_url: tenant.avatar_url,
       room_adjustment: tenant.room_adjustment,
+      room: tenant.room,
       start_date: tenant.start_date,
       departure_date: tenant.departure_date,
+      status: tenant.status,
       created_at: now_utc,
       updated_at: now_utc,
       # Contract fields
@@ -126,8 +128,10 @@ class TenantRepository < BaseRepository
       facebookId: tenant.facebook_id,
       avatarUrl: tenant.avatar_url,
       roomAdjustment: tenant.room_adjustment,
+      room: tenant.room,
       startDate: tenant.start_date,
       departureDate: tenant.departure_date,
+      status: tenant.status,
       updatedAt: now_utc,
       # Contract fields
       personnummer: tenant.personnummer,
@@ -185,8 +189,10 @@ class TenantRepository < BaseRepository
       facebook_id: row[:facebookId],
       avatar_url: row[:avatarUrl],
       room_adjustment: row[:roomAdjustment],
+      room: row[:room],
       start_date: row[:startDate],
       departure_date: row[:departureDate],
+      status: row[:status],
       created_at: row[:createdAt],
       updated_at: row[:updatedAt],
       # Contract fields
@@ -208,8 +214,10 @@ class TenantRepository < BaseRepository
       facebookId: tenant.facebook_id,
       avatarUrl: tenant.avatar_url,
       roomAdjustment: tenant.room_adjustment,
+      room: tenant.room,
       startDate: tenant.start_date,
       departureDate: tenant.departure_date,
+      status: tenant.status,
       createdAt: tenant.created_at || now_utc,
       updatedAt: tenant.updated_at || now_utc,
       # Contract fields

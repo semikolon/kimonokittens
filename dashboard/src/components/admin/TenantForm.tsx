@@ -115,8 +115,8 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
       )}
 
       {success && (
-        <div className="bg-green-900/20 border border-green-500/30 rounded-lg px-4 py-3">
-          <p className="text-green-200 text-sm">{success}</p>
+        <div className="bg-cyan-900/20 border border-cyan-500/30 rounded-lg px-4 py-3">
+          <p className="text-cyan-200 text-sm">{success}</p>
         </div>
       )}
 
@@ -257,9 +257,9 @@ export const TenantForm: React.FC<TenantFormProps> = ({ onSuccess }) => {
           onClick={() => handleSubmit(true)}
           disabled={loading}
           className="flex-1 flex items-center justify-center gap-3 px-8 py-4 text-lg font-medium
-                   bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-xl
+                   bg-cyan-600/80 hover:bg-cyan-600 text-white rounded-xl
                    transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                   focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                   focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
         >
           {loading ? (
             <Loader2 className="w-5 h-5 animate-spin" />

@@ -46,28 +46,40 @@ class AdminContractsHandler
   private
 
   def list_contracts(req)
-    # Fetch all contracts
+    # Fetch all data
     contract_repo = Persistence.signed_contracts
     tenant_repo = Persistence.tenants
     participant_repo = Persistence.contract_participants
+
+    # Get all tenants
+    all_tenants = tenant_repo.all
 
     # Get all contracts ordered by creation date (newest first)
     contracts = RentDb.instance.class.db[:SignedContract]
       .order(Sequel.desc(:createdAt))
       .all
 
-    # Enrich with tenant names and participants
-    enriched_contracts = contracts.map do |contract|
-      # Get tenant name
-      tenant = tenant_repo.find_by_id(contract[:tenantId])
+    # Track which tenants have contracts
+    tenant_ids_with_contracts = contracts.map { |c| c[:tenantId] }.to_set
 
-      # Get participants for this contract
+    # Build enriched member list:
+    # 1. Contracts (with tenant data merged in)
+    # 2. Tenants without contracts
+    members = []
+
+    # Add contracts with full tenant data
+    contracts.each do |contract|
+      tenant = tenant_repo.find_by_id(contract[:tenantId])
       participants = participant_repo.find_by_contract_id(contract[:id])
 
-      {
+      members << {
+        type: 'contract',
         id: contract[:id],
         tenant_id: contract[:tenantId],
         tenant_name: tenant&.name || 'Unknown',
+        tenant_email: tenant&.email,
+        tenant_room: tenant&.room,
+        tenant_room_adjustment: tenant&.room_adjustment,
         tenant_start_date: tenant&.start_date,
         tenant_departure_date: tenant&.departure_date,
         case_id: contract[:caseId],
@@ -117,6 +129,31 @@ class AdminContractsHandler
       }
     end
 
+    # Add tenants without contracts
+    all_tenants.each do |tenant|
+      next if tenant_ids_with_contracts.include?(tenant.id)
+
+      members << {
+        type: 'tenant',
+        id: tenant.id,
+        tenant_id: tenant.id,
+        tenant_name: tenant.name,
+        tenant_email: tenant.email,
+        tenant_room: tenant.room,
+        tenant_room_adjustment: tenant.room_adjustment,
+        tenant_start_date: tenant.start_date,
+        tenant_departure_date: tenant.departure_date,
+        status: tenant.status || 'active',
+        created_at: tenant.created_at
+      }
+    end
+
+    # Sort members by start date (newest first), nil dates go to end
+    members.sort_by! do |m|
+      start_date = m[:tenant_start_date]
+      start_date ? -start_date.to_time.to_i : 0
+    end
+
     # Get statistics
     stats = contract_repo.statistics
 
@@ -124,13 +161,15 @@ class AdminContractsHandler
       200,
       { 'Content-Type' => 'application/json' },
       [Oj.dump({
-        'contracts' => enriched_contracts,
-        'total' => stats[:total],
+        'members' => members,
+        'total' => members.length,
+        'contracts_count' => contracts.length,
+        'tenants_without_contracts' => members.count { |m| m[:type] == 'tenant' },
         'statistics' => stats
       }, mode: :compat)]
     ]
   rescue => e
-    puts "❌ Error fetching contracts: #{e.message}"
+    puts "❌ Error fetching members: #{e.message}"
     puts e.backtrace.first(5)
     internal_error(e.message)
   end
