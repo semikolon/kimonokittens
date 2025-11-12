@@ -330,6 +330,40 @@ class ContractSigner
     signed_path
   end
 
+  # Download signed PDF from direct URL (from webhook payload)
+  #
+  # This method is used by webhooks when the signed PDF URL is already available
+  # in the webhook payload, avoiding an unnecessary API call.
+  #
+  # @param pdf_url [String] Direct URL to signed PDF (from webhook)
+  # @param tenant_name [String] Tenant name for filename generation
+  #
+  # @return [String] Path to downloaded signed PDF
+  #
+  # @raise [RuntimeError] If download fails
+  def download_signed_pdf_from_url(pdf_url, tenant_name)
+    # Generate filename for signed PDF
+    safe_name = tenant_name.gsub(/[^\w\s-]/, '').gsub(/\s+/, '_')
+    signed_filename = "#{safe_name}_Hyresavtal_Signed_#{Time.now.strftime('%Y-%m-%d')}.pdf"
+    signed_path = File.join(SIGNED_DIR, signed_filename)
+
+    puts "📥 Downloading signed PDF from webhook URL..."
+
+    # Download PDF with authentication
+    pdf_response = HTTParty.get(
+      pdf_url,
+      headers: { 'Authorization' => "Bearer #{@zigned.instance_variable_get(:@access_token)}" }
+    )
+
+    raise "Failed to download PDF: #{pdf_response.code}" unless pdf_response.success?
+
+    # Save to file
+    File.write(signed_path, pdf_response.body, mode: 'wb')
+    puts "✅ Signed PDF saved: #{signed_path}"
+
+    signed_path
+  end
+
   # Cancel a pending signing case
   #
   # @param case_id [String] The Zigned case ID (agreement_id in v3)
