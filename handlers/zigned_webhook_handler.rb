@@ -348,9 +348,9 @@ class ZignedWebhookHandler
     # Auto-download signed PDF
     begin
       tenant = Persistence.tenants.find_by_id(contract.tenant_id)
-      if tenant
+      if tenant && signed_document_url
         signer = ContractSigner.new(test_mode: contract.test_mode)
-        signed_path = signer.download_signed_contract(agreement_id, tenant.name)
+        signed_path = signer.download_signed_pdf_from_url(signed_document_url, tenant.name)
 
         # Update contract with signed PDF path and mark as completed
         contract.pdf_url = signed_path
