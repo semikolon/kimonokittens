@@ -118,9 +118,33 @@ export const MemberRow: React.FC<MemberRowProps> = ({
   // Compute tenant status
   const tenantStatus = isTenant ? (hasDeparted ? 'departed' : 'active') : 'active'
 
+  const [creatingContract, setCreatingContract] = React.useState(false)
+  const [toast, setToast] = React.useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
   const handleCreateContract = async () => {
-    // TODO: Implement contract creation for existing tenant
-    console.log('Create contract for tenant:', member.tenant_id)
+    setCreatingContract(true)
+    try {
+      const response = await fetch(`/api/admin/contracts/tenants/${member.tenant_id}/create-contract`, {
+        method: 'POST'
+      })
+      const data = await response.json()
+
+      if (response.ok) {
+        showToast('Kontrakt skapat!', 'success')
+        // WebSocket broadcast will update UI automatically
+      } else {
+        showToast(data.error || 'Kunde inte skapa kontrakt', 'error')
+      }
+    } catch (error) {
+      showToast('Fel vid skapande av kontrakt', 'error')
+    } finally {
+      setCreatingContract(false)
+    }
   }
 
   return (
@@ -196,12 +220,14 @@ export const MemberRow: React.FC<MemberRowProps> = ({
                   e.stopPropagation()
                   handleCreateContract()
                 }}
+                disabled={creatingContract}
                 className="flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-medium
                          bg-cyan-600/80 hover:bg-cyan-600 text-white
-                         transition-all border border-cyan-500/30"
+                         transition-all border border-cyan-500/30
+                         disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FileSignature className="w-3 h-3" />
-                Skapa kontrakt
+                {creatingContract ? 'Skapar...' : 'Skapa kontrakt'}
               </button>
             )}
           </div>
@@ -240,6 +266,28 @@ export const MemberRow: React.FC<MemberRowProps> = ({
           ) : (
             <TenantDetails tenant={member as TenantMember} />
           )}
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-4 right-4 z-50 animate-fade-in">
+          <div
+            className={`
+              px-4 py-3 rounded-lg shadow-lg flex items-center gap-2
+              ${toast.type === 'success'
+                ? 'bg-green-600 text-white'
+                : 'bg-red-600 text-white'
+              }
+            `}
+          >
+            {toast.type === 'success' ? (
+              <CheckCircle2 className="w-5 h-5" />
+            ) : (
+              <XCircle className="w-5 h-5" />
+            )}
+            <span className="font-medium">{toast.message}</span>
+          </div>
         </div>
       )}
     </div>

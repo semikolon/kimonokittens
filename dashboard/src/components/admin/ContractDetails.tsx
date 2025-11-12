@@ -66,8 +66,8 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
       if (response.ok) {
         showToast('Kontrakt avbrutet!', 'success')
         setShowCancelConfirm(false)
-        // Refresh page to show updated status
-        setTimeout(() => window.location.reload(), 1500)
+        // WebSocket broadcast from backend will update UI automatically
+        // (DataBroadcaster.broadcast_contract_list_changed called after DB update)
       } else {
         showToast(data.error || 'Kunde inte avbryta kontrakt', 'error')
       }

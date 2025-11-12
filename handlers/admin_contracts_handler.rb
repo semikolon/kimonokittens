@@ -46,6 +46,13 @@ class AdminContractsHandler
         else
           method_not_allowed
         end
+      elsif req.path_info =~ %r{^/tenants/([a-z0-9\-]+)/create-contract$}
+        tenant_id = $1
+        if req.post?
+          create_contract_for_tenant(req, tenant_id)
+        else
+          method_not_allowed
+        end
       else
         not_found
       end
@@ -318,6 +325,10 @@ class AdminContractsHandler
         # Update contract status in database
         contract_repo.update(contract_id, { status: 'cancelled' })
 
+        # Broadcast update to WebSocket clients (triggers admin dashboard refresh)
+        require_relative '../lib/data_broadcaster'
+        DataBroadcaster.broadcast_contract_list_changed
+
         [
           200,
           { 'Content-Type' => 'application/json' },
@@ -401,6 +412,69 @@ class AdminContractsHandler
         500,
         { 'Content-Type' => 'application/json' },
         [Oj.dump({ error: "Failed to update departure date: #{e.message}" })]
+      ]
+    end
+  end
+
+  def create_contract_for_tenant(req, tenant_id)
+    # Find tenant
+    tenant_repo = Persistence.tenants
+    tenant = tenant_repo.find_by_id(tenant_id)
+
+    unless tenant
+      return [404, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Tenant not found' })]]
+    end
+
+    # Validate tenant has required fields for contract
+    unless tenant.name && tenant.email && tenant.personnummer && tenant.start_date
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({
+        error: 'Tenant missing required fields (name, email, personnummer, start_date)'
+      })]]
+    end
+
+    # Check if tenant already has a contract
+    contract_repo = Persistence.signed_contracts
+    existing = contract_repo.find_by_tenant_id(tenant_id)
+    if existing
+      return [409, { 'Content-Type' => 'application/json' }, [Oj.dump({
+        error: 'Tenant already has a contract'
+      })]]
+    end
+
+    # Generate and send contract
+    begin
+      require_relative '../lib/contract_signer'
+      contract_result = ContractSigner.create_and_send(
+        tenant_id: tenant_id,
+        test_mode: ENV['CONTRACT_TEST_MODE'] != 'false',
+        send_emails: ENV['CONTRACT_SEND_EMAILS'] == 'true'
+      )
+
+      # Broadcast update to WebSocket clients (triggers admin dashboard refresh)
+      require_relative '../lib/data_broadcaster'
+      DataBroadcaster.broadcast_contract_list_changed
+
+      [
+        201,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({
+          success: true,
+          message: 'Contract created successfully',
+          contract: {
+            pdf_path: contract_result[:pdf_path],
+            case_id: contract_result[:case_id],
+            landlord_link: contract_result[:landlord_link],
+            tenant_link: contract_result[:tenant_link]
+          }
+        }, mode: :compat)]
+      ]
+    rescue => e
+      puts "❌ Error creating contract: #{e.message}"
+      puts e.backtrace.first(5)
+      [
+        500,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ error: "Failed to create contract: #{e.message}" })]
       ]
     end
   end

@@ -8,6 +8,29 @@
 
 A keyboard-navigable admin dashboard for rental contract management has been fully integrated into the existing hallway dashboard. The admin view matches the existing dashboard's visual style (purple/slate glass-morphism) and provides comprehensive contract lifecycle tracking.
 
+## 🔍 Key Architectural Findings (Nov 12, 2025 Deep Dive)
+
+**The Critical DataContext Fix**: The most significant discovery during the DataContext migration was that `broadcast_contract_list_changed` originally only sent a notification event without any data payload. This architectural mismatch meant the old code had to make HTTP GET requests upon receiving notifications, defeating the purpose of real-time updates. The fix involved modifying `data_broadcaster.rb` to immediately call `fetch_and_publish('admin_contracts_data', ...)` before sending the notification, ensuring the frontend receives fresh data payloads directly through WebSocket messages. This single change enabled true reactive updates where contract creation, departure date changes, and Zigned webhook events all trigger immediate UI refreshes without HTTP round-trips.
+
+**React Reconciliation Efficiency**: The DataContext pattern leverages React's intelligent reconciliation algorithm to update only the specific DOM nodes that changed, not the entire page. When a tenant's departure date is set to a past date, React efficiently moves that single row from the "NUVARANDE" section to "HISTORISKA" section by updating just the affected elements. This surgical precision extends to all interactions—contract status badges change color, timeline events appear, signing timestamps update—all without touching unaffected components. The `useMemo` hook in `useContracts.tsx` ensures date parsing only runs when the underlying data changes, and the segmentation logic runs client-side with zero network overhead.
+
+**Backend Performance Optimization**: The admin contracts handler implements a clever optimization that calculates current rent for all tenants in a single pass rather than per-row queries. Lines 66-97 in `admin_contracts_handler.rb` build a `roommates` hash once, fetch the config once, call `RentCalculator.rent_breakdown` once, then enrich each member with their calculated rent from the cached breakdown. This transforms what would be 80+ database queries (10 tenants × 8+ queries each for config, days stayed, roommate counting) into approximately 10 queries total—an 8× reduction in database load. The optimization is transparent to the frontend, which simply receives `current_rent` as a pre-calculated integer.
+
+**Landlord Auto-Signature Logic**: A subtle but important feature handles the case where Fredrik (the landlord) is also a tenant signing his own contract. The code compares the tenant's `personnummer` against the hardcoded landlord ID `'8604230717'` and automatically treats the landlord signature as complete when they match. This appears in three places: `MemberRow.tsx:19-21`, `ContractDetails.tsx:14-17`, and the status icon logic. The UI reflects this by showing "Signerad (automatisk)" instead of a timestamp for the landlord signature line when Fredrik signs his own contract. This prevents the confusing state where the landlord would have to manually sign a contract they're already party to as a tenant.
+
+**Segmentation & Real-Time Movement**: The member list segmentation uses a midnight-based date comparison (`today.setHours(0, 0, 0, 0)`) to categorize members into "NUVARANDE" (current) and "HISTORISKA" (historical) sections. When a user sets a departure date through the TenantDetails date picker, the backend saves the date, broadcasts a WebSocket update with the full member list, and the frontend automatically recalculates segmentation on the client side. If the date is in the past, the member instantly moves to the historical section without any additional backend logic—the segmentation is purely a frontend presentation concern derived from tenant data. This architectural decision means historical members remain fully accessible with their complete contract details, rent history, and timeline intact.
+
+**Notable Implementation Details**:
+
+- **Toast notifications auto-dismiss after 3 seconds** with fade animations, providing non-intrusive feedback for all action buttons
+- **Days until expiration** are calculated client-side using `Math.ceil((expires_at - now) / 86400000)` and update in real-time
+- **Timeline events are approximated** for system actions by adding fixed offsets to `created_at` (e.g., +1 minute for agreement creation, +2 minutes for emails)
+- **The cancel contract action is the ONLY operation** that triggers `window.location.reload()` instead of relying on WebSocket updates—an architectural inconsistency that could be improved
+- **Email status display shows the same timestamp for both participants** because the current implementation doesn't track per-participant delivery times, only a global `email_status` field
+- **Contract creation for existing tenants is stubbed** (MemberRow.tsx:122) with a TODO comment—the UI button exists but the backend endpoint doesn't
+- **The filter toggle is pure client-side** with zero network overhead, filtering the already-loaded member array by status values
+- **Room adjustments appear as trendlines** (TrendingDown for discounts in cyan, TrendingUp for surcharges in red) with clear Swedish labels
+
 ## Component Structure
 
 ```

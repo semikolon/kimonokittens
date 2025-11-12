@@ -1,11 +1,12 @@
 // Admin Dashboard - Contract Management View
 // Matches existing dashboard Widget component pattern with purple/slate glass-morphism
 import React, { useState } from 'react'
-import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck } from 'lucide-react'
+import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, Wifi, WifiOff } from 'lucide-react'
 import { ContractList } from '../components/admin/ContractList'
 import { TenantForm } from '../components/admin/TenantForm'
 import { useContracts } from '../hooks/useContracts'
 import { useKeyboardNav } from '../hooks/useKeyboardNav'
+import { useData } from '../context/DataContext'
 
 // TypeScript interfaces matching requirements
 export interface SignedContract {
@@ -100,8 +101,13 @@ const Widget = ({
 }
 
 export const AdminDashboard: React.FC = () => {
+  const { state } = useData()
   const { contracts, loading, error } = useContracts()
   const [filterActive, setFilterActive] = useState(false)
+
+  // Track connection status for UI feedback
+  const isConnected = state.connectionStatus === 'open'
+  const isReconnecting = state.connectionStatus === 'connecting'
 
   // Filter contracts based on active toggle
   const displayContracts = filterActive
@@ -129,6 +135,29 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <>
+      {/* Connection Status Indicator */}
+      {!isConnected && (
+        <div className={`
+          mb-4 p-3 rounded-lg flex items-center gap-3 text-sm font-medium
+          ${isReconnecting
+            ? 'bg-yellow-900/30 border border-yellow-500/30 text-yellow-200'
+            : 'bg-red-900/30 border border-red-500/30 text-red-200'
+          }
+        `}>
+          {isReconnecting ? (
+            <>
+              <Wifi className="w-4 h-4 animate-pulse" />
+              <span>Återansluter till servern...</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="w-4 h-4" />
+              <span>Anslutning till servern förlorad. Real-tidsuppdateringar pausade.</span>
+            </>
+          )}
+        </div>
+      )}
+
       <Widget title="Medlemmar" horsemenFont={true} accent={true}>
         <ContractList
           contracts={displayContracts}
