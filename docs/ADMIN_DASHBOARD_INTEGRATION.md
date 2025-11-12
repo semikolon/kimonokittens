@@ -404,10 +404,13 @@ completed        # Agreement fulfilled (agreement.lifecycle.fulfilled)
 
 **Database**: No schema changes needed - reusing existing `ContractParticipant.status` field (already indexed on line 151 of schema.prisma).
 
-**Frontend Benefits**:
-- Timeline automatically shows richer events: "Frida **läser avtalet**" → "Frida **granskade hela avtalet**" → "Frida **signerar med BankID**"
-- Status badges can show current engagement state
-- Admins can see if someone is actively reviewing vs just opened the link
+**Frontend Implementation** (ContractTimeline.tsx):
+- Timeline displays participant engagement events based on current status
+- Events positioned between email delivery and signature (approximated timestamps)
+- Shows progression: "öppnade signeringslänken" → "läste avtalet" → "granskade hela avtalet" → "påbörjade BankID-signering" → "signerade"
+- Real `signed_at` timestamps used for signatures
+- Intermediate states use email_sent_time + 30s offset per participant
+- Admins can see if someone is actively reviewing vs completed signing
 
 **WebSocket Broadcasting**: Each status update triggers `DataBroadcaster.broadcast_contract_update()` for real-time UI updates.
 
@@ -437,8 +440,10 @@ All `sign_event.*` webhooks include:
 
 2. ✅ **Granular Status Tracking** (COMPLETE):
    - ~~Implement sign_event webhook handlers for participant status updates~~
-   - Test with retried historical events
-   - Update frontend timeline display with new status labels (if needed)
+   - ~~Update frontend timeline display with participant engagement events~~
+   - ~~Added participants array to SignedContract TypeScript interface~~
+   - ~~Timeline shows progression based on participant.status field~~
+   - Test with retried historical events (or live signing flow)
 
 3. **Contract Creation Flow** (TODO):
    - Implement "Skapa kontrakt" button handler

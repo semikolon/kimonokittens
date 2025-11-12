@@ -37,6 +37,19 @@ export interface SignedContract {
   generation_status?: 'draft' | 'generated' | 'validated' | 'failed'
   email_status?: 'pending' | 'sent' | 'bounced' | 'failed'
   error_message?: string
+
+  // Participant tracking
+  participants?: Array<{
+    id: string
+    name: string
+    email: string
+    role: string
+    status: string
+    signed_at?: string
+    signing_url?: string
+    email_delivered: boolean
+    email_delivered_at?: string
+  }>
 }
 
 export interface TenantMember {

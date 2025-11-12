@@ -33,15 +33,59 @@ export const ContractTimeline: React.FC<ContractTimelineProps> = ({ contract }) 
   })
 
   // Emails sent
+  const emailSentTime = new Date(contract.created_at.getTime() + 120000)
   if (contract.email_status === 'sent') {
     events.push({
-      timestamp: new Date(contract.created_at.getTime() + 120000),
+      timestamp: emailSentTime,
       label: 'E-post skickad',
       actor: 'System'
     })
   }
 
-  // Landlord signed
+  // Participant engagement events (between email and signing)
+  if (contract.participants) {
+    contract.participants.forEach((participant, index) => {
+      const baseOffset = 30000 * (index + 1) // Stagger by 30s per participant
+
+      // Show engagement event based on current status (if not yet signed)
+      if (participant.status === 'viewing') {
+        events.push({
+          timestamp: new Date(emailSentTime.getTime() + baseOffset),
+          label: 'öppnade signeringslänken',
+          actor: participant.name
+        })
+      } else if (participant.status === 'reading') {
+        events.push({
+          timestamp: new Date(emailSentTime.getTime() + baseOffset),
+          label: 'läste avtalet',
+          actor: participant.name
+        })
+      } else if (participant.status === 'reviewed') {
+        events.push({
+          timestamp: new Date(emailSentTime.getTime() + baseOffset),
+          label: 'granskade hela avtalet',
+          actor: participant.name
+        })
+      } else if (participant.status === 'signing') {
+        events.push({
+          timestamp: new Date(emailSentTime.getTime() + baseOffset),
+          label: 'påbörjade BankID-signering',
+          actor: participant.name
+        })
+      }
+
+      // Show actual signature with real timestamp
+      if (participant.signed_at) {
+        events.push({
+          timestamp: new Date(participant.signed_at),
+          label: 'signerade',
+          actor: participant.name
+        })
+      }
+    })
+  }
+
+  // Landlord signed (legacy field - shown if no participant data)
   if (contract.landlord_signed) {
     events.push({
       timestamp: contract.updated_at,
