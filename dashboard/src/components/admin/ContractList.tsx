@@ -47,6 +47,20 @@ export const ContractList: React.FC<ContractListProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedId, expandedId, contracts])
 
+  // Segment members into current vs historical
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const currentMembers = contracts.filter(member => {
+    const departureDate = member.tenant_departure_date
+    return !departureDate || departureDate >= today
+  })
+
+  const historicalMembers = contracts.filter(member => {
+    const departureDate = member.tenant_departure_date
+    return departureDate && departureDate < today
+  })
+
   // Calculate member statistics
   const contractMembers = contracts.filter(m => m.type === 'contract')
   const tenantMembers = contracts.filter(m => m.type === 'tenant')
@@ -95,19 +109,43 @@ export const ContractList: React.FC<ContractListProps> = ({
         </button>
       </div>
 
-      {/* Member rows */}
-      <div className="space-y-2">
-        {contracts.map((member) => (
-          <MemberRow
-            key={member.id}
-            member={member}
-            isExpanded={expandedId === member.id}
-            isSelected={selectedId === member.id}
-            onToggle={() => setExpandedId(expandedId === member.id ? null : member.id)}
-            onSelect={() => setSelectedId(member.id)}
-          />
-        ))}
-      </div>
+      {/* Current members section */}
+      {currentMembers.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-purple-200 mb-3" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>
+            Nuvarande
+          </div>
+          {currentMembers.map((member) => (
+            <MemberRow
+              key={member.id}
+              member={member}
+              isExpanded={expandedId === member.id}
+              isSelected={selectedId === member.id}
+              onToggle={() => setExpandedId(expandedId === member.id ? null : member.id)}
+              onSelect={() => setSelectedId(member.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Historical members section */}
+      {historicalMembers.length > 0 && (
+        <div className="space-y-2 mt-6">
+          <div className="text-purple-200 mb-3" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>
+            Historiska
+          </div>
+          {historicalMembers.map((member) => (
+            <MemberRow
+              key={member.id}
+              member={member}
+              isExpanded={expandedId === member.id}
+              isSelected={selectedId === member.id}
+              onToggle={() => setExpandedId(expandedId === member.id ? null : member.id)}
+              onSelect={() => setSelectedId(member.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

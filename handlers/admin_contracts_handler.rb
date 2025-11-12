@@ -39,6 +39,13 @@ class AdminContractsHandler
         else
           method_not_allowed
         end
+      elsif req.path_info =~ %r{^/tenants/([a-z0-9\-]+)/departure-date$}
+        tenant_id = $1
+        if req.patch?
+          set_tenant_departure_date(req, tenant_id)
+        else
+          method_not_allowed
+        end
       else
         not_found
       end
@@ -332,6 +339,68 @@ class AdminContractsHandler
         500,
         { 'Content-Type' => 'application/json' },
         [Oj.dump({ error: "Failed to cancel contract: #{e.message}" })]
+      ]
+    end
+  end
+
+  def set_tenant_departure_date(req, tenant_id)
+    # Parse JSON body
+    begin
+      body = Oj.load(req.body.read)
+      date_string = body['date']
+
+      unless date_string
+        return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Missing date parameter' })]]
+      end
+
+      # Parse date
+      departure_date = Date.parse(date_string)
+    rescue Oj::ParseError => e
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Invalid JSON body' })]]
+    rescue ArgumentError => e
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: "Invalid date format: #{e.message}" })]]
+    end
+
+    # Find tenant
+    tenant_repo = Persistence.tenants
+    tenant = tenant_repo.find_by_id(tenant_id)
+
+    unless tenant
+      return [404, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Tenant not found' })]]
+    end
+
+    # Update departure date
+    begin
+      success = tenant_repo.set_departure_date(tenant_id, departure_date)
+
+      if success
+        # Broadcast update to WebSocket clients
+        require_relative '../lib/data_broadcaster'
+        DataBroadcaster.broadcast_contract_list_changed
+
+        [
+          200,
+          { 'Content-Type' => 'application/json' },
+          [Oj.dump({
+            success: true,
+            message: 'Departure date updated successfully',
+            tenant_id: tenant_id,
+            departure_date: departure_date.to_s
+          }, mode: :compat)]
+        ]
+      else
+        [
+          500,
+          { 'Content-Type' => 'application/json' },
+          [Oj.dump({ error: 'Failed to update departure date' })]
+        ]
+      end
+    rescue => e
+      puts "❌ Error updating departure date: #{e.message}"
+      [
+        500,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ error: "Failed to update departure date: #{e.message}" })]
       ]
     end
   end

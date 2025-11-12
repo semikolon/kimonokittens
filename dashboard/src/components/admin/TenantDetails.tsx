@@ -1,6 +1,6 @@
 // TenantDetails - Expanded content for tenant-only rows
-import React from 'react'
-import { DollarSign, TrendingDown, TrendingUp } from 'lucide-react'
+import React, { useState } from 'react'
+import { DollarSign, TrendingDown, TrendingUp, Calendar } from 'lucide-react'
 import type { TenantMember } from '../../views/AdminDashboard'
 
 interface TenantDetailsProps {
@@ -10,6 +10,39 @@ interface TenantDetailsProps {
 export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant }) => {
   const currentRent = tenant.current_rent || 0
   const roomAdjustment = tenant.tenant_room_adjustment || 0
+  const [isSettingDepartureDate, setIsSettingDepartureDate] = useState(false)
+  const [departureDate, setDepartureDate] = useState('')
+
+  const handleSetDepartureDate = async () => {
+    if (!departureDate) return
+
+    try {
+      const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/departure-date`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ date: departureDate })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to update departure date')
+      }
+
+      const result = await response.json()
+      console.log('✅ Departure date updated:', result)
+
+      // Close the form and clear state
+      setIsSettingDepartureDate(false)
+      setDepartureDate('')
+
+      // UI will auto-refresh via WebSocket broadcast
+    } catch (error) {
+      console.error('❌ Error setting departure date:', error)
+      alert(`Failed to set departure date: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
 
   return (
     <div className="p-6 space-y-6 bg-slate-900/60">
@@ -47,6 +80,65 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant }) => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Departure date section */}
+      <div className="pt-4 border-t border-purple-500/10">
+        <h4 className="text-sm font-semibold text-purple-200 mb-3">Utflyttningsdatum:</h4>
+
+        {tenant.tenant_departure_date ? (
+          <div className="flex items-center gap-3">
+            <Calendar className="w-5 h-5 text-purple-300" />
+            <div className="text-purple-100">
+              {new Date(tenant.tenant_departure_date).toLocaleDateString('sv-SE')}
+            </div>
+          </div>
+        ) : (
+          <>
+            {!isSettingDepartureDate ? (
+              <button
+                onClick={() => setIsSettingDepartureDate(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                         bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                         transition-all border border-purple-900/30"
+              >
+                <Calendar className="w-4 h-4" />
+                Sätt utflyttningsdatum
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={departureDate}
+                  onChange={(e) => setDepartureDate(e.target.value)}
+                  className="px-3 py-2 rounded-lg bg-slate-900 border border-purple-500/30
+                           text-purple-100 text-sm focus:outline-none focus:border-purple-500"
+                />
+                <button
+                  onClick={handleSetDepartureDate}
+                  disabled={!departureDate}
+                  className="px-4 py-2 rounded-lg text-sm font-medium
+                           bg-cyan-600 hover:bg-cyan-700 text-white
+                           disabled:opacity-50 disabled:cursor-not-allowed
+                           transition-all"
+                >
+                  Spara
+                </button>
+                <button
+                  onClick={() => {
+                    setIsSettingDepartureDate(false)
+                    setDepartureDate('')
+                  }}
+                  className="px-4 py-2 rounded-lg text-sm font-medium
+                           bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                           transition-all"
+                >
+                  Avbryt
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Info note */}
