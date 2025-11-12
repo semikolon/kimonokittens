@@ -2,6 +2,7 @@
 import React from 'react'
 import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, ChevronRight, User, FileSignature } from 'lucide-react'
 import { ContractDetails } from './ContractDetails'
+import { TenantDetails } from './TenantDetails'
 import type { Member, SignedContract, TenantMember } from '../../views/AdminDashboard'
 
 interface MemberRowProps {
@@ -137,21 +138,17 @@ export const MemberRow: React.FC<MemberRowProps> = ({
       <button
         onClick={() => {
           onSelect()
-          if (isContract) {
-            onToggle()
-          }
+          onToggle() // All rows are now expandable
         }}
         className="w-full p-4 flex items-center gap-4 text-left"
       >
-        {/* Expand icon (only for contracts) */}
-        {isContract && (
-          <ChevronRight
-            className={`
-              w-4 h-4 text-purple-300 transition-transform duration-200
-              ${isExpanded ? 'rotate-90' : ''}
-            `}
-          />
-        )}
+        {/* Expand icon (all rows are expandable) */}
+        <ChevronRight
+          className={`
+            w-4 h-4 text-purple-300 transition-transform duration-200
+            ${isExpanded ? 'rotate-90' : ''}
+          `}
+        />
 
         {/* Status icon */}
         {isContract ? getStatusIcon(member as SignedContract) : (
@@ -172,11 +169,6 @@ export const MemberRow: React.FC<MemberRowProps> = ({
             {dateRange && (
               <span className="text-purple-300/60 text-sm">
                 {dateRange}
-              </span>
-            )}
-            {member.tenant_room_adjustment && member.tenant_room_adjustment !== 0 && (
-              <span className={`text-sm font-medium ${member.tenant_room_adjustment < 0 ? 'text-cyan-400' : 'text-red-400'}`}>
-                {member.tenant_room_adjustment > 0 ? '+' : ''}{member.tenant_room_adjustment} kr
               </span>
             )}
           </div>
@@ -223,10 +215,14 @@ export const MemberRow: React.FC<MemberRowProps> = ({
         </div>
       )}
 
-      {/* Expanded details (only for contracts) */}
-      {isContract && isExpanded && (
+      {/* Expanded details (for all rows) */}
+      {isExpanded && (
         <div className="border-t border-purple-500/20">
-          <ContractDetails contract={member as SignedContract} />
+          {isContract ? (
+            <ContractDetails contract={member as SignedContract} />
+          ) : (
+            <TenantDetails tenant={member as TenantMember} />
+          )}
         </div>
       )}
     </div>

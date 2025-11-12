@@ -19,6 +19,7 @@ class DataBroadcaster
     # Start thread-based schedulers for different data sources
     @threads << periodic(30) { fetch_and_publish('train_data', "#{@base_url}/data/train_departures") }
     @threads << periodic(60) { fetch_and_publish('temperature_data', "#{@base_url}/data/temperature") }
+    @threads << periodic(60) { fetch_and_publish('admin_contracts_data', "#{@base_url}/api/admin/contracts") }
     @threads << periodic(300) { fetch_and_publish('weather_data', "#{@base_url}/data/weather") }
     @threads << periodic(600) { fetch_and_publish('strava_data', "#{@base_url}/data/strava_stats") }
     @threads << periodic(3600) { fetch_and_publish('rent_data', "#{@base_url}/api/rent/friendly_message") }
@@ -38,6 +39,7 @@ class DataBroadcaster
       fetch_and_publish('strava_data', "#{@base_url}/data/strava_stats")
       fetch_and_publish('train_data', "#{@base_url}/data/train_departures")
       fetch_and_publish('temperature_data', "#{@base_url}/data/temperature")
+      fetch_and_publish('admin_contracts_data', "#{@base_url}/api/admin/contracts")
       fetch_and_publish('rent_data', "#{@base_url}/api/rent/friendly_message")
       fetch_and_publish('electricity_price_data', "#{@base_url}/data/electricity_prices")
       fetch_and_publish('electricity_daily_costs_data', "#{@base_url}/api/electricity/daily_costs")
@@ -54,6 +56,7 @@ class DataBroadcaster
       fetch_and_publish('strava_data', "#{@base_url}/data/strava_stats")
       fetch_and_publish('train_data', "#{@base_url}/data/train_departures")
       fetch_and_publish('temperature_data', "#{@base_url}/data/temperature")
+      fetch_and_publish('admin_contracts_data', "#{@base_url}/api/admin/contracts")
       fetch_and_publish('rent_data', "#{@base_url}/api/rent/friendly_message")
       fetch_and_publish('electricity_price_data', "#{@base_url}/data/electricity_prices")
       fetch_and_publish('electricity_daily_costs_data', "#{@base_url}/api/electricity/daily_costs")
