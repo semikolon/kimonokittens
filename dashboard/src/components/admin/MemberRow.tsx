@@ -46,6 +46,7 @@ const getStatusColor = (status: string) => {
     failed: 'bg-red-400/20 text-red-300 border-red-400/30',
     cancelled: 'bg-red-400/20 text-red-300 border-red-400/30',
     expired: 'bg-orange-400/20 text-orange-300 border-orange-400/30',
+    departed: 'bg-slate-600/20 text-slate-400 border-slate-600/30',
     active: 'bg-slate-400/20 text-slate-300 border-slate-400/30'
   }
   return colors[status as keyof typeof colors] || colors.active
@@ -61,6 +62,7 @@ const getStatusLabel = (status: string) => {
     failed: 'Misslyckat',
     cancelled: 'Avbrutet',
     expired: 'Utgånget',
+    departed: 'Utflyttad',
     active: 'Aktiv'
   }
   return labels[status as keyof typeof labels] || 'Aktiv'
@@ -111,6 +113,9 @@ export const MemberRow: React.FC<MemberRowProps> = ({
   today.setHours(0, 0, 0, 0) // Start of today
   const hasDeparted = member.tenant_departure_date && member.tenant_departure_date < today
   const shouldShowCreateButton = isTenant && !hasDeparted
+
+  // Compute tenant status
+  const tenantStatus = isTenant ? (hasDeparted ? 'departed' : 'active') : 'active'
 
   const handleCreateContract = async () => {
     // TODO: Implement contract creation for existing tenant
@@ -180,9 +185,9 @@ export const MemberRow: React.FC<MemberRowProps> = ({
             {/* Status badge */}
             <span className={`
               px-3 py-1 rounded-full text-xs font-medium border
-              ${getStatusColor(isContract ? (member as SignedContract).status : 'active')}
+              ${getStatusColor(isContract ? (member as SignedContract).status : tenantStatus)}
             `}>
-              {getStatusLabel(isContract ? (member as SignedContract).status : 'active')}
+              {getStatusLabel(isContract ? (member as SignedContract).status : tenantStatus)}
             </span>
 
             {/* Test mode badge */}
