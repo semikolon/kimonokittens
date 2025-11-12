@@ -405,7 +405,7 @@ completed        # Agreement fulfilled (agreement.lifecycle.fulfilled)
 **Database**: No schema changes needed - reusing existing `ContractParticipant.status` field (already indexed on line 151 of schema.prisma).
 
 **Frontend Benefits**:
-- Timeline automatically shows richer events: "Frida är nu **läser avtalet**" → "Frida **granskade hela avtalet**" → "Frida **signerar med BankID**"
+- Timeline automatically shows richer events: "Frida **läser avtalet**" → "Frida **granskade hela avtalet**" → "Frida **signerar med BankID**"
 - Status badges can show current engagement state
 - Admins can see if someone is actively reviewing vs just opened the link
 
