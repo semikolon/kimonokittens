@@ -10,7 +10,7 @@ export function DeploymentBanner() {
   const totalTime = 120 // 2 minutes debounce
   const progress = Math.max(0, Math.min(1, timeRemaining / totalTime))
   const circumference = 2 * Math.PI * 17 // radius = 17
-  const strokeDashoffset = circumference * (1 - progress)
+  const strokeDashoffset = circumference * progress
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
@@ -44,7 +44,7 @@ export function DeploymentBanner() {
         {/* Time text in center */}
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-purple-200 text-xs font-medium">
-            {Math.ceil(timeRemaining)}s
+            {timeRemaining > 60 ? `${Math.ceil(timeRemaining / 60)}m` : `${Math.ceil(timeRemaining)}s`}
           </span>
         </div>
 

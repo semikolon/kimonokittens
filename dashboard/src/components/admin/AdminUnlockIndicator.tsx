@@ -36,7 +36,7 @@ export const AdminUnlockIndicator: React.FC = () => {
   const totalSeconds = sessionDurationMs ? Math.max(1, Math.round(sessionDurationMs / 1000)) : remainingSeconds
   const progress = Math.max(0, Math.min(1, remainingSeconds / totalSeconds))
   const circumference = 2 * Math.PI * 17
-  const strokeDashoffset = circumference * (1 - progress)
+  const strokeDashoffset = circumference * progress
   const remainingLabel = remainingSeconds >= 60
     ? `${Math.ceil(remainingSeconds / 60)}m`
     : `${remainingSeconds}s`
