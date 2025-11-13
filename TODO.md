@@ -796,3 +796,7 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 ## 🎨 Design System & UI Consistency
 
 - [ ] Draft a shared style guide covering typography (uppercase headings, dot separators), gradients, color palette (logo-derived), spacing, and motion. Document reusable tokens so admin/dashboard widgets stay consistent.
+
+## 🧾 Logging & Monitoring
+
+- [ ] Investigate prod log volume (journald + dashboard logs): measure disk space consumed per hour/day and trim noisy broadcast entries.

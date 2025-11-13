@@ -37,6 +37,12 @@ export const ContractList: React.FC<ContractListProps> = ({ contracts }) => {
   // Keyboard navigation
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const active = document.activeElement as HTMLElement | null
+      if (active) {
+        const tag = active.tagName
+        const isFormField = tag === 'INPUT' || tag === 'TEXTAREA' || active.isContentEditable
+        if (isFormField) return
+      }
       if (e.key === 'ArrowDown') {
         e.preventDefault()
         if (orderedMembers.length === 0) return

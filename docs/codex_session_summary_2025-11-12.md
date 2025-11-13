@@ -29,4 +29,7 @@ _Last updated: 2025‑11‑12 by Codex._
   - Added an on-screen admin unlock countdown (mirrors the deployment debounce indicator) so hallway users know when the PIN session expires.
   - Authored `scripts/update_tenant_names.rb` to standardize historical tenant names (e.g., Amanda Persson) and backfill missing alumni like Frans Sporsén, Ellinor Lidén, and Patrik Ljungkvist.
   - Button styles (admin list + tenant form) now use faint gradients matched to the dashboard background and toned glow effects so interactions stay consistent with the heatpump cursor aesthetic.
+  - Scroll handling fixed in kiosk mode (`body.kiosk-mode` now allows vertical scrolling while keeping scrollbars hidden), so tall admin views remain usable without exposing the scrollbar chrome.
+  - Wrote `docs/todo_list_overhaul_plan.md` outlining the PIN-gated markdown workflow for todos and how it ties into the future Obsidian-powered handbook.
+  - Identified `unclutter` (`Exec=unclutter -idle 0.1 -root`) as the cursor-hiding daemon so we can tweak its idle timeout for kiosk usability.
   - Historical log (this doc) kept current so we can quickly resume after Claude Code weekly-session limits.
