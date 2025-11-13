@@ -48,6 +48,13 @@ class AdminContractsHandler
         else
           method_not_allowed
         end
+      elsif req.path_info =~ %r{^/tenants/([a-z0-9\-]+)/room$}
+        tenant_id = $1
+        if req.patch?
+          set_tenant_room(req, tenant_id)
+        else
+          method_not_allowed
+        end
       elsif req.path_info =~ %r{^/tenants/([a-z0-9\-]+)/create-contract$}
         tenant_id = $1
         if req.post?
@@ -433,6 +440,47 @@ class AdminContractsHandler
         500,
         { 'Content-Type' => 'application/json' },
         [Oj.dump({ error: "Failed to update departure date: #{e.message}" })]
+      ]
+    end
+  end
+
+  def set_tenant_room(req, tenant_id)
+    if (auth_error = require_admin_token(req))
+      return auth_error
+    end
+
+    begin
+      body = Oj.load(req.body.read)
+      room = body['room']&.to_s
+      unless room && !room.strip.empty?
+        return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Missing room parameter' })]]
+      end
+    rescue Oj::ParseError
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Invalid JSON body' })]]
+    end
+
+    tenant_repo = Persistence.tenants
+    tenant = tenant_repo.find_by_id(tenant_id)
+    unless tenant
+      return [404, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Tenant not found' })]]
+    end
+
+    begin
+      tenant.room = room.strip
+      tenant_repo.update(tenant)
+      require_relative '../lib/data_broadcaster'
+      DataBroadcaster.broadcast_contract_list_changed
+
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ success: true, tenant_id: tenant_id, room: tenant.room })]
+      ]
+    rescue => e
+      [
+        500,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ error: "Failed to update room: #{e.message}" })]
       ]
     end
   end
