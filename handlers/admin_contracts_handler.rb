@@ -134,6 +134,8 @@ class AdminContractsHandler
         tenant_room_adjustment: tenant&.room_adjustment,
         tenant_start_date: tenant&.start_date,
         tenant_departure_date: tenant&.departure_date,
+        tenant_deposit: tenant&.deposit,
+        tenant_furnishing_deposit: tenant&.furnishing_deposit,
         current_rent: tenant ? (rent_breakdown.dig("rents", tenant.name) || 0) : 0,
         case_id: contract[:caseId],
         pdf_url: contract[:pdfUrl],
@@ -199,6 +201,8 @@ class AdminContractsHandler
         tenant_room_adjustment: tenant.room_adjustment,
         tenant_start_date: tenant.start_date,
         tenant_departure_date: tenant.departure_date,
+        tenant_deposit: tenant.deposit,
+        tenant_furnishing_deposit: tenant.furnishing_deposit,
         current_rent: rent_breakdown.dig("rents", tenant.name) || 0,
         status: tenant.status || 'active',
         created_at: tenant.created_at

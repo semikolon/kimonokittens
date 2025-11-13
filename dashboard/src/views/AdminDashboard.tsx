@@ -20,6 +20,8 @@ export interface SignedContract {
   tenant_room_adjustment?: number // Room adjustment in kr
   tenant_start_date?: Date     // Move-in date
   tenant_departure_date?: Date // Move-out date (nullable)
+  tenant_deposit?: number
+  tenant_furnishing_deposit?: number
   current_rent?: number        // Current rent for tenant
   case_id: string              // Zigned agreement ID
   pdf_url: string              // Generated PDF path
@@ -65,6 +67,8 @@ export interface TenantMember {
   tenant_room_adjustment?: number
   tenant_start_date?: Date
   tenant_departure_date?: Date
+  tenant_deposit?: number
+  tenant_furnishing_deposit?: number
   current_rent?: number
   status: string
   created_at: Date

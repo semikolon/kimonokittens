@@ -150,6 +150,8 @@ interface SignedContract {
   tenant_room_adjustment?: number
   tenant_start_date?: string
   tenant_departure_date?: string
+  tenant_deposit?: number
+  tenant_furnishing_deposit?: number
   current_rent?: number
   case_id: string
   pdf_url: string
@@ -191,6 +193,8 @@ interface TenantMember {
   tenant_room_adjustment?: number
   tenant_start_date?: string
   tenant_departure_date?: string
+  tenant_deposit?: number
+  tenant_furnishing_deposit?: number
   current_rent?: number
   status: string
   created_at: string

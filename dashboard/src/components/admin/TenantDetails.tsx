@@ -1,8 +1,9 @@
 // TenantDetails - Expanded content for tenant-only rows
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { DollarSign, TrendingDown, TrendingUp, Calendar } from 'lucide-react'
 import type { TenantMember } from '../../views/AdminDashboard'
 import { useAdminAuth } from '../../contexts/AdminAuthContext'
+import { useData } from '../../context/DataContext'
 
 interface TenantDetailsProps {
   tenant: TenantMember
@@ -15,6 +16,23 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
   const [isSettingDepartureDate, setIsSettingDepartureDate] = useState(false)
   const [departureDate, setDepartureDate] = useState('')
   const { ensureAuth } = useAdminAuth()
+  const { state } = useData()
+  const rentData = state.rentData
+
+  const rentClarifications = useMemo(() => {
+    const lines: string[] = []
+    if (rentData?.data_source?.description_sv) {
+      let text = rentData.data_source.description_sv
+      if (rentData.electricity_amount && rentData.electricity_month) {
+        text += ` - ${rentData.electricity_amount} kr för ${rentData.electricity_month} månads förbrukning`
+      }
+      lines.push(text)
+    }
+    if (rentData?.heating_cost_line) {
+      lines.push(rentData.heating_cost_line)
+    }
+    return lines
+  }, [rentData])
 
   const handleSetDepartureDate = async () => {
     if (!departureDate) return
@@ -76,84 +94,100 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
       )}
 
       {showRent && (
-        <div>
-          <h4 className="text-sm font-semibold text-purple-200 mb-3">Aktuell hyra:</h4>
-          <div className="flex items-center gap-3">
-            <DollarSign className="w-5 h-5 text-purple-300" />
-            <div>
-              <div className="text-2xl font-semibold text-purple-100">
-                {currentRent.toLocaleString('sv-SE')} kr
-              </div>
-              <div className="text-xs text-purple-300/60 mt-1">
-                per månad (inkl. el, internet, avgifter)
+        <div className="grid gap-6 md:grid-cols-3">
+          <div>
+            <h4 className="text-sm font-semibold text-purple-200 mb-3">Aktuell hyra:</h4>
+            <div className="flex items-center gap-3">
+              <DollarSign className="w-5 h-5 text-purple-300" />
+              <div>
+                <div className="text-2xl font-semibold text-purple-100">
+                  {currentRent.toLocaleString('sv-SE')} kr
+                </div>
+                <div className="text-xs text-purple-300/60 mt-1">
+                  per månad (inkl. el, internet, avgifter)
+                </div>
               </div>
             </div>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold text-purple-200 mb-3">Depositioner:</h4>
+            <div className="space-y-2 text-purple-100">
+              <div>
+                <div className="text-xs text-purple-300/60 uppercase tracking-wide">Bas</div>
+                <div className="text-xl font-semibold">{tenant.tenant_deposit ? `${tenant.tenant_deposit.toLocaleString('sv-SE')} kr` : '—'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-purple-300/60 uppercase tracking-wide">Inredning</div>
+                <div className="text-xl font-semibold">{tenant.tenant_furnishing_deposit ? `${tenant.tenant_furnishing_deposit.toLocaleString('sv-SE')} kr` : '—'}</div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold text-purple-200 mb-3">Utflyttningsdatum:</h4>
+            {tenant.tenant_departure_date ? (
+              <div className="flex items-center gap-3">
+                <Calendar className="w-5 h-5 text-purple-300" />
+                <div className="text-purple-100">
+                  {new Date(tenant.tenant_departure_date).toLocaleDateString('sv-SE')}
+                </div>
+              </div>
+            ) : (
+              <>
+                {!isSettingDepartureDate ? (
+                  <button
+                    onClick={() => setIsSettingDepartureDate(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                             bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                             transition-all border border-purple-900/30"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Sätt utflyttningsdatum
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={departureDate}
+                      onChange={(e) => setDepartureDate(e.target.value)}
+                      className="px-3 py-2 rounded-lg bg-slate-900 border border-purple-500/30
+                               text-purple-100 text-sm focus:outline-none focus:border-purple-500"
+                    />
+                    <button
+                      onClick={handleSetDepartureDate}
+                      disabled={!departureDate}
+                      className="px-4 py-2 rounded-lg text-sm font-medium
+                               bg-cyan-600 hover:bg-cyan-700 text-white
+                               disabled:opacity-50 disabled:cursor-not-allowed
+                               transition-all"
+                    >
+                      Spara
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsSettingDepartureDate(false)
+                        setDepartureDate('')
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium
+                               bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                               transition-all"
+                    >
+                      Avbryt
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
 
-      {/* Departure date section */}
-      <div className="pt-4 border-t border-purple-500/10">
-        <h4 className="text-sm font-semibold text-purple-200 mb-3">Utflyttningsdatum:</h4>
-
-        {tenant.tenant_departure_date ? (
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-purple-300" />
-            <div className="text-purple-100">
-              {new Date(tenant.tenant_departure_date).toLocaleDateString('sv-SE')}
-            </div>
-          </div>
-        ) : (
-          <>
-            {!isSettingDepartureDate ? (
-              <button
-                onClick={() => setIsSettingDepartureDate(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                         bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                         transition-all border border-purple-900/30"
-              >
-                <Calendar className="w-4 h-4" />
-                Sätt utflyttningsdatum
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={departureDate}
-                  onChange={(e) => setDepartureDate(e.target.value)}
-                  className="px-3 py-2 rounded-lg bg-slate-900 border border-purple-500/30
-                           text-purple-100 text-sm focus:outline-none focus:border-purple-500"
-                />
-                <button
-                  onClick={handleSetDepartureDate}
-                  disabled={!departureDate}
-                  className="px-4 py-2 rounded-lg text-sm font-medium
-                           bg-cyan-600 hover:bg-cyan-700 text-white
-                           disabled:opacity-50 disabled:cursor-not-allowed
-                           transition-all"
-                >
-                  Spara
-                </button>
-                <button
-                  onClick={() => {
-                    setIsSettingDepartureDate(false)
-                    setDepartureDate('')
-                  }}
-                  className="px-4 py-2 rounded-lg text-sm font-medium
-                           bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                           transition-all"
-                >
-                  Avbryt
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {showRent && (
-        <div className="text-xs text-purple-300/50 pt-4 border-t border-purple-500/10">
-          Hyran beräknas från aktuella elkostnader och delad grundhyra mellan aktiva hyresgäster.
+      {showRent && rentClarifications.length > 0 && (
+        <div className="text-xs text-purple-300/60 pt-4 border-t border-purple-500/10 space-y-1">
+          {rentClarifications.map((line, idx) => (
+            <div key={idx}>{line}</div>
+          ))}
         </div>
       )}
     </div>

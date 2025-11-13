@@ -219,12 +219,12 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
         {contract.pdf_url && (
           <button
             onClick={() => window.open(`/api/contracts/${contract.id}/pdf`, '_blank')}
-            className="px-4 py-2 bg-[#ffaa88] hover:bg-[#ff9977] text-slate-900 rounded-lg text-sm font-medium transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-all button-cursor-glow button-glow-orange button-hover-brighten"
             style={{
-              background: 'linear-gradient(135deg, #ffaa88 0%, #ff9977 100%)'
+              backgroundImage: 'linear-gradient(180deg, #c86c34 20%, #8f3c10 100%)'
             }}
           >
-            Visa PDF
+            Visa kontrakt
           </button>
         )}
         <button
