@@ -231,7 +231,7 @@ export const MemberRow: React.FC<MemberRowProps> = ({
     maxHeight: isExpanded ? `${contentHeight}px` : '0px',
     opacity: isExpanded ? 1 : 0,
     overflow: 'hidden',
-    transition: 'max-height 0.5s linear, opacity 0.5s linear',
+    transition: 'none',
     borderTopWidth: isExpanded ? 1 : 0,
     borderTopStyle: 'solid',
     borderTopColor: isExpanded ? 'rgba(168, 85, 247, 0.2)' : 'transparent'
