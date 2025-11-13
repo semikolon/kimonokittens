@@ -119,16 +119,30 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
           </div>
 
           <div>
+            <h4 className="text-sm font-semibold text-purple-200 mb-3">Depositioner:</h4>
+            <div className="space-y-2 text-purple-100">
+              <div>
+                <div className="text-xs text-purple-300/60 uppercase tracking-wide">Bas</div>
+                <div className="text-xl font-semibold">{formatDeposit(baseDeposit)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-purple-300/60 uppercase tracking-wide">Inredning</div>
+                <div className="text-xl font-semibold">{formatDeposit(furnishingDeposit)}</div>
+              </div>
+            </div>
+          </div>
+
+          <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-purple-200">Depositioner:</h4>
-              <div className="flex items-center gap-2 text-xs text-purple-300/70">
+              <div className="text-sm font-semibold text-purple-200 flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 <span>{roomInput || 'Rum saknas'}</span>
-                <button
-                  onClick={async () => {
-                    const newRoom = window.prompt('Ange nytt rumsnamn', roomInput || '')
-                    if (newRoom === null) return
-                    const trimmed = newRoom.trim()
+              </div>
+              <button
+                onClick={async () => {
+                  const newRoom = window.prompt('Ange nytt rumsnamn', roomInput || '')
+                  if (newRoom === null) return
+                  const trimmed = newRoom.trim()
                     if (!trimmed) {
                       alert('Rumsnamn kan inte vara tomt')
                       return
@@ -156,80 +170,71 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                       setUpdatingRoom(false)
                     }
                   }}
-                  className="px-2 py-1 rounded border border-purple-500/30 text-purple-200 hover:bg-purple-900/20 transition text-[11px]"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                           bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                           transition-all border border-purple-900/30"
                   disabled={updatingRoom}
                 >
                   {updatingRoom ? 'Sparar…' : 'Ändra rum'}
                 </button>
               </div>
             </div>
-            <div className="space-y-2 text-purple-100">
-              <div>
-                <div className="text-xs text-purple-300/60 uppercase tracking-wide">Bas</div>
-                <div className="text-xl font-semibold">{formatDeposit(baseDeposit)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-purple-300/60 uppercase tracking-wide">Inredning</div>
-                <div className="text-xl font-semibold">{formatDeposit(furnishingDeposit)}</div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-semibold text-purple-200 mb-3">Utflyttningsdatum:</h4>
-            {tenant.tenant_departure_date ? (
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-purple-300" />
-                <div className="text-purple-100">
-                  {new Date(tenant.tenant_departure_date).toLocaleDateString('sv-SE')}
-                </div>
-              </div>
-            ) : (
-              <>
-                {!isSettingDepartureDate ? (
-                  <button
-                    onClick={() => setIsSettingDepartureDate(true)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                             bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                             transition-all border border-purple-900/30"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    Sätt utflyttningsdatum
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      value={departureDate}
-                      onChange={(e) => setDepartureDate(e.target.value)}
-                      className="px-3 py-2 rounded-lg bg-slate-900 border border-purple-500/30
-                               text-purple-100 text-sm focus:outline-none focus:border-purple-500"
-                    />
-                    <button
-                      onClick={handleSetDepartureDate}
-                      disabled={!departureDate}
-                      className="px-4 py-2 rounded-lg text-sm font-medium
-                               bg-cyan-600 hover:bg-cyan-700 text-white
-                               disabled:opacity-50 disabled:cursor-not-allowed
-                               transition-all"
-                    >
-                      Spara
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsSettingDepartureDate(false)
-                        setDepartureDate('')
-                      }}
-                      className="px-4 py-2 rounded-lg text-sm font-medium
-                               bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                               transition-all"
-                    >
-                      Avbryt
-                    </button>
+            <div>
+              <h4 className="text-sm font-semibold text-purple-200 mb-3">Utflyttningsdatum:</h4>
+              {tenant.tenant_departure_date ? (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-purple-300" />
+                  <div className="text-purple-100">
+                    {new Date(tenant.tenant_departure_date).toLocaleDateString('sv-SE')}
                   </div>
-                )}
-              </>
-            )}
+                </div>
+              ) : (
+                <>
+                  {!isSettingDepartureDate ? (
+                    <button
+                      onClick={() => setIsSettingDepartureDate(true)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                               bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                               transition-all border border-purple-900/30"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Sätt utflyttningsdatum
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        value={departureDate}
+                        onChange={(e) => setDepartureDate(e.target.value)}
+                        className="px-3 py-2 rounded-lg bg-slate-900 border border-purple-500/30
+                                 text-purple-100 text-sm focus:outline-none focus:border-purple-500"
+                      />
+                      <button
+                        onClick={handleSetDepartureDate}
+                        disabled={!departureDate}
+                        className="px-4 py-2 rounded-lg text-sm font-medium
+                                 bg-cyan-600 hover:bg-cyan-700 text-white
+                                 disabled:opacity-50 disabled:cursor-not-allowed
+                                 transition-all"
+                      >
+                        Spara
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsSettingDepartureDate(false)
+                          setDepartureDate('')
+                        }}
+                        className="px-4 py-2 rounded-lg text-sm font-medium
+                                 bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                                 transition-all"
+                      >
+                        Avbryt
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
