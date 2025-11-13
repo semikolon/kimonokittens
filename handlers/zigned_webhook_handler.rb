@@ -5,6 +5,7 @@ require_relative '../lib/contract_signer'
 require_relative '../lib/data_broadcaster'
 require_relative '../lib/repositories/signed_contract_repository'
 require_relative '../lib/persistence'
+require_relative '../lib/landlord_profile'
 
 # Dedicated logger for Zigned webhook events
 # Production: /var/log/kimonokittens/zigned-webhooks.log
@@ -710,12 +711,12 @@ class ZignedWebhookHandler
   def lookup_personal_number(contract_id, participant_data)
     email = participant_data['email']
 
-    # Landlord email (hardcoded in ContractSigner)
-    landlord_email = 'branstrom@gmail.com'
-    landlord_personnummer = '8604230717'
+    landlord_info = LandlordProfile.info
+    landlord_email = landlord_info[:email]&.downcase
+    landlord_personnummer = landlord_info[:personnummer]
 
     # Check if this is the landlord
-    return landlord_personnummer if email&.downcase == landlord_email
+    return landlord_personnummer if landlord_email && email&.downcase == landlord_email
 
     # Otherwise look up tenant personnummer from contract
     contract = @repository.find_by_id(contract_id)
@@ -731,7 +732,7 @@ class ZignedWebhookHandler
 
   # Determine if participant is landlord (for legacy field updates)
   def is_landlord?(personal_number)
-    personal_number&.gsub(/\D/, '') == '8604230717'
+    personal_number&.gsub(/\D/, '') == LandlordProfile.info[:personnummer]&.gsub(/\D/, '')
   end
 
   # ========== SIGN EVENT HANDLERS (Participant Engagement Tracking) ==========

@@ -1,4 +1,5 @@
 require 'securerandom'
+require_relative '../landlord_profile'
 
 # Domain model for contract participants (individual signers)
 # Represents a person who needs to sign a contract (landlord, tenant, observer)
@@ -74,8 +75,7 @@ class ContractParticipant
   end
 
   def landlord?
-    # TODO: Replace with role-based check when roles are properly set
-    personal_number == '8604230717'
+    personal_number&.gsub(/\D/, '') == LandlordProfile.info[:personnummer]&.gsub(/\D/, '')
   end
 
   def tenant?

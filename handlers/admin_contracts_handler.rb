@@ -6,6 +6,7 @@ class AdminContractsHandler
     require_relative '../rent'
     require_relative '../lib/models/rent_config'
     require_relative '../lib/admin_auth'
+    require_relative '../lib/landlord_profile'
   end
 
   def call(env)
@@ -63,6 +64,8 @@ class AdminContractsHandler
   private
 
   def list_contracts(req)
+    landlord_profile = LandlordProfile.info
+
     # Fetch all data
     contract_repo = Persistence.signed_contracts
     tenant_repo = Persistence.tenants
@@ -136,6 +139,9 @@ class AdminContractsHandler
         pdf_url: contract[:pdfUrl],
         status: contract[:status],
         landlord_signed: contract[:landlordSigned],
+        landlord_email: landlord_profile[:email],
+        landlord_name: landlord_profile[:name],
+        landlord_personnummer: landlord_profile[:personnummer],
         tenant_signed: contract[:tenantSigned],
         landlord_signed_at: contract[:landlordSignedAt],
         tenant_signed_at: contract[:tenantSignedAt],

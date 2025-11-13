@@ -90,7 +90,7 @@ export const ContractTimeline: React.FC<ContractTimelineProps> = ({ contract }) 
     events.push({
       timestamp: contract.updated_at,
       label: 'Hyresvärd signerade',
-      actor: 'Fredrik Brännström'
+      actor: contract.landlord_name || 'Hyresvärd'
     })
   }
 

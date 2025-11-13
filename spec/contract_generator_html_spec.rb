@@ -147,11 +147,6 @@ RSpec.describe ContractGeneratorHtml do
   end
 
   describe 'constants' do
-    it 'has correct LANDLORD info' do
-      expect(ContractGeneratorHtml::LANDLORD[:name]).to eq('Fredrik Bränström')
-      expect(ContractGeneratorHtml::LANDLORD[:personnummer]).to eq('8604230717')
-    end
-
     it 'has correct PROPERTY info' do
       expect(ContractGeneratorHtml::PROPERTY[:address]).to eq('Sördalavägen 26, 141 60 Huddinge')
     end

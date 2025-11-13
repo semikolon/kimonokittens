@@ -13,9 +13,11 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
   const daysLeft = Math.ceil((new Date(contract.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
 
   // If tenant IS the landlord (match on personnummer), landlord signature is implicit/automatic
-  const LANDLORD_PERSONNUMMER = '8604230717'
-  const isLandlord = contract.tenant_personnummer?.replace(/\D/g, '') === LANDLORD_PERSONNUMMER
+  const landlordPersonnummer = contract.landlord_personnummer?.replace(/\D/g, '')
+  const tenantPersonnummer = contract.tenant_personnummer?.replace(/\D/g, '')
+  const isLandlord = Boolean(landlordPersonnummer && tenantPersonnummer === landlordPersonnummer)
   const landlordSigned = isLandlord || contract.landlord_signed
+  const landlordName = contract.landlord_name || 'Hyresvärd'
 
   // State for button actions
   const [resendingEmail, setResendingEmail] = useState(false)
@@ -166,7 +168,7 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
               <>
                 <CheckCircle2 className="w-4 h-4 text-cyan-400" />
                 <span className="text-purple-100">
-                  Fredrik Brännström - Signerad {isLandlord ? '(automatisk)' : `(${new Date(contract.updated_at).toLocaleString('sv-SE', {
+                  {landlordName} - Signerad {isLandlord ? '(automatisk)' : `(${new Date(contract.updated_at).toLocaleString('sv-SE', {
                     month: 'long',
                     day: 'numeric',
                     hour: '2-digit',
@@ -177,7 +179,7 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
             ) : (
               <>
                 <Clock className="w-4 h-4 text-yellow-400" />
-                <span className="text-purple-200">Fredrik Brännström - Väntar ({daysLeft} dagar kvar)</span>
+                <span className="text-purple-200">{landlordName} - Väntar ({daysLeft} dagar kvar)</span>
               </>
             )}
           </div>
@@ -205,10 +207,12 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
       </div>
 
       {/* Timeline Section */}
-      <div>
-        <h4 className="text-sm font-semibold text-purple-200 mb-3">Tidslinje:</h4>
-        <ContractTimeline contract={contract} />
-      </div>
+      {contract.status !== 'completed' && (
+        <div>
+          <h4 className="text-sm font-semibold text-purple-200 mb-3">Tidslinje:</h4>
+          <ContractTimeline contract={contract} />
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex gap-3 pt-2">

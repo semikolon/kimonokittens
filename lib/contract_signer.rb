@@ -8,6 +8,8 @@ require 'json'
 require 'fileutils'
 require 'securerandom'
 
+require_relative 'landlord_profile'
+
 # ContractSigner orchestrates the entire contract signing workflow
 #
 # Responsibilities:
@@ -39,12 +41,6 @@ class ContractSigner
   GENERATED_DIR = File.join(CONTRACTS_DIR, 'generated')
   SIGNED_DIR = File.join(CONTRACTS_DIR, 'signed')
   METADATA_DIR = File.join(CONTRACTS_DIR, 'metadata')
-
-  LANDLORD = {
-    name: 'Fredrik Bränström',
-    personnummer: '8604230717',
-    email: 'branstrom@gmail.com'
-  }.freeze
 
   # Database-driven contract signing (PRODUCTION CODE PATH)
   #
@@ -111,11 +107,13 @@ class ContractSigner
       test_mode: test_mode
     )
 
+    landlord = LandlordProfile.info
+
     case_title = "Hyresavtal - #{tenant.name}"
     webhook_url = ENV['WEBHOOK_BASE_URL'] ? "#{ENV['WEBHOOK_BASE_URL']}/api/webhooks/zigned" : nil
 
     signers = [
-      LANDLORD,
+      landlord,
       {
         name: tenant.name,
         personnummer: tenant.personnummer,
@@ -137,7 +135,7 @@ class ContractSigner
     puts "📅 Expires at: #{zigned_result[:expires_at]}"
 
     # Step 3: Save to database (replaces file-based metadata)
-    landlord_link = zigned_result[:signing_links][LANDLORD[:personnummer].gsub(/\D/, '')]
+    landlord_link = zigned_result[:signing_links][landlord[:personnummer].gsub(/\D/, '')]
     tenant_link = zigned_result[:signing_links][tenant.personnummer.gsub(/\D/, '')]
 
     signed_contract = SignedContract.new(
@@ -161,7 +159,7 @@ class ContractSigner
 
     # Step 4: Print signing links
     puts "\n🔗 Signing Links:"
-    puts "\nLandlord (#{LANDLORD[:name]}):"
+    puts "\nLandlord (#{landlord[:name]}):"
     puts landlord_link
     puts "\nTenant (#{tenant.name}):"
     puts tenant_link
@@ -228,8 +226,9 @@ class ContractSigner
     case_title = "Hyresavtal - #{tenant[:name]}"
     webhook_url = ENV['WEBHOOK_BASE_URL'] ? "#{ENV['WEBHOOK_BASE_URL']}/api/webhooks/zigned" : nil
 
+    landlord = LandlordProfile.info
     signers = [
-      LANDLORD,
+      landlord,
       { name: tenant[:name], personnummer: tenant[:personnummer], email: tenant[:email] }
     ]
 
@@ -265,11 +264,11 @@ class ContractSigner
     puts "✅ Metadata saved: #{metadata_path}"
 
     # Step 4: Print signing links
-    landlord_link = zigned_result[:signing_links][LANDLORD[:personnummer].gsub(/\D/, '')]
+    landlord_link = zigned_result[:signing_links][landlord[:personnummer].gsub(/\D/, '')]
     tenant_link = zigned_result[:signing_links][tenant[:personnummer].gsub(/\D/, '')]
 
     puts "\n🔗 Signing Links:"
-    puts "\nLandlord (#{LANDLORD[:name]}):"
+    puts "\nLandlord (#{landlord[:name]}):"
     puts landlord_link
     puts "\nTenant (#{tenant[:name]}):"
     puts tenant_link

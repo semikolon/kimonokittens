@@ -25,6 +25,9 @@ export interface SignedContract {
   pdf_url: string              // Generated PDF path
   status: 'pending' | 'landlord_signed' | 'tenant_signed' | 'completed' | 'expired' | 'cancelled' | 'failed'
   landlord_signed: boolean
+  landlord_name?: string
+  landlord_email?: string
+  landlord_personnummer?: string
   tenant_signed: boolean
   landlord_signing_url: string
   tenant_signing_url: string

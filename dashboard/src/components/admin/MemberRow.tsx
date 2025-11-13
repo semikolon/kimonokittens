@@ -16,9 +16,9 @@ interface MemberRowProps {
 
 // Status icon mapping for contracts
 const getStatusIcon = (contract: SignedContract) => {
-  // If tenant IS the landlord (match on personnummer), landlord signature is implicit/automatic
-  const LANDLORD_PERSONNUMMER = '8604230717'
-  const isLandlord = contract.tenant_personnummer?.replace(/\D/g, '') === LANDLORD_PERSONNUMMER
+  const landlordPersonnummer = contract.landlord_personnummer?.replace(/\D/g, '')
+  const tenantPersonnummer = contract.tenant_personnummer?.replace(/\D/g, '')
+  const isLandlord = Boolean(landlordPersonnummer && tenantPersonnummer === landlordPersonnummer)
   const landlordSigned = isLandlord || contract.landlord_signed
 
   if (contract.status === 'completed') {

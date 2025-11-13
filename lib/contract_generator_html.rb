@@ -4,6 +4,7 @@ require 'fileutils'
 require 'kramdown'
 require_relative 'repositories/tenant_repository'
 require_relative 'handbook_parser'
+require_relative 'landlord_profile'
 
 class ContractGeneratorHtml
   TEMPLATE_PATH = File.expand_path('contract_template.html.erb', __dir__)
@@ -12,13 +13,6 @@ class ContractGeneratorHtml
   FONTS_DIR = File.expand_path('../fonts', __dir__)
   LOGO_PATH = File.expand_path('assets/logo-80pct-saturated-2000w.png', __dir__)  # Optimized 2000px (1.2MB vs 6.8MB, 82% reduction)
   SWISH_QR_PATH = File.expand_path('swish-qr.png', __dir__)
-
-  LANDLORD = {
-    name: 'Fredrik Bränström',
-    personnummer: '8604230717',
-    phone: '073-830 72 22',
-    email: 'branstrom@gmail.com'
-  }.freeze
 
   PROPERTY = {
     address: 'Sördalavägen 26, 141 60 Huddinge',
@@ -135,7 +129,7 @@ class ContractGeneratorHtml
     furnishing_deposit = tenant.furnishing_deposit || DEFAULT_DEPOSITS[:furnishing_deposit]
 
     {
-      landlord: LANDLORD,
+      landlord: landlord_profile,
       tenant: {
         name: tenant.name,
         personnummer: tenant.personnummer || 'N/A',
@@ -220,7 +214,7 @@ class ContractGeneratorHtml
       fonts_dir: FONTS_DIR,
       logo_path: LOGO_PATH,
       swish_qr_path: SWISH_QR_PATH,
-      landlord: LANDLORD,
+      landlord: landlord_profile,
       tenant: tenant_info,
       property: PROPERTY,
       contract_period: "#{start_date} – tills vidare",
@@ -290,7 +284,7 @@ class ContractGeneratorHtml
       fonts_dir: FONTS_DIR,
       logo_path: LOGO_PATH,
       swish_qr_path: SWISH_QR_PATH,
-      landlord: LANDLORD,
+      landlord: landlord_profile,
       tenant: tenant,
       property: PROPERTY,
       contract_period: "#{start_date} – tills vidare",
@@ -308,6 +302,10 @@ class ContractGeneratorHtml
       other_terms: extract_list_items(markdown, 'Övriga villkor'),
       democratic_structure_text: extract_section(markdown, 'Hyresstruktur och demokratisk beslutsgång')
     }
+  end
+
+  def landlord_profile
+    LandlordProfile.info
   end
 
   def extract_section(markdown, heading)

@@ -31,6 +31,26 @@ class TenantRepository < BaseRepository
     row && hydrate(row)
   end
 
+  # Find tenant by personnummer (ignores formatting characters)
+  # @param value [String] Personnummer plain or formatted
+  # @return [Tenant, nil]
+  def find_by_personnummer(value)
+    normalized = normalize_personnummer(value)
+    return nil if normalized.empty?
+
+    row = dataset.where(personnummer: value).first
+    row ||= dataset.where(personnummer: normalized).first
+
+    unless row
+      row = dataset
+        .exclude(personnummer: nil)
+        .all
+        .find { |entry| normalize_personnummer(entry[:personnummer]) == normalized }
+    end
+
+    row && hydrate(row)
+  end
+
   # Find tenant by Facebook ID
   # @param facebook_id [String] Facebook ID
   # @return [Tenant, nil]
@@ -201,6 +221,10 @@ class TenantRepository < BaseRepository
       deposit: row[:deposit],
       furnishing_deposit: row[:furnishingDeposit]
     )
+  end
+
+  def normalize_personnummer(value)
+    value.to_s.gsub(/\D/, '')
   end
 
   # Convert domain object to database hash
