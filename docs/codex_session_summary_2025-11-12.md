@@ -15,17 +15,21 @@ _Documenting the work Codex and Fredrik paired on during the enforced Claude Cod
   - Wrapped all sensitive actions (tenant creation, contract creation, departure-date edits, resend reminders, cancel agreements) behind the `X-Admin-Token` check.
   - Frontend now includes an `AdminAuthProvider` that prompts for the PIN on first protected action, caches the token in localStorage, and injects it automatically.
 - **General UX tweaks**: placeholders updated (“Karlsson på Taket”), success/error copy tightened, rent note hidden for inactive tenants.
+- **Dynamic landlord profile**: Admin UI + contract generation now read the landlord’s name/email/phone/personnummer from the tenant record, eliminating hardcoded “Brännst…” spellings across the stack.
+- **Tenant insight panel**: Expanded rows show rent, deposit + furnishing deposit, and move-out date side-by-side with the same rent clarifications used in the rent widget.
+- **Post-completion polish**: Contract timelines collapse once both parties sign so the focus stays on signing status/actions.
 
 ## Open Follow-ups
 
-- Consider exposing an unlock indicator (e.g., subtle badge) so admins know when the PIN expires.
 - PIN currently shared across all actions; evaluate moving to per-user auth if kiosk usage grows.
 - Animation polish paused; revisit softer transitions once security/UI backlog settles.
 - Pending: investigate Adam’s failed contract creation (need fresh `journalctl -u kimonokittens-dashboard` snippet right after reproduction).
+- Pending: reproduce Adam’s contract creation from a LAN browser session (pop-os.local) and capture `journalctl -u kimonokittens-dashboard` immediately after.
 - Pending: implement PIN-gated todo editing + markdown persistence per `docs/todo_list_overhaul_plan.md`.
 - Pending: add instrumentation/TODO for production log volume (how fast `/var/log/kimonokittens/*.log` grows).
-- Pending: explore LAN kiosk access hygiene (documented at `http://pop-os.local/` using same-origin calls, no cross-device localhost dependencies).
-- Pending: stage/commit recent UI tweaks (button glows, CLAUDE.md LAN note) once git access is available—current session couldn’t write `.git/index.lock`.
+- Pending: explore LAN kiosk access hygiene (documented at `http://pop-os.local/` using same-origin calls, no cross-device localhost dependencies) and document any remaining gaps.
+- Pending: stabilize Ferrum/Chromium-based specs (currently timing out) once feature work settles.
+- Pending: plan a subtle logo drift or other anti burn-in treatment for the kiosk display.
 
 _Last updated: 2025‑11‑12 by Codex._
 - **Nov 12 follow-up**:

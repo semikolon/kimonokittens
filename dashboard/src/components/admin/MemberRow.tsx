@@ -230,11 +230,7 @@ export const MemberRow: React.FC<MemberRowProps> = ({
   const detailsStyle: React.CSSProperties = {
     maxHeight: isExpanded ? `${contentHeight}px` : '0px',
     opacity: isExpanded ? 1 : 0,
-    overflow: 'hidden',
-    transition: 'none',
-    borderTopWidth: isExpanded ? 1 : 0,
-    borderTopStyle: 'solid',
-    borderTopColor: isExpanded ? 'rgba(168, 85, 247, 0.2)' : 'transparent'
+    overflow: 'hidden'
   }
 
   return (
@@ -334,7 +330,10 @@ export const MemberRow: React.FC<MemberRowProps> = ({
       )}
 
       {/* Expanded details (for all rows) */}
-      <div style={detailsStyle}>
+      <div
+        className={`${isExpanded ? 'rounded-b-2xl border-t border-purple-500/10' : ''}`}
+        style={detailsStyle}
+      >
         {isContract ? (
           <>
             <div ref={detailsRef}>
@@ -351,6 +350,8 @@ export const MemberRow: React.FC<MemberRowProps> = ({
                 tenant_room_adjustment: (member as SignedContract).tenant_room_adjustment,
                 tenant_start_date: (member as SignedContract).tenant_start_date,
                 tenant_departure_date: (member as SignedContract).tenant_departure_date,
+                tenant_deposit: (member as SignedContract).tenant_deposit,
+                tenant_furnishing_deposit: (member as SignedContract).tenant_furnishing_deposit,
                 current_rent: (member as SignedContract).current_rent,
                   status: 'active',
                   created_at: (member as SignedContract).created_at

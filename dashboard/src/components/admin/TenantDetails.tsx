@@ -13,6 +13,8 @@ interface TenantDetailsProps {
 export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent = true }) => {
   const currentRent = tenant.current_rent || 0
   const roomAdjustment = tenant.tenant_room_adjustment || 0
+  const baseDeposit = tenant.tenant_deposit
+  const furnishingDeposit = tenant.tenant_furnishing_deposit
   const [isSettingDepartureDate, setIsSettingDepartureDate] = useState(false)
   const [departureDate, setDepartureDate] = useState('')
   const { ensureAuth } = useAdminAuth()
@@ -28,11 +30,15 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
       }
       lines.push(text)
     }
-    if (rentData?.heating_cost_line) {
-      lines.push(rentData.heating_cost_line)
-    }
     return lines
   }, [rentData])
+
+  const formatDeposit = (value?: number | string | null) => {
+    if (value === null || value === undefined) return '—'
+    const numeric = typeof value === 'string' ? parseFloat(value) : value
+    if (!Number.isFinite(numeric)) return '—'
+    return `${Math.round(numeric).toLocaleString('sv-SE')} kr`
+  }
 
   const handleSetDepartureDate = async () => {
     if (!departureDate) return
@@ -115,11 +121,11 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
             <div className="space-y-2 text-purple-100">
               <div>
                 <div className="text-xs text-purple-300/60 uppercase tracking-wide">Bas</div>
-                <div className="text-xl font-semibold">{tenant.tenant_deposit ? `${tenant.tenant_deposit.toLocaleString('sv-SE')} kr` : '—'}</div>
+                <div className="text-xl font-semibold">{formatDeposit(baseDeposit)}</div>
               </div>
               <div>
                 <div className="text-xs text-purple-300/60 uppercase tracking-wide">Inredning</div>
-                <div className="text-xl font-semibold">{tenant.tenant_furnishing_deposit ? `${tenant.tenant_furnishing_deposit.toLocaleString('sv-SE')} kr` : '—'}</div>
+                <div className="text-xl font-semibold">{formatDeposit(furnishingDeposit)}</div>
               </div>
             </div>
           </div>
