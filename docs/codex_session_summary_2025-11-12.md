@@ -21,6 +21,11 @@ _Documenting the work Codex and Fredrik paired on during the enforced Claude Cod
 - Consider exposing an unlock indicator (e.g., subtle badge) so admins know when the PIN expires.
 - PIN currently shared across all actions; evaluate moving to per-user auth if kiosk usage grows.
 - Animation polish paused; revisit softer transitions once security/UI backlog settles.
+- Pending: investigate Adam’s failed contract creation (need fresh `journalctl -u kimonokittens-dashboard` snippet right after reproduction).
+- Pending: implement PIN-gated todo editing + markdown persistence per `docs/todo_list_overhaul_plan.md`.
+- Pending: add instrumentation/TODO for production log volume (how fast `/var/log/kimonokittens/*.log` grows).
+- Pending: explore LAN kiosk access hygiene (documented at `http://pop-os.local/` using same-origin calls, no cross-device localhost dependencies).
+- Pending: stage/commit recent UI tweaks (button glows, CLAUDE.md LAN note) once git access is available—current session couldn’t write `.git/index.lock`.
 
 _Last updated: 2025‑11‑12 by Codex._
 - **Nov 12 follow-up**:
@@ -32,4 +37,5 @@ _Last updated: 2025‑11‑12 by Codex._
   - Scroll handling fixed in kiosk mode (`body.kiosk-mode` now allows vertical scrolling while keeping scrollbars hidden), so tall admin views remain usable without exposing the scrollbar chrome.
   - Wrote `docs/todo_list_overhaul_plan.md` outlining the PIN-gated markdown workflow for todos and how it ties into the future Obsidian-powered handbook.
   - Identified `unclutter` (`Exec=unclutter -idle 0.1 -root`) as the cursor-hiding daemon so we can tweak its idle timeout for kiosk usability.
+  - Confirmed the kiosk exposes the dashboard UI/API over LAN via `http://pop-os.local/`; app makes only same-origin calls so browsing from another machine never hits that machine’s localhost.
   - Historical log (this doc) kept current so we can quickly resume after Claude Code weekly-session limits.

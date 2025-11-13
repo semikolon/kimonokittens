@@ -311,11 +311,11 @@ export const MemberRow: React.FC<MemberRowProps> = ({
                   handleCreateContract()
                 }}
                 disabled={creatingContract}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-medium
                          text-white transition-all button-cursor-glow button-glow-orange button-hover-brighten
                          disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  backgroundImage: 'linear-gradient(180deg, #c86c34 0%, #8f3c10 100%)'
+                  backgroundImage: 'linear-gradient(180deg, #c86c34 20%, #8f3c10 100%)'
                 }}
               >
                 <FileSignature className="w-3 h-3 text-white" />

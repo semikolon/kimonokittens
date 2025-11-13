@@ -254,7 +254,7 @@
 
 
 .button-cursor-glow {
-  transition: box-shadow 0.4s linear, filter 0.2s linear;
+  transition: box-shadow 0.1s linear, filter 0.1s linear;
 }
 
 .button-cursor-glow:hover,
@@ -264,17 +264,17 @@
 
 .button-glow-default:hover,
 .button-glow-default:focus-visible {
-  box-shadow: 0 0 10px rgba(58, 31, 82, 0.46), 0 0 24px rgba(58, 31, 82, 0.34);
+  box-shadow: 0 0 10px rgba(58, 31, 82, 0.7), 0 0 24px rgba(58, 31, 82, 0.4);
 }
 
 .button-glow-orange:hover,
 .button-glow-orange:focus-visible {
-  box-shadow: 0 0 10px rgba(139, 66, 23, 0.43), 0 0 22px rgba(139, 66, 23, 0.31);
+  box-shadow: 0 0 10px rgba(139, 66, 23, 0.7), 0 0 22px rgba(139, 66, 23, 0.4);
 }
 
 .button-hover-brighten:hover,
 .button-hover-brighten:focus-visible {
-  filter: brightness(1.05);
+  filter: brightness(1.1);
 }
 
 .heatpump-status {

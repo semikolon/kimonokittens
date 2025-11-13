@@ -569,7 +569,7 @@ For LLM assistants and future developers:
 ## 🚀 DEPLOYMENT ARCHITECTURE
 
 > **✅ KIOSK DEPLOYED**: Dell Optiplex 7010 live in hallway (October 6, 2025)
-> - **Production IP**: `192.168.4.84` (SSH hostname: `pop` via ~/.ssh/config)
+> - **Production IP**: `192.168.4.84` (SSH hostname: `pop` via ~/.ssh/config). From any device on the LAN you can hit the dashboard UI directly at `http://pop-os.local/` (nginx on port 80 proxies everything), so no special tunneling is required. The SPA only makes same-origin requests (`/api/*`, `/dashboard/ws` etc.), so browsing from another machine never tries to call its own localhost.
 > - Dashboard display operational 24/7
 > - GPU acceleration + webhook auto-deployment active
 > - Migration from Pi 3B+ ongoing (Node-RED, MQTT, cron jobs)
