@@ -9,11 +9,11 @@ export function DeploymentBanner() {
   const timeRemaining = deploymentStatus.time_remaining || 0
   const totalTime = 120 // 2 minutes debounce
   const progress = Math.max(0, Math.min(1, timeRemaining / totalTime))
-  const circumference = 2 * Math.PI * 16 // radius = 16
+  const circumference = 2 * Math.PI * 17 // radius = 17
   const strokeDashoffset = circumference * (1 - progress)
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 z-50">
       <div className="relative group">
         {/* Circular progress indicator */}
         <svg className="w-12 h-12 -rotate-90" viewBox="0 0 40 40">

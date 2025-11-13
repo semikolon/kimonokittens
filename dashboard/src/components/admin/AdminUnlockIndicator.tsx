@@ -1,6 +1,8 @@
 import React from 'react'
 import { useAdminAuth } from '../../contexts/AdminAuthContext'
 
+const DEMO_MODE = false
+
 export const AdminUnlockIndicator: React.FC = () => {
   const { token, expiresAt, sessionDurationMs, clearAuth } = useAdminAuth()
   const [remainingSeconds, setRemainingSeconds] = React.useState<number>(0)
@@ -33,11 +35,14 @@ export const AdminUnlockIndicator: React.FC = () => {
 
   const totalSeconds = sessionDurationMs ? Math.max(1, Math.round(sessionDurationMs / 1000)) : remainingSeconds
   const progress = Math.max(0, Math.min(1, remainingSeconds / totalSeconds))
-  const circumference = 2 * Math.PI * 16
+  const circumference = 2 * Math.PI * 17
   const strokeDashoffset = circumference * (1 - progress)
+  const remainingLabel = remainingSeconds >= 60
+    ? `${Math.ceil(remainingSeconds / 60)}m`
+    : `${remainingSeconds}s`
 
   return (
-    <div className="fixed bottom-6 right-6 z-40">
+    <div className="fixed bottom-5 right-5 z-40">
       <div className="relative group">
         <svg className="w-12 h-12 -rotate-90" viewBox="0 0 40 40">
           <circle
@@ -68,8 +73,8 @@ export const AdminUnlockIndicator: React.FC = () => {
           </defs>
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-purple-100 text-[10px] font-semibold">
-          <span>Admin</span>
-          <span>{remainingSeconds}s</span>
+          <span>PIN</span>
+          <span>{remainingLabel}</span>
         </div>
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
           <div className="bg-slate-900/90 text-purple-100 text-xs px-3 py-2 rounded-lg shadow-lg backdrop-blur-sm whitespace-nowrap">
