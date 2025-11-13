@@ -1,6 +1,10 @@
 import { useData } from '../context/DataContext'
 
-export function DeploymentBanner() {
+interface DeploymentBannerProps {
+  compact?: boolean
+}
+
+export function DeploymentBanner({ compact }: DeploymentBannerProps) {
   const { state } = useData()
   const { deploymentStatus } = state
 
@@ -12,8 +16,10 @@ export function DeploymentBanner() {
   const circumference = 2 * Math.PI * 17 // radius = 17
   const strokeDashoffset = circumference * progress
 
+  const containerClass = compact ? '' : 'fixed bottom-4 right-4 z-50'
+
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className={containerClass}>
       <div className="relative group">
         {/* Circular progress indicator */}
         <svg className="w-12 h-12 -rotate-90" viewBox="0 0 40 40">

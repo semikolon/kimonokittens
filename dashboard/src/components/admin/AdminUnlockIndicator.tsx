@@ -3,7 +3,11 @@ import { useAdminAuth } from '../../contexts/AdminAuthContext'
 
 const DEMO_MODE = false
 
-export const AdminUnlockIndicator: React.FC = () => {
+interface AdminUnlockIndicatorProps {
+  compact?: boolean
+}
+
+export const AdminUnlockIndicator: React.FC<AdminUnlockIndicatorProps> = ({ compact }) => {
   const { token, expiresAt, sessionDurationMs, clearAuth } = useAdminAuth()
   const [remainingSeconds, setRemainingSeconds] = React.useState<number>(0)
 
@@ -41,8 +45,10 @@ export const AdminUnlockIndicator: React.FC = () => {
     ? `${Math.ceil(remainingSeconds / 60)}m`
     : `${remainingSeconds}s`
 
+  const containerClass = compact ? '' : 'fixed bottom-5 right-5 z-40'
+
   return (
-    <div className="fixed bottom-5 right-5 z-40">
+    <div className={containerClass}>
       <div className="relative group">
         <svg className="w-12 h-12 -rotate-90" viewBox="0 0 40 40">
           <circle

@@ -10,12 +10,11 @@ import { TemperatureWidget } from './components/TemperatureWidget'
 import { TrainWidget } from './components/TrainWidget'
 import { StravaWidget } from './components/StravaWidget'
 import { RentWidget, AnomalySparklineBar } from './components/RentWidget'
-import { DeploymentBanner } from './components/DeploymentBanner'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import AnoAI from './components/ui/animated-shader-background'
 import { AdminDashboard } from './views/AdminDashboard'
 import { useKeyboardNav } from './hooks/useKeyboardNav'
-import { AdminUnlockIndicator } from './components/admin/AdminUnlockIndicator'
+import { AdminStatusStack } from './components/AdminStatusStack'
 
 // Refined widget component with organic, magazine-style design
 const Widget = ({
@@ -162,7 +161,7 @@ function DashboardContent() {
   if (viewMode === 'admin') {
     return (
       <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,_rgb(28,22,35)_0%,_rgb(25,18,32)_100%)] overflow-x-clip relative">
-        <DeploymentBanner />
+        <AdminStatusStack />
         <FadeOverlay />
 
         {/* Same animated background as public view */}
@@ -196,7 +195,6 @@ function DashboardContent() {
           </ErrorBoundary>
         </div>
 
-        <AdminUnlockIndicator />
       </div>
     )
   }
@@ -263,6 +261,7 @@ function App() {
       <DataProvider>
         <AdminAuthProvider>
           <DashboardContent />
+          <AdminStatusStack />
         </AdminAuthProvider>
       </DataProvider>
     </SleepScheduleProvider>
