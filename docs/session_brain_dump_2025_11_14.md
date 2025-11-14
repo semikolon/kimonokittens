@@ -95,6 +95,137 @@ Nov 12 23:30:39 pop-os bash[2667287]: TEMPERATURE_HANDLER: Got response code 200
 
 ---
 
+#### 4. Personnummer Display Bug Fix (CRITICAL) ✅
+**Commits**: `d905661`, `17fdbfc`
+
+**Problem**: Admin UI showing "—" placeholder despite database having personnummer data
+
+**Root Cause**: `lib/repositories/tenant_repository.rb` line 97 - `.select()` was missing personnummer field!
+
+**Before** (BROKEN):
+```ruby
+def all
+  dataset
+    .select(:id, :name, :email, :startDate, :departureDate, :roomAdjustment, :room, :status)
+    .order(:name)
+    .map { |row| hydrate(row) }
+end
+```
+
+**After** (FIXED):
+```ruby
+def all
+  dataset
+    .select(:id, :name, :email, :startDate, :departureDate, :roomAdjustment, :room, :status,
+            :personnummer, :phone, :deposit, :furnishingDeposit,
+            :facebookId, :avatarUrl, :createdAt, :updatedAt)
+    .order(:name)
+    .map { |row| hydrate(row) }
+end
+```
+
+**Database had data all along**:
+- Fredrik Bränström: 8604230717
+- Frida Johansson: 9012151234
+- Sanna Juni Benemar: 8706220020
+
+**Lesson**: Always verify actual database state before concluding data is missing!
+
+---
+
+#### 5. Complete Contact Management System ✅
+**Commits**: `17fdbfc`, `d6beb20`, `865579b`
+
+**3-Column Contact Grid**:
+- Column 1: Personnummer (identity)
+- Column 2: Facebook ID (social contact)
+- Column 3: Phone number (direct contact)
+
+**Backend Endpoints**:
+- `PATCH /api/admin/contracts/tenants/:id/personnummer` - Swedish format validation (10-12 digits)
+- `PATCH /api/admin/contracts/tenants/:id/facebook-id` - Any string format
+- `PATCH /api/admin/contracts/tenants/:id/phone` - Swedish phone validation (9-15 digits)
+
+**Security**:
+- All endpoints PIN-gated via `X-Admin-Token`
+- Personnummer editing blocked if `has_completed_contract = true`
+- Lock message: "🔒 Personnummer kan inte ändras efter signerat kontrakt"
+
+**UI Features**:
+- Inline editing via `window.prompt`
+- Clickable links: `facebook.com/{id}`, `tel:{phone}`
+- Obfuscation: `860423-****` (show first 6 digits, hide last 4)
+- Clean display: Only show button when field missing (no placeholder text)
+- Real-time updates via WebSocket broadcast
+
+**Phone Number Validation**:
+```ruby
+# Removes whitespace and common formatting characters
+cleaned_phone = phone.strip.gsub(/[\s\-\(\)\.\/]/, '')
+
+# Swedish phone numbers: 9-15 digits (with/without country code)
+unless cleaned_phone =~ /^\+?\d{9,15}$/
+  return error
+end
+```
+
+---
+
+#### 6. Deposit Amounts Set ✅
+**Script**: `scripts/set_tenant_deposits.rb` (one-off, not committed)
+
+**Standard deposits**:
+- Base deposit: 6,200 kr
+- Furnishing deposit: 2,200 kr
+
+**Updated tenants**:
+- ✅ Adam McCarthy: 6,200 kr + 2,200 kr
+- ✅ Fredrik Bränström: 6,200 kr + 2,200 kr
+- ✅ Sanna Juni Benemar: 6,200 kr + 2,200 kr (already had correct amounts)
+- ⏭️ Frida Johansson: Skipped (already has contract)
+
+---
+
+#### 7. Contract Status Display Revamp ✅
+**Commit**: `5cf0245`
+
+**Old format** (verbose with headers):
+```
+Signeringsstatus:
+  ✓ Fredrik Bränström - Signerad (12 november kl. 18:08)
+  ✓ Hyresgäst - Signerad (12 november kl. 18:08)
+```
+
+**New format** (clean, no headers):
+```
+✓ Fredrik Bränström signerade 12 nov. 18:08
+✓ Frida Johansson signerade 12 nov. 18:08
+```
+
+**Key improvements**:
+- Removed section headers ("E-poststatus:", "Signeringsstatus:")
+- Abbreviated month names (nov instead of november)
+- Simplified past tense ("signerade" vs "Signerad")
+- Email: "fick kontraktet via email" format
+- Combined email + signing in single section for non-completed contracts
+
+**Completed contracts layout**:
+- Signing status appears in column to right of "Visa kontrakt" button
+- Horizontal flex layout with `gap-8`
+- Clean, scannable status info
+
+---
+
+#### 8. Visual Polish: Teal Button [IN PROGRESS]
+**Current work**: Change "Visa kontrakt" button from orange to teal gradient
+
+**Before**: `linear-gradient(180deg, #c86c34 20%, #8f3c10 100%)` (orange)
+**After**: `linear-gradient(180deg, #22d3ee 20%, #0891b2 100%)` (teal, matches checkmarks)
+
+**Rationale**: Visual consistency with cyan-400 checkmarks throughout contract UI
+
+---
+
 ## Important Context from Previous Session
 
 ### Codex Session Summary (Nov 12, 2025)
@@ -301,6 +432,12 @@ lsof -ti :3001 :5175
 ### Recent Commits (This Session)
 1. **7e91957**: fix: remove phased-out public temperature endpoint
 2. **d07ef3a**: feat(admin): hide email status & extra buttons for completed contracts
+3. **d905661**: fix: personnummer display bug (repository SELECT missing fields)
+4. **17fdbfc**: feat: complete personnummer + Facebook ID management
+5. **d6beb20**: feat(admin): add phone number to 3-column tenant contact grid
+6. **865579b**: refactor(admin): clean UI for missing contact fields + set deposits
+7. **5cf0245**: refactor(admin): revamp contract status display for cleaner UI
+8. **[IN PROGRESS]**: style: change "Visa kontrakt" button to teal gradient
 
 ### Pull Before Push
 - Session encountered merge conflict during push
@@ -369,21 +506,26 @@ lsof -ti :3001 :5175
 
 ---
 
-## Next Steps (From User's Latest Request)
+## Work Completed This Session ✅
 
-### Immediate Tasks
-1. **Check latest commits** - User pulled work from server-side CC agent
-2. **Troubleshoot personnummer display issue**:
-   - Screenshot shows personnummer field in admin UI
-   - User says "doesn't fetch the data correctly"
-   - Need to investigate what's wrong with data fetching
-3. **Push fix if solved**
+### Major Accomplishments
+1. ✅ **Temperature handler cleanup** - Removed phased-out public endpoint
+2. ✅ **Completed contract UI cleanup** - Hide email status & extra buttons
+3. ✅ **CRITICAL: Personnummer bug fix** - Repository SELECT was missing fields
+4. ✅ **Complete contact management** - 3-column grid (personnummer, Facebook, phone)
+5. ✅ **Deposit amounts standardized** - 6,200 kr + 2,200 kr for all active tenants
+6. ✅ **Status display revamp** - Removed headers, cleaner format, teal visual consistency
+7. 🔄 **IN PROGRESS: Teal button** - Currently coding, about to commit & push
 
-### Context for Investigation
-- User mentioned pulling work from "server side CC agent"
-- This suggests there's been development on the kiosk itself
-- Need to check recent commits NOT from this local session
-- Likely commits after `d07ef3a` that haven't been analyzed yet
+### Files Modified This Session
+- `handlers/temperature_handler.rb` - Endpoint cleanup
+- `dashboard/src/components/admin/ContractDetails.tsx` - UI cleanup, status revamp, button color
+- `dashboard/src/components/admin/TenantDetails.tsx` - 3-column grid, phone editing
+- `dashboard/src/views/AdminDashboard.tsx` - TypeScript interfaces
+- `handlers/admin_contracts_handler.rb` - Phone endpoint, tenant_phone in API
+- `lib/repositories/tenant_repository.rb` - CRITICAL FIX: Added missing SELECT fields
+- `TODO.md` - Added contract replacement workflow task
+- `docs/session_brain_dump_2025_11_14.md` - This comprehensive update
 
 ---
 

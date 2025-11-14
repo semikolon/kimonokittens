@@ -214,9 +214,9 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
         {contract.pdf_url && (
           <button
             onClick={() => window.open(`/api/contracts/${contract.id}/pdf`, '_blank')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-all button-cursor-glow button-glow-orange button-hover-brighten"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-all button-cursor-glow button-hover-brighten"
             style={{
-              backgroundImage: 'linear-gradient(180deg, #c86c34 20%, #8f3c10 100%)'
+              backgroundImage: 'linear-gradient(180deg, #22d3ee 20%, #0891b2 100%)'
             }}
           >
             Visa kontrakt
