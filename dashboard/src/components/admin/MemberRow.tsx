@@ -342,24 +342,10 @@ export const MemberRow: React.FC<MemberRowProps> = ({
               {/* Also show tenant details for contracts */}
               <TenantDetails
                 tenant={{
-                  type: 'tenant',
+                  ...(member as SignedContract),
+                  type: 'tenant', // Override type for TenantMember interface
                   id: (member as SignedContract).tenant_id,
-                tenant_id: (member as SignedContract).tenant_id,
-                tenant_name: (member as SignedContract).tenant_name,
-                tenant_email: (member as SignedContract).tenant_email,
-                tenant_personnummer: (member as SignedContract).tenant_personnummer,
-                tenant_facebook_id: (member as SignedContract).tenant_facebook_id,
-                tenant_phone: (member as SignedContract).tenant_phone,
-                tenant_room: (member as SignedContract).tenant_room,
-                tenant_room_adjustment: (member as SignedContract).tenant_room_adjustment,
-                tenant_start_date: (member as SignedContract).tenant_start_date,
-                tenant_departure_date: (member as SignedContract).tenant_departure_date,
-                tenant_deposit: (member as SignedContract).tenant_deposit,
-                tenant_furnishing_deposit: (member as SignedContract).tenant_furnishing_deposit,
-                current_rent: (member as SignedContract).current_rent,
-                  status: 'active',
-                  has_completed_contract: (member as SignedContract).status === 'completed',
-                  created_at: (member as SignedContract).created_at
+                  status: 'active'
                 }}
                 showRent={shouldShowRent}
               />

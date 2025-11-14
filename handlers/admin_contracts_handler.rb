@@ -151,6 +151,11 @@ class AdminContractsHandler
       tenant = tenant_repo.find_by_id(contract[:tenantId])
       participants = participant_repo.find_by_contract_id(contract[:id])
 
+      # Check if tenant has any completed contracts (prevents personnummer editing)
+      has_completed_contract = RentDb.instance.class.db[:SignedContract]
+        .where(tenantId: contract[:tenantId], status: 'completed')
+        .count > 0
+
       members << {
         type: 'contract',
         id: contract[:id],
@@ -158,6 +163,8 @@ class AdminContractsHandler
         tenant_name: tenant&.name || 'Unknown',
         tenant_email: tenant&.email,
         tenant_personnummer: tenant&.personnummer,
+        tenant_facebook_id: tenant&.facebook_id,
+        tenant_phone: tenant&.phone,
         tenant_room: tenant&.room,
         tenant_room_adjustment: tenant&.room_adjustment,
         tenant_start_date: tenant&.start_date,
@@ -165,6 +172,7 @@ class AdminContractsHandler
         tenant_deposit: tenant&.deposit,
         tenant_furnishing_deposit: tenant&.furnishing_deposit,
         current_rent: tenant ? (rent_breakdown.dig("rents", tenant.name) || 0) : 0,
+        has_completed_contract: has_completed_contract,
         case_id: contract[:caseId],
         pdf_url: contract[:pdfUrl],
         status: contract[:status],

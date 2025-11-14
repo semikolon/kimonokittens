@@ -15,6 +15,8 @@ export interface SignedContract {
   tenant_name: string          // Tenant full name
   tenant_email?: string        // Tenant email
   tenant_personnummer?: string // Tenant personnummer for landlord detection
+  tenant_facebook_id?: string  // Tenant Facebook ID
+  tenant_phone?: string        // Tenant phone number
   tenant_room?: string         // Room assignment
   tenant_room_adjustment?: number // Room adjustment in kr
   tenant_start_date?: Date     // Move-in date
@@ -22,6 +24,7 @@ export interface SignedContract {
   tenant_deposit?: number
   tenant_furnishing_deposit?: number
   current_rent?: number        // Current rent for tenant
+  has_completed_contract?: boolean // Whether tenant has any completed contracts
   case_id: string              // Zigned agreement ID
   pdf_url: string              // Generated PDF path
   status: 'pending' | 'landlord_signed' | 'tenant_signed' | 'completed' | 'expired' | 'cancelled' | 'failed'
