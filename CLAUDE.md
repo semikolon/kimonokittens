@@ -1192,6 +1192,41 @@ Host kimonokittens
 - Never edit production checkout directly
 - Always develop in fredrik checkout, deploy via git
 
+### Monitoring Production Kiosk Display 📸
+
+**Problem**: The production kiosk display is physically located in the hallway downstairs - not visible from SSH sessions.
+
+**Solution**: Screenshot API for remote monitoring
+
+**Usage**:
+```bash
+# Capture new screenshot of kiosk display
+curl -s http://localhost:3001/api/screenshot/capture | jq .
+
+# Download the screenshot
+curl -s http://localhost:3001/api/screenshot/latest > /tmp/dashboard.png
+
+# View with image viewer or Read tool
+# The screenshot shows exactly what's on the physical display
+```
+
+**API Endpoints**:
+- `GET /api/screenshot/capture` - Takes new screenshot, returns metadata
+- `GET /api/screenshot/latest` - Returns the most recent screenshot image (PNG)
+
+**Storage**: Screenshots saved to `/tmp/kimonokittens-screenshots/`, last 10 kept automatically
+
+**Requirements**:
+- Runs as `kimonokittens` user with `DISPLAY=:0` access
+- Uses `scrot` command (pre-installed on production)
+- Works from any SSH session without sudo/authentication
+
+**Use cases**:
+- Verify frontend deployments loaded correctly
+- Check WebSocket connection status
+- Debug visual issues without walking downstairs
+- Monitor kiosk health remotely
+
 ## 🔄 SMART WEBHOOK DEPLOYMENT SYSTEM
 
 ### Overview: Modern Event-Driven Deployment
