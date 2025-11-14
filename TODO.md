@@ -250,6 +250,13 @@ Located at `config/sleep_schedule.json`:
   - **In-dashboard alerts** for critical events (generation failures, email bounces, expirations)
     - Note: No SMS backend integration yet - alerts display in admin dashboard only
     - Future: Integrate with SMS system when available (see "SMS Reminders and Swish Integration" section)
+- [ ] **Contract replacement workflow** for completed contracts
+  - "Delete + Re-sign" button for signed contracts
+  - Allows landlord to cancel existing contract and generate fresh one
+  - Use case: Contract corrections, rent adjustments, term changes
+  - Security: PIN-gated action (same admin auth as other sensitive operations)
+  - Flow: Delete old SignedContract record → Create new contract → Send to Zigned
+  - Note: Discovered Nov 14, 2025 - completed contracts currently show only "Visa kontrakt" button
 - [ ] **Tenant application workflow** (when public signup implemented)
   - View pending applications from `/meow` signup form
   - Approve/reject applicants with notes

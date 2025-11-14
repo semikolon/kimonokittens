@@ -112,7 +112,8 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
 
   return (
     <div className="p-6 space-y-6">
-      {/* Email Status Section */}
+      {/* Email Status Section - Hidden for completed contracts */}
+      {contract.status !== 'completed' && (
       <div>
         <h4 className="text-sm font-semibold text-purple-200 mb-3">E-poststatus:</h4>
         <div className="space-y-2 text-sm">
@@ -158,6 +159,7 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
           </div>
         </div>
       </div>
+      )}
 
       {/* Signing Status Section */}
       <div>
@@ -227,36 +229,41 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
             Visa kontrakt
           </button>
         )}
-        <button
-          onClick={handleResendEmail}
-          disabled={!canResendEmail || resendingEmail}
-          className="px-4 py-2 text-purple-100 rounded-lg text-sm font-medium transition-colors shadow-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{
-            background: 'linear-gradient(135deg, #4a2b87 0%, #3d1f70 100%)'
-          }}
-        >
-          {resendingEmail ? 'Skickar...' : 'Skicka igen'}
-        </button>
-        <button
-          onClick={() => setShowCancelConfirm(true)}
-          disabled={!canCancel}
-          className="px-4 py-2 text-purple-100 rounded-lg text-sm font-medium transition-colors shadow-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{
-            background: 'linear-gradient(135deg, #4a2b87 0%, #3d1f70 100%)'
-          }}
-        >
-          Avbryt
-        </button>
-        <button
-          onClick={handleCopyLinks}
-          disabled={!canCopyLinks}
-          className="px-4 py-2 text-purple-100 rounded-lg text-sm font-medium transition-colors shadow-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{
-            background: 'linear-gradient(135deg, #4a2b87 0%, #3d1f70 100%)'
-          }}
-        >
-          Kopiera länkar
-        </button>
+        {/* Hide extra buttons for completed contracts */}
+        {contract.status !== 'completed' && (
+          <>
+            <button
+              onClick={handleResendEmail}
+              disabled={!canResendEmail || resendingEmail}
+              className="px-4 py-2 text-purple-100 rounded-lg text-sm font-medium transition-colors shadow-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                background: 'linear-gradient(135deg, #4a2b87 0%, #3d1f70 100%)'
+              }}
+            >
+              {resendingEmail ? 'Skickar...' : 'Skicka igen'}
+            </button>
+            <button
+              onClick={() => setShowCancelConfirm(true)}
+              disabled={!canCancel}
+              className="px-4 py-2 text-purple-100 rounded-lg text-sm font-medium transition-colors shadow-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                background: 'linear-gradient(135deg, #4a2b87 0%, #3d1f70 100%)'
+              }}
+            >
+              Avbryt
+            </button>
+            <button
+              onClick={handleCopyLinks}
+              disabled={!canCopyLinks}
+              className="px-4 py-2 text-purple-100 rounded-lg text-sm font-medium transition-colors shadow-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                background: 'linear-gradient(135deg, #4a2b87 0%, #3d1f70 100%)'
+              }}
+            >
+              Kopiera länkar
+            </button>
+          </>
+        )}
       </div>
 
       {/* Confirmation Dialog for Cancel */}
