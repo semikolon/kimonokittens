@@ -63,6 +63,7 @@ export interface TenantMember {
   tenant_name: string
   tenant_email?: string
   tenant_personnummer?: string
+  tenant_facebook_id?: string
   tenant_room?: string
   tenant_room_adjustment?: number
   tenant_start_date?: Date
@@ -71,6 +72,7 @@ export interface TenantMember {
   tenant_furnishing_deposit?: number
   current_rent?: number
   status: string
+  has_completed_contract?: boolean
   created_at: Date
 }
 

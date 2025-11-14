@@ -20,6 +20,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
   const [roomInput, setRoomInput] = useState(tenant.tenant_room || '')
   const [updatingRoom, setUpdatingRoom] = useState(false)
   const [updatingPersonnummer, setUpdatingPersonnummer] = useState(false)
+  const [updatingFacebookId, setUpdatingFacebookId] = useState(false)
   const { ensureAuth } = useAdminAuth()
   const { state } = useData()
   const rentData = state.rentData
@@ -80,13 +81,15 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
     }
   }
 
-  // Obfuscate personnummer - show last 4 digits only
+  // Obfuscate personnummer - show first 6 digits, hide last 4
   const formatPersonnummer = (pnr?: string) => {
     if (!pnr) return '—'
-    // Keep last 4 digits, obfuscate the rest
-    const lastFour = pnr.slice(-4)
-    const prefix = pnr.length > 4 ? 'XXXXXX-' : ''
-    return `${prefix}${lastFour}`
+    // Show first 6 digits (YYMMDD), hide last 4
+    if (pnr.length >= 10) {
+      const firstSix = pnr.slice(0, 6)
+      return `${firstSix}-****`
+    }
+    return pnr // Fallback for unexpected formats
   }
 
   return (
@@ -111,64 +114,132 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
         </div>
       )}
 
-      {/* Personnummer */}
-      <div>
-        <h4 className="text-sm font-semibold text-purple-200 mb-3">Personnummer:</h4>
-        <div className="text-lg font-mono text-purple-100 mb-2">
-          {formatPersonnummer(tenant.tenant_personnummer)}
-        </div>
-        {!tenant.tenant_personnummer && (
-          <div className="text-xs text-yellow-400/80 mb-3">
-            ⚠️ Personnummer krävs för att skapa avtal
+      {/* Personnummer & Facebook - 2 column grid */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Personnummer */}
+        <div>
+          <h4 className="text-sm font-semibold text-purple-200 mb-3">Personnummer:</h4>
+          <div className="text-lg font-mono text-purple-100 mb-2">
+            {formatPersonnummer(tenant.tenant_personnummer)}
           </div>
-        )}
-        <button
-          onClick={async () => {
-            const newPersonnummer = window.prompt(
-              'Ange personnummer (YYYYMMDD-XXXX eller YYMMDD-XXXX)',
-              tenant.tenant_personnummer || ''
-            )
-            if (newPersonnummer === null) return
-            const trimmed = newPersonnummer.trim()
-            if (!trimmed) {
-              alert('Personnummer kan inte vara tomt')
-              return
-            }
-            // Basic client-side validation
-            const digitsOnly = trimmed.replace(/\D/g, '')
-            if (digitsOnly.length !== 10 && digitsOnly.length !== 12) {
-              alert('Personnummer måste vara 10 eller 12 siffror (YYMMDD-XXXX eller YYYYMMDD-XXXX)')
-              return
-            }
-            try {
-              setUpdatingPersonnummer(true)
-              const adminToken = await ensureAuth()
-              if (!adminToken) return
-              const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/personnummer`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-Admin-Token': adminToken
-                },
-                body: JSON.stringify({ personnummer: trimmed })
-              })
-              if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.error || 'Kunde inte uppdatera personnummer')
+          {!tenant.tenant_personnummer && (
+            <div className="text-xs text-yellow-400/80 mb-3">
+              ⚠️ Personnummer krävs för att skapa avtal
+            </div>
+          )}
+          {!tenant.has_completed_contract && (
+            <button
+              onClick={async () => {
+                const newPersonnummer = window.prompt(
+                  'Ange personnummer (YYYYMMDD-XXXX eller YYMMDD-XXXX)',
+                  tenant.tenant_personnummer || ''
+                )
+                if (newPersonnummer === null) return
+                const trimmed = newPersonnummer.trim()
+                if (!trimmed) {
+                  alert('Personnummer kan inte vara tomt')
+                  return
+                }
+                // Basic client-side validation
+                const digitsOnly = trimmed.replace(/\D/g, '')
+                if (digitsOnly.length !== 10 && digitsOnly.length !== 12) {
+                  alert('Personnummer måste vara 10 eller 12 siffror (YYMMDD-XXXX eller YYYYMMDD-XXXX)')
+                  return
+                }
+                try {
+                  setUpdatingPersonnummer(true)
+                  const adminToken = await ensureAuth()
+                  if (!adminToken) return
+                  const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/personnummer`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-Admin-Token': adminToken
+                    },
+                    body: JSON.stringify({ personnummer: trimmed })
+                  })
+                  if (!response.ok) {
+                    const error = await response.json()
+                    throw new Error(error.error || 'Kunde inte uppdatera personnummer')
+                  }
+                } catch (error) {
+                  alert(error instanceof Error ? error.message : 'Kunde inte uppdatera personnummer')
+                } finally {
+                  setUpdatingPersonnummer(false)
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                       bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                       transition-all border border-purple-900/30"
+              disabled={updatingPersonnummer}
+            >
+              {updatingPersonnummer ? 'Sparar…' : (tenant.tenant_personnummer ? 'Ändra personnummer' : 'Lägg till personnummer')}
+            </button>
+          )}
+          {tenant.has_completed_contract && tenant.tenant_personnummer && (
+            <div className="text-xs text-purple-300/60 mt-1">
+              🔒 Personnummer kan inte ändras efter signerat kontrakt
+            </div>
+          )}
+        </div>
+
+        {/* Facebook ID */}
+        <div>
+          <h4 className="text-sm font-semibold text-purple-200 mb-3">Facebook:</h4>
+          {tenant.tenant_facebook_id ? (
+            <a
+              href={`https://facebook.com/${tenant.tenant_facebook_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-lg text-cyan-400 hover:text-cyan-300 underline mb-2 block"
+            >
+              facebook.com/{tenant.tenant_facebook_id}
+            </a>
+          ) : (
+            <div className="text-lg text-purple-100/40 mb-2">Ej länkat</div>
+          )}
+          <button
+            onClick={async () => {
+              const newFacebookId = window.prompt(
+                'Ange Facebook ID (t.ex. "john.doe" eller numeriskt ID)',
+                tenant.tenant_facebook_id || ''
+              )
+              if (newFacebookId === null) return
+              const trimmed = newFacebookId.trim()
+              if (!trimmed) {
+                alert('Facebook ID kan inte vara tomt')
+                return
               }
-            } catch (error) {
-              alert(error instanceof Error ? error.message : 'Kunde inte uppdatera personnummer')
-            } finally {
-              setUpdatingPersonnummer(false)
-            }
-          }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                   bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                   transition-all border border-purple-900/30"
-          disabled={updatingPersonnummer}
-        >
-          {updatingPersonnummer ? 'Sparar…' : (tenant.tenant_personnummer ? 'Ändra personnummer' : 'Lägg till personnummer')}
-        </button>
+              try {
+                setUpdatingFacebookId(true)
+                const adminToken = await ensureAuth()
+                if (!adminToken) return
+                const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/facebook-id`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Token': adminToken
+                  },
+                  body: JSON.stringify({ facebook_id: trimmed })
+                })
+                if (!response.ok) {
+                  const error = await response.json()
+                  throw new Error(error.error || 'Kunde inte uppdatera Facebook ID')
+                }
+              } catch (error) {
+                alert(error instanceof Error ? error.message : 'Kunde inte uppdatera Facebook ID')
+              } finally {
+                setUpdatingFacebookId(false)
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                     bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                     transition-all border border-purple-900/30"
+            disabled={updatingFacebookId}
+          >
+            {updatingFacebookId ? 'Sparar…' : (tenant.tenant_facebook_id ? 'Ändra Facebook ID' : 'Lägg till Facebook ID')}
+          </button>
+        </div>
       </div>
 
       {showRent && (

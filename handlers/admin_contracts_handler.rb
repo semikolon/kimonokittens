@@ -62,6 +62,13 @@ class AdminContractsHandler
         else
           method_not_allowed
         end
+      elsif req.path_info =~ %r{^/tenants/([a-z0-9\-]+)/facebook-id$}
+        tenant_id = $1
+        if req.patch?
+          set_tenant_facebook_id(req, tenant_id)
+        else
+          method_not_allowed
+        end
       elsif req.path_info =~ %r{^/tenants/([a-z0-9\-]+)/create-contract$}
         tenant_id = $1
         if req.post?
@@ -205,6 +212,11 @@ class AdminContractsHandler
     all_tenants.each do |tenant|
       next if tenant_ids_with_contracts.include?(tenant.id)
 
+      # Check if tenant has any completed contracts (prevents personnummer editing)
+      has_completed_contract = RentDb.instance.class.db[:SignedContract]
+        .where(tenantId: tenant.id, status: 'completed')
+        .count > 0
+
       members << {
         type: 'tenant',
         id: tenant.id,
@@ -212,6 +224,7 @@ class AdminContractsHandler
         tenant_name: tenant.name,
         tenant_email: tenant.email,
         tenant_personnummer: tenant.personnummer,
+        tenant_facebook_id: tenant.facebook_id,
         tenant_room: tenant.room,
         tenant_room_adjustment: tenant.room_adjustment,
         tenant_start_date: tenant.start_date,
@@ -220,7 +233,8 @@ class AdminContractsHandler
         tenant_furnishing_deposit: tenant.furnishing_deposit,
         current_rent: rent_breakdown.dig("rents", tenant.name) || 0,
         status: tenant.status || 'active',
-        created_at: tenant.created_at
+        created_at: tenant.created_at,
+        has_completed_contract: has_completed_contract
       }
     end
 
@@ -537,6 +551,47 @@ class AdminContractsHandler
         500,
         { 'Content-Type' => 'application/json' },
         [Oj.dump({ error: "Failed to update personnummer: #{e.message}" })]
+      ]
+    end
+  end
+
+  def set_tenant_facebook_id(req, tenant_id)
+    if (auth_error = require_admin_token(req))
+      return auth_error
+    end
+
+    begin
+      body = Oj.load(req.body.read)
+      facebook_id = body['facebook_id']&.to_s
+      unless facebook_id && !facebook_id.strip.empty?
+        return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Missing facebook_id parameter' })]]
+      end
+    rescue Oj::ParseError
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Invalid JSON body' })]]
+    end
+
+    tenant_repo = Persistence.tenants
+    tenant = tenant_repo.find_by_id(tenant_id)
+    unless tenant
+      return [404, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Tenant not found' })]]
+    end
+
+    begin
+      tenant.facebook_id = facebook_id.strip
+      tenant_repo.update(tenant)
+      require_relative '../lib/data_broadcaster'
+      DataBroadcaster.broadcast_contract_list_changed
+
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ success: true, tenant_id: tenant_id, facebook_id: tenant.facebook_id })]
+      ]
+    rescue => e
+      [
+        500,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ error: "Failed to update facebook_id: #{e.message}" })]
       ]
     end
   end
