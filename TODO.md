@@ -238,6 +238,7 @@ Located at `config/sleep_schedule.json`:
   - Seamless transitions without page reload
   - Admin view hidden from passive hallway display
   - Visual indicator for which view is active
+- [ ] **Facebook profile pic avatars** for tenant rows: Circular avatars (1.5× current icon size, white border) sourced from Facebook via facebookId field when populated
 
 **Contract Management UI:**
 - [ ] **Signing progress monitoring** (real-time webhook updates)

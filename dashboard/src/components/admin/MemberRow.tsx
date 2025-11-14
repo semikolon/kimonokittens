@@ -1,6 +1,6 @@
 // MemberRow - Unified row for both contracts and standalone tenants
 import React from 'react'
-import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, ChevronRight, User, FileSignature, MapPin } from 'lucide-react'
+import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, ChevronRight, CircleUserRound, FileSignature, MapPin } from 'lucide-react'
 import { ContractDetails } from './ContractDetails'
 import { TenantDetails } from './TenantDetails'
 import type { Member, SignedContract, TenantMember } from '../../views/AdminDashboard'
@@ -262,7 +262,7 @@ export const MemberRow: React.FC<MemberRowProps> = ({
 
         {/* Status icon */}
         {isContract ? getStatusIcon(member as SignedContract) : (
-          <User className="w-5 h-5 text-slate-400" />
+          <CircleUserRound className="w-5 h-5 text-slate-400" />
         )}
 
         {/* Member info */}

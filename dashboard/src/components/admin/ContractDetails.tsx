@@ -1,6 +1,6 @@
 // ContractDetails - Expanded content area (email, signing, timeline)
 import React, { useState } from 'react'
-import { CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react'
+import { CheckCircle2, Clock, XCircle, AlertCircle, Signature } from 'lucide-react'
 import { ContractTimeline } from './ContractTimeline'
 import type { SignedContract } from '../../views/AdminDashboard'
 import { useAdminAuth } from '../../contexts/AdminAuthContext'
@@ -216,9 +216,10 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
             onClick={() => window.open(`/api/contracts/${contract.id}/pdf`, '_blank')}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-all button-cursor-glow button-glow-teal button-hover-brighten"
             style={{
-              backgroundImage: 'linear-gradient(180deg, #0891b2 20%, #155e75 100%)'
+              backgroundImage: 'linear-gradient(180deg, #06b6d4 20%, #0e7490 100%)'
             }}
           >
+            <Signature className="w-4 h-4" />
             Visa kontrakt
           </button>
         )}
