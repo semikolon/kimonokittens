@@ -17,11 +17,11 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
   const furnishingDeposit = tenant.tenant_furnishing_deposit
   const [isSettingDepartureDate, setIsSettingDepartureDate] = useState(false)
   const [departureDate, setDepartureDate] = useState('')
+  const [roomInput, setRoomInput] = useState(tenant.tenant_room || '')
+  const [updatingRoom, setUpdatingRoom] = useState(false)
   const { ensureAuth } = useAdminAuth()
   const { state } = useData()
   const rentData = state.rentData
-  const [roomInput, setRoomInput] = useState(tenant.tenant_room || '')
-  const [updatingRoom, setUpdatingRoom] = useState(false)
 
   const rentClarifications = useMemo(() => {
     const lines: string[] = []
@@ -132,17 +132,18 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
             </div>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-sm font-semibold text-purple-200 flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                <span>{roomInput || 'Rum saknas'}</span>
-              </div>
-              <button
-                onClick={async () => {
-                  const newRoom = window.prompt('Ange nytt rumsnamn', roomInput || '')
-                  if (newRoom === null) return
-                  const trimmed = newRoom.trim()
+          <div className="space-y-5">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm font-semibold text-purple-200 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  <span>{roomInput || 'Rum saknas'}</span>
+                </div>
+                <button
+                  onClick={async () => {
+                    const newRoom = window.prompt('Ange nytt rumsnamn', roomInput || '')
+                    if (newRoom === null) return
+                    const trimmed = newRoom.trim()
                     if (!trimmed) {
                       alert('Rumsnamn kan inte vara tomt')
                       return
@@ -179,6 +180,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                 </button>
               </div>
             </div>
+
             <div>
               <h4 className="text-sm font-semibold text-purple-200 mb-3">Utflyttningsdatum:</h4>
               {tenant.tenant_departure_date ? (
