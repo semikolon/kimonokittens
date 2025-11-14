@@ -21,6 +21,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
   const [updatingRoom, setUpdatingRoom] = useState(false)
   const [updatingPersonnummer, setUpdatingPersonnummer] = useState(false)
   const [updatingFacebookId, setUpdatingFacebookId] = useState(false)
+  const [updatingPhone, setUpdatingPhone] = useState(false)
   const { ensureAuth } = useAdminAuth()
   const { state } = useData()
   const rentData = state.rentData
@@ -114,8 +115,8 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
         </div>
       )}
 
-      {/* Personnummer & Facebook - 2 column grid */}
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* Personnummer, Facebook, Phone - 3 column grid */}
+      <div className="grid gap-6 md:grid-cols-3">
         {/* Personnummer */}
         <div>
           <h4 className="text-sm font-semibold text-purple-200 mb-3">Personnummer:</h4>
@@ -238,6 +239,62 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
             disabled={updatingFacebookId}
           >
             {updatingFacebookId ? 'Sparar…' : (tenant.tenant_facebook_id ? 'Ändra Facebook ID' : 'Lägg till Facebook ID')}
+          </button>
+        </div>
+
+        {/* Phone Number */}
+        <div>
+          <h4 className="text-sm font-semibold text-purple-200 mb-3">Telefon:</h4>
+          {tenant.tenant_phone ? (
+            <a
+              href={`tel:${tenant.tenant_phone}`}
+              className="text-lg text-cyan-400 hover:text-cyan-300 underline mb-2 block"
+            >
+              {tenant.tenant_phone}
+            </a>
+          ) : (
+            <div className="text-lg text-purple-100/40 mb-2">Ej angiven</div>
+          )}
+          <button
+            onClick={async () => {
+              const newPhone = window.prompt(
+                'Ange telefonnummer (t.ex. "0701234567" eller "+46701234567")',
+                tenant.tenant_phone || ''
+              )
+              if (newPhone === null) return
+              const trimmed = newPhone.trim()
+              if (!trimmed) {
+                alert('Telefonnummer kan inte vara tomt')
+                return
+              }
+              try {
+                setUpdatingPhone(true)
+                const adminToken = await ensureAuth()
+                if (!adminToken) return
+                const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/phone`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Token': adminToken
+                  },
+                  body: JSON.stringify({ phone: trimmed })
+                })
+                if (!response.ok) {
+                  const error = await response.json()
+                  throw new Error(error.error || 'Kunde inte uppdatera telefonnummer')
+                }
+              } catch (error) {
+                alert(error instanceof Error ? error.message : 'Kunde inte uppdatera telefonnummer')
+              } finally {
+                setUpdatingPhone(false)
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                     bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                     transition-all border border-purple-900/30"
+            disabled={updatingPhone}
+          >
+            {updatingPhone ? 'Sparar…' : (tenant.tenant_phone ? 'Ändra telefonnummer' : 'Lägg till telefonnummer')}
           </button>
         </div>
       </div>

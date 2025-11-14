@@ -69,6 +69,13 @@ class AdminContractsHandler
         else
           method_not_allowed
         end
+      elsif req.path_info =~ %r{^/tenants/([a-z0-9\-]+)/phone$}
+        tenant_id = $1
+        if req.patch?
+          set_tenant_phone(req, tenant_id)
+        else
+          method_not_allowed
+        end
       elsif req.path_info =~ %r{^/tenants/([a-z0-9\-]+)/create-contract$}
         tenant_id = $1
         if req.post?
@@ -225,6 +232,7 @@ class AdminContractsHandler
         tenant_email: tenant.email,
         tenant_personnummer: tenant.personnummer,
         tenant_facebook_id: tenant.facebook_id,
+        tenant_phone: tenant.phone,
         tenant_room: tenant.room,
         tenant_room_adjustment: tenant.room_adjustment,
         tenant_start_date: tenant.start_date,
@@ -592,6 +600,55 @@ class AdminContractsHandler
         500,
         { 'Content-Type' => 'application/json' },
         [Oj.dump({ error: "Failed to update facebook_id: #{e.message}" })]
+      ]
+    end
+  end
+
+  def set_tenant_phone(req, tenant_id)
+    if (auth_error = require_admin_token(req))
+      return auth_error
+    end
+
+    begin
+      body = Oj.load(req.body.read)
+      phone = body['phone']&.to_s
+      unless phone && !phone.strip.empty?
+        return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Missing phone parameter' })]]
+      end
+
+      # Basic validation: remove whitespace and common formatting characters
+      cleaned_phone = phone.strip.gsub(/[\s\-\(\)\.\/]/, '')
+
+      # Swedish phone numbers: should be 10+ digits (with country code) or 9-10 digits (without)
+      unless cleaned_phone =~ /^\+?\d{9,15}$/
+        return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Invalid phone number format (expected 9-15 digits)' })]]
+      end
+    rescue Oj::ParseError
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Invalid JSON body' })]]
+    end
+
+    tenant_repo = Persistence.tenants
+    tenant = tenant_repo.find_by_id(tenant_id)
+    unless tenant
+      return [404, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Tenant not found' })]]
+    end
+
+    begin
+      tenant.phone = cleaned_phone
+      tenant_repo.update(tenant)
+      require_relative '../lib/data_broadcaster'
+      DataBroadcaster.broadcast_contract_list_changed
+
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ success: true, tenant_id: tenant_id, phone: tenant.phone })]
+      ]
+    rescue => e
+      [
+        500,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ error: "Failed to update phone: #{e.message}" })]
       ]
     end
   end

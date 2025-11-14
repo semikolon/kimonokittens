@@ -64,6 +64,7 @@ export interface TenantMember {
   tenant_email?: string
   tenant_personnummer?: string
   tenant_facebook_id?: string
+  tenant_phone?: string
   tenant_room?: string
   tenant_room_adjustment?: number
   tenant_start_date?: Date
