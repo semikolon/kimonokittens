@@ -126,7 +126,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
             </div>
           ) : (
             <div className="text-xs text-yellow-400/80 mb-3">
-              ⚠️ Personnummer krävs för att skapa avtal
+              ⚠️ Krävs för att skapa avtal
             </div>
           )}
           {!tenant.has_completed_contract && (
@@ -245,12 +245,9 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
         <div>
           <h4 className="text-sm font-semibold text-purple-200 mb-3">Telefon:</h4>
           {tenant.tenant_phone && (
-            <a
-              href={`tel:${tenant.tenant_phone}`}
-              className="text-lg text-cyan-400 hover:text-cyan-300 underline mb-2 block"
-            >
+            <div className="text-lg text-purple-100 mb-2">
               {tenant.tenant_phone}
-            </a>
+            </div>
           )}
           <button
             onClick={async () => {
@@ -297,7 +294,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
       </div>
 
       {showRent && (
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-3 pt-6 border-t border-purple-500/10">
           <div>
             <h4 className="text-sm font-semibold text-purple-200 mb-3">Aktuell hyra:</h4>
             <div className="flex items-center gap-3">
