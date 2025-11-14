@@ -5,9 +5,8 @@ class TemperatureHandler
     begin
       puts "TEMPERATURE_HANDLER: Starting temperature data fetch"
 
-      # Try kimonokittens.com first, fallback to local IP
+      # Use local Node-RED endpoint directly (domain migrated, public URL phased out)
       endpoints = [
-        "https://kimonokittens.com/data/temperature",
         "http://192.168.4.66:1880/data/temperature"
       ]
 
@@ -20,11 +19,6 @@ class TemperatureHandler
             timeout: 5,
             open_timeout: 2
           }
-
-          # Skip SSL verification for kimonokittens.com
-          if url.include?('kimonokittens.com')
-            options[:verify] = false
-          end
 
           response = HTTParty.get(url, options)
           puts "TEMPERATURE_HANDLER: Got response code #{response.code}"
