@@ -1,5 +1,23 @@
 # Kimonokittens Project Instructions
 
+## 📖 DOCUMENTATION PHILOSOPHY
+
+**What belongs in CLAUDE.md**:
+- ✅ **Operationally important features** - How to use the system, critical workflows, commands
+- ✅ **Critical gotchas & lessons learned** - Hard-won knowledge about bugs, non-obvious behavior, architectural constraints that cost time to discover - document these to never repeat the same costly mistakes
+- ✅ **Current production state** - What's deployed, how it works, where things are
+
+**What does NOT belong in CLAUDE.md**:
+- ❌ **Every small fix** - Bug fixes and polish work should live in git history and session dumps
+- ❌ **Detailed historical narrative** - No need for play-by-play of how we got here
+- ❌ **Redundant information** - If it's in other docs (like session brain dumps), reference them instead
+
+**Core principle**: Never risk repeating the same costly mistakes. Document hard-won lessons concisely so future developers avoid the same pitfalls.
+
+**Purpose**: Keep CLAUDE.md focused, actionable, and maintainable. Future developers should find critical operational knowledge quickly without wading through historical minutiae.
+
+---
+
 ## ⚠️ CRITICAL: PROCESS MANAGEMENT PROTOCOL
 
 **Status**: ✅ PRODUCTION (Oct 26, 2025) | **Deep Dive**: `docs/PROCESS_MANAGEMENT_DEEP_DIVE.md`
@@ -974,85 +992,41 @@ npm run dev:logs     # Attach to live process logs
 5. **Verify results**: Test API and check dashboard
 6. **Clean up**: Remove any test data from production DB
 
-## 🖥️ Kiosk GPU Acceleration (Oct 2, 2025) **DEPLOYED ✅**
+## Kiosk Display Optimization
 
-**Status**: Live - Dell Optiplex in hallway (Oct 6, 2025), NVIDIA GTX 1650
+**WebGL Shader Impact** (`animated-shader-background.tsx`):
+- +7-8% GPU, +16-21°C temp, +23-24W power, increased fan noise
+- **Recommendation**: Disable for 24/7 use (reduces wear, ~200 kWh/year saved, quieter)
+- To disable: Comment out `<AnoAI />` in `App.tsx`
 
-### Achievement Summary
-Successfully configured hardware GPU acceleration for WebGL shader animations on Dell Optiplex 7010 kiosk after resolving crash-loop issues caused by outdated Chrome flags.
-
-**Problem Solved**: Initial GPU flags (`--enable-gpu-rasterization`, `--enable-zero-copy`, `--use-gl=desktop`) caused Chrome to crash every 60 seconds, spawning 9+ renderer processes and consuming 737.5% CPU. System was unusable.
-
-**Solution**: 2024 NVIDIA-specific flags that properly enable GPU acceleration without conflicts:
-```bash
---ignore-gpu-blocklist
---enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL,VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs
---force-gpu-mem-available-mb=4096  # Matched to actual GTX 1650 VRAM
---force-device-scale-factor=1.15   # 115% zoom for readability
-```
-
-**Performance Results**:
-- ✅ GPU: 52% utilization (WebGL shader running on hardware)
-- ✅ VRAM: 1.2GB / 4GB (well within limits)
-- ✅ CPU: 275% total (normal for shader coordination)
-- ✅ Smooth 60fps animations, no crashes
-- ✅ Fan noise acceptable, display stays cool
-
-**WebGL Shader Background Impact** (Oct 6, 2025):
-The `animated-shader-background.tsx` component adds visual appeal but can increase resource usage. Testing showed approximately **+7-8% GPU utilization, +16-21°C temperature increase (typically 54°C → 70-75°C), +23-24W power draw (19W → 42-43W), with increased fan activity**. Actual impact varies by time of day and ambient temperature. Disabling the shader (comment out `<AnoAI />` in `App.tsx`) reduces GPU load while maintaining smooth UI. Optional tradeoff between aesthetics and efficiency.
-
-**Recommendation for 24/7 hallway display**: Disable shader to reduce GPU wear, power consumption (~200 kWh/year), and fan noise. While 70°C is safe for continuous operation, the decorative animation provides minimal utility for a passive display. GPU lifespan at constant 70°C: 5-8+ years vs 10+ years at lower temps.
-
-**Architecture**: DRY pattern - `setup_production.sh` creates basic service, then calls `configure_chrome_kiosk.sh` to apply optimized flags. Single source of truth for Chrome configuration.
-
-**Documentation**: `DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md` section "Browser Performance" documents flag choices and VRAM verification.
+**Note**: Hardware specs and Chrome GPU flags are in `~/.claude/CLAUDE.md` (global, machine-specific)
 
 ---
 
-## Train/Bus Animation System 🚂 **COMPLETED ✅**
+## Frontend Animation Patterns
 
-### Smart Identity Tracking for Sliding Animations
-**Location**: `dashboard/src/components/TrainWidget.tsx:129-130`
-
-The animation system uses **original departure times** for train/bus identity, not adjusted-if-late times:
+### Stable Identity Keys Prevent False Animations
+Use **stable, unchanging identifiers** for list items to prevent re-renders when data updates:
 
 ```typescript
-const generateTrainId = (train: TrainDeparture): string =>
-  `${train.departure_time}-${train.line_number}-${train.destination}`
+// Good: Use original departure time (doesn't change when delays update)
+const id = `${departure_time}-${line_number}-${destination}`
+
+// Bad: Using adjusted time would change ID when delays update
+const id = `${adjusted_time}-${line_number}-${destination}` // ❌ Triggers false animations
 ```
 
-**Why this works**: Delayed trains maintain their identity and don't trigger unnecessary animations when delay info updates.
+### CSS Animation Gotchas
+**Hard-won lessons** (`dashboard/src/components/TrainWidget.tsx`):
+- **`background` shorthand resets all** → Use `background-image` when composing with `background-clip: text`
+- **Animations snap back by default** → Always add `animation-fill-mode: forwards` to prevent flash
+- **Interval = duration = race condition** → Add gap (e.g., 4s animation + 8s interval, not 4s + 4s)
+- **Gradient transparency bugs** → Use `background-repeat: repeat-x` to tile infinitely
 
-### Complete Animation System ✅ (September 29, 2025)
-**Major breakthrough**: Fully implemented comprehensive animation system addressing all edge cases:
-
-1. **Introduction Animations**: Both trains and buses slide in when becoming feasible (`introducing` class, 5s duration)
-2. **Departure Animations**: Smooth removal animations when becoming infeasible (400ms slide out)
-3. **Feasibility Transition Support**: Fixed core bug - trains transitioning infeasible→feasible now animate properly
-4. **Smart List Change Detection**: Compare previous feasible vs current feasible (not raw API vs feasible)
-5. **Bus Glow Timing**: Optimized from 4-3min to 2-1min to prevent slide-in glow
-6. **Terminology Fix**: "introducing" (not "arriving" - trains arrive at platforms, not departure lists)
-
-### Critical Bug Fixes Implemented ✅
-- **Missing train introduction animations**: Trains had zero slide-in animations vs buses
-- **Feasibility transition detection**: List change hooks compared wrong datasets causing missed transitions
-- **False animation prevention**: 5-minute time window prevents API time updates from triggering animations
-- **Animation simplification**: Removed blur/scale effects, reduced 10s→5s for cleaner experience
-- **Störningar filtering**: Delayed trains in disruption box now respect adjusted feasibility times
-
-### Performance & Architecture
-- **GPU acceleration**: `transform` and `opacity` for 60fps animations
-- **Accessibility**: Respects `prefers-reduced-motion` media query
-- **Consistent timing**: 5s introduction, 400ms departure, 0.1s stagger per item
-- **Memory management**: Proper cleanup of animation states and timeouts
-
-### CSS Gradient Animation Gotchas (Oct 3, 2025)
-**Hard-won lessons from shine swoosh implementation:**
-- **`background` shorthand resets all properties** → Use `background-image` when composing with `background-clip: text`
-- **Animations snap back by default** → Always add `animation-fill-mode: forwards` to prevent color flash at end
-- **Test intervals matching animation duration = race conditions** → Add gap (e.g., 4s animation + 8s interval)
-- **`background-repeat: repeat-x` solves transparency bugs** → Gradient tiles infinitely, prevents gaps during animation
-- **Background-position math**: `offset = (container_width - gradient_width) × position%` (200% gradient needs careful positioning)
+### Performance Best Practices
+- **GPU acceleration**: Use `transform` and `opacity` (not `left`/`top`) for 60fps
+- **Accessibility**: Respect `prefers-reduced-motion` media query
+- **Memory**: Clean up animation states and timeouts in useEffect cleanup
 
 ## WebSocket Architecture ⚡
 
@@ -1526,63 +1500,20 @@ Repository `.all()` method was using `.select()` but **missing fields**:
 
 ---
 
-## 📚 HISTORICAL: Initial Production Deployment (September-October 2025)
+## Production Deployment Reference
 
-**Status**: ✅ COMPLETED - Database fully operational in production since October 6, 2025
+**Status**: ✅ Dell Optiplex deployed Oct 6, 2025 - `kimonokittens_production` database operational
 
-### What Was Done (Historical Context):
-- **Sep 28-30, 2025**: Created Prisma schema + initial migrations
-  - `20250930000000_initial_schema` - All tables (ElectricityBill, RentConfig, RentLedger, Tenants)
-  - `20251004112744_remove_generated_column_extend_ledger` - Schema fixes
-- **Sep 28, 2025**: Created `production_migration.rb` for initial data population
-  - Migrated 58 historical RentLedger records from JSON files
-  - Populated 8 Tenants, 7 RentConfig records
-- **Oct 6, 2025**: Dell kiosk deployed with database fully operational
+**Deployment docs**: See `DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md` for complete hardware setup and `deployment/` folder for automation scripts.
 
-### Current Production Database State:
-```
-✅ Schema: 2 Prisma migrations applied
-✅ Data: RentConfig, Tenants, RentLedger, ElectricityBill tables populated
-✅ Location: kimonokittens_production database on Dell kiosk
-```
-
-### Recent Work (October 21-23, 2025):
-**Model architecture refactoring** - Pure code changes, no database migrations:
-- Created domain models in `lib/models/` (ElectricityBill, RentConfig, Tenant, RentLedger)
-- Created repositories in `lib/repositories/`
-- Created services in `lib/services/` (ApplyElectricityBill)
-- Created persistence module `lib/persistence.rb`
-- **Deployment**: Code-only via webhook (no manual database steps needed)
-
-### Complete Deployment Documentation:
-**All initial deployment procedures have been completed (Oct 6, 2025).** Documentation preserved for:
-- Future server migrations (e.g., new production environment)
-- Reference when considering deployment automation tools (Capistrano, Mina, etc.)
-
-**Available documentation:**
-- **`deployment/DEPLOYMENT_CHECKLIST.md`** - Complete step-by-step initial deployment
-- **`DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md`** - Hardware setup + database migration procedures
-- **`deployment/production_migration.rb`** - Historical data migration script (already run)
-- **`deployment/scripts/setup_production.sh`** - Automated setup script
-- **`docs/PRODUCTION_CRON_DEPLOYMENT.md`** - Cron job setup for electricity automation
-
-**Note on Capistrano:** Current deployment uses webhook-based automation. If migrating to Capistrano or similar tools in the future, above docs provide the baseline deployment procedure to automate.
-
-### For Future Deployments:
+**Verification commands**:
 ```bash
-# Ruby dependencies
-bundle install --deployment --without development test assets
-
 # Database connectivity
 ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.get_tenants.length"
 
-# API endpoints
+# API health
 curl http://localhost:3001/api/rent/friendly_message
 
-# WebSocket connection
-# Check browser console for WebSocket at ws://localhost:3001
+# WebSocket (check browser console)
+ws://localhost:3001
 ```
-
-## 🔧 System Upgrade History
-
-**Oct 9, 2025**: Pop!_OS 22.04 system upgrade completed successfully - PostgreSQL 14→18, NVIDIA 550→580, kernel 6.16.3, 552 packages total. Database schema intact (kimonokittens_production), all DKMS modules compiled.
