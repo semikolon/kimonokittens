@@ -94,7 +94,9 @@ class TenantRepository < BaseRepository
   # @return [Array<Tenant>]
   def all
     dataset
-      .select(:id, :name, :email, :startDate, :departureDate, :roomAdjustment, :room, :status)
+      .select(:id, :name, :email, :startDate, :departureDate, :roomAdjustment, :room, :status,
+              :personnummer, :phone, :deposit, :furnishingDeposit,
+              :facebookId, :avatarUrl, :createdAt, :updatedAt)
       .order(:name)
       .map { |row| hydrate(row) }
   end

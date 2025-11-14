@@ -19,6 +19,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
   const [departureDate, setDepartureDate] = useState('')
   const [roomInput, setRoomInput] = useState(tenant.tenant_room || '')
   const [updatingRoom, setUpdatingRoom] = useState(false)
+  const [updatingPersonnummer, setUpdatingPersonnummer] = useState(false)
   const { ensureAuth } = useAdminAuth()
   const { state } = useData()
   const rentData = state.rentData
@@ -113,14 +114,61 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
       {/* Personnummer */}
       <div>
         <h4 className="text-sm font-semibold text-purple-200 mb-3">Personnummer:</h4>
-        <div className="text-lg font-mono text-purple-100">
+        <div className="text-lg font-mono text-purple-100 mb-2">
           {formatPersonnummer(tenant.tenant_personnummer)}
         </div>
         {!tenant.tenant_personnummer && (
-          <div className="text-xs text-yellow-400/80 mt-1">
+          <div className="text-xs text-yellow-400/80 mb-3">
             ⚠️ Personnummer krävs för att skapa avtal
           </div>
         )}
+        <button
+          onClick={async () => {
+            const newPersonnummer = window.prompt(
+              'Ange personnummer (YYYYMMDD-XXXX eller YYMMDD-XXXX)',
+              tenant.tenant_personnummer || ''
+            )
+            if (newPersonnummer === null) return
+            const trimmed = newPersonnummer.trim()
+            if (!trimmed) {
+              alert('Personnummer kan inte vara tomt')
+              return
+            }
+            // Basic client-side validation
+            const digitsOnly = trimmed.replace(/\D/g, '')
+            if (digitsOnly.length !== 10 && digitsOnly.length !== 12) {
+              alert('Personnummer måste vara 10 eller 12 siffror (YYMMDD-XXXX eller YYYYMMDD-XXXX)')
+              return
+            }
+            try {
+              setUpdatingPersonnummer(true)
+              const adminToken = await ensureAuth()
+              if (!adminToken) return
+              const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/personnummer`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Admin-Token': adminToken
+                },
+                body: JSON.stringify({ personnummer: trimmed })
+              })
+              if (!response.ok) {
+                const error = await response.json()
+                throw new Error(error.error || 'Kunde inte uppdatera personnummer')
+              }
+            } catch (error) {
+              alert(error instanceof Error ? error.message : 'Kunde inte uppdatera personnummer')
+            } finally {
+              setUpdatingPersonnummer(false)
+            }
+          }}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                   bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                   transition-all border border-purple-900/30"
+          disabled={updatingPersonnummer}
+        >
+          {updatingPersonnummer ? 'Sparar…' : (tenant.tenant_personnummer ? 'Ändra personnummer' : 'Lägg till personnummer')}
+        </button>
       </div>
 
       {showRent && (

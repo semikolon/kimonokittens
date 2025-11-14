@@ -55,6 +55,13 @@ class AdminContractsHandler
         else
           method_not_allowed
         end
+      elsif req.path_info =~ %r{^/tenants/([a-z0-9\-]+)/personnummer$}
+        tenant_id = $1
+        if req.patch?
+          set_tenant_personnummer(req, tenant_id)
+        else
+          method_not_allowed
+        end
       elsif req.path_info =~ %r{^/tenants/([a-z0-9\-]+)/create-contract$}
         tenant_id = $1
         if req.post?
@@ -482,6 +489,54 @@ class AdminContractsHandler
         500,
         { 'Content-Type' => 'application/json' },
         [Oj.dump({ error: "Failed to update room: #{e.message}" })]
+      ]
+    end
+  end
+
+  def set_tenant_personnummer(req, tenant_id)
+    if (auth_error = require_admin_token(req))
+      return auth_error
+    end
+
+    begin
+      body = Oj.load(req.body.read)
+      personnummer = body['personnummer']&.to_s
+      unless personnummer && !personnummer.strip.empty?
+        return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Missing personnummer parameter' })]]
+      end
+
+      # Basic validation: 10 or 12 digits (ignoring non-digits)
+      digits_only = personnummer.gsub(/\D/, '')
+      unless digits_only.length == 10 || digits_only.length == 12
+        return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Personnummer must be 10 or 12 digits (YYMMDD-XXXX or YYYYMMDD-XXXX)' })]]
+      end
+    rescue Oj::ParseError
+      return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Invalid JSON body' })]]
+    end
+
+    tenant_repo = Persistence.tenants
+    tenant = tenant_repo.find_by_id(tenant_id)
+    unless tenant
+      return [404, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Tenant not found' })]]
+    end
+
+    begin
+      # Store digits only (consistent with database format)
+      tenant.personnummer = digits_only
+      tenant_repo.update(tenant)
+      require_relative '../lib/data_broadcaster'
+      DataBroadcaster.broadcast_contract_list_changed
+
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ success: true, tenant_id: tenant_id, personnummer: tenant.personnummer })]
+      ]
+    rescue => e
+      [
+        500,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({ error: "Failed to update personnummer: #{e.message}" })]
       ]
     end
   end
