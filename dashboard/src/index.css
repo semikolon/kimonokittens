@@ -272,6 +272,11 @@
   box-shadow: 0 0 10px rgba(139, 66, 23, 0.7), 0 0 22px rgba(139, 66, 23, 0.4);
 }
 
+.button-glow-teal:hover,
+.button-glow-teal:focus-visible {
+  box-shadow: 0 0 10px rgba(8, 145, 178, 0.7), 0 0 22px rgba(8, 145, 178, 0.4);
+}
+
 .button-hover-brighten:hover,
 .button-hover-brighten:focus-visible {
   filter: brightness(1.1);
