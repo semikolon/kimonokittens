@@ -112,28 +112,27 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
 
   return (
     <div className="p-6 space-y-6">
-      {/* Email Status Section - Hidden for completed contracts */}
+      {/* Email & Signing Status - Simplified format without headers */}
       {contract.status !== 'completed' && (
-      <div>
-        <h4 className="text-sm font-semibold text-purple-200 mb-3">E-poststatus:</h4>
         <div className="space-y-2 text-sm">
+          {/* Email status */}
           <div className="flex items-center gap-2">
             {contract.email_status === 'sent' ? (
               <>
                 <CheckCircle2 className="w-4 h-4 text-green-400" />
                 <span className="text-purple-100">
-                  Hyresvärd: Levererad ({new Date(contract.created_at).toLocaleString('sv-SE', {
-                    month: 'long',
+                  {landlordName} fick kontraktet via email {new Date(contract.created_at).toLocaleString('sv-SE', {
                     day: 'numeric',
+                    month: 'short',
                     hour: '2-digit',
                     minute: '2-digit'
-                  })})
+                  })}
                 </span>
               </>
             ) : (
               <>
                 <Clock className="w-4 h-4 text-yellow-400" />
-                <span className="text-purple-200">Hyresvärd: Väntar</span>
+                <span className="text-purple-200">{landlordName} väntar på email</span>
               </>
             )}
           </div>
@@ -142,46 +141,40 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
               <>
                 <CheckCircle2 className="w-4 h-4 text-green-400" />
                 <span className="text-purple-100">
-                  Hyresgäst: Levererad ({new Date(contract.created_at).toLocaleString('sv-SE', {
-                    month: 'long',
+                  {contract.tenant_name} fick kontraktet via email {new Date(contract.created_at).toLocaleString('sv-SE', {
                     day: 'numeric',
+                    month: 'short',
                     hour: '2-digit',
                     minute: '2-digit'
-                  })})
+                  })}
                 </span>
               </>
             ) : (
               <>
                 <Clock className="w-4 h-4 text-yellow-400" />
-                <span className="text-purple-200">Hyresgäst: Väntar</span>
+                <span className="text-purple-200">{contract.tenant_name} väntar på email</span>
               </>
             )}
           </div>
-        </div>
-      </div>
-      )}
 
-      {/* Signing Status Section */}
-      <div>
-        <h4 className="text-sm font-semibold text-purple-200 mb-3">Signeringsstatus:</h4>
-        <div className="space-y-2 text-sm">
+          {/* Signing status */}
           <div className="flex items-center gap-2">
             {landlordSigned ? (
               <>
                 <CheckCircle2 className="w-4 h-4 text-cyan-400" />
                 <span className="text-purple-100">
-                  {landlordName} - Signerad {isLandlord ? '(automatisk)' : `(${new Date(contract.updated_at).toLocaleString('sv-SE', {
-                    month: 'long',
+                  {landlordName} signerade {isLandlord ? '(automatisk)' : new Date(contract.updated_at).toLocaleString('sv-SE', {
                     day: 'numeric',
+                    month: 'short',
                     hour: '2-digit',
                     minute: '2-digit'
-                  })})`}
+                  })}
                 </span>
               </>
             ) : (
               <>
                 <Clock className="w-4 h-4 text-yellow-400" />
-                <span className="text-purple-200">{landlordName} - Väntar ({daysLeft} dagar kvar)</span>
+                <span className="text-purple-200">{landlordName} har inte signerat ({daysLeft} dagar kvar)</span>
               </>
             )}
           </div>
@@ -190,23 +183,23 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
               <>
                 <CheckCircle2 className="w-4 h-4 text-cyan-400" />
                 <span className="text-purple-100">
-                  Hyresgäst - Signerad ({new Date(contract.updated_at).toLocaleString('sv-SE', {
-                    month: 'long',
+                  {contract.tenant_name} signerade {new Date(contract.updated_at).toLocaleString('sv-SE', {
                     day: 'numeric',
+                    month: 'short',
                     hour: '2-digit',
                     minute: '2-digit'
-                  })})
+                  })}
                 </span>
               </>
             ) : (
               <>
                 <Clock className="w-4 h-4 text-yellow-400" />
-                <span className="text-purple-200">Hyresgäst - Väntar ({daysLeft} dagar kvar)</span>
+                <span className="text-purple-200">{contract.tenant_name} har inte signerat ({daysLeft} dagar kvar)</span>
               </>
             )}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Timeline Section */}
       {contract.status !== 'completed' && (
@@ -216,8 +209,8 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
         </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex gap-3 pt-2">
+      {/* Action Buttons + Signing Status for Completed */}
+      <div className={contract.status === 'completed' ? 'flex gap-8 pt-2 items-start' : 'flex gap-3 pt-2'}>
         {contract.pdf_url && (
           <button
             onClick={() => window.open(`/api/contracts/${contract.id}/pdf`, '_blank')}
@@ -228,6 +221,34 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
           >
             Visa kontrakt
           </button>
+        )}
+
+        {/* Signing status for completed contracts */}
+        {contract.status === 'completed' && (
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+              <span className="text-purple-100">
+                {landlordName} signerade {isLandlord ? '(automatisk)' : new Date(contract.updated_at).toLocaleString('sv-SE', {
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+              <span className="text-purple-100">
+                {contract.tenant_name} signerade {new Date(contract.updated_at).toLocaleString('sv-SE', {
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </span>
+            </div>
+          </div>
         )}
         {/* Hide extra buttons for completed contracts */}
         {contract.status !== 'completed' && (
