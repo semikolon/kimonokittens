@@ -14,7 +14,39 @@
 
 **Core principle**: Never risk repeating the same costly mistakes. Document hard-won lessons concisely so future developers avoid the same pitfalls.
 
+**Cross-machine development**: Machine-specific specs (hardware, OS versions, GPU flags) should be documented in **BOTH** the global `~/.claude/CLAUDE.md` (for other projects on that machine) **AND** the project `CLAUDE.md` (so Claude Code agents on other development machines know the production environment details). This enables effective debugging and deployment decisions from any development workstation.
+
 **Purpose**: Keep CLAUDE.md focused, actionable, and maintainable. Future developers should find critical operational knowledge quickly without wading through historical minutiae.
+
+---
+
+## 💻 Production Environment (Dell Optiplex 7010)
+
+**Hardware:**
+- Dell Optiplex 7010
+- GPU: NVIDIA GTX 1650 (4GB VRAM)
+- Display: Physical monitor in hallway (24/7 kiosk)
+
+**System:**
+- OS: Pop!_OS 22.04 (Linux kernel 6.16.3)
+- PostgreSQL: 18
+- NVIDIA Driver: 580
+- Last system upgrade: Oct 9, 2025
+
+**Chrome Kiosk GPU Flags:**
+```bash
+--ignore-gpu-blocklist
+--enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL,VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs
+--force-gpu-mem-available-mb=4096
+--force-device-scale-factor=1.15
+```
+
+**Services:**
+- Backend API: Puma on port 3001
+- Frontend: Nginx serving built dashboard
+- WebSocket: Integrated with Puma backend
+- Webhook receiver: Port 49123
+- Production database: `kimonokittens_production`
 
 ---
 
