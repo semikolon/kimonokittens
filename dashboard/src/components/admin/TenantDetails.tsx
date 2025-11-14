@@ -120,10 +120,11 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
         {/* Personnummer */}
         <div>
           <h4 className="text-sm font-semibold text-purple-200 mb-3">Personnummer:</h4>
-          <div className="text-lg font-mono text-purple-100 mb-2">
-            {formatPersonnummer(tenant.tenant_personnummer)}
-          </div>
-          {!tenant.tenant_personnummer && (
+          {tenant.tenant_personnummer ? (
+            <div className="text-lg font-mono text-purple-100 mb-2">
+              {formatPersonnummer(tenant.tenant_personnummer)}
+            </div>
+          ) : (
             <div className="text-xs text-yellow-400/80 mb-3">
               ⚠️ Personnummer krävs för att skapa avtal
             </div>
@@ -187,7 +188,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
         {/* Facebook ID */}
         <div>
           <h4 className="text-sm font-semibold text-purple-200 mb-3">Facebook:</h4>
-          {tenant.tenant_facebook_id ? (
+          {tenant.tenant_facebook_id && (
             <a
               href={`https://facebook.com/${tenant.tenant_facebook_id}`}
               target="_blank"
@@ -196,8 +197,6 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
             >
               facebook.com/{tenant.tenant_facebook_id}
             </a>
-          ) : (
-            <div className="text-lg text-purple-100/40 mb-2">Ej länkat</div>
           )}
           <button
             onClick={async () => {
@@ -245,15 +244,13 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
         {/* Phone Number */}
         <div>
           <h4 className="text-sm font-semibold text-purple-200 mb-3">Telefon:</h4>
-          {tenant.tenant_phone ? (
+          {tenant.tenant_phone && (
             <a
               href={`tel:${tenant.tenant_phone}`}
               className="text-lg text-cyan-400 hover:text-cyan-300 underline mb-2 block"
             >
               {tenant.tenant_phone}
             </a>
-          ) : (
-            <div className="text-lg text-purple-100/40 mb-2">Ej angiven</div>
           )}
           <button
             onClick={async () => {
