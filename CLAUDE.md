@@ -1451,6 +1451,81 @@ journalctl -u kimonokittens-dashboard | grep -E "(agreement|participant|email_ev
 
 ---
 
+## 👤 ADMIN CONTRACT UI & CONTACT MANAGEMENT
+
+**Status**: ✅ **PRODUCTION** (Nov 14, 2025) - Tenant contact fields + contract creation validation
+
+### Contact Management Endpoints
+
+**3-column tenant contact grid** (personnummer, Facebook ID, phone):
+
+```bash
+# Update personnummer (Swedish format: 10 or 12 digits)
+PATCH /api/admin/contracts/tenants/:id/personnummer
+Body: { "personnummer": "YYYYMMDD-XXXX" }
+Validation: 10 or 12 digits (ignoring non-digits)
+
+# Update Facebook ID (any string)
+PATCH /api/admin/contracts/tenants/:id/facebook-id
+Body: { "facebook_id": "john.doe" }
+
+# Update phone (Swedish: 9-15 digits)
+PATCH /api/admin/contracts/tenants/:id/phone
+Body: { "phone": "+46701234567" }
+Validation: 9-15 digits with optional +
+```
+
+### Security & Validation
+
+- **All endpoints PIN-gated**: Require `X-Admin-Token` header
+- **Personnummer locked after signing**: Cannot edit if `has_completed_contract = true`
+- **Contract creation requires personnummer**: 400 error if missing - legally required for Swedish rental contracts
+
+### UI Behavior
+
+- **Obfuscation**: Personnummer shows as `YYMMDD-****` (first 6 visible, last 4 hidden)
+- **Clickable links**: Facebook → `facebook.com/{id}`, Phone → `tel:{phone}`
+- **Inline editing**: `window.prompt` for quick updates
+- **Real-time updates**: WebSocket broadcast refreshes admin UI
+
+### Critical: Contract Creation Requirements
+
+**Required tenant fields** (line 502-506 in `handlers/admin_contracts_handler.rb`):
+- `name`
+- `email`
+- `personnummer` ← **MOST COMMON MISSING FIELD**
+- `start_date`
+
+If any field missing: `400 Bad Request` with error message identifying missing field.
+
+---
+
+## ⚠️ REPOSITORY PATTERN GOTCHA
+
+**Critical bug discovered Nov 14, 2025** - `lib/repositories/tenant_repository.rb`
+
+### The Problem
+
+Repository `.all()` method was using `.select()` but **missing fields**:
+```ruby
+# WRONG - fields not in SELECT returned as nil!
+.select(:id, :name, :email, :startDate, :departureDate, :roomAdjustment, :room, :status)
+```
+
+**Impact**: Admin UI showed "—" for personnummer even though database had data!
+
+### The Lesson
+
+**Always include all model fields in SELECT statements** or use `select_all`:
+```ruby
+# CORRECT - include all fields model needs
+.select(:id, :name, :email, :personnummer, :phone, :facebookId, ...)
+```
+
+**When debugging "missing data"**: Verify database state FIRST before concluding data doesn't exist.
+
+---
+
 ## 📚 HISTORICAL: Initial Production Deployment (September-October 2025)
 
 **Status**: ✅ COMPLETED - Database fully operational in production since October 6, 2025
