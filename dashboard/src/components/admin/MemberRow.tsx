@@ -1,6 +1,6 @@
 // MemberRow - Unified row for both contracts and standalone tenants
 import React from 'react'
-import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, ChevronRight, User, FileSignature } from 'lucide-react'
+import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, ChevronRight, User, FileSignature, MapPin } from 'lucide-react'
 import { ContractDetails } from './ContractDetails'
 import { TenantDetails } from './TenantDetails'
 import type { Member, SignedContract, TenantMember } from '../../views/AdminDashboard'
@@ -272,7 +272,8 @@ export const MemberRow: React.FC<MemberRowProps> = ({
               {member.tenant_name}
             </span>
             {member.tenant_room && (
-              <span className="text-purple-300/80 text-sm font-medium">
+              <span className="text-purple-300/80 text-sm font-medium flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-purple-300/80" />
                 {member.tenant_room}
               </span>
             )}

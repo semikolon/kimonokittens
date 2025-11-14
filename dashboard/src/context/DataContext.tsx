@@ -6,6 +6,29 @@ interface TrainData {
   summary: string
   deviation_summary: string
   generated_at?: string
+  trains?: Array<{
+    departure_time: string
+    departure_timestamp: number
+    minutes_until: number
+    can_walk?: boolean
+    line_number: string
+    destination: string
+    deviation_note: string
+    summary_deviation_note: string
+    suffix?: string
+  }>
+  buses?: Array<{
+    departure_time: string
+    departure_timestamp: number
+    minutes_until: number
+    line_number: string
+    destination: string
+  }>
+  deviations?: Array<{
+    time: string
+    destination: string
+    reason: string
+  }>
 }
 
 interface TemperatureData {
@@ -21,6 +44,11 @@ interface TemperatureData {
   last_updated_date: string
   offline_percentage: string
   outages: number[]
+  schedule_data?: Array<{
+    time: string
+    countHours: number
+    value: boolean
+  }>
 }
 
 interface WeatherData {
@@ -374,7 +402,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const socketUrl = '/dashboard/ws'
 
-  const { lastMessage, connectionStatus, readyState } = useWebSocket(socketUrl, {
+  const { lastMessage } = useWebSocket(socketUrl, {
     onOpen: () => {
       console.log('Dashboard WebSocket connection established.')
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'open' })

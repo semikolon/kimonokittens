@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { WidgetContainer } from './shared/WidgetContainer'
-import { formatSwedishTime, formatSwedishDate, getGreeting } from '../utils/formatters'
+import { useState, useEffect, useRef } from 'react'
+import { formatSwedishDate } from '../utils/formatters'
 import { neonTheme } from '../utils/theme'
 import { TodoWidget } from './TodoWidget'
 

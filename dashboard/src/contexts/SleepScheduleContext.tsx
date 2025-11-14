@@ -114,7 +114,7 @@ const log = (message: string) => {
 export const SleepScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, DEFAULT_STATE);
   const [configLoaded, setConfigLoaded] = React.useState(false);
-  const fadeAnimationRef = useRef<number>();
+  const fadeAnimationRef = useRef<number | null>(null);
 
   // Load config from API on mount
   useEffect(() => {

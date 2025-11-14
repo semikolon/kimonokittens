@@ -1,8 +1,6 @@
 import React from 'react'
 import { useAdminAuth } from '../../contexts/AdminAuthContext'
 
-const DEMO_MODE = false
-
 interface AdminUnlockIndicatorProps {
   compact?: boolean
 }

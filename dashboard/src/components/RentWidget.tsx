@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useData } from '../context/DataContext'
-import { VirtualPotDisplay } from './VirtualPotDisplay'
 
 // Anomaly Summary Component - generates dynamic text about anomalous electricity usage
-function AnomalySummaryText({ anomalySummary }: {
+export function AnomalySummaryText({ anomalySummary }: {
   anomalySummary?: {
     total_anomalies: number
     anomalous_days: Array<{
@@ -599,7 +598,7 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
 
 export function RentWidget() {
   const { state } = useData()
-  const { rentData, electricityDailyCostsData, connectionStatus } = state
+  const { rentData, connectionStatus } = state
 
   if (connectionStatus !== 'open') {
     return (

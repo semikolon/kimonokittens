@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 interface CalendarEvent {
   id: string
@@ -11,8 +11,6 @@ interface CalendarEvent {
 
 export function CalendarWidget() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   // Mock data for demonstration
   const mockEvents: CalendarEvent[] = [

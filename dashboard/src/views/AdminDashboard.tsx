@@ -1,11 +1,10 @@
 // Admin Dashboard - Contract Management View
 // Matches existing dashboard Widget component pattern with purple/slate glass-morphism
 import React from 'react'
-import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, Wifi, WifiOff } from 'lucide-react'
+import { Wifi, WifiOff } from 'lucide-react'
 import { ContractList } from '../components/admin/ContractList'
 import { TenantForm } from '../components/admin/TenantForm'
 import { useContracts } from '../hooks/useContracts'
-import { useKeyboardNav } from '../hooks/useKeyboardNav'
 import { useData } from '../context/DataContext'
 
 // TypeScript interfaces matching requirements

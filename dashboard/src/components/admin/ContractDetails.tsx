@@ -1,6 +1,6 @@
 // ContractDetails - Expanded content area (email, signing, timeline)
 import React, { useState } from 'react'
-import { CheckCircle2, Clock, XCircle, Mail, AlertCircle } from 'lucide-react'
+import { CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react'
 import { ContractTimeline } from './ContractTimeline'
 import type { SignedContract } from '../../views/AdminDashboard'
 import { useAdminAuth } from '../../contexts/AdminAuthContext'

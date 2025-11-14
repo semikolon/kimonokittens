@@ -1,22 +1,24 @@
-import React, { useEffect, useRef } from 'react';
-import * as THREE from 'three';
-import { Infinity, Rocket, Shield, Brain, Play, ChevronDown } from 'lucide-react';
-import { useSleepSchedule } from '../../contexts/SleepScheduleContext';
+import { useEffect, useRef } from 'react'
+import * as THREE from 'three'
+import { useSleepSchedule } from '../../contexts/SleepScheduleContext'
 
 const AnoAI = () => {
-  const containerRef = useRef(null);
-  const { state: sleepState } = useSleepSchedule();
-  const frameIdRef = useRef<number>();
-  const isPausedRef = useRef(false);
-  const animateFnRef = useRef<(() => void) | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const { state: sleepState } = useSleepSchedule()
+  const frameIdRef = useRef<number | null>(null)
+  const isPausedRef = useRef(false)
+  const animateFnRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
-    const container = containerRef.current;
-    const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    container.appendChild(renderer.domElement);
+    const container = containerRef.current
+    if (!container) {
+      return
+    }
+    const scene = new THREE.Scene()
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+    const renderer = new THREE.WebGLRenderer({ antialias: true })
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    container.appendChild(renderer.domElement)
 
     const material = new THREE.ShaderMaterial({
       uniforms: {
@@ -90,66 +92,71 @@ const AnoAI = () => {
       `
     });
 
-    const geometry = new THREE.PlaneGeometry(2, 2);
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
+    const geometry = new THREE.PlaneGeometry(2, 2)
+    const mesh = new THREE.Mesh(geometry, material)
+    scene.add(mesh)
 
     const animate = () => {
-      if (isPausedRef.current) return;
+      if (isPausedRef.current) return
 
-      material.uniforms.iTime.value += 0.016;
-      renderer.render(scene, camera);
-      frameIdRef.current = requestAnimationFrame(animate);
-    };
+      material.uniforms.iTime.value += 0.016
+      renderer.render(scene, camera)
+      frameIdRef.current = requestAnimationFrame(animate)
+    }
 
     // Store animate function in ref so pause/resume effect can access it
-    animateFnRef.current = animate;
+    animateFnRef.current = animate
 
-    animate();
+    animate()
 
     const handleResize = () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
+      renderer.setSize(window.innerWidth, window.innerHeight)
+      material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight)
+    }
+    window.addEventListener('resize', handleResize)
 
     return () => {
-      if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current);
-      window.removeEventListener('resize', handleResize);
-      container.removeChild(renderer.domElement);
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
-      animateFnRef.current = null;
-    };
-  }, []);
+      if (frameIdRef.current !== null) {
+        cancelAnimationFrame(frameIdRef.current)
+        frameIdRef.current = null
+      }
+      window.removeEventListener('resize', handleResize)
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement)
+      }
+      geometry.dispose()
+      material.dispose()
+      renderer.dispose()
+      animateFnRef.current = null
+    }
+  }, [])
 
   // Pause/resume based on sleep state
   useEffect(() => {
     // Pause ONLY when fully asleep (not during fade transitions)
-    const shouldPause = sleepState.currentState === 'sleeping';
+    const shouldPause = sleepState.currentState === 'sleeping'
 
     if (shouldPause && !isPausedRef.current) {
       // Pause animation
-      if (frameIdRef.current) {
-        cancelAnimationFrame(frameIdRef.current);
-        frameIdRef.current = undefined;
+      if (frameIdRef.current !== null) {
+        cancelAnimationFrame(frameIdRef.current)
+        frameIdRef.current = null
       }
-      isPausedRef.current = true;
+      isPausedRef.current = true
     } else if (!shouldPause && isPausedRef.current) {
       // Resume animation
-      isPausedRef.current = false;
+      isPausedRef.current = false
       if (animateFnRef.current) {
-        animateFnRef.current(); // Restart animation loop
+        animateFnRef.current() // Restart animation loop
       }
     }
-  }, [sleepState.currentState]);
+  }, [sleepState.currentState])
 
   return (
     <div ref={containerRef} className="relative overflow-x-hidden">
       <div className="relative z-10 divider" />
     </div>
-  );
-};
+  )
+}
 
-export default AnoAI;
+export default AnoAI

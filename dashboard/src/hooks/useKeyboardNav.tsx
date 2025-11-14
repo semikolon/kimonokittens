@@ -31,7 +31,7 @@ export const useKeyboardNav = () => {
     }
 
     // Handle browser back/forward buttons
-    const handlePopState = (e: PopStateEvent) => {
+    const handlePopState = () => {
       const newMode = window.location.pathname === '/admin' ? 'admin' : 'public'
       setViewMode(newMode)
     }

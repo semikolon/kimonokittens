@@ -17,6 +17,8 @@ _Documenting the work Codex and Fredrik paired on during the enforced Claude Cod
 - **General UX tweaks**: placeholders updated (“Karlsson på Taket”), success/error copy tightened, rent note hidden for inactive tenants.
 - **Dynamic landlord profile**: Admin UI + contract generation now read the landlord’s name/email/phone/personnummer from the tenant record, eliminating hardcoded “Brännst…” spellings across the stack.
 - **Tenant insight panel**: Expanded rows show rent, deposit + furnishing deposit, and move-out date side-by-side with the same rent clarifications used in the rent widget.
+- **Tenant room editing polish**: Room name now shows once (next to the tenant name with a pin icon) and the room edit button sits above the move-out controls to keep the column aligned with other actions.
+- **Dashboard build health**: Cleared the TypeScript backlog (unused imports, stricter schedule/transport typings, shader safeguards) so `npm run build --workspace=dashboard` succeeds again.
 - **Post-completion polish**: Contract timelines collapse once both parties sign so the focus stays on signing status/actions.
 
 ## Open Follow-ups

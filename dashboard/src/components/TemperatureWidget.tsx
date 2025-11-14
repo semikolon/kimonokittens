@@ -159,7 +159,9 @@ export function TemperatureWidget() {
     // Build hour-by-hour schedule from schedule_data
     const scheduleMap = new Map()
 
-    temperatureData.schedule_data.forEach(period => {
+    const scheduleEntries = temperatureData.schedule_data
+
+    scheduleEntries.forEach((period) => {
       const startTime = new Date(period.time)
       const countHours = period.countHours
       const isOn = period.value

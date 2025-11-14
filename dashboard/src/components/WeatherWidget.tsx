@@ -1,6 +1,5 @@
-import React from 'react'
 import { useData } from '../context/DataContext'
-import { Sun, Cloud, CloudRain, CloudSnow, Zap, CloudDrizzle, Droplets, Wind, Hexagon } from 'lucide-react'
+import { Sun, Cloud, CloudRain, CloudSnow, Zap, CloudDrizzle, Droplets, Wind } from 'lucide-react'
 
 export function WeatherWidget() {
   const { state } = useData()
@@ -79,15 +78,6 @@ export function WeatherWidget() {
         // Fallback for unknown codes
         return <Cloud className="w-6 h-6 text-purple-200" />
     }
-  }
-
-  const getAQIText = (usEpaIndex: number) => {
-    if (usEpaIndex <= 1) return 'Bra'
-    if (usEpaIndex <= 2) return 'OK'
-    if (usEpaIndex <= 3) return 'Måttlig'
-    if (usEpaIndex <= 4) return 'Dålig'
-    if (usEpaIndex <= 5) return 'Mycket dålig'
-    return 'Farlig'
   }
 
   const shortenWeatherText = (text: string) => {

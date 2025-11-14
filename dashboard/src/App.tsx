@@ -11,10 +11,10 @@ import { TrainWidget } from './components/TrainWidget'
 import { StravaWidget } from './components/StravaWidget'
 import { RentWidget, AnomalySparklineBar } from './components/RentWidget'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import AnoAI from './components/ui/animated-shader-background'
 import { AdminDashboard } from './views/AdminDashboard'
 import { useKeyboardNav } from './hooks/useKeyboardNav'
 import { AdminStatusStack } from './components/AdminStatusStack'
+import { DeploymentBanner } from './components/DeploymentBanner'
 
 // Refined widget component with organic, magazine-style design
 const Widget = ({

@@ -1,6 +1,6 @@
 // TenantDetails - Expanded content for tenant-only rows
 import React, { useMemo, useState } from 'react'
-import { DollarSign, TrendingDown, TrendingUp, Calendar, MapPin } from 'lucide-react'
+import { DollarSign, TrendingDown, TrendingUp, Calendar } from 'lucide-react'
 import type { TenantMember } from '../../views/AdminDashboard'
 import { useAdminAuth } from '../../contexts/AdminAuthContext'
 import { useData } from '../../context/DataContext'
@@ -134,51 +134,46 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
 
           <div className="space-y-5">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm font-semibold text-purple-200 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  <span>{roomInput || 'Rum saknas'}</span>
-                </div>
-                <button
-                  onClick={async () => {
-                    const newRoom = window.prompt('Ange nytt rumsnamn', roomInput || '')
-                    if (newRoom === null) return
-                    const trimmed = newRoom.trim()
-                    if (!trimmed) {
-                      alert('Rumsnamn kan inte vara tomt')
-                      return
+              <h4 className="text-sm font-semibold text-purple-200 mb-3">Rum:</h4>
+              <button
+                onClick={async () => {
+                  const newRoom = window.prompt('Ange nytt rumsnamn', roomInput || '')
+                  if (newRoom === null) return
+                  const trimmed = newRoom.trim()
+                  if (!trimmed) {
+                    alert('Rumsnamn kan inte vara tomt')
+                    return
+                  }
+                  try {
+                    setUpdatingRoom(true)
+                    const adminToken = await ensureAuth()
+                    if (!adminToken) return
+                    const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/room`, {
+                      method: 'PATCH',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Token': adminToken
+                      },
+                      body: JSON.stringify({ room: trimmed })
+                    })
+                    if (!response.ok) {
+                      const error = await response.json()
+                      throw new Error(error.error || 'Kunde inte uppdatera rum')
                     }
-                    try {
-                      setUpdatingRoom(true)
-                      const adminToken = await ensureAuth()
-                      if (!adminToken) return
-                      const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/room`, {
-                        method: 'PATCH',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'X-Admin-Token': adminToken
-                        },
-                        body: JSON.stringify({ room: trimmed })
-                      })
-                      if (!response.ok) {
-                        const error = await response.json()
-                        throw new Error(error.error || 'Kunde inte uppdatera rum')
-                      }
-                      setRoomInput(trimmed)
-                    } catch (error) {
-                      alert(error instanceof Error ? error.message : 'Kunde inte uppdatera rum')
-                    } finally {
-                      setUpdatingRoom(false)
-                    }
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                           bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                           transition-all border border-purple-900/30"
-                  disabled={updatingRoom}
-                >
-                  {updatingRoom ? 'Sparar…' : 'Ändra rum'}
-                </button>
-              </div>
+                    setRoomInput(trimmed)
+                  } catch (error) {
+                    alert(error instanceof Error ? error.message : 'Kunde inte uppdatera rum')
+                  } finally {
+                    setUpdatingRoom(false)
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                         bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                         transition-all border border-purple-900/30"
+                disabled={updatingRoom}
+              >
+                {updatingRoom ? 'Sparar…' : 'Ändra rum'}
+              </button>
             </div>
 
             <div>

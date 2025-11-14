@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useData } from '../context/DataContext'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
+const MotionDiv = motion.div as React.ComponentType<any>
 
 // Types for structured transport data
 interface TrainDeparture {
@@ -203,9 +204,7 @@ const generateBusId = (bus: BusDeparture): string => {
 const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
   // Map stores trainId -> isRedTinted (true for last swoosh at 7m)
   const [shineAnimatedTrains, setShineAnimatedTrains] = useState<Map<string, boolean>>(new Map())
-  const [trainsMarkedForRemoval, setTrainsMarkedForRemoval] = useState<Set<string>>(new Set())
   const animatedAtMinuteRef = useRef<Map<string, Set<number>>>(new Map())
-  const markedForRemovalRef = useRef<Set<string>>(new Set())
 
   // Cleanup function to remove shine animation after it completes
   const cleanupShineAnimation = (trainId: string) => {
@@ -239,20 +238,8 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
     })
   }, [trains])
 
-  // Clean up removed trains set when they're actually gone from incoming data
-  useEffect(() => {
-    const currentTrainIds = new Set(trains.map(generateTrainId))
-    setTrainsMarkedForRemoval(prev => {
-      const filtered = new Set([...prev].filter(id => currentTrainIds.has(id)))
-      // Only update if actually changed
-      if (filtered.size === prev.size) return prev
-      return filtered
-    })
-  }, [trains])
-
   return {
     shineAnimatedTrains,
-    trainsMarkedForRemoval,
     cleanupShineAnimation
   }
 }
@@ -316,17 +303,6 @@ const getTimeOpacity = (minutesUntil: number): number => {
   // Smooth gradual fade from 15m (1.0) to 50m (0.15)
   const progress = (minutesUntil - 15) / (50 - 15)
   return 1.0 - (progress * 0.85)
-}
-
-const isFeasibleTrainDeparture = (minutesUntil: number): boolean => {
-  return minutesUntil >= 6 // Trains leaving in <6 minutes are too hard to catch
-}
-
-// Enhanced departure sequence states
-type DepartureState = 'feasible' | 'warning' | 'critical' | 'departing' | 'departed'
-
-interface TrainWithDepartureState extends TrainDeparture {
-  departureState?: DepartureState
 }
 
 const isFeasibleBusDeparture = (minutesUntil: number): boolean => {
@@ -471,16 +447,23 @@ const DeviationAlerts: React.FC<{
 
 export function TrainWidget() {
   const { state } = useData()
-  const { trainData, connectionStatus } = state
+  const { trainData } = state
 
-  // Calculate state flags
-  const loading = connectionStatus === 'connecting' && !trainData
-  const error = connectionStatus === 'closed' ? 'WebSocket-anslutning avbruten' : null
-  const hasNoData = !trainData
+  const hasStructuredData = (data: unknown): data is StructuredTransportData => {
+    if (!data || typeof data !== 'object') return false
+    const maybeData = data as Partial<StructuredTransportData>
+    return Array.isArray(maybeData.trains) &&
+      Array.isArray(maybeData.buses) &&
+      Array.isArray(maybeData.deviations)
+  }
 
-  // Handle both old HTML format (backwards compatibility) and new structured format
-  const isStructuredData = trainData?.trains !== undefined
-  const structuredData = isStructuredData ? trainData as StructuredTransportData : null
+  const isStructuredData = hasStructuredData(trainData)
+  const structuredData: StructuredTransportData | null = isStructuredData ? {
+    trains: trainData.trains,
+    buses: trainData.buses,
+    deviations: trainData.deviations,
+    generated_at: trainData.generated_at || new Date().toISOString()
+  } : null
 
   // IMPORTANT: All hooks must be called before any conditional returns
   // Prepare data for hooks (use empty arrays if no structured data)
@@ -488,7 +471,7 @@ export function TrainWidget() {
     mergeDelayInfoIntoTrains(structuredData.trains, structuredData.deviations) : []
 
   // Shine animation at 8-9min + pre-emptive removal at 5min
-  const { shineAnimatedTrains, trainsMarkedForRemoval, cleanupShineAnimation: cleanupTrainAnimation } = useTrainDepartureAnimation(trainsForHooks)
+  const { shineAnimatedTrains, cleanupShineAnimation: cleanupTrainAnimation } = useTrainDepartureAnimation(trainsForHooks)
 
   const feasibleTrainsForHooks = trainsForHooks.filter(train => {
     const adjusted = calculateAdjustedDeparture(train)
@@ -520,9 +503,7 @@ export function TrainWidget() {
   }
 
   // Safe to use structured data now
-  const { buses, deviations } = structuredData
-  const trainsWithMergedDelays = trainsForHooks
-  // Use derived feasible data directly (Framer Motion handles all transitions)
+  const deviations = structuredData?.deviations ?? []
   const feasibleTrains = feasibleTrainsForHooks
   const feasibleBuses = feasibleBusesForHooks
 
@@ -573,7 +554,7 @@ export function TrainWidget() {
                   <AnimatePresence mode="popLayout">
                     {feasibleTrains
                       .slice(0, feasibleDeviations.length > 0 ? 3 : 4)
-                      .map((train, index) => {
+                      .map((train) => {
                       const trainId = generateTrainId(train)
                       const isRedTinted = shineAnimatedTrains.get(trainId) // undefined if not animating, true if red, false if orange
 
@@ -581,7 +562,7 @@ export function TrainWidget() {
                       const shineAnimation = isRedTinted === true ? 'red' : isRedTinted === false ? 'orange' : null
 
                       return (
-                        <motion.div
+                        <MotionDiv
                           key={trainId}
                           layout
                           initial={{ opacity: 0, y: 20 }}
@@ -595,7 +576,7 @@ export function TrainWidget() {
                             shineAnimation={shineAnimation}
                             onAnimationEnd={() => cleanupTrainAnimation(trainId)}
                           />
-                        </motion.div>
+                        </MotionDiv>
                       )
                     })}
                   </AnimatePresence>
@@ -618,7 +599,7 @@ export function TrainWidget() {
               {feasibleBuses.length > 0 ? (
                 <LayoutGroup>
                   <AnimatePresence mode="popLayout">
-                    {feasibleBuses.slice(0, 4).map((bus, index) => {
+                    {feasibleBuses.slice(0, 4).map((bus) => {
                       const busId = generateBusId(bus)
                       const isRedTinted = shineAnimatedBuses.get(busId) // undefined if not animating, true if red, false if orange
 
@@ -626,7 +607,7 @@ export function TrainWidget() {
                       const shineAnimation = isRedTinted === true ? 'red' : isRedTinted === false ? 'orange' : null
 
                       return (
-                        <motion.div
+                        <MotionDiv
                           key={busId}
                           layout
                           initial={{ opacity: 0, y: 20 }}
@@ -640,7 +621,7 @@ export function TrainWidget() {
                             shineAnimation={shineAnimation}
                             onAnimationEnd={() => cleanupBusAnimation(busId)}
                           />
-                        </motion.div>
+                        </MotionDiv>
                       )
                     })}
                   </AnimatePresence>
