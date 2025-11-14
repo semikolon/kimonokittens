@@ -79,6 +79,15 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
     }
   }
 
+  // Obfuscate personnummer - show last 4 digits only
+  const formatPersonnummer = (pnr?: string) => {
+    if (!pnr) return '—'
+    // Keep last 4 digits, obfuscate the rest
+    const lastFour = pnr.slice(-4)
+    const prefix = pnr.length > 4 ? 'XXXXXX-' : ''
+    return `${prefix}${lastFour}`
+  }
+
   return (
     <div className="p-6 space-y-6 bg-slate-900/60">
       {/* Room Adjustment */}
@@ -100,6 +109,19 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
           </div>
         </div>
       )}
+
+      {/* Personnummer */}
+      <div>
+        <h4 className="text-sm font-semibold text-purple-200 mb-3">Personnummer:</h4>
+        <div className="text-lg font-mono text-purple-100">
+          {formatPersonnummer(tenant.tenant_personnummer)}
+        </div>
+        {!tenant.tenant_personnummer && (
+          <div className="text-xs text-yellow-400/80 mt-1">
+            ⚠️ Personnummer krävs för att skapa avtal
+          </div>
+        )}
+      </div>
 
       {showRent && (
         <div className="grid gap-6 md:grid-cols-3">
