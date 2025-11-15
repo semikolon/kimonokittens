@@ -1616,3 +1616,172 @@ Auto-migration: Swedish 07xxx → +467xxx
 - ELKS_USERNAME (46elks - not yet set)
 - ELKS_PASSWORD (46elks - not yet set)
 
+
+---
+
+## PHASE 2-6 CONCURRENT EXECUTION META-PLAN
+
+**Date**: November 15, 2025 (01:15)
+**Status**: Phase 1 Complete (113 tests) → Planning Group 1 parallel execution
+
+### Dependency Analysis
+
+**Phase 1 (✅ COMPLETE):**
+- BankTransaction, RentReceipt, SmsEvent models + repositories
+- All 113 tests passing (21+18+24+11+23+16)
+- Ready for Phases 2-6 to consume
+
+**Phase 2 - Lunch Flow Integration:**
+- **Dependencies**: BankTransaction model/repo (✅ done)
+- **Outputs**: Hourly bank transaction syncing
+- **Can start**: YES - completely independent
+- **No blockers**
+
+**Phase 3 - Payment Matching Service:**
+- **Dependencies**: 
+  - BankTransaction model/repo (✅ done)
+  - RentReceipt model/repo (✅ done)
+  - Existing RentLedger repo (✅ exists)
+- **Outputs**: Automatic payment reconciliation
+- **Can start**: YES - can develop/test with mocked bank transactions
+- **Note**: Phase 2 calls this service, but can develop independently with TDD
+
+**Phase 4 - SMS Infrastructure:**
+- **Dependencies**: 
+  - SmsEvent model/repo (✅ done)
+  - Tenant repo (✅ exists)
+  - 46elks account (❌ user hasn't signed up yet)
+- **Outputs**: SMS sending + webhook receivers
+- **Can start**: YES - mock 46elks API for development/testing
+- **Production blocker**: Needs actual 46elks account for live testing
+
+**Phase 5 - Rent Reminder Scheduling:**
+- **Dependencies**:
+  - SMS sending from Phase 4 (❌ must have working SmsGateway)
+  - Payment status from Phase 3 (❌ must have ApplyBankPayment service)
+  - Both RentLedger and RentReceipt queries
+- **Can start**: NO - genuinely dependent on Phases 3 & 4 completing
+- **Sequential after Group 1**
+
+**Phase 6 - Admin Dashboard UI:**
+- **Dependencies**:
+  - Payment status logic from Phase 3 (can mock initially)
+  - Existing admin contracts handler (✅ exists)
+- **Can start**: YES - develop UI with mocked payment data
+- **Integration**: Connect to real Phase 3 after Group 1 completes
+
+---
+
+### Concurrent Execution Strategy
+
+#### **Group 1 - Parallel Development (4 concurrent agents)**
+
+**AGENT-LUNCHFLOW: Phase 2 - Lunch Flow Integration**
+- **Deliverables**:
+  - `lib/banking/lunchflow_client.rb` - API client with x-api-key auth
+  - `bin/bank_sync` - Hourly cron script with --dry-run flag
+  - State management (cursor tracking in `state/bank_sync.json`)
+  - `bin/check_lunchflow_auth` - 90-day re-auth monitoring
+  - Tests with mocked API responses
+- **Testing**: Mock Lunch Flow responses, cursor pagination, deduplication
+- **Output**: Hourly transaction sync (dry-run mode ready for testing)
+- **No blockers**
+
+**AGENT-PAYMENT-MATCH: Phase 3 - Payment Matching Service**
+- **Deliverables**:
+  - `lib/services/apply_bank_payment.rb` - 3-tier reconciliation engine
+  - Reference matching (Swish payment descriptions with UUIDs)
+  - Fuzzy name matching (Levenshtein + token-based via BankTransaction model)
+  - Manual fallback classification
+  - Partial payment accumulation logic
+  - Admin SMS confirmations (calls Phase 4 SmsGateway - can mock)
+  - Tests with mocked BankTransaction data
+- **Testing**: All 3 matching tiers, partial payments, overpayment edge cases
+- **Output**: Automatic reconciliation service
+- **Integration point**: Receives bank transactions from Phase 2 (mock for now)
+
+**AGENT-SMS: Phase 4 - SMS Infrastructure**
+- **Deliverables**:
+  - `lib/sms/gateway.rb` - Abstract SMS interface
+  - `lib/sms/elks_client.rb` - 46elks API client (mocked)
+  - `handlers/elks_webhooks.rb` - Delivery receipts + incoming SMS
+  - Mount webhooks in `puma_server.rb`
+  - Tests with mocked 46elks responses
+- **Testing**: Mock 46elks API, delivery receipts, incoming SMS parsing
+- **Output**: SMS sending + webhook receivers (mock mode)
+- **Production blocker**: Needs actual 46elks account signup for live testing
+
+**AGENT-DASHBOARD-UI: Phase 6 - Admin Dashboard UI**
+- **Deliverables**:
+  - Update `handlers/admin_contracts_handler.rb` with payment status fields
+  - Payment status helper methods (paid/partially_paid/unpaid)
+  - Frontend payment status display components
+  - Payment history timeline UI
+  - SMS reminder count display
+  - Tests with mocked payment data
+- **Testing**: UI components, handler logic, payment status calculations
+- **Output**: Admin UI showing payment status (with mocked data initially)
+- **Integration point**: Connect to real Phase 3 queries after Group 1 completes
+
+**Communication Protocol**:
+- Same `.agent_comms.md` pattern as Phase 1
+- Only write if BLOCKED or have CONFLICTS
+- Report completion status when done
+
+---
+
+#### **Group 2 - Sequential (After Group 1 completes)**
+
+**Phase 5: Rent Reminder Scheduling**
+- **Dependencies**: Requires completed Phases 3 & 4
+- **Deliverables**:
+  - `bin/rent_reminders` - Daily cron script
+  - Smart timing logic (23rd, 25th, 27th, 28th+)
+  - 5 tone variations (heads_up, first_reminder, urgent, very_urgent, overdue)
+  - `lib/sms/message_composer.rb` - LLM-generated messages (GPT-5-mini)
+  - `lib/swish/link_generator.rb` - Swish deep links with pre-filled payment
+  - Admin deadline alerts (27th 10:00, 27th 17:00, daily after)
+  - Tests with mocked time/payment data
+- **Cron**: 09:45 and 16:45 daily
+- **Must wait for**: SMS sending (Phase 4), payment status (Phase 3)
+
+---
+
+### Key Benefits
+
+1. **Maximum parallelization**: 4 agents working simultaneously (same as Phase 1)
+2. **No hard dependencies**: Each Group 1 agent can work independently with mocks
+3. **TDD approach**: All agents write tests first, implementation follows
+4. **Integration happens after**: Once all 4 complete, integrate and test end-to-end
+5. **Production blockers separated**: 46elks signup needed only for final prod testing
+
+### Risks & Mitigation
+
+**Risk**: Mock APIs might not match real behavior
+- **Mitigation**: Use actual API documentation (Lunch Flow, 46elks) for mock design
+
+**Risk**: Payment matching logic might need adjustment after seeing real transactions
+- **Mitigation**: Phase 3 tests cover edge cases (overpayment, partial, fuzzy matching)
+
+**Risk**: UI might need tweaks after seeing real payment data
+- **Mitigation**: Phase 6 uses realistic mock data based on current rent structure
+
+**Risk**: Schema conflicts (like Phase 1 SMS-EVENT detected)
+- **Mitigation**: `.agent_comms.md` communication protocol catches conflicts early
+
+---
+
+### Next Steps
+
+1. Launch 4 concurrent agents (Group 1)
+2. Monitor `.agent_comms.md` for conflicts/blockers
+3. After all 4 complete: Integration testing
+4. Then: Launch Phase 5 (sequential)
+5. Final: End-to-end testing with real Lunch Flow + 46elks accounts
+
+**Expected timeline**: 
+- Group 1 (parallel): ~2-3 hours with 4 agents
+- Integration: ~30 minutes
+- Group 2 (Phase 5): ~1 hour
+- **Total**: ~4-5 hours for Phases 2-6 complete
+
