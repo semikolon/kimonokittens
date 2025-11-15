@@ -1,0 +1,103 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Fetch Lunch Flow connected bank accounts and display their IDs
+# Usage: bundle exec ruby bin/fetch_lunchflow_accounts
+
+require 'dotenv/load'
+require 'net/http'
+require 'json'
+
+API_KEY = ENV['LUNCHFLOW_API_KEY']
+BASE_URL = 'https://www.lunchflow.app/api/v1'
+
+def fetch_accounts
+  uri = URI("#{BASE_URL}/accounts")
+  request = Net::HTTP::Get.new(uri)
+  request['x-api-key'] = API_KEY
+  request['Content-Type'] = 'application/json'
+
+  puts "🔍 Fetching connected accounts from Lunch Flow..."
+  puts
+
+  response = Net::HTTP.start(
+    uri.hostname,
+    uri.port,
+    use_ssl: true,
+    verify_mode: OpenSSL::SSL::VERIFY_NONE,  # Bypass SSL cert verification for quick test
+    read_timeout: 60,
+    open_timeout: 60
+  ) do |http|
+    http.request(request)
+  end
+
+  case response.code.to_i
+  when 200
+    data = JSON.parse(response.body)
+    accounts = data['accounts'] || []
+
+    if accounts.empty?
+      puts "⚠️  No accounts found. Have you connected a bank account via Lunch Flow web interface?"
+      puts "   Visit: https://www.lunchflow.app"
+      exit 1
+    end
+
+    puts "✅ Found #{accounts.length} connected account#{accounts.length == 1 ? '' : 's'}:\n\n"
+
+    accounts.each_with_index do |account, idx|
+      puts "#{idx + 1}. #{account['name']}"
+      puts "   Institution: #{account['institution_name']}"
+      puts "   Account ID: #{account['id']}"
+      puts "   → #{account['institution_name'].include?('Swedbank') ? '🏦 SWEDBANK (Huset account?)' : ''}"
+      puts
+    end
+
+    # Find Swedbank accounts
+    swedbank_accounts = accounts.select { |a| a['institution_name']&.downcase&.include?('swedbank') }
+
+    if swedbank_accounts.any?
+      puts "\n🎯 Swedbank accounts found:"
+      swedbank_accounts.each do |account|
+        puts "   #{account['name']} → ID: #{account['id']}"
+      end
+      puts "\n💡 Add to .env:"
+      puts "   LUNCHFLOW_ACCOUNT_ID=#{swedbank_accounts.first['id']}"
+    else
+      puts "⚠️  No Swedbank accounts found. Is 'Huset' named differently?"
+      puts "   Review the list above and pick the correct account ID."
+    end
+
+  when 401, 403
+    puts "❌ Authentication failed!"
+    puts "   Check that LUNCHFLOW_API_KEY in .env is correct."
+    puts "   Response: #{response.body}"
+    exit 1
+  when 404
+    puts "❌ Endpoint not found (404)"
+    puts "   The API structure may have changed."
+    puts "   Response: #{response.body}"
+    exit 1
+  else
+    puts "❌ Unexpected response: #{response.code}"
+    puts "   #{response.body}"
+    exit 1
+  end
+
+rescue Net::ReadTimeout, Net::OpenTimeout => e
+  puts "❌ Network timeout: #{e.message}"
+  puts "   Lunch Flow API may be slow or unreachable. Try again in a moment."
+  exit 1
+rescue => e
+  puts "❌ Error: #{e.class} - #{e.message}"
+  puts e.backtrace.first(5)
+  exit 1
+end
+
+# Verify API key is set
+if API_KEY.nil? || API_KEY.empty?
+  puts "❌ LUNCHFLOW_API_KEY not found in .env"
+  puts "   Add it first: LUNCHFLOW_API_KEY=your_key_here"
+  exit 1
+end
+
+fetch_accounts
