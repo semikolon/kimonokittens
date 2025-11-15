@@ -67,6 +67,14 @@ class TenantRepository < BaseRepository
     row && hydrate(row)
   end
 
+  # Find tenant by phone number (E.164 format)
+  # @param phone [String] Phone number in E.164 format (e.g., "+46701234567")
+  # @return [Tenant, nil]
+  def find_by_phone_e164(phone)
+    row = dataset.where(phoneE164: phone).first
+    row && hydrate(row)
+  end
+
   # Find all tenants active on a specific date
   # @param date [Date] Date to check
   # @return [Array<Tenant>]
