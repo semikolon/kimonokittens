@@ -24,10 +24,11 @@
 **Critical Swish Transaction Discovery** (Real API Testing, Nov 15):
 - **396 transactions** fetched from Lunch Flow (Huset account ID: 4065)
 - **Swish rent payments** found: 4× 7577 SEK (Oct 26-28, messages: "Hyra November", "Hyra Fb")
-- **⚠️ NO COUNTERPARTY NAME** in Lunchflow API for Swish transactions
-- **Consequence:** Tier 2 fuzzy name matching **WILL NOT WORK** for Swish
-- **Mitigation:** Rely on Tier 1 (reference code in message) or amount-only matching
-- **Swish structure:** Reference ID (18 digits), optional message ("Message To Recipient: ..."), direction (In/Ut)
+- **✅ SOLUTION FOUND**: Lunchflow Eta templates extract phone + message from `remittanceInformationUnstructured`
+- **Description field configured**: `from: +46XXXXXXXXX ... messageToRecipient: {text}`
+- **Tier 1 matching WILL WORK**: Swish links pre-fill message with reference code (e.g., "KK-2025-11-Sanna-cmhqe9enc")
+- **Swish structure:** Reference ID (18 digits), phone number, optional message ("Message To Recipient: ..."), direction (In/Ut)
+- **Backup matching**: Could add Tier 2.5 phone number matching (extract from description field)
 
 **46elks Configuration** (Nov 15, 2025):
 - **ONE-WAY SMS only** - Alphanumeric sender "Katten" (zero monthly cost)
@@ -103,6 +104,13 @@
 - 90-day re-auth required (EU PSD2) - **Mitigate with SMS alert to admin**
 - **SSL Note:** Ruby `Net::HTTP` may require `verify_mode: OpenSSL::SSL::VERIFY_NONE` for CRL issues
 - **API Documentation:** `docs/api/LUNCHFLOW_API.md` (30KB, comprehensive reference)
+
+**Lunchflow Eta Template Configuration** (Nov 15, 2025):
+- **Description field** configured to extract: `from: {phone} ... messageToRecipient: {text}`
+- **Template source:** `it.remittanceInformationUnstructured` (contains all Swish metadata)
+- **Enables:** Reference code matching (when tenants use our Swish links with pre-filled message)
+- **Data extracted:** Phone number (+46XXXXXXXXX), Swish reference ID, payment message
+- **Future enhancement:** Could configure Merchant field to extract just phone number for Tier 2.5 matching
 
 **SMS Provider**:
 - **46elks** (Swedish SMS provider) - **ONE-WAY OUTBOUND ONLY**
