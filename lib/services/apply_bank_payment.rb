@@ -6,10 +6,11 @@ require 'time'
 
 # ApplyBankPayment service matches bank transactions to rent payments
 #
-# Implements 3-tier matching strategy:
-# 1. Reference code matching (KK-YYYY-MM-Name-UUID)
-# 2. Fuzzy name matching (Levenshtein + amount)
-# 3. Manual classification fallback
+# Implements 4-tier matching strategy:
+# 1. Reference code matching (KK-YYYY-MM-Name-UUID in Swish message)
+# 2. Phone number matching (extract from Swish transaction description)
+# 3. Fuzzy name matching (Levenshtein + amount for bank transfers)
+# 4. Manual classification fallback
 #
 # Payment logic:
 # - Calculates remaining amount due (ledger - existing receipts)
@@ -107,20 +108,25 @@ class ApplyBankPayment
     @transaction.swish_payment?
   end
 
-  # Find matching tenant using 3-tier strategy
+  # Find matching tenant using 4-tier strategy
   # @return [Array<Tenant, String>, nil] [tenant, match_method] or nil
   def find_matching_tenant
-    # Tier 1: Reference code matching
+    # Tier 1: Reference code matching (UUID in Swish message)
     if tenant = match_by_reference
       return [tenant, 'reference']
     end
 
-    # Tier 2: Amount + Name fuzzy matching
+    # Tier 2: Phone number matching (Swish sender phone)
+    if tenant = match_by_phone
+      return [tenant, 'phone']
+    end
+
+    # Tier 3: Amount + Name fuzzy matching (bank transfers)
     if tenant = match_by_amount_and_name
       return [tenant, 'amount+name']
     end
 
-    # Tier 3: Manual classification fallback (log for admin review)
+    # Tier 4: Manual classification fallback (log for admin review)
     # For MVP, return nil (no match)
     nil
   end
@@ -134,7 +140,18 @@ class ApplyBankPayment
     all_tenants.find { |tenant| @transaction.has_reference_code?(tenant) }
   end
 
-  # Tier 2: Match by amount and fuzzy name
+  # Tier 2: Match by phone number (Swish payments)
+  # @return [Tenant, nil]
+  def match_by_phone
+    # BankTransaction model has phone_matches? which:
+    # 1. Extracts phone from Lunchflow description format: "from: +46XXXXXXXXX ..."
+    # 2. Normalizes both phones (remove non-digits)
+    # 3. Compares tenant.phone with extracted phone
+    all_tenants = Persistence.tenants.all
+    all_tenants.find { |tenant| @transaction.phone_matches?(tenant) }
+  end
+
+  # Tier 3: Match by amount and fuzzy name (bank transfers)
   # @return [Tenant, nil]
   def match_by_amount_and_name
     # Get current month's expected rent amounts

@@ -119,7 +119,39 @@ class BankTransaction
     false
   end
 
-  # Check if counterparty name matches tenant (Tier 2 matching)
+  # Extract phone number from description field (Swish payments)
+  # @return [String, nil] Phone number in E.164 format (+46XXXXXXXXX) or nil if not found
+  #
+  # @example Lunchflow format
+  #   tx.description = "from: +46702894437 1803968388237103, reference: ..."
+  #   tx.extract_phone_number  # => "+46702894437"
+  def extract_phone_number
+    return nil unless description
+
+    # Lunchflow format: "from: +46XXXXXXXXX ..."
+    match = description.match(/from:\s*(\+46\d{9})/)
+    match ? match[1] : nil
+  end
+
+  # Check if extracted phone number matches tenant (Tier 2 matching - Swish)
+  # @param tenant [Tenant] Tenant to check
+  # @return [Boolean] True if extracted phone matches tenant phone
+  #
+  # @example
+  #   tx.description = "from: +46702894437 ..."
+  #   tenant.phone = "+46702894437"
+  #   tx.phone_matches?(tenant)  # => true
+  def phone_matches?(tenant)
+    return false unless tenant.phone
+
+    phone = extract_phone_number
+    return false unless phone
+
+    # Normalize both phones (remove spaces, compare)
+    normalize_phone(phone) == normalize_phone(tenant.phone)
+  end
+
+  # Check if counterparty name matches tenant (Tier 3 matching - bank transfers)
   # @param tenant [Tenant] Tenant to check
   # @return [Boolean] True if counterparty name fuzzy-matches tenant name
   def name_matches?(tenant)
@@ -127,11 +159,11 @@ class BankTransaction
     fuzzy_name_match?(tenant.name, counterparty)
   end
 
-  # Legacy method for backwards compatibility - checks BOTH reference and name
+  # Legacy method for backwards compatibility - checks ALL matching strategies
   # @param tenant [Tenant] Tenant to check
-  # @return [Boolean] True if reference code OR name matches
+  # @return [Boolean] True if reference code OR phone OR name matches
   def belongs_to_tenant?(tenant)
-    has_reference_code?(tenant) || name_matches?(tenant)
+    has_reference_code?(tenant) || phone_matches?(tenant) || name_matches?(tenant)
   end
 
   # Serialize transaction to hash for API responses / JSON serialization
@@ -168,6 +200,17 @@ class BankTransaction
   def parse_amount(value)
     return value.to_f if value.is_a?(Numeric)
     value.to_s.to_f
+  end
+
+  # Normalize phone number for comparison
+  # @param phone [String] Phone number in any format
+  # @return [String] Normalized phone with only digits
+  #
+  # @example
+  #   normalize_phone("+46 70 123 45 67")  # => "46701234567"
+  #   normalize_phone("+46701234567")      # => "46701234567"
+  def normalize_phone(phone)
+    phone.to_s.gsub(/\D/, '')  # Remove all non-digits
   end
 
   # Fuzzy match two names using Levenshtein distance

@@ -134,7 +134,73 @@ RSpec.describe ApplyBankPayment do
     end
   end
 
-  describe 'Tier 2: Fuzzy Name + Amount Matching' do
+  describe 'Tier 2: Phone Number Matching' do
+    it 'matches payment by Swish phone number (Lunchflow format)' do
+      # Transaction with phone number in description but NO reference code
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_phone_001',
+        account_id: '4065',
+        booked_at: DateTime.parse('2025-11-15T10:30:00Z'),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH from: +46701234567    1803968388237103, reference: 1803968388237103IN',
+        raw_json: { id: 'lf_tx_phone_001' }
+      )
+
+      created_tx = Persistence.bank_transactions.create(tx)
+      allow_any_instance_of(ApplyBankPayment).to receive(:send_admin_confirmation)
+
+      ApplyBankPayment.call(transaction_id: created_tx.id)
+
+      receipts = Persistence.rent_receipts.find_by_tenant(sanna.id, year: 2025, month: 11)
+      expect(receipts.length).to eq(1)
+      expect(receipts.first.matched_via).to eq('phone')
+      expect(receipts.first.tenant_id).to eq(sanna.id)
+    end
+
+    it 'matches with phone number + messageToRecipient' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_phone_002',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7200.0,
+        currency: 'SEK',
+        description: 'SWISH from: +46709876543    1803803512048894, reference: 1803803512048894IN,messageToRecipient: Hyra november',
+        raw_json: { id: 'lf_tx_phone_002' }
+      )
+
+      created_tx = Persistence.bank_transactions.create(tx)
+      allow_any_instance_of(ApplyBankPayment).to receive(:send_admin_confirmation)
+
+      ApplyBankPayment.call(transaction_id: created_tx.id)
+
+      receipts = Persistence.rent_receipts.find_by_tenant(adam.id, year: 2025, month: 11)
+      expect(receipts.first.matched_via).to eq('phone')
+      expect(receipts.first.tenant_id).to eq(adam.id)
+    end
+
+    it 'does NOT match when phone number differs' do
+      # Phone number +46999999999 doesn't match any tenant
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_wrong_phone',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH from: +46999999999    1803968388237103',
+        raw_json: { id: 'lf_tx_wrong_phone' }
+      )
+
+      created_tx = Persistence.bank_transactions.create(tx)
+
+      ApplyBankPayment.call(transaction_id: created_tx.id)
+
+      receipts = Persistence.rent_receipts.find_by_tenant(sanna.id, year: 2025, month: 11)
+      expect(receipts).to be_empty
+    end
+  end
+
+  describe 'Tier 3: Fuzzy Name + Amount Matching' do
     it 'matches payment by amount and exact name match' do
       # Transaction WITHOUT reference code
       tx = BankTransaction.new(

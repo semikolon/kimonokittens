@@ -156,10 +156,11 @@
 - ❌ Skip `lang` (noted in TODO.md for future)
 
 **Payment Matching Strategy**:
-- **All 3 tiers** implemented:
-  1. Reference code matching (exact)
-  2. Amount + name fuzzy matching (Levenshtein)
-  3. Partial payment accumulation
+- **4-tier matching** implemented:
+  1. **Reference code** (UUID in message) - Primary for Swish payments via our links
+  2. **Phone number** (extract from description) - Backup for Swish without reference (99% of rent payments)
+  3. **Fuzzy name** (Levenshtein) - Fallback for regular bank transfers (rare)
+  4. **Partial payment accumulation** - Always runs after match
 
 **Reference Code Format**:
 - `KK-{YYYY}-{MM}-{TenantName}-{ShortUUID}`

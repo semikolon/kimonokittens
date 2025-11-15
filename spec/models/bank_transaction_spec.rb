@@ -215,7 +215,8 @@ RSpec.describe BankTransaction, 'domain model' do
       double(
         'Tenant',
         id: 'cmhqe9enc0000wopipuxgc3kw',
-        name: 'Sanna Juni Benemar'
+        name: 'Sanna Juni Benemar',
+        phone: '+46702894437'
       )
     end
 
@@ -233,7 +234,21 @@ RSpec.describe BankTransaction, 'domain model' do
       expect(tx.belongs_to_tenant?(tenant)).to be true
     end
 
-    it 'returns true when counterparty name fuzzy matches tenant name' do
+    it 'returns true when phone number matches (Tier 2)' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103, reference: 1803968388237103IN',
+        raw_json: {}
+      )
+
+      expect(tx.belongs_to_tenant?(tenant)).to be true
+    end
+
+    it 'returns true when counterparty name fuzzy matches tenant name (Tier 3)' do
       tx = BankTransaction.new(
         external_id: 'lf_tx_abc123',
         account_id: '4065',
@@ -290,6 +305,150 @@ RSpec.describe BankTransaction, 'domain model' do
       )
 
       expect(tx.belongs_to_tenant?(tenant)).to be false
+    end
+  end
+
+  describe '#extract_phone_number' do
+    it 'extracts phone number from Lunchflow format' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103, reference: 1803968388237103IN',
+        raw_json: {}
+      )
+
+      expect(tx.extract_phone_number).to eq('+46702894437')
+    end
+
+    it 'extracts phone with messageToRecipient' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46738307222    1803803512048894, reference: 1803803512048894IN,messageToRecipient: Hyra FB',
+        raw_json: {}
+      )
+
+      expect(tx.extract_phone_number).to eq('+46738307222')
+    end
+
+    it 'returns nil when no phone found' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 100.0,
+        currency: 'SEK',
+        description: 'Regular bank transfer',
+        raw_json: {}
+      )
+
+      expect(tx.extract_phone_number).to be_nil
+    end
+
+    it 'returns nil when description is nil' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 100.0,
+        currency: 'SEK',
+        raw_json: {}
+      )
+
+      expect(tx.extract_phone_number).to be_nil
+    end
+  end
+
+  describe '#phone_matches?' do
+    let(:tenant) do
+      double(
+        'Tenant',
+        id: 'cmhqe9enc0000wopipuxgc3kw',
+        name: 'Sanna Juni Benemar',
+        phone: '+46702894437'
+      )
+    end
+
+    it 'returns true when phone matches (E.164 format)' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103, reference: 1803968388237103IN',
+        raw_json: {}
+      )
+
+      expect(tx.phone_matches?(tenant)).to be true
+    end
+
+    it 'returns true when phone matches with different formatting' do
+      tenant_with_spaces = double('Tenant', phone: '+46 70 289 44 37')
+
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103',
+        raw_json: {}
+      )
+
+      expect(tx.phone_matches?(tenant_with_spaces)).to be true
+    end
+
+    it 'returns false when phone does not match' do
+      different_phone_tenant = double('Tenant', phone: '+46701234567')
+
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103',
+        raw_json: {}
+      )
+
+      expect(tx.phone_matches?(different_phone_tenant)).to be false
+    end
+
+    it 'returns false when tenant has no phone' do
+      no_phone_tenant = double('Tenant', phone: nil)
+
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103',
+        raw_json: {}
+      )
+
+      expect(tx.phone_matches?(no_phone_tenant)).to be false
+    end
+
+    it 'returns false when transaction has no phone' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 100.0,
+        currency: 'SEK',
+        description: 'Regular bank transfer',
+        raw_json: {}
+      )
+
+      expect(tx.phone_matches?(tenant)).to be false
     end
   end
 

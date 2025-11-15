@@ -5,7 +5,7 @@ require 'time'
 # Links bank transactions to tenant rent payments (double-entry ledger pattern)
 #
 # Business Logic:
-# - Payment matching classification (reference, amount+name, manual)
+# - Payment matching classification (reference, phone, amount+name, manual)
 # - Partial payment detection
 # - Payment completion verification
 # - Month-based payment tracking
@@ -13,13 +13,13 @@ require 'time'
 # Schema fields (actual database):
 # - month: "2025-11" (ISO month string)
 # - matchedTxId: Foreign key to BankTransaction (nullable)
-# - matchedVia: "reference" | "amount+name" | "manual"
+# - matchedVia: "reference" | "phone" | "amount+name" | "manual"
 # - partial: Boolean flag for partial payments
 #
 # NO DATABASE ACCESS - Pure domain model
 # Use RentReceiptRepository for persistence
 class RentReceipt
-  VALID_MATCHED_VIA = %w[reference amount+name manual].freeze
+  VALID_MATCHED_VIA = %w[reference phone amount+name manual].freeze
 
   attr_reader :id, :tenant_id, :month, :amount, :paid_at, :matched_via,
               :matched_tx_id, :partial, :created_at
@@ -51,6 +51,12 @@ class RentReceipt
   # @return [Boolean]
   def reference_match?
     matched_via == 'reference'
+  end
+
+  # Check if this was matched by phone number (Swish)
+  # @return [Boolean]
+  def phone_match?
+    matched_via == 'phone'
   end
 
   # Check if this was matched by amount and name fuzzy matching
@@ -100,6 +106,6 @@ class RentReceipt
     raise ArgumentError, "amount required" if amount.nil?
     raise ArgumentError, "amount must be positive" if amount <= 0
     raise ArgumentError, "paid_at required" if paid_at.nil?
-    raise ArgumentError, "matched_via must be 'reference', 'amount+name', or 'manual'" unless VALID_MATCHED_VIA.include?(matched_via)
+    raise ArgumentError, "matched_via must be one of: #{VALID_MATCHED_VIA.join(', ')}" unless VALID_MATCHED_VIA.include?(matched_via)
   end
 end
