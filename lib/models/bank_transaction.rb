@@ -41,15 +41,18 @@ class BankTransaction
 
   # Check if transaction is a Swish payment
   #
-  # PRESERVED LOGIC from implementation plan (Swish detection)
+  # UPDATED Nov 15, 2025: Real Lunchflow data uses merchant field
   #
-  # @return [Boolean] True if description contains "SWISH" (case insensitive)
+  # @return [Boolean] True if merchant contains "Swish" (Mottagen/Skickad)
   #
-  # @example
-  #   tx.description = "SWISH SANNA BENEMAR KK-2025-11-Sanna-cmhqe9enc"
+  # @example Real Lunchflow format
+  #   tx.raw_json = { merchant: 'Swish Mottagen', ... }
   #   tx.swish_payment?  # => true
   def swish_payment?
-    description.upcase.include?('SWISH')
+    merchant = raw_json.dig('merchant')
+    return false unless merchant
+
+    merchant.to_s.upcase.include?('SWISH')
   end
 
   # Check if transaction amount matches expected rent amount

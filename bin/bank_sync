@@ -7,6 +7,17 @@ require 'fileutils'
 require_relative '../lib/banking/lunchflow_client'
 require_relative '../lib/persistence'
 
+# Helper: Extract phone number from Swish transaction description
+# @param description [String] Transaction description from Lunchflow
+# @return [String, nil] E.164 phone number (+46XXXXXXXXX) or nil
+def extract_phone_from_description(description)
+  return nil unless description
+
+  # Lunchflow Swish format: "from: +46XXXXXXXXX ..."
+  match = description.match(/from:\s*(\+46\d{9})/)
+  match ? match[1] : nil
+end
+
 # IMPORTANT: SmsGateway and ApplyBankPayment will be implemented in Phase 3-4
 # For now, we create mock placeholders for dry-run testing
 
@@ -67,9 +78,10 @@ begin
       puts "\n#{tx[:id]}: #{tx[:amount]} #{tx[:currency]} - #{tx[:description]}"
       puts "  Booked: #{tx[:date]}"
       puts "  Counterparty: #{tx[:counterparty_name] || 'N/A'}"
+      puts "  Merchant: #{tx[:merchant] || 'N/A'}"
 
-      # Check if this would trigger reconciliation
-      reconcile_flag = if tx[:description]&.include?('SWISH')
+      # Check if this would trigger reconciliation (use merchant field for Swish detection)
+      reconcile_flag = if tx[:merchant]&.to_s&.upcase&.include?('SWISH')
                          'YES (Swish payment)'
                        else
                          'NO'
@@ -77,6 +89,14 @@ begin
       puts "  Would reconcile: #{reconcile_flag}"
     else
       # Production mode: upsert to database
+      # For Swish: extract phone from description and populate counterparty
+      # For bank transfers: use counterparty name from Lunchflow
+      counterparty = if tx[:merchant]&.to_s&.upcase&.include?('SWISH')
+                       extract_phone_from_description(tx[:description])
+                     else
+                       tx[:counterparty_name]
+                     end
+
       Persistence.bank_transactions.upsert(
         external_id: tx[:id],
         account_id: account_id,
@@ -84,12 +104,12 @@ begin
         amount: tx[:amount],
         currency: tx[:currency],
         description: tx[:description],
-        counterparty: tx[:counterparty_name],
+        counterparty: counterparty,
         raw_json: tx
       )
 
-      # Trigger reconciliation for Swish payments
-      if tx[:description]&.include?('SWISH')
+      # Trigger reconciliation for Swish payments (use merchant field for detection)
+      if tx[:merchant]&.to_s&.upcase&.include?('SWISH')
         ApplyBankPayment.call(transaction_id: tx[:id])
       end
     end

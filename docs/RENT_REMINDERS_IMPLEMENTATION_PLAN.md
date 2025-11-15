@@ -1870,3 +1870,65 @@ Auto-migration: Swedish 07xxx → +467xxx
 
 **Phase 3 debugging**: Proceeding with payment matching service test fixes while signup completes.
 
+
+---
+
+## CRITICAL UPDATES - Real Lunchflow Data Analysis (Nov 15, 2025)
+
+### Swish Detection - Merchant Field (NOT Description Keyword)
+
+**Real Lunchflow Format** (from actual transaction preview):
+- **Merchant field**: "Swish Mottagen" (received) or "Swish Skickad" (sent)
+- **Description field**: "from: +46XXXXXXXXX    1803..., reference: ..."
+- **Counterparty field**: NULL (Swish doesn't provide sender names)
+
+**Updated Detection Logic**:
+```ruby
+def swish_payment?
+  raw_json.dig('merchant')&.to_s&.upcase&.include?('SWISH')
+end
+```
+
+**NOT**: Checking for "SWISH" in description (doesn't exist in real data)
+
+### Counterparty Enhancement for Swish Transactions
+
+**Problem**: Counterparty field is NULL/wasted for Swish payments
+
+**Solution**: Extract phone from description and populate counterparty field during sync
+
+**Implementation** (bin/bank_sync):
+```ruby
+# For Swish transactions, extract phone and use as counterparty
+counterparty: if tx[:merchant]&.include?('Swish')
+                extract_phone_from_description(tx[:description])
+              else
+                tx[:counterparty_name]
+              end
+```
+
+**Benefits**:
+- Makes counterparty field meaningful for all transactions
+- Enables database queries on "who paid" (name OR phone)
+- Consistent with counterparty's semantic purpose (identifying other party)
+
+**Note**: `extract_phone_number()` method remains canonical source (description field is source of truth)
+
+### Test Data Format - Must Match Real Lunchflow
+
+**Real Swish Transaction**:
+```ruby
+{
+  external_id: '147226ad972952f9753f05dd1cd12b25',
+  amount: 7577.0,
+  description: 'from: +46760177088    1803970570800935, reference: 1803970570800935IN',
+  counterparty: '+46760177088',  # Extracted from description during sync
+  raw_json: { merchant: 'Swish Mottagen', ... }
+}
+```
+
+**NOT** (previous test format with fake "SWISH" keyword):
+```ruby
+description: 'SWISH SANNA BENEMAR KK-2025-11...'  # ❌ Doesn't match reality
+```
+
