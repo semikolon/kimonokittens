@@ -92,34 +92,46 @@ class BankTransaction
   #   tx.counterparty = "Sanna Benemar"
   #   tenant.name = "Sanna Juni Benemar"
   #   tx.belongs_to_tenant?(tenant)  # => true (80%+ similarity)
-  def belongs_to_tenant?(tenant)
-    # Tier 1: Reference code matching
-    if description && tenant.id
-      # Reference format: KK-YYYY-MM-Name-{shortUUID}
-      # The shortUUID could be a prefix of the tenant ID (various lengths)
-      # Check both:
-      # 1. If description contains any prefix of tenant ID (min 8 chars to avoid false positives)
-      # 2. If description contains any suffix of tenant ID (min 8 chars)
+  # Check if transaction has reference code for tenant (Tier 1 matching)
+  # @param tenant [Tenant] Tenant to check
+  # @return [Boolean] True if description contains tenant UUID
+  def has_reference_code?(tenant)
+    return false unless description && tenant.id
 
-      # Check prefixes (e.g., "cmhqe9enc" from "cmhqe9enc0000wopipuxgc3kw")
-      (8..tenant.id.length).each do |len|
-        prefix = tenant.id[0, len]
-        return true if description.include?(prefix)
-      end
+    # Reference format: KK-YYYY-MM-Name-{shortUUID}
+    # The shortUUID could be a prefix of the tenant ID (various lengths)
+    # Check both:
+    # 1. If description contains any prefix of tenant ID (min 8 chars to avoid false positives)
+    # 2. If description contains any suffix of tenant ID (min 8 chars)
 
-      # Check suffixes (e.g., last 13 chars)
-      (8..tenant.id.length).each do |len|
-        suffix = tenant.id[-len..-1]
-        return true if description.include?(suffix)
-      end
+    # Check prefixes (e.g., "cmhqe9enc" from "cmhqe9enc0000wopipuxgc3kw")
+    (8..tenant.id.length).each do |len|
+      prefix = tenant.id[0, len]
+      return true if description.include?(prefix)
     end
 
-    # Tier 2: Fuzzy name matching
-    if counterparty && tenant.name
-      return fuzzy_name_match?(tenant.name, counterparty)
+    # Check suffixes (e.g., last 13 chars)
+    (8..tenant.id.length).each do |len|
+      suffix = tenant.id[-len..-1]
+      return true if description.include?(suffix)
     end
 
     false
+  end
+
+  # Check if counterparty name matches tenant (Tier 2 matching)
+  # @param tenant [Tenant] Tenant to check
+  # @return [Boolean] True if counterparty name fuzzy-matches tenant name
+  def name_matches?(tenant)
+    return false unless counterparty && tenant.name
+    fuzzy_name_match?(tenant.name, counterparty)
+  end
+
+  # Legacy method for backwards compatibility - checks BOTH reference and name
+  # @param tenant [Tenant] Tenant to check
+  # @return [Boolean] True if reference code OR name matches
+  def belongs_to_tenant?(tenant)
+    has_reference_code?(tenant) || name_matches?(tenant)
   end
 
   # Serialize transaction to hash for API responses / JSON serialization

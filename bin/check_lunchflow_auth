@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'dotenv/load'
+require_relative '../lib/banking/lunchflow_client'
+
+# Mock SmsGateway for Phase 2 (will be real in Phase 4)
+module SmsGateway
+  def self.send_admin_alert(message)
+    puts "📱 [SMS MOCK] Admin alert: #{message}"
+  end
+end
+
+# Initialize Lunch Flow client
+client = LunchflowClient.new
+
+begin
+  # Health check: list accounts
+  accounts = client.list_accounts
+
+  if accounts.empty?
+    # Empty accounts might indicate auth issues
+    SmsGateway.send_admin_alert(
+      "⚠️ Lunch Flow kräver Bank-ID om-autentisering\nGå till: lunchflow.app/settings"
+    )
+    puts '⚠️  No accounts found - possible auth issue'
+    exit 1
+  end
+
+  # Success
+  puts "✓ Lunch Flow auth OK - #{accounts.length} accounts connected"
+  accounts.each do |account|
+    puts "  - #{account[:name]} (#{account[:institution_name]})"
+  end
+
+rescue StandardError => e
+  # Check for authentication-related errors
+  if e.message.include?('401') || e.message.downcase.include?('consent') ||
+     e.message.downcase.include?('unauthorized')
+    SmsGateway.send_admin_alert('⚠️ Lunch Flow auth expired - re-auth needed')
+    puts "❌ Authentication error: #{e.message}"
+    exit 1
+  else
+    # Other errors (network, etc.)
+    puts "❌ Error checking Lunch Flow: #{e.message}"
+    exit 2
+  end
+end
