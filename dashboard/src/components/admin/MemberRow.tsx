@@ -1,6 +1,6 @@
 // MemberRow - Unified row for both contracts and standalone tenants
 import React from 'react'
-import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, ChevronRight, CircleUserRound, FileSignature, MapPin } from 'lucide-react'
+import { CheckCircle2, Clock, XCircle, Ban, AlertTriangle, UserCheck, ChevronRight, CircleUserRound, FileSignature, MapPin, Coins } from 'lucide-react'
 import { ContractDetails } from './ContractDetails'
 import { TenantDetails } from './TenantDetails'
 import type { Member, SignedContract, TenantMember } from '../../views/AdminDashboard'
@@ -292,6 +292,26 @@ export const MemberRow: React.FC<MemberRowProps> = ({
             `}>
               {statusLabel}
             </span>
+
+            {/* Payment status badge (Phase 6: Rent Reminders) */}
+            {shouldShowRent && (
+              <span className={`
+                px-2.5 py-1 rounded-full text-xs font-medium border flex items-center gap-1.5
+                ${member.rent_paid
+                  ? 'bg-cyan-400/20 text-cyan-300 border-cyan-400/30'
+                  : member.rent_remaining && member.rent_remaining > 0
+                    ? 'bg-yellow-400/20 text-yellow-300 border-yellow-400/30'
+                    : 'bg-slate-600/20 text-slate-400 border-slate-600/30'
+                }
+              `}>
+                <Coins className="w-3 h-3" />
+                {member.rent_paid
+                  ? 'Betald'
+                  : member.rent_remaining && member.rent_remaining > 0
+                    ? `${Math.round(member.rent_remaining).toLocaleString('sv-SE')} kr`
+                    : 'Hyra'}
+              </span>
+            )}
 
             {/* Test mode badge */}
             {isContract && (member as SignedContract).test_mode && (

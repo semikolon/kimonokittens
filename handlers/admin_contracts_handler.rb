@@ -156,6 +156,26 @@ class AdminContractsHandler
         .where(tenantId: contract[:tenantId], status: 'completed')
         .count > 0
 
+      # Calculate payment status for current month
+      current_month = "#{year}-#{month.to_s.rjust(2, '0')}"
+      payment_info = if tenant
+        {
+          rent_paid: payment_status(tenant, current_month) == 'paid',
+          rent_amount: current_rent_amount(tenant, current_month),
+          rent_remaining: remaining_amount(tenant, current_month),
+          last_payment_date: last_payment_date(tenant, current_month),
+          sms_reminder_count: sms_count(tenant, current_month)
+        }
+      else
+        {
+          rent_paid: false,
+          rent_amount: 0,
+          rent_remaining: 0,
+          last_payment_date: nil,
+          sms_reminder_count: 0
+        }
+      end
+
       members << {
         type: 'contract',
         id: contract[:id],
@@ -173,6 +193,8 @@ class AdminContractsHandler
         tenant_furnishing_deposit: tenant&.furnishing_deposit,
         current_rent: tenant ? (rent_breakdown.dig("rents", tenant.name) || 0) : 0,
         has_completed_contract: has_completed_contract,
+        # Payment status fields (Phase 6: Rent Reminders)
+        **payment_info,
         case_id: contract[:caseId],
         pdf_url: contract[:pdfUrl],
         status: contract[:status],
@@ -232,6 +254,16 @@ class AdminContractsHandler
         .where(tenantId: tenant.id, status: 'completed')
         .count > 0
 
+      # Calculate payment status for current month
+      current_month = "#{year}-#{month.to_s.rjust(2, '0')}"
+      payment_info = {
+        rent_paid: payment_status(tenant, current_month) == 'paid',
+        rent_amount: current_rent_amount(tenant, current_month),
+        rent_remaining: remaining_amount(tenant, current_month),
+        last_payment_date: last_payment_date(tenant, current_month),
+        sms_reminder_count: sms_count(tenant, current_month)
+      }
+
       members << {
         type: 'tenant',
         id: tenant.id,
@@ -250,7 +282,9 @@ class AdminContractsHandler
         current_rent: rent_breakdown.dig("rents", tenant.name) || 0,
         status: tenant.status || 'active',
         created_at: tenant.created_at,
-        has_completed_contract: has_completed_contract
+        has_completed_contract: has_completed_contract,
+        # Payment status fields (Phase 6: Rent Reminders)
+        **payment_info
       }
     end
 
@@ -749,5 +783,88 @@ class AdminContractsHandler
       { 'Content-Type' => 'application/json' },
       [Oj.dump({ error: 'Admin PIN krävs för denna åtgärd' })]
     ]
+  end
+
+  # Payment status helper methods (Phase 6: Rent Reminders)
+
+  # Returns payment status for a tenant in given month
+  # @param tenant [Tenant] The tenant object
+  # @param month [String] Month in format "YYYY-MM" (e.g. "2025-11")
+  # @return [String] One of: 'paid', 'partially_paid', 'unpaid', 'unknown'
+  def payment_status(tenant, month)
+    year = month.split('-')[0].to_i
+    month_num = month.split('-')[1].to_i
+    period_start = Date.new(year, month_num, 1)
+
+    ledger = Persistence.rent_ledger.find_by_tenant_and_period(tenant.id, period_start)
+    return 'unknown' unless ledger
+
+    receipts = Persistence.rent_receipts.find_by_tenant(tenant.id, year: year, month: month_num)
+    total_paid = receipts.sum { |r| r.amount.to_f }
+
+    if total_paid >= ledger.amount_due.to_f
+      'paid'
+    elsif total_paid > 0
+      'partially_paid'
+    else
+      'unpaid'
+    end
+  end
+
+  # Returns current rent amount for a tenant in given month
+  # @param tenant [Tenant] The tenant object
+  # @param month [String] Month in format "YYYY-MM"
+  # @return [Float] Rent amount in SEK
+  def current_rent_amount(tenant, month)
+    year = month.split('-')[0].to_i
+    month_num = month.split('-')[1].to_i
+    period_start = Date.new(year, month_num, 1)
+
+    ledger = Persistence.rent_ledger.find_by_tenant_and_period(tenant.id, period_start)
+    return 0.0 unless ledger
+
+    ledger.amount_due.to_f
+  end
+
+  # Returns remaining amount owed for a tenant in given month
+  # @param tenant [Tenant] The tenant object
+  # @param month [String] Month in format "YYYY-MM"
+  # @return [Float] Remaining amount in SEK
+  def remaining_amount(tenant, month)
+    year = month.split('-')[0].to_i
+    month_num = month.split('-')[1].to_i
+    period_start = Date.new(year, month_num, 1)
+
+    ledger = Persistence.rent_ledger.find_by_tenant_and_period(tenant.id, period_start)
+    return 0.0 unless ledger
+
+    receipts = Persistence.rent_receipts.find_by_tenant(tenant.id, year: year, month: month_num)
+    total_paid = receipts.sum { |r| r.amount.to_f }
+
+    remaining = ledger.amount_due.to_f - total_paid
+    remaining > 0 ? remaining : 0.0
+  end
+
+  # Returns most recent payment date for a tenant in given month
+  # @param tenant [Tenant] The tenant object
+  # @param month [String] Month in format "YYYY-MM"
+  # @return [DateTime, nil] Most recent payment date or nil if no payments
+  def last_payment_date(tenant, month)
+    year = month.split('-')[0].to_i
+    month_num = month.split('-')[1].to_i
+
+    receipts = Persistence.rent_receipts.find_by_tenant(tenant.id, year: year, month: month_num)
+    return nil if receipts.empty?
+
+    receipts.map(&:paid_at).max
+  end
+
+  # Returns count of SMS reminders sent to tenant in given month
+  # @param tenant [Tenant] The tenant object
+  # @param month [String] Month in format "YYYY-MM"
+  # @return [Integer] Count of SMS reminders
+  # Note: Phase 6 returns 0 (mocked) - Phase 4 will implement actual SMS tracking
+  def sms_count(tenant, month)
+    0 # Mocked for Phase 6 - Phase 4 will query actual SmsEvent table
   end
 end
