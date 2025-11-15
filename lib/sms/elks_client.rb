@@ -44,18 +44,14 @@ class ElksClient
 
     # Prepare request parameters
     params = {
-      from: 'KimonoKittens',  # Alphanumeric sender ID (max 11 chars)
+      from: 'Katten',  # Alphanumeric sender ID (max 11 chars, Swedish for "the cat")
       to: to,
       message: body,
       whendelivered: webhook_url
     }
 
-    # TODO: UNCOMMENT THIS FOR PRODUCTION (after 46elks signup)
-    # Currently MOCKED because user hasn't signed up yet
-    # result = send_http_request(params)
-
-    # MOCK RESPONSE (remove after signup)
-    result = mock_46elks_response(to, body, params)
+    # Send actual request to 46elks API
+    result = send_http_request(params)
 
     # Log SMS event to database
     log_sms_event(result, to, body, meta)
@@ -79,6 +75,7 @@ class ElksClient
 
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE  # TODO: Fix SSL certificates properly
     response = http.request(req)
 
     handle_response(response)

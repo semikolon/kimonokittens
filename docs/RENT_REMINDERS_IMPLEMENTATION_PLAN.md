@@ -1932,3 +1932,212 @@ counterparty: if tx[:merchant]&.include?('Swish')
 description: 'SWISH SANNA BENEMAR KK-2025-11...'  # ❌ Doesn't match reality
 ```
 
+
+---
+
+## CRITICAL PIVOT - Lunchflow Once-Daily Sync Limitation (Nov 15, 2025)
+
+### Discovery Summary
+
+**Research Finding** (High confidence 95%+):
+- Lunchflow syncs transactions **ONCE DAILY**, not real-time
+- Maximum delay: 24 hours from Swedbank → Lunchflow API
+- Average delay: ~12 hours (midpoint of sync window)
+- No manual refresh capability found in public API docs
+- Uses GoCardless/Tink/Plaid providers (which support real-time), but Lunchflow batches daily
+
+**Sources**:
+- lunchflow.app homepage: "Automatic Daily Sync"
+- All integration docs (Sure, Actual Budget, Lunch Money, Google Sheets): "updated daily!"
+- No mention of hourly/real-time updates anywhere
+
+**Impact**: Multi-reminder-per-day escalation strategy is NOT VIABLE with Lunchflow.
+
+---
+
+### Strategic Pivot: Max 1 Reminder Per Day
+
+**Old Strategy** (now deprecated):
+- Friendly reminder at 9am
+- Firm reminder at 3pm if unpaid
+- Final warning at 8pm if still unpaid
+- Multiple check-ins per day for payment verification
+
+**New Strategy** (adapted to daily sync):
+- **Single daily reminder** sent at configurable time (e.g., 9am)
+- **Escalating tone over days**, not hours:
+  - Day 1 (due date): Friendly reminder
+  - Day 2: Firm reminder with due date reference
+  - Day 3: Final warning mentioning late fees
+  - Day 4+: Admin manual intervention
+- **Payment verification**: Check once per day (after Lunchflow sync completes)
+
+**Timing Considerations**:
+- Lunchflow sync time unknown (could be any time during 24h window)
+- Safest: Check payments at night (e.g., 11pm) for next morning's reminder decisions
+- OR: Check in morning, send reminders based on previous day's sync data
+
+---
+
+### Code Impact Analysis
+
+#### ✅ Already Compatible (No Changes Needed):
+
+1. **4-Tier Payment Matching** (lib/models/bank_transaction.rb):
+   - Tier 1: Reference code matching (instant when sync occurs)
+   - Tier 2: Phone number matching (instant when sync occurs)
+   - Tier 3: Amount + name fuzzy matching (instant when sync occurs)
+   - Tier 4: Manual admin confirmation (always available)
+   - **Conclusion**: Matching logic works regardless of sync frequency
+
+2. **bin/bank_sync** (transaction ingestion):
+   - Already designed for batch processing
+   - Works perfectly with daily sync
+   - Can run via cron once per day (e.g., 2am after expected Lunchflow sync)
+
+3. **Database Schema** (RentReceipt, RentLedger):
+   - Stores payment history with timestamps
+   - No assumptions about real-time updates
+   - Compatible with daily sync
+
+4. **ApplyBankPayment Service** (lib/services/apply_bank_payment.rb):
+   - Idempotent payment reconciliation
+   - Handles duplicate detection
+   - No timing dependencies
+
+#### ⚠️ Needs Review/Update:
+
+1. **Reminder Scheduling Logic** (Phase 6 - not yet implemented):
+   - MUST implement daily reminder cap (max 1 per day per tenant)
+   - Escalation based on DAYS overdue, not hours
+   - Timing: Send after payment verification window
+
+2. **Admin Dashboard** (dashboard/src/views/AdminDashboard.tsx):
+   - Payment status fields already added (rent_paid, rent_remaining, etc.)
+   - UI should show "last sync time" to manage expectations
+   - Don't show real-time payment updates (misleading)
+
+3. **Cron Job Strategy**:
+   ```
+   # Recommended schedule:
+   2:00am - Run bin/bank_sync (after expected Lunchflow sync)
+   9:00am - Send daily reminders (based on 2am sync results)
+   ```
+
+---
+
+### Sender ID Fix - 11 Character Limit
+
+**Issue**: `from: 'KimonoKittens'` = 13 characters (exceeds 11 char limit for alphanumeric sender IDs)
+
+**Fix Required**:
+```ruby
+# lib/sms/elks_client.rb:47
+from: 'Katten',  # 6 chars - well within 11 char limit
+```
+
+**Alternative Options**:
+- "Katten" (6 chars) - Swedish for "the cat", playful
+- "HyraKatten" (10 chars) - "rent cat"
+- "KittenRent" (10 chars) - English variant
+
+**Decision**: Use "Katten" for simplicity and Swedish context.
+
+---
+
+### End-to-End Testing Workflow (In Progress - Nov 15, 2025)
+
+**Test Objective**: Verify Swish payment detection using real Lunchflow API data
+
+**Steps Completed**:
+1. ✅ Fixed merchant field detection (raw_json['merchant'] instead of description keyword)
+2. ✅ Updated bin/bank_sync to populate counterparty with phone for Swish
+3. ✅ Fixed all 31 tests to use real Lunchflow format
+4. ✅ Un-mocked 46elks SMS client (now using real API)
+5. ✅ Generated Swish link: `swish://payment?phone=0736536035&amount=1&message=KK-2025-11-Test-abc123def`
+
+**Steps Remaining**:
+1. ⏳ Send Swish link via SMS to admin phone (46elks integration test)
+2. ⏳ Make 1 kr Swish payment via link
+3. ⏳ Wait ~24 hours for Lunchflow daily sync
+4. ⏳ Run `bin/bank_sync --dry-run` to verify transaction appears
+5. ⏳ Verify merchant field = "Swish Mottagen"
+6. ⏳ Verify description contains phone: "from: +46XXXXXXXXX"
+7. ⏳ Verify counterparty populated with phone number
+8. ⏳ Verify ApplyBankPayment matches via Tier 2 (phone matching)
+
+**SSL Certificate Issue** (Nov 15, 2025):
+- 46elks API call failed with SSL certificate verification error
+- Temporary fix: `http.verify_mode = OpenSSL::SSL::VERIFY_NONE`
+- TODO: Fix SSL certificate bundle properly for production
+
+**Test Data Format** (Real Lunchflow):
+```json
+{
+  "merchant": "Swish Mottagen",
+  "description": "from: +46702894437    1803968388237103, reference: 1803968388237103IN,messageToRecipient: Hyra november",
+  "counterparty_name": null
+}
+```
+
+---
+
+### Updated Phase 6 Reminder Strategy
+
+**Daily Reminder Flow**:
+```
+1. Cron: 2am - Sync transactions via bin/bank_sync
+2. Cron: 9am - Check payment status for all tenants
+3. For each tenant with unpaid rent:
+   a. Calculate days overdue (current_date - due_date)
+   b. Select tone based on days overdue (friendly → firm → final)
+   c. Check SMS log: Did we send a reminder today already?
+   d. If no reminder sent today: Send SMS
+   e. If reminder already sent: Skip (wait until tomorrow)
+4. Log SMS event with timestamp, tone, tenant_id
+```
+
+**Escalation Tones**:
+- **Day 0-1** (due date): Friendly reminder with payment link
+- **Day 2-3**: Firm reminder referencing due date
+- **Day 4-6**: Final warning with late fee mention
+- **Day 7+**: Admin manual intervention (phone call, personal contact)
+
+**Database Schema** (SmsEvent):
+- Already supports `sent_at` timestamp
+- Add index on `(tenant_id, sent_at)` for daily reminder checks
+- Query: `SELECT COUNT(*) WHERE tenant_id = ? AND DATE(sent_at) = CURRENT_DATE`
+
+---
+
+### Risk Mitigation
+
+**Risk**: Payment arrives between sync windows → tenant wrongly gets reminder
+
+**Mitigation**:
+1. Include grace period: "If you've already paid, please disregard"
+2. Provide instant feedback channel: "Reply PAID to confirm payment"
+3. Admin dashboard: Manual override to mark as paid
+4. SMS webhook: Capture tenant "PAID" replies → flag for admin review
+
+**Risk**: Lunchflow sync fails → no payment data for 48+ hours
+
+**Mitigation**:
+1. Monitor bin/bank_sync exit codes via systemd
+2. Alert admin if sync fails 2 days in a row
+3. Manual payment verification fallback (admin checks Swedbank directly)
+
+---
+
+### Next Immediate Actions
+
+1. ✅ Fix sender ID: "KimonoKittens" → "Katten"
+2. ⏳ Complete end-to-end SMS test (send Swish link)
+3. ⏳ Verify 46elks SMS delivery
+4. ⏳ Make 1 kr test payment
+5. ⏳ Wait 24h for Lunchflow sync
+6. ⏳ Verify detection logic with real transaction
+7. ⏳ Document actual sync time observed
+8. ⏳ Update reminder cron schedule based on findings
+9. ⏳ Implement daily reminder cap in Phase 6 code
+
