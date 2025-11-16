@@ -1060,6 +1060,24 @@ const id = `${adjusted_time}-${line_number}-${destination}` // ❌ Triggers fals
 - **Accessibility**: Respect `prefers-reduced-motion` media query
 - **Memory**: Clean up animation states and timeouts in useEffect cleanup
 
+## Frontend Form Editing Patterns
+
+**Principle**: Inline forms for editing existing values; modal dialogs for auth/confirmations/wizards.
+
+**Inline forms** (faster, maintains context):
+- Text/date field edits in expanded detail views
+- Multi-field sequences (tab navigation)
+- Pattern: Button → input + Save/Cancel inline
+- See: `TenantDetails.tsx` departure date, contact fields
+
+**Modal dialogs** (demands attention):
+- Authentication gates, destructive actions, multi-step flows, creating new entities
+- See: `AdminAuthContext.tsx` PIN gate, `ContractDetails.tsx` cancel confirmation
+
+**Decision**: User already editing? Inline. Needs isolation/confirmation? Modal.
+
+---
+
 ## WebSocket Architecture ⚡
 
 ### DataBroadcaster URLs - FIXED ✅
