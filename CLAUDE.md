@@ -1062,79 +1062,19 @@ const id = `${adjusted_time}-${line_number}-${destination}` // ❌ Triggers fals
 
 ## Frontend Form Editing Patterns
 
-### Prefer Inline Forms Over Modal Dialogs
+**Principle**: Inline forms for editing existing values; modal dialogs for auth/confirmations/wizards.
 
-**Status**: ✅ DESIGN PRINCIPLE (Nov 16, 2025) - Consistent UX pattern for field editing
+**Inline forms** (faster, maintains context):
+- Text/date field edits in expanded detail views
+- Multi-field sequences (tab navigation)
+- Pattern: Button → input + Save/Cancel inline
+- See: `TenantDetails.tsx` departure date, contact fields
 
-**General Rule**: Use **inline form fields** for editing existing simple values, reserve **modal dialogs** for authentication, confirmations, and multi-step wizards.
+**Modal dialogs** (demands attention):
+- Authentication gates, destructive actions, multi-step flows, creating new entities
+- See: `AdminAuthContext.tsx` PIN gate, `ContractDetails.tsx` cancel confirmation
 
-### When to Use Inline Forms ✅
-
-**Best for editing existing simple values:**
-- Text fields (personnummer, phone, Facebook ID, room name)
-- Date fields (departure date, start date)
-- Single-value updates with basic validation
-- Multiple related fields edited in sequence
-- User already in expanded detail view
-
-**Example**: `TenantDetails.tsx` departure date (lines 372-427)
-- Button → inline form appears → Save/Cancel buttons
-- No overlay, stays in context
-- Fast workflow for rapid edits
-
-**Advantages:**
-- **Faster workflow** - no modal open/close ceremony
-- **Better for multi-field edits** - natural tab navigation between fields
-- **Maintains context** - user's eyes stay on the content
-- **Less disruptive** - no layout shift to full-screen overlay
-- **Consistent with modern UX** - direct manipulation feels responsive
-
-### When to Use Modal Dialogs ✅
-
-**Best for special interactions requiring focus:**
-- **Authentication** (`AdminAuthContext.tsx`) - PIN gate requires isolation
-- **Destructive confirmations** (`ContractDetails.tsx`) - cancel contract warning
-- **Multi-step wizards** - complex flows with multiple stages
-- **Creating NEW entities** - context shift signals "new thing" mode
-- **Critical decisions** - demands user attention, prevents mistakes
-
-**Example**: PIN gate modal (lines 141-176 in `AdminAuthContext.tsx`)
-- Full-screen backdrop with blur
-- Centered card with auto-focused input
-- Can't be missed or accidentally dismissed
-
-### Implementation Notes
-
-**Inline form pattern:**
-```tsx
-const [editing, setEditing] = useState(false)
-const [value, setValue] = useState(initialValue)
-
-{!editing ? (
-  <button onClick={() => setEditing(true)}>Edit Field</button>
-) : (
-  <div className="flex gap-2">
-    <input value={value} onChange={(e) => setValue(e.target.value)} />
-    <button onClick={handleSave}>Save</button>
-    <button onClick={() => setEditing(false)}>Cancel</button>
-  </div>
-)}
-```
-
-**Modal dialog pattern:**
-```tsx
-{modalOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-    <div className="bg-slate-900 border border-purple-500/30 rounded-2xl p-6">
-      {/* Modal content */}
-    </div>
-  </div>
-)}
-```
-
-**Decision criteria**: If user is already in "edit mode mentally" (expanded row, detail view), use inline forms. If action is destructive, authentication-related, or multi-step, use modal.
-
-**Created**: Nov 16, 2025 - After analyzing contact field editing UX for admin dashboard tenant details
+**Decision**: User already editing? Inline. Needs isolation/confirmation? Modal.
 
 ---
 
