@@ -38,17 +38,18 @@ class ElksClient
   # @return [Hash] 46elks API response
   # @raise [RuntimeError] On API errors (403, 401, etc.)
   def send(to:, body:, meta: {})
-    # Build webhook URL with Basic Auth for delivery receipts
-    # Note: 46elks doesn't use HMAC-SHA256 like Zigned, uses Basic Auth instead
-    webhook_url = "#{@api_base_url}/webhooks/elks/dlr"
-
     # Prepare request parameters
     params = {
       from: 'Katten',  # Alphanumeric sender ID (max 11 chars, Swedish for "the cat")
       to: to,
-      message: body,
-      whendelivered: webhook_url
+      message: body
     }
+
+    # Only add delivery receipt webhook in production (requires publicly accessible URL)
+    unless ENV['RACK_ENV'] == 'development'
+      webhook_url = "#{@api_base_url}/webhooks/elks/dlr"
+      params[:whendelivered] = webhook_url
+    end
 
     # Send actual request to 46elks API
     result = send_http_request(params)
@@ -147,6 +148,6 @@ class ElksClient
       sent_at: Time.now
     )
 
-    Persistence.sms_events.create(event)
+    Persistence.sms_events.save(event)
   end
 end

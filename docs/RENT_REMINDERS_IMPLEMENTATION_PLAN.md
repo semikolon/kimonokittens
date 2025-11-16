@@ -2141,3 +2141,118 @@ from: 'Katten',  # 6 chars - well within 11 char limit
 8. ⏳ Update reminder cron schedule based on findings
 9. ⏳ Implement daily reminder cap in Phase 6 code
 
+
+---
+
+## CRITICAL UPDATE - Swish Payment UX Pivot (Nov 15, 2025, 22:45)
+
+### Deep Link Discovery: P2P Not Supported
+
+**Research finding** (99% confidence from Swish Developer Documentation + Swedish banking sources):
+- Swish deep links (`swish://paymentrequest?...`) **ONLY work for merchant payments** with API tokens
+- **Person-to-person Swish has NO deep-link support** for pre-filling payment details
+- This is intentional anti-fraud design - all P2P payments require manual user confirmation
+
+### QR Code Solution: WORKS for P2P ✅
+
+**Research finding** (99% confidence from Swish docs + QR generator services):
+- **Swish QR codes work for person-to-person payments** without merchant account
+- Format: `swish://payment?number=46XXXXXXXXX&amount=XXX&message=TEXT`
+- Can pre-fill: recipient number, amount (locked), message (50 char max)
+- Works with regular personal Swish accounts (no API needed)
+
+### Final Implementation Strategy
+
+**SMS Format (≤140 chars, no dashes for iPhone copy):**
+```
+Hyra nov: 7,045 kr
+Betala: kimonokittens.com/pay/cmhqe9enc
+```
+
+**Payment Link Flow (`/pay/:tenant_uuid`):**
+
+1. **Backend** (`handlers/rent_payment_link_handler.rb`):
+   - Lookup tenant by UUID
+   - Calculate current rent amount
+   - Generate reference: `KK202511Sannacmhqe9enc` (YYYY-MM + name + tenant ID suffix, NO DASHES)
+   - Generate QR code data: `swish://payment?number=46736536035&amount=7045&message=KK202511Sannacmhqe9enc`
+   - Broadcast WebSocket: `{ type: 'show_qr', tenant_id: '...', qr_data: '...' }`
+
+2. **Dashboard** (hallway kiosk):
+   - Receive WebSocket broadcast
+   - Display full-screen QR code (large, scannable from 1-2m distance)
+   - Show tenant name + amount for context
+   - Auto-hide after 2 minutes
+
+3. **User's Phone** (when clicking SMS link):
+   - **User-Agent detection**:
+     - **iOS/Android + Swish app installed**: Redirect to `swish://payment?...` (opens app directly!)
+     - **Fallback**: Show web page with:
+       - Large QR code (same as dashboard)
+       - Copy buttons for: number, amount, reference (individual buttons for easy copying)
+       - Manual instructions as fallback
+
+**Reference Format Change:**
+- **OLD (bad)**: `KK-2025-11-Sanna-cmhqe9enc` (dashes break iOS long-tap copy)
+- **NEW (good)**: `KK202511Sannacmhqe9enc` (copies complete on long-tap)
+
+**Payment Matching Priority:**
+1. **Tier 2 (PRIMARY)**: Phone number matching - `phone_matches?(tenant)` 
+   - Most reliable for Swish payments
+   - Reference is nice-to-have, NOT required!
+2. **Tier 1 (optional)**: Reference code matching - `has_reference_code?(tenant)`
+   - Bonus validation if user includes reference
+   - But phone alone is sufficient
+3. **Tier 3 (fallback)**: Amount + name fuzzy matching
+
+**Why This Works:**
+- Lunchflow extracts phone number from Swish description: `"from: +46702894437 ..."`
+- Bank transaction gets `counterparty = '+46702894437'` 
+- `phone_matches?(tenant)` compares normalized phones
+- ✅ Match confirmed even if reference is wrong/missing!
+
+### Code Changes Required
+
+1. **Remove deep-link code**:
+   - Delete `lib/swish_link_generator.rb` (if exists)
+   - Remove any `swish://payment?phone=...` references
+
+2. **Add QR code generation**:
+   - `lib/swish_qr_generator.rb` - generates QR code PNG from payment data
+   - Format: `swish://payment?number=46736536035&amount=7045&message=KK202511Sannacmhqe9enc`
+
+3. **Add payment link handler**:
+   - `handlers/rent_payment_link_handler.rb` - serves `/pay/:tenant_uuid`
+   - WebSocket broadcast for dashboard QR display
+   - User-Agent detection for direct Swish app opening vs web page
+
+4. **Update reference format**:
+   - `lib/services/generate_reference.rb` - NO DASHES: `KK202511Sannacmhqe9enc`
+   - Update tests to match new format
+
+5. **Frontend QR display**:
+   - `dashboard/src/components/QRCodeModal.tsx` - full-screen QR component
+   - WebSocket listener for `show_qr` events
+   - Auto-hide after 2 minutes
+
+### Testing Workflow (Updated)
+
+1. ✅ **Migrations applied** - SmsEvent table created
+2. ✅ **SMS delivery works** - 46elks sending successfully, sender ID "Katten" verified
+3. 🔄 **Next**: Generate test payment link with QR code
+4. 🔄 **Verify**: QR code opens Swish with pre-filled details
+5. 🔄 **Test**: Make 1 kr payment, verify Lunchflow sync (24h), verify phone matching
+
+### Risk Mitigation
+
+**If QR codes also fail:**
+- Fallback to manual SMS instructions with copy buttons
+- Still functional, just less smooth UX
+- Phone matching ensures payments are tracked regardless
+
+**If users don't scan QR:**
+- Copy buttons provide easy manual entry
+- Phone matching means reference is optional
+- System still works, just requires more user effort
+
+---
