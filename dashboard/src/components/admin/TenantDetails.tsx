@@ -369,7 +369,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
         <div>
           <h4 className="text-sm font-semibold text-purple-200 mb-3">Telefon:</h4>
           {tenant.tenant_phone && !editingPhone && (
-            <div className="text-lg text-purple-100 mb-2">
+            <div className="text-lg font-mono text-purple-100 mb-2">
               {tenant.tenant_phone}
             </div>
           )}
