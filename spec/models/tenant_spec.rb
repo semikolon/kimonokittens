@@ -111,29 +111,42 @@ RSpec.describe Tenant, 'deposit tracking' do
   end
 
   describe '.calculate_deposit' do
-    it 'calculates 110% of per-person base rent' do
-      deposit = Tenant.calculate_deposit(4, total_base_rent: 24_530)
-      # (24530 / 4) * 1.1 = 6745.75 → rounded to 6746
-      expect(deposit).to eq(6746)
+    it 'splits total house deposit evenly among tenants' do
+      deposit = Tenant.calculate_deposit(4, total_house_deposit: 24_884)
+      # 24884 / 4 = 6221
+      expect(deposit).to eq(6221)
     end
 
-    it 'handles different occupancy levels' do
+    it 'handles different occupancy levels (more people = lower per-person deposit)' do
       deposit_4_people = Tenant.calculate_deposit(4)
       deposit_5_people = Tenant.calculate_deposit(5)
 
+      # More people means each pays less (total stays constant)
       expect(deposit_4_people).to be > deposit_5_people
     end
 
-    it 'uses default base rent when not specified' do
+    it 'uses default total house deposit when not specified' do
       deposit = Tenant.calculate_deposit(4)
-      # Should use default 24_530 kr
-      expect(deposit).to eq(6746)
+      # Should use default 24_884 kr total → 6221 kr per person
+      expect(deposit).to eq(6221)
     end
 
-    it 'handles custom base rent' do
-      deposit = Tenant.calculate_deposit(3, total_base_rent: 30_000)
-      # (30000 / 3) * 1.1 = 11000
-      expect(deposit).to eq(11000)
+    it 'handles custom total deposit amount' do
+      deposit = Tenant.calculate_deposit(3, total_house_deposit: 30_000)
+      # 30000 / 3 = 10000
+      expect(deposit).to eq(10000)
+    end
+
+    it 'ensures total deposit never exceeds original amount paid' do
+      # Original: 6221 kr/person × 4 people = 24,884 kr total
+      total_4_people = Tenant.calculate_deposit(4) * 4
+      total_5_people = Tenant.calculate_deposit(5) * 5
+      total_3_people = Tenant.calculate_deposit(3) * 3
+
+      # All should be approximately 24,884 kr (±1 kr due to rounding)
+      expect(total_4_people).to eq(24_884)
+      expect(total_5_people).to be_within(1).of(24_884)
+      expect(total_3_people).to be_within(1).of(24_884)
     end
   end
 

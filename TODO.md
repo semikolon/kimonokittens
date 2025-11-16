@@ -26,7 +26,7 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 5. **Electricity Bills History** - ✅ 98% complete (only Nov 2024 missing)
 
 ### ❌ Still TODO (documentation accurate):
-1. **Deposit Formula Mismatch** - Decision needed (6,746 kr vs 6,200 kr)
+1. ~~**Deposit Formula Mismatch**~~ - ✅ **FIXED** (Nov 16, 2025)
 2. **Log Rotation** - Needs verification if actually needed in production
 3. **Contract Replacement Workflow** - Delete+Re-sign not yet implemented
 4. **Tenant Signup Form** - Backend handler missing (frontend HTML needed)
@@ -36,23 +36,27 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 ---
 
-## ⚠️ HIGH PRIORITY - Deposit Formula Mismatch
+## ✅ RESOLVED - Deposit Formula Fixed (Nov 16, 2025)
 
-**CRITICAL:** Deposit formula in code (6,746 kr) doesn't match social convention (6,200 kr)!
+**PROBLEM:** Deposit formula in code (6,746 kr) didn't match actual practice (6,221 kr per person)!
 
-**Current state:**
-- `Tenant.calculate_deposit(4)` returns **6,746 kr** (formula: 110% of per-person rent)
-- Social convention/practice is **6,200 kr** (historical, "floating around between mouths and memories")
-- Formula exists in `lib/models/tenant.rb:164` but is **NEVER CALLED** in codebase
-- Risk: Future code could call formula and set wrong deposit amount
+**ROOT CAUSE:** Formula incorrectly calculated based on rent (110% of per-person rent) instead of splitting the fixed total deposit (24,884 kr) evenly among tenants.
 
-**Action needed:**
-- [ ] Decide: Remove formula OR update to return 6,200 kr OR document as "theoretical only"
-- [ ] If keeping formula: Add explicit warning that social convention overrides formula
-- [ ] Consider: Should formula be dynamic based on tenant count? (5 tenants = recalculate?)
-- [ ] Document: Where is the "real" deposit amount stored/defined as source of truth?
+**SOLUTION IMPLEMENTED:**
+- [x] Updated formula to split fixed total deposit: `24_884 / num_active_tenants`
+- [x] Corrected default to actual deposit paid: **6,221 kr per person** (not 6,200 kr)
+- [x] Total house deposit: **24,884 kr** (6,221 kr × 4 original tenants)
+- [x] Updated tests in `spec/models/tenant_spec.rb` (all passing)
+- [x] Verified logic with manual tests (4 people: 6,221 kr, 5 people: 4,977 kr, 3 people: 8,295 kr)
 
-**Context:** Discovered Nov 10, 2025 during contract testing prep. Formula gives 546 kr higher than actual practice.
+**KEY PRINCIPLE:** Total deposit never exceeds original amount paid (24,884 kr), regardless of tenant count.
+
+**Implementation:**
+- File: `lib/models/tenant.rb` lines 161-180
+- Method: `Tenant.calculate_deposit(num_active_tenants, total_house_deposit: 24_884)`
+- Tests: `spec/models/tenant_spec.rb` lines 113-151
+
+**Context:** Discovered Nov 10, 2025 during contract testing. Fixed Nov 16, 2025 based on clarification that original deposit was 6,221 kr/person (24,884 kr total).
 
 ---
 ## 🚀 PRODUCTION DEPLOYMENT - Dell Optiplex Kiosk ✅ COMPLETE
