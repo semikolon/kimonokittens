@@ -2256,3 +2256,141 @@ Betala: kimonokittens.com/pay/cmhqe9enc
 - System still works, just requires more user effort
 
 ---
+
+---
+
+## SESSION CONTINUATION - Final Implementation Decisions (Nov 15, 2025, 23:00)
+
+### CRITICAL: Swish Integration Reality Check
+
+**What we tested and learned:**
+
+1. **`swish://` plain link - FAILS ❌**
+   - Does NOT render as clickable in SMS on iPhone (tested)
+   - Cannot open Swish app from SMS link
+   - Users must open app manually
+
+2. **`swish://payment?number=XXX&amount=XXX` - INVALID ❌**
+   - This URL format does NOT exist for P2P
+   - Only merchant format exists: `swish://paymentrequest?token=...`
+   - Requires Swish Handel/Commerce API
+
+3. **QR codes via public API - WORKS ✅ but OVERKILL**
+   - Endpoint: `https://mpc.getswish.net/qrg-swish/api/v1/prefilled`
+   - No merchant account required
+   - Can pre-fill: recipient, amount, message
+   - Decision: Too complex for use case (requires dashboard proximity)
+
+4. **Rich text links in SMS - IMPOSSIBLE ❌**
+   - Cannot hide URLs behind custom text
+   - No HTML anchor tag equivalent in SMS
+   - URLs always visible as plain text
+
+### Swish Handel/Commerce - REJECTED
+
+**Pricing (Swedbank, Nov 2025):**
+- Setup: 1,000 SEK per phone number
+- Annual: 480 SEK minimum
+- Per transaction: 3 SEK
+- **Total first year (60 txns): 1,660 SEK**
+
+**Decision**: Prohibitively expensive for share house use case. Rejected.
+
+### Final Solution: Manual SMS Instructions
+
+**SMS format (≤140 chars):**
+```
+Hyra nov: 7,045 kr
+Till: 0736536035
+Medd: KK202511Sannacmhqe9enc
+
+(Öppna Swish-appen manuellt)
+```
+
+**Why this works:**
+- ✅ Phone matching is PRIMARY (Tier 2)
+- ✅ Reference is OPTIONAL (95% of payments to this number are rent)
+- ✅ No dashes in reference (iPhone long-tap copies whole string)
+- ✅ Zero cost
+- ✅ Fully automated matching via Lunchflow
+
+### Payment Matching Architecture (Confirmed)
+
+**Tier 2 (PRIMARY): Phone number matching**
+- Lunchflow extracts: `"from: +46702894437 ..."`
+- BankTransaction.counterparty populated with phone
+- `phone_matches?(tenant)` compares normalized phones
+- **Reference not required for successful match**
+
+**Tier 1 (nice-to-have): Reference code matching**
+- Format: `KK202511Sannacmhqe9enc` (NO DASHES)
+- Helps with multi-tenant edge cases
+- But phone alone is sufficient
+
+**Tier 3 (fallback): Amount + name fuzzy matching**
+- Rarely needed with phone matching
+
+### Lunchflow Sync Timing (Confirmed)
+
+**Research finding (high confidence):**
+- Transactions sync **once per 24 hours** (not real-time)
+- Max delay: 24 hours from bank posting → Lunchflow API
+- Official docs: "Automatic Daily Sync" and "updated daily!"
+
+**Strategic impact:**
+- Max 1 reminder/day per tenant
+- Daily escalation over days (not hourly)
+- Cron schedule: 2am sync, 9am reminders
+
+### Code Implementation Status
+
+**✅ Completed:**
+1. Fixed Swish detection - uses `merchant` field from Lunchflow
+2. Counterparty extraction - phone from Swish description
+3. Updated all 31 tests - real Lunchflow format
+4. Un-mocked 46elks - real SMS sending works
+5. Fixed sender ID - "Katten" (6 chars, within 11 limit)
+6. Database migrations - SmsEvent, BankTransaction, RentReceipt tables
+7. Phone formats - all tenants E.164 format (+46XXXXXXXXX)
+8. ElksClient environment-aware - webhook only in production
+
+**🔄 Needs implementation:**
+1. SMS reminder scheduler (cron: 9am daily)
+2. Reference format generator (no dashes: `KK202511Sannacmhqe9enc`)
+3. Reminder escalation logic (Day 1: friendly, Day 2-3: firm, Day 4+: final)
+4. SMS template system (tone variations)
+5. Test with real 1 kr payment → wait 24h → verify Lunchflow sync
+
+### Testing Workflow (Current Status)
+
+**✅ Completed:**
+1. Sent test SMSes via 46elks (3 delivered successfully)
+2. Verified sender ID "Katten" works
+3. Tested `swish://` link (does NOT render clickable)
+4. Applied database migrations
+5. Fixed tenant phone formats
+
+**🔄 Next steps:**
+1. Make manual 1 kr Swish payment to test phone
+2. Wait ~24 hours for Lunchflow daily sync
+3. Run `bin/bank_sync --dry-run`
+4. Verify merchant field = "Swish Mottagen"
+5. Verify counterparty = phone number
+6. Verify `phone_matches?(tenant)` works
+7. Implement SMS reminder scheduler
+
+### Key Architectural Decisions
+
+1. **Phone matching is sufficient** - reference is nice-to-have, not required
+2. **Manual SMS instructions** - no deep links, no QR codes (KISS principle)
+3. **Daily reminder limit** - max 1/day due to Lunchflow sync timing
+4. **No Swish Handel** - prohibitively expensive, manual flow acceptable
+5. **Reference format** - no dashes for iPhone copy compatibility
+
+### Documentation Updated
+
+- ✅ CLAUDE.md - Added Swish payment integration section
+- ✅ This plan doc - Complete session learnings
+- 🔄 Code comments - Need to update with final decisions
+
+---
