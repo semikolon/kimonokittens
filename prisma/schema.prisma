@@ -79,6 +79,32 @@ model Tenant {
   RentLedger        RentLedger[]
   SignedContract    SignedContract[]
   CoOwnedItem       CoOwnedItem[]    @relation("ItemOwners")
+  TenantLead        TenantLead?
+}
+
+model TenantLead {
+  id                  String    @id @default(cuid())
+  name                String
+  email               String?
+  facebookId          String?
+  phone               String?
+  contactMethod       String // "email" or "facebook"
+  moveInFlexibility   String // "immediate", "1month", "2months", "3months", "specific", "other"
+  moveInExtra         String? // Date string or text description
+  motivation          String?   @db.Text
+  status              String    @default("pending_review") // pending_review, contacted, interview_scheduled, approved, rejected, converted
+  adminNotes          String?   @db.Text
+  source              String?   @default("web_form") // Track application source
+  ipAddress           String
+  userAgent           String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  convertedToTenantId String?   @unique
+  convertedToTenant   Tenant?   @relation(fields: [convertedToTenantId], references: [id])
+
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@index([ipAddress, createdAt]) // For rate limiting queries
 }
 
 model SignedContract {

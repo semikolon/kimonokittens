@@ -54,6 +54,8 @@ require_relative 'handlers/contract_pdf_handler'
 require_relative 'handlers/admin_contracts_handler'
 require_relative 'handlers/tenant_handler'
 require_relative 'handlers/admin_auth_handler'
+require_relative 'handlers/signup_handler'
+require_relative 'handlers/admin_leads_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
@@ -75,6 +77,8 @@ contract_pdf_handler = ContractPdfHandler.new
 admin_contracts_handler = AdminContractsHandler.new
 tenant_handler = TenantHandler.new
 admin_auth_handler = AdminAuthHandler.new
+signup_handler = SignupHandler.new
+admin_leads_handler = AdminLeadsHandler.new
 
 # --- WebSocket Pub/Sub Manager ---
 class PubSub
@@ -313,6 +317,16 @@ app = Rack::Builder.new do
 
   map "/api/admin/auth" do
     run admin_auth_handler
+  end
+
+  # Admin leads API
+  map "/api/admin/leads" do
+    run admin_leads_handler
+  end
+
+  # Public signup form
+  map "/api/signup" do
+    run signup_handler
   end
 
   # Contract PDF serving endpoint
