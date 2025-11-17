@@ -167,15 +167,23 @@ class Tenant
 
   # Calculate expected deposit based on number of active tenants
   #
-  # Formula: ~110% of per-person base rent
-  # Example: 4 people → 24,530 / 4 = 6,132.5 → * 1.1 = 6,746 kr
+  # The total house deposit is FIXED at 24,884 kr (the original amount paid).
+  # This is split evenly among all active tenants.
+  #
+  # Principle: Total deposit amount never exceeds what was originally paid,
+  # regardless of tenant count.
+  #
+  # Formula: Fixed total deposit / number of active tenants
+  # Examples:
+  #   - 4 people → 24,884 / 4 = 6,221 kr per person
+  #   - 5 people → 24,884 / 5 = 4,977 kr per person
+  #   - 3 people → 24,884 / 3 = 8,295 kr per person
   #
   # @param num_active_tenants [Integer] Number of active tenants
-  # @param total_base_rent [Integer] Total apartment base rent (default: 24,530 kr)
-  # @return [Integer] Expected deposit amount (rounded)
-  def self.calculate_deposit(num_active_tenants, total_base_rent: 24_530)
-    base_rent_per_person = total_base_rent / num_active_tenants.to_f
-    (base_rent_per_person * 1.1).round
+  # @param total_house_deposit [Integer] Total fixed deposit for apartment (default: 24,884 kr)
+  # @return [Integer] Expected deposit amount per person (rounded)
+  def self.calculate_deposit(num_active_tenants, total_house_deposit: 24_884)
+    (total_house_deposit / num_active_tenants.to_f).round
   end
 
   def to_s
