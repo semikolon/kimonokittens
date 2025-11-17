@@ -1614,16 +1614,16 @@ Medd: KK202511Sannacmhqe9enc
 ```
 
 **Why this works:**
-- ✅ **Phone matching is primary** - reference is optional nice-to-have
-- ✅ **95% of payments to this number are rent** - minimal ambiguity
+- ✅ **Reference most exact** - Tier 1 when present (manual entry required)
+- ✅ **Phone highly reliable** - Tier 2, rent = exact amount + payday timing (distinguishable from non-rent)
 - ✅ **Long-tap to copy** - no dashes in reference for iPhone compatibility
 - ✅ **Zero cost** - no Swish Handel fees
 - ✅ **Fully automated matching** - Lunchflow extracts phone from description
 
 **Payment matching tiers:**
-1. **Tier 2 (PRIMARY)**: Phone number matching via Lunchflow Swish description
-2. **Tier 1 (nice-to-have)**: Reference code matching
-3. **Tier 3 (fallback)**: Amount + name fuzzy matching
+1. **Tier 1**: Reference code (most exact, but requires manual entry in Swish)
+2. **Tier 2**: Phone number (reliable - rent payments distinguishable via amount+timing)
+3. **Tier 3**: Amount + fuzzy name (fallback for bank transfers)
 
 **Lunchflow daily sync** (research confirmed Nov 15, 2025):
 - Transactions sync **once per 24 hours** (not real-time)

@@ -1,4 +1,5 @@
 require 'date'
+require 'json'
 
 # BankTransaction domain model representing a bank transaction from Lunch Flow API
 #
@@ -34,7 +35,7 @@ class BankTransaction
     @currency = currency
     @description = description || ''  # Default to empty string (DB constraint NOT NULL)
     @counterparty = counterparty
-    @raw_json = raw_json
+    @raw_json = parse_json(raw_json)
     @created_at = created_at
     validate!
   end
@@ -87,7 +88,7 @@ class BankTransaction
   # @return [Boolean] True if transaction belongs to tenant
   #
   # @example Reference code matching
-  #   tx.description = "SWISH SANNA BENEMAR KK-2025-11-Sanna-cmhqe9enc"
+  #   tx.description = "SWISH SANNA BENEMAR KK202511Sannacmhqe9enc"
   #   tenant.id = "cmhqe9enc0000wopipuxgc3kw"
   #   tx.belongs_to_tenant?(tenant)  # => true (ID suffix matches)
   #
@@ -101,7 +102,8 @@ class BankTransaction
   def has_reference_code?(tenant)
     return false unless description && tenant.id
 
-    # Reference format: KK-YYYY-MM-Name-{shortUUID}
+    # Reference format: KK{YYYYMM}{FirstName}{shortUUID} (no dashes for iPhone compatibility)
+    # Example: KK202511Sannacmhqe9enc
     # The shortUUID could be a prefix of the tenant ID (various lengths)
     # Check both:
     # 1. If description contains any prefix of tenant ID (min 8 chars to avoid false positives)
@@ -203,6 +205,15 @@ class BankTransaction
   def parse_amount(value)
     return value.to_f if value.is_a?(Numeric)
     value.to_s.to_f
+  end
+
+  # Parse JSON from string or return hash as-is
+  # @param value [Hash, String] JSON string or Hash
+  # @return [Hash]
+  def parse_json(value)
+    return value if value.is_a?(Hash)
+    return {} if value.nil?
+    JSON.parse(value)
   end
 
   # Normalize phone number for comparison

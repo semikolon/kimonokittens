@@ -30,7 +30,9 @@ class Tenant
               :status, :created_at, :updated_at,
               # Contract fields:
               :personnummer, :phone,
-              :deposit, :furnishing_deposit
+              :deposit, :furnishing_deposit,
+              # SMS reminder fields:
+              :sms_opt_out, :payday_start_day
 
   # Writer methods for mutable contract fields
   attr_writer :personnummer, :phone, :deposit, :furnishing_deposit, :room, :departure_date
@@ -40,7 +42,9 @@ class Tenant
                  status: nil, created_at: nil, updated_at: nil,
                  # Contract fields:
                  personnummer: nil, phone: nil,
-                 deposit: nil, furnishing_deposit: nil)
+                 deposit: nil, furnishing_deposit: nil,
+                 # SMS reminder fields:
+                 sms_opt_out: false, payday_start_day: 25)
     @id = id
     @name = name.to_s
     @email = email.to_s
@@ -58,6 +62,9 @@ class Tenant
     @phone = phone
     @deposit = parse_decimal(deposit)
     @furnishing_deposit = parse_decimal(furnishing_deposit)
+    # SMS reminder fields
+    @sms_opt_out = sms_opt_out
+    @payday_start_day = payday_start_day
     validate!
   end
 
@@ -196,7 +203,10 @@ class Tenant
       personnummer: personnummer,
       phone: phone,
       deposit: deposit,
-      furnishingDeposit: furnishing_deposit
+      furnishingDeposit: furnishing_deposit,
+      # SMS reminder fields
+      smsOptOut: sms_opt_out,
+      paydayStartDay: payday_start_day
     }
   end
 

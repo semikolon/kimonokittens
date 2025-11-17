@@ -7,7 +7,7 @@ require 'time'
 # ApplyBankPayment service matches bank transactions to rent payments
 #
 # Implements 4-tier matching strategy:
-# 1. Reference code matching (KK-YYYY-MM-Name-UUID in Swish message)
+# 1. Reference code matching (KK{YYYYMM}{FirstName}{UUID} in Swish message, no dashes)
 # 2. Phone number matching (extract from Swish transaction description)
 # 3. Fuzzy name matching (Levenshtein + amount for bank transfers)
 # 4. Manual classification fallback

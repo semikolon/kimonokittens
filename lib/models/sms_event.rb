@@ -34,7 +34,7 @@ require 'json'
 #   )
 class SmsEvent
   VALID_SMS_TYPES = %w[reminder admin_alert confirmation].freeze
-  VALID_TONES = %w[neutral friendly urgent].freeze
+  VALID_TONES = %w[heads_up first_reminder urgent overdue neutral friendly].freeze  # Updated for rent reminders refactoring
   VALID_DELIVERY_STATUSES = %w[queued sent delivered failed].freeze
   E164_REGEX = /^\+[1-9]\d{1,14}$/.freeze
 

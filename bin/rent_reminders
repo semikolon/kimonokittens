@@ -27,7 +27,6 @@ require 'time'
 require_relative '../lib/persistence'
 require_relative '../lib/sms/gateway'
 require_relative '../lib/sms/message_composer'
-require_relative '../lib/swish/link_generator'
 
 # Parse command line flags
 dry_run = ARGV.include?('--dry-run')
@@ -56,17 +55,18 @@ end
 all_tenants = Persistence.tenants.all
 active_tenants = all_tenants.select do |t|
   !t.sms_opt_out &&
-  (!t.departure_date || t.departure_date > now)
+  (!t.departure_date || t.departure_date > now.to_date)
 end
 
 puts "👥 Found #{all_tenants.length} total tenants, #{active_tenants.length} active"
 
-# Helper: Generate reference code for tenant
+# Helper: Generate reference code for tenant (no dashes for iPhone copy compatibility)
 def generate_reference(tenant, month)
-  # KK-2025-11-Sanna-cmhqe9enc
+  # KK202511Sannacmhqe9enc
   short_uuid = tenant.id[-13..-1]  # Last 13 chars of CUID
   first_name = tenant.name.split(' ').first
-  "KK-#{month}-#{first_name}-#{short_uuid}"
+  month_compact = month.gsub('-', '')  # "2025-11" → "202511"
+  "KK#{month_compact}#{first_name}#{short_uuid}"
 end
 
 # Process each active tenant
@@ -103,25 +103,22 @@ active_tenants.each do |tenant|
   should_send = false
   tone = nil
 
-  # Timing logic
+  # Timing logic (4 tones, all once daily)
   if current_day == 23 && current_hour == 9
-    # Heads up reminder (gentle)
+    # Heads up reminder (day 23, 09:45)
     should_send = true
     tone = :heads_up
   elsif current_day == tenant.payday_start_day && current_hour == 9
-    # First payment reminder (payday)
+    # First payment reminder (payday, 09:45)
     should_send = true
     tone = :first_reminder
-  elsif current_day == 27 && current_hour == 10
-    # Urgent reminder (10:00 on deadline)
+  elsif current_day == 27 && current_hour == 9
+    # Urgent reminder (deadline day 27, 09:45)
     should_send = true
     tone = :urgent
-  elsif current_day == 27 && current_hour == 16  # Actually 16:45 from cron
-    # Very urgent reminder (17:00 on deadline)
-    should_send = true
-    tone = :very_urgent
-  elsif current_day >= 28 && [9, 16].include?(current_hour)
-    # Twice daily after deadline (09:45 and 16:45)
+  elsif current_day >= 28 && current_hour == 9
+    # Overdue reminder (day 28+, 09:45 once daily)
+    # Rationale: Lunchflow syncs once per 24h, second reminder has no new payment data
     should_send = true
     tone = :overdue
   end
@@ -145,29 +142,20 @@ active_tenants.each do |tenant|
     event.meta && event.meta['tone'] == tone.to_s
   end
 
-  if today_events.any? && tone != :overdue
+  # Skip if already sent today (all tones now once daily)
+  if today_events.any?
     puts "  🔁 #{tenant.name}: #{tone} reminder already sent today"
     next
   end
 
-  # For overdue, allow max 2 per day
-  if tone == :overdue && today_events.length >= 2
-    puts "  🔁 #{tenant.name}: Overdue reminder already sent 2x today"
-    next
-  end
-
-  # Generate reminder message
+  # Generate reminder message (LLM hybrid approach)
   reference = generate_reference(tenant, current_month)
-  swish_link = SwishLinkGenerator.generate(
-    phone: admin_swish_number,
-    amount: remaining,
-    message: reference
-  )
   message = MessageComposer.compose(
     tenant_name: tenant.name,
     amount: remaining,
     month: current_month,
-    swish_link: swish_link,
+    recipient_phone: admin_swish_number,
+    reference: reference,
     tone: tone
   )
 

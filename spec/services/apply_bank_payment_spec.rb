@@ -81,9 +81,17 @@ RSpec.describe ApplyBankPayment do
         booked_at: DateTime.parse('2025-11-15T10:30:00Z'),
         amount: 7045.0,
         currency: 'SEK',
-        description: 'SWISH SANNA BENEMAR KK-2025-11-Sanna-cmhqe9enc',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_ref_match_001' }
+        raw_json: {
+          id: 'lf_tx_ref_match_001',
+          date: '2025-11-15',
+          amount: 7045.0,
+          currency: 'SEK',
+          description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
+          merchant: 'Swish Mottagen',
+          accountId: '4065'
+        }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -119,9 +127,17 @@ RSpec.describe ApplyBankPayment do
         booked_at: DateTime.now,
         amount: 7045.0,
         currency: 'SEK',
-        description: 'SWISH Payment KK-2025-11-Sanna-cmhqe9en',  # 8 chars
+        description: 'SWISH Payment KK202511Sannacmhqe9en',  # 8 chars
         counterparty: 'Sanna B.',
-        raw_json: { id: 'lf_tx_ref_short' }
+        raw_json: {
+          id: 'lf_tx_ref_short',
+          date: DateTime.now.strftime('%Y-%m-%d'),
+          amount: 7045.0,
+          currency: 'SEK',
+          description: 'SWISH Payment KK202511Sannacmhqe9en',
+          merchant: 'Swish Mottagen',
+          accountId: '4065'
+        }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -144,7 +160,15 @@ RSpec.describe ApplyBankPayment do
         amount: 7045.0,
         currency: 'SEK',
         description: 'SWISH from: +46701234567    1803968388237103, reference: 1803968388237103IN',
-        raw_json: { id: 'lf_tx_phone_001' }
+        raw_json: {
+          id: 'lf_tx_phone_001',
+          date: '2025-11-15',
+          amount: 7045.0,
+          currency: 'SEK',
+          description: 'SWISH from: +46701234567    1803968388237103, reference: 1803968388237103IN',
+          merchant: 'Swish Mottagen',
+          accountId: '4065'
+        }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -166,7 +190,15 @@ RSpec.describe ApplyBankPayment do
         amount: 7200.0,
         currency: 'SEK',
         description: 'SWISH from: +46709876543    1803803512048894, reference: 1803803512048894IN,messageToRecipient: Hyra november',
-        raw_json: { id: 'lf_tx_phone_002' }
+        raw_json: {
+        id: 'lf_tx_phone_002',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 7200.0,
+        currency: 'SEK',
+        description: 'SWISH from: +46709876543    1803803512048894, reference: 1803803512048894IN,messageToRecipient: Hyra november',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -188,7 +220,15 @@ RSpec.describe ApplyBankPayment do
         amount: 7045.0,
         currency: 'SEK',
         description: 'SWISH from: +46999999999    1803968388237103',
-        raw_json: { id: 'lf_tx_wrong_phone' }
+        raw_json: {
+        id: 'lf_tx_wrong_phone',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH from: +46999999999    1803968388237103',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -211,7 +251,15 @@ RSpec.describe ApplyBankPayment do
         currency: 'SEK',
         description: 'SWISH Betalning från Sanna Juni Benemar',
         counterparty: 'Sanna Juni Benemar',
-        raw_json: { id: 'lf_tx_fuzzy_001' }
+        raw_json: {
+        id: 'lf_tx_fuzzy_001',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH Betalning från Sanna Juni Benemar',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -232,7 +280,15 @@ RSpec.describe ApplyBankPayment do
         currency: 'SEK',
         description: 'SWISH från Sanna Benemar',  # Missing middle name
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_fuzzy_002' }
+        raw_json: {
+        id: 'lf_tx_fuzzy_002',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH från Sanna Benemar',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -253,7 +309,15 @@ RSpec.describe ApplyBankPayment do
         currency: 'SEK',
         description: 'SWISH S. Benemar',
         counterparty: 'S. Benemar',
-        raw_json: { id: 'lf_tx_initial' }
+        raw_json: {
+        id: 'lf_tx_initial',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH S. Benemar',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -274,7 +338,15 @@ RSpec.describe ApplyBankPayment do
         currency: 'SEK',
         description: 'SWISH Sanna Benemar',
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_wrong_amount' }
+        raw_json: {
+        id: 'lf_tx_wrong_amount',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 7100.0,
+        currency: 'SEK',
+        description: 'SWISH Sanna Benemar',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -294,7 +366,15 @@ RSpec.describe ApplyBankPayment do
         currency: 'SEK',
         description: 'SWISH Erik Johansson',
         counterparty: 'Erik Johansson',
-        raw_json: { id: 'lf_tx_wrong_name' }
+        raw_json: {
+        id: 'lf_tx_wrong_name',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH Erik Johansson',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -314,9 +394,17 @@ RSpec.describe ApplyBankPayment do
         booked_at: DateTime.now,
         amount: 3000.0,  # Less than 7045
         currency: 'SEK',
-        description: 'SWISH SANNA BENEMAR KK-2025-11-Sanna-cmhqe9enc',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_partial_001' }
+        raw_json: {
+        id: 'lf_tx_partial_001',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 3000.0,
+        currency: 'SEK',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -343,9 +431,17 @@ RSpec.describe ApplyBankPayment do
         booked_at: DateTime.parse('2025-11-15T10:00:00Z'),
         amount: 3000.0,
         currency: 'SEK',
-        description: 'SWISH SANNA BENEMAR KK-2025-11-Sanna-cmhqe9enc',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_partial_1' }
+        raw_json: {
+        id: 'lf_tx_partial_1',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 3000.0,
+        currency: 'SEK',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx1 = Persistence.bank_transactions.create(tx1)
@@ -360,9 +456,17 @@ RSpec.describe ApplyBankPayment do
         booked_at: DateTime.parse('2025-11-15T14:00:00Z'),
         amount: 4045.0,
         currency: 'SEK',
-        description: 'SWISH SANNA BENEMAR KK-2025-11-Sanna-cmhqe9enc',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_partial_2' }
+        raw_json: {
+        id: 'lf_tx_partial_2',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 4045.0,
+        currency: 'SEK',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx2 = Persistence.bank_transactions.create(tx2)
@@ -395,9 +499,17 @@ RSpec.describe ApplyBankPayment do
         booked_at: DateTime.now,
         amount: 8000.0,  # More than due
         currency: 'SEK',
-        description: 'SWISH SANNA BENEMAR KK-2025-11-Sanna-cmhqe9enc',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_overpay' }
+        raw_json: {
+        id: 'lf_tx_overpay',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 8000.0,
+        currency: 'SEK',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -423,9 +535,17 @@ RSpec.describe ApplyBankPayment do
         booked_at: DateTime.now,
         amount: 7045.0,
         currency: 'SEK',
-        description: 'SWISH SANNA BENEMAR KK-2025-11-Sanna-cmhqe9enc',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_complete' }
+        raw_json: {
+        id: 'lf_tx_complete',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -444,9 +564,17 @@ RSpec.describe ApplyBankPayment do
         booked_at: DateTime.now,
         amount: 3000.0,
         currency: 'SEK',
-        description: 'SWISH SANNA BENEMAR KK-2025-11-Sanna-cmhqe9enc',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_partial_late' }
+        raw_json: {
+        id: 'lf_tx_partial_late',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 3000.0,
+        currency: 'SEK',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -467,9 +595,17 @@ RSpec.describe ApplyBankPayment do
         booked_at: DateTime.now,
         amount: 7045.0,
         currency: 'SEK',
-        description: 'SWISH SANNA BENEMAR KK-2025-11-Sanna-cmhqe9enc',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_ws_test' }
+        raw_json: {
+        id: 'lf_tx_ws_test',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -503,7 +639,15 @@ RSpec.describe ApplyBankPayment do
         currency: 'SEK',
         description: 'Bank transfer from Sanna',
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_not_swish' }
+        raw_json: {
+        id: 'lf_tx_not_swish',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'Bank transfer from Sanna',
+        merchant: 'Överföring Via Internet',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -524,7 +668,15 @@ RSpec.describe ApplyBankPayment do
         currency: 'SEK',
         description: 'SWISH Unknown Person',
         counterparty: 'Unknown Person',
-        raw_json: { id: 'lf_tx_unknown' }
+        raw_json: {
+        id: 'lf_tx_unknown',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 5000.0,
+        currency: 'SEK',
+        description: 'SWISH Unknown Person',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
@@ -547,9 +699,17 @@ RSpec.describe ApplyBankPayment do
         booked_at: DateTime.now,
         amount: 7045.0,
         currency: 'SEK',
-        description: 'SWISH SANNA BENEMAR KK-2025-11-Sanna-cmhqe9enc',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
         counterparty: 'Sanna Benemar',
-        raw_json: { id: 'lf_tx_no_ledger' }
+        raw_json: {
+        id: 'lf_tx_no_ledger',
+        date: DateTime.now.strftime('%Y-%m-%d'),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH SANNA BENEMAR KK202511Sannacmhqe9enc',
+        merchant: 'Swish Mottagen',
+        accountId: '4065'
+      }
       )
 
       created_tx = Persistence.bank_transactions.create(tx)
