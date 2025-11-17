@@ -43,6 +43,8 @@
 
 **Display Rotation:** Monitor physically rotated 90° clockwise (portrait). Software compensates with 90° counter-clockwise (`<rotation>left</rotation>`). **Critical:** GNOME ignores `/var/lib/gdm3/.config/monitors.xml` on modern systems - use `/etc/xdg/monitors.xml` (global Mutter config) to persist rotation across reboots/power outages. Wayland disabled (`WaylandEnable=false` in `/etc/gdm3/custom.conf`).
 
+**UPS Needed:** Power outages cause config resets (rotation, possibly brightness schedule). UPS recommended (650-900 kr) to protect production server from outage-related configuration drift.
+
 **Services:**
 - Backend API: Puma on port 3001
 - Frontend: Nginx serving built dashboard

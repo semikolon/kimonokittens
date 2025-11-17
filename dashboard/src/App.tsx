@@ -157,6 +157,9 @@ function DashboardContent() {
   // Pause CSS animations ONLY when fully asleep
   const shouldPauseAnimations = sleepState.currentState === 'sleeping';
 
+  // Hide gradient blobs in dev mode (less visual noise during development)
+  const showGradients = import.meta.env.PROD;
+
   // Show admin view if Tab key toggled
   if (viewMode === 'admin') {
     return (
@@ -164,20 +167,22 @@ function DashboardContent() {
         <AdminStatusStack />
         <FadeOverlay />
 
-        {/* Same animated background as public view */}
-        <div
-          className="gradients-container fixed inset-0 h-full w-full opacity-35 blur-[50px]"
-          style={{
-            zIndex: 2,
-            animationPlayState: shouldPauseAnimations ? 'paused' : 'running'
-          }}
-        >
-          <div className="absolute w-[60%] h-[60%] top-[10%] left-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(68,25,150,0.38)_0%,_rgba(68,25,150,0)_70%)] mix-blend-screen animate-dashboard-first" />
-          <div className="absolute w-[50%] h-[70%] top-[15%] right-[5%] bg-[radial-gradient(ellipse_at_center,_rgba(89,45,170,0.33)_0%,_rgba(89,45,170,0)_70%)] mix-blend-screen animate-dashboard-second" />
-          <div className="absolute w-[70%] h-[50%] top-[35%] left-[20%] bg-[radial-gradient(ellipse_at_center,_rgba(110,35,160,0.30)_0%,_rgba(110,35,160,0)_70%)] mix-blend-screen animate-dashboard-third" />
-          <div className="absolute w-[55%] h-[65%] bottom-[10%] left-[15%] bg-[radial-gradient(ellipse_at_center,_rgba(48,12,80,0.33)_0%,_rgba(48,12,80,0)_70%)] mix-blend-screen animate-dashboard-fourth" />
-          <div className="absolute w-[65%] h-[55%] bottom-[15%] right-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(130,90,200,0.26)_0%,_rgba(130,90,200,0)_70%)] mix-blend-screen animate-dashboard-fifth" />
-        </div>
+        {/* Animated gradient blobs (production only) */}
+        {showGradients && (
+          <div
+            className="gradients-container fixed inset-0 h-full w-full opacity-35 blur-[50px]"
+            style={{
+              zIndex: 2,
+              animationPlayState: shouldPauseAnimations ? 'paused' : 'running'
+            }}
+          >
+            <div className="absolute w-[60%] h-[60%] top-[10%] left-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(68,25,150,0.38)_0%,_rgba(68,25,150,0)_70%)] mix-blend-screen animate-dashboard-first" />
+            <div className="absolute w-[50%] h-[70%] top-[15%] right-[5%] bg-[radial-gradient(ellipse_at_center,_rgba(89,45,170,0.33)_0%,_rgba(89,45,170,0)_70%)] mix-blend-screen animate-dashboard-second" />
+            <div className="absolute w-[70%] h-[50%] top-[35%] left-[20%] bg-[radial-gradient(ellipse_at_center,_rgba(110,35,160,0.30)_0%,_rgba(110,35,160,0)_70%)] mix-blend-screen animate-dashboard-third" />
+            <div className="absolute w-[55%] h-[65%] bottom-[10%] left-[15%] bg-[radial-gradient(ellipse_at_center,_rgba(48,12,80,0.33)_0%,_rgba(48,12,80,0)_70%)] mix-blend-screen animate-dashboard-fourth" />
+            <div className="absolute w-[65%] h-[55%] bottom-[15%] right-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(130,90,200,0.26)_0%,_rgba(130,90,200,0)_70%)] mix-blend-screen animate-dashboard-fifth" />
+          </div>
+        )}
 
         {/* Admin dashboard content */}
         <div className="w-full px-4 py-12 min-w-0 relative z-10">
@@ -212,25 +217,27 @@ function DashboardContent() {
         <AnoAI />
       </div> */}
 
-      {/* Magic animated background - elliptical gradients that move around */}
-      <div
-        className="gradients-container fixed inset-0 h-full w-full opacity-35 blur-[50px]"
-        style={{
-          zIndex: 2,
-          animationPlayState: shouldPauseAnimations ? 'paused' : 'running'
-        }}
-      >
-        {/* Top-left blob - moves in circular orbit */}
-        <div className="absolute w-[60%] h-[60%] top-[10%] left-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(68,25,150,0.38)_0%,_rgba(68,25,150,0)_70%)] mix-blend-screen animate-dashboard-first" />
-        {/* Top-right blob - drifts horizontally */}
-        <div className="absolute w-[50%] h-[70%] top-[15%] right-[5%] bg-[radial-gradient(ellipse_at_center,_rgba(89,45,170,0.33)_0%,_rgba(89,45,170,0)_70%)] mix-blend-screen animate-dashboard-second" />
-        {/* Center blob - pulses and rotates */}
-        <div className="absolute w-[70%] h-[50%] top-[35%] left-[20%] bg-[radial-gradient(ellipse_at_center,_rgba(110,35,160,0.30)_0%,_rgba(110,35,160,0)_70%)] mix-blend-screen animate-dashboard-third" />
-        {/* Bottom-left blob - diagonal movement */}
-        <div className="absolute w-[55%] h-[65%] bottom-[10%] left-[15%] bg-[radial-gradient(ellipse_at_center,_rgba(48,12,80,0.33)_0%,_rgba(48,12,80,0)_70%)] mix-blend-screen animate-dashboard-fourth" />
-        {/* Bottom-right blob - slow orbit */}
-        <div className="absolute w-[65%] h-[55%] bottom-[15%] right-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(130,90,200,0.26)_0%,_rgba(130,90,200,0)_70%)] mix-blend-screen animate-dashboard-fifth" />
-      </div>
+      {/* Animated gradient blobs (production only) */}
+      {showGradients && (
+        <div
+          className="gradients-container fixed inset-0 h-full w-full opacity-35 blur-[50px]"
+          style={{
+            zIndex: 2,
+            animationPlayState: shouldPauseAnimations ? 'paused' : 'running'
+          }}
+        >
+          {/* Top-left blob - moves in circular orbit */}
+          <div className="absolute w-[60%] h-[60%] top-[10%] left-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(68,25,150,0.38)_0%,_rgba(68,25,150,0)_70%)] mix-blend-screen animate-dashboard-first" />
+          {/* Top-right blob - drifts horizontally */}
+          <div className="absolute w-[50%] h-[70%] top-[15%] right-[5%] bg-[radial-gradient(ellipse_at_center,_rgba(89,45,170,0.33)_0%,_rgba(89,45,170,0)_70%)] mix-blend-screen animate-dashboard-second" />
+          {/* Center blob - pulses and rotates */}
+          <div className="absolute w-[70%] h-[50%] top-[35%] left-[20%] bg-[radial-gradient(ellipse_at_center,_rgba(110,35,160,0.30)_0%,_rgba(110,35,160,0)_70%)] mix-blend-screen animate-dashboard-third" />
+          {/* Bottom-left blob - diagonal movement */}
+          <div className="absolute w-[55%] h-[65%] bottom-[10%] left-[15%] bg-[radial-gradient(ellipse_at_center,_rgba(48,12,80,0.33)_0%,_rgba(48,12,80,0)_70%)] mix-blend-screen animate-dashboard-fourth" />
+          {/* Bottom-right blob - slow orbit */}
+          <div className="absolute w-[65%] h-[55%] bottom-[15%] right-[10%] bg-[radial-gradient(ellipse_at_center,_rgba(130,90,200,0.26)_0%,_rgba(130,90,200,0)_70%)] mix-blend-screen animate-dashboard-fifth" />
+        </div>
+      )}
 
 
       {/* Main content */}

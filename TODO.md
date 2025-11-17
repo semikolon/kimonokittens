@@ -61,6 +61,25 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 **Context:** Discovered Nov 10, 2025 during contract testing. Fixed Nov 16, 2025 based on clarification that original deposit was 6,221 kr/person (24,884 kr total).
 
 ---
+
+## ⚠️ Monitor Brightness Schedule - Verify After Power Outage
+
+**Issue:** Display appears stuck at low brightness (0.7-0.8) during daytime hours. May have reset after Nov 15 power outage (same outage that broke rotation).
+
+**Expected schedule** (from `DASHBOARD_SLEEP_SCHEDULE_IMPLEMENTATION.md`):
+- 00:00-05:32: 0.7 (night)
+- 06:00: 1.0 (morning start)
+- 08:00: 1.26 (mid-morning)
+- 10:00: 1.39 (daytime peak)
+
+**Action needed:**
+- [ ] Test during daytime (10am-4pm) to verify brightness reaches ~1.4 instead of staying at 0.7
+- [ ] Check xrandr brightness command execution in `/home/kimonokittens/.config/systemd/user/` or wherever schedule runs
+- [ ] Consider UPS purchase (650-900 kr) to prevent future power-related config resets
+
+**Created:** Nov 15, 2025 after display rotation reset incident
+
+---
 ## 🚀 PRODUCTION DEPLOYMENT - Dell Optiplex Kiosk ✅ COMPLETE
 
 **Goal:** Deploy Kimonokittens dashboard as production kiosk on Dell Optiplex
