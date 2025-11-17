@@ -29,42 +29,47 @@ require 'openai'
 module MessageComposer
   VALID_TONES = [:heads_up, :first_reminder, :urgent, :overdue].freeze
 
-  # Compose SMS message with LLM-generated context + fixed payment block
+  # Compose SMS message with simple dashboard-style template
   #
-  # @param tenant_name [String] Tenant full name (e.g., "Sanna Juni Benemar")
+  # @param tenant_name [String] Tenant full name (not used)
   # @param amount [Float] Rent amount in kr
   # @param month [String] Month in YYYY-MM format (e.g., "2025-11")
   # @param recipient_phone [String] Admin Swish phone (local format, no +46)
-  # @param reference [String] Payment reference (no dashes, e.g., "KK202511Sannacmhqe9enc")
+  # @param reference [String] Payment reference (not used)
   # @param tone [Symbol] Message tone (:heads_up, :first_reminder, :urgent, :overdue)
-  # @return [String] Complete SMS message
+  # @return [String] Complete SMS message in format: "Context • Amount kr swishas till Phone"
   def self.compose(tenant_name:, amount:, month:, recipient_phone:, reference:, tone:)
     raise ArgumentError, "Invalid tone: #{tone}. Must be one of #{VALID_TONES}" unless VALID_TONES.include?(tone)
 
-    first_name = tenant_name.split(' ').first
     rounded_amount = amount.round
     month_full = format_month_full(month)
 
-    # Generate or fallback to context line
-    begin
-      context_line = generate_context_line(first_name, month_full, tone)
-    rescue => e
-      puts "⚠️  LLM generation failed (#{e.message}), using fallback"
-      context_line = fallback_context(month_full, tone)
-    end
+    # Simple context template based on tone
+    context = simple_context(month_full, tone)
 
-    # Fixed payment info block
-    payment_info = <<~INFO.strip
-      Hyra #{month_full}: #{format_amount(rounded_amount)} kr
-      Swishas till: #{recipient_phone}
-      Referens: #{reference}
-    INFO
-
-    # Combine context + payment info
-    "#{context_line}\n\n#{payment_info}"
+    # Dashboard-style format: Context • Amount kr swishas till Phone
+    "#{context} • #{format_amount(rounded_amount)} kr swishas till #{recipient_phone}"
   end
 
-  # Generate context line using GPT-5-mini
+  # Simple context templates based on tone
+  #
+  # @param month_full [String] Full month format (e.g., "november 2025")
+  # @param tone [Symbol] Message tone
+  # @return [String] Context string
+  def self.simple_context(month_full, tone)
+    case tone
+    when :heads_up, :first_reminder
+      "Hyran för #{month_full} ska betalas innan 27 nov"
+    when :urgent
+      "Hyran för #{month_full} ska betalas idag"
+    when :overdue
+      "Hyran för #{month_full} är försenad"
+    else
+      raise ArgumentError, "Unknown tone: #{tone}"
+    end
+  end
+
+  # Generate context line using GPT-5-mini (DEPRECATED - keeping for reference)
   #
   # @param first_name [String] Tenant first name
   # @param month_full [String] Full month format (e.g., "november 2025")
