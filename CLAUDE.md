@@ -41,6 +41,8 @@
 --force-device-scale-factor=1.15
 ```
 
+**Display Rotation:** Monitor physically rotated 90° clockwise (portrait). Software compensates with 90° counter-clockwise (`<rotation>left</rotation>`). **Critical:** GNOME ignores `/var/lib/gdm3/.config/monitors.xml` on modern systems - use `/etc/xdg/monitors.xml` (global Mutter config) to persist rotation across reboots/power outages. Wayland disabled (`WaylandEnable=false` in `/etc/gdm3/custom.conf`).
+
 **Services:**
 - Backend API: Puma on port 3001
 - Frontend: Nginx serving built dashboard
