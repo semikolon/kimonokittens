@@ -704,7 +704,11 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 
 ### SMS Reminders and Swish Integration
 
-**📌 IMPORTANT: Detailed planning exists in ChatGPT thread with automated Swish transaction matching implementation details**
+**📌 IMPORTANT: Detailed planning exists in `docs/RENT_REMINDERS_SYSTEM_BRAIN_DUMP.md` - complete codebase exploration + GPT-5 prompt**
+
+**Future Tenant fields (deferred for now):**
+- [ ] `sms_tone` field (gentle-quirky, professional, etc.) - Add when personality customization needed
+- [ ] `lang` field (sv/en) - Add when non-Swedish tenants join
 
 - [ ] Implement automated rent reminders via SMS:
   - Generate personalized Swish payment links with correct amounts
@@ -854,6 +858,43 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - [ ] Add error handling for API timeouts and connection issues
   - [ ] Implement logging for JotForm API requests for debugging
   - [ ] Create OpenAPI documentation specifically for JotForm integration
+
+---
+
+## 💰 Rent Reminders & Payment Automation
+
+**Status:** ✅ Implementation plan complete (Nov 14, 2025) - Ready for development
+**Documentation:** `docs/RENT_REMINDERS_IMPLEMENTATION_PLAN.md`
+
+### MVP Implementation (6-Week Plan)
+- [ ] **Phase 1:** Database schema (3 new tables: BankTransaction, RentReceipt, SmsEvent)
+- [ ] **Phase 2:** Lunch Flow API integration (hourly bank sync cron)
+- [ ] **Phase 3:** Payment matching service (3-tier: reference, amount+name, partial)
+- [ ] **Phase 4:** SMS infrastructure (46elks integration + webhooks)
+- [ ] **Phase 5:** Rent reminder scheduling (daily 09:45 & 16:45, tone-based escalation)
+- [ ] **Phase 6:** Admin dashboard UI (payment status badges + expanded details)
+
+### Service Signup Required
+- [ ] **Lunch Flow:** Sign up at https://www.lunchflow.app/signin/signup (£5/month, 7-day trial)
+- [ ] **46elks:** Sign up at https://46elks.com/register (Swedish SMS provider, ~0.65 SEK/SMS)
+
+### Future Enhancements (Deferred from MVP)
+
+**Future Tenant Fields** (noted Nov 14, 2025):
+- [ ] `sms_tone` field (gentle-quirky, professional, etc.) - Add when personality customization needed
+- [ ] `lang` field (sv/en) - Add when non-Swedish tenants join
+
+**Desktop User Experience:**
+- [ ] QR code fallback for Swish links (desktop users can scan with phone camera instead of copy-paste)
+
+**Analytics & Tracking:**
+- [ ] Swish link click tracking (`/swish/track?token=...` endpoint to log who clicks vs who pays without clicking)
+
+**Swish Commerce API** (4-6 line summary as requested):
+- [ ] Apply for business Swish account (requires enskild firma or company registration)
+- [ ] Real-time payment webhooks (~200-500 kr/month subscription cost)
+- [ ] Immediate confirmation instead of hourly bank sync lag (better UX)
+- [ ] Refund capability via API for overpayments or cancellations
 
 ---
 

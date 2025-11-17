@@ -1,0 +1,146 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'dotenv/load'
+require 'json'
+require 'fileutils'
+require_relative '../lib/banking/lunchflow_client'
+require_relative '../lib/persistence'
+
+# Helper: Extract phone number from Swish transaction description
+# @param description [String] Transaction description from Lunchflow
+# @return [String, nil] E.164 phone number (+46XXXXXXXXX) or nil
+def extract_phone_from_description(description)
+  return nil unless description
+
+  # Lunchflow Swish format: "from: +46XXXXXXXXX ..."
+  match = description.match(/from:\s*(\+46\d{9})/)
+  match ? match[1] : nil
+end
+
+# IMPORTANT: SmsGateway and ApplyBankPayment will be implemented in Phase 3-4
+# For now, we create mock placeholders for dry-run testing
+
+# Mock SmsGateway (Phase 4 will implement actual 46elks client)
+module SmsGateway
+  def self.send_admin_alert(message)
+    puts "📱 [SMS MOCK] Admin alert: #{message}"
+  end
+end
+
+# Mock ApplyBankPayment service (Phase 3 will implement actual reconciliation)
+module ApplyBankPayment
+  def self.call(transaction_id:)
+    puts "💰 [MOCK] Would reconcile transaction: #{transaction_id}"
+  end
+end
+
+# Parse command line flags
+dry_run = ARGV.include?('--dry-run')
+
+# State file for cursor tracking
+STATE_DIR = 'state'
+STATE_FILE = File.join(STATE_DIR, 'bank_sync.json')
+
+# Ensure state directory exists
+FileUtils.mkdir_p(STATE_DIR) unless File.exist?(STATE_DIR)
+
+# Load last cursor from state file
+state = if File.exist?(STATE_FILE)
+          JSON.parse(File.read(STATE_FILE))
+        else
+          {}
+        end
+cursor = state['cursor']
+
+# Initialize Lunch Flow client
+client = LunchflowClient.new
+account_id = ENV['LUNCHFLOW_ACCOUNT_ID']
+
+unless account_id
+  puts '❌ LUNCHFLOW_ACCOUNT_ID not set in environment'
+  exit 1
+end
+
+begin
+  # Fetch transactions from Lunch Flow
+  response = client.fetch_transactions(account_id: account_id, since: cursor)
+
+  if dry_run
+    puts '🔍 DRY RUN MODE - No changes will be saved'
+    puts "Found #{response[:transactions].length} transactions:"
+  end
+
+  # Process each transaction
+  response[:transactions].each do |tx|
+    if dry_run
+      # Dry-run mode: print what would be done
+      puts "\n#{tx[:id]}: #{tx[:amount]} #{tx[:currency]} - #{tx[:description]}"
+      puts "  Booked: #{tx[:date]}"
+      puts "  Counterparty: #{tx[:counterparty_name] || 'N/A'}"
+      puts "  Merchant: #{tx[:merchant] || 'N/A'}"
+
+      # Check if this would trigger reconciliation (use merchant field for Swish detection)
+      reconcile_flag = if tx[:merchant]&.to_s&.upcase&.include?('SWISH')
+                         'YES (Swish payment)'
+                       else
+                         'NO'
+                       end
+      puts "  Would reconcile: #{reconcile_flag}"
+    else
+      # Production mode: upsert to database
+      # For Swish: extract phone from description and populate counterparty
+      # For bank transfers: use counterparty name from Lunchflow
+      counterparty = if tx[:merchant]&.to_s&.upcase&.include?('SWISH')
+                       extract_phone_from_description(tx[:description])
+                     else
+                       tx[:counterparty_name]
+                     end
+
+      Persistence.bank_transactions.upsert(
+        external_id: tx[:id],
+        account_id: account_id,
+        booked_at: DateTime.parse(tx[:date]),
+        amount: tx[:amount],
+        currency: tx[:currency],
+        description: tx[:description],
+        counterparty: counterparty,
+        raw_json: tx
+      )
+
+      # Trigger reconciliation for Swish payments (use merchant field for detection)
+      if tx[:merchant]&.to_s&.upcase&.include?('SWISH')
+        ApplyBankPayment.call(transaction_id: tx[:id])
+      end
+    end
+  end
+
+  unless dry_run
+    # Update cursor to latest transaction date
+    if response[:transactions].any?
+      latest_date = response[:transactions].map { |tx| tx[:date] }.max
+      state['cursor'] = latest_date
+      File.write(STATE_FILE, JSON.pretty_generate(state))
+    end
+  end
+
+  # Success message
+  count = response[:transactions].length
+  message = if dry_run
+              "Would sync #{count} transactions"
+            else
+              "Synced #{count} transactions"
+            end
+  puts message
+
+rescue StandardError => e
+  # Send admin SMS on failure (skip in dry-run)
+  unless dry_run
+    SmsGateway.send_admin_alert("⚠️ Bank sync failed: #{e.message}")
+  end
+
+  # Log error and re-raise
+  puts "❌ Error: #{e.message}"
+  puts e.backtrace.first(5).join("\n") if ENV['DEBUG']
+  raise
+end

@@ -1,0 +1,228 @@
+#!/usr/bin/env ruby
+
+# SMS Testing Script - Send all message types to admin phone
+#
+# Tests LLM generation + 46elks delivery for:
+# - 4 reminder tones (heads_up, first_reminder, urgent, overdue)
+# - Admin alert messages
+#
+# Usage:
+#   bundle exec ruby bin/test_sms_all_types           # Send all types
+#   bundle exec ruby bin/test_sms_all_types --dry-run # Preview only
+
+require 'dotenv/load'
+require_relative '../lib/sms/gateway'
+require_relative '../lib/sms/message_composer'
+require_relative '../lib/models/tenant'
+
+# Load OpenAI key from global secrets if not in .env
+unless ENV['OPENAI_API_KEY']
+  secrets_file = File.expand_path('~/dotfiles/.secrets')
+  if File.exist?(secrets_file)
+    File.readlines(secrets_file).each do |line|
+      if line =~ /export OPENAI_API_KEY='(.+)'/
+        ENV['OPENAI_API_KEY'] = $1
+        break
+      end
+    end
+  end
+end
+
+# Parse flags
+dry_run = ARGV.include?('--dry-run')
+batches_arg = ARGV.find { |arg| arg.start_with?('--batches=') }
+num_batches = batches_arg ? batches_arg.split('=').last.to_i : 1
+
+if dry_run
+  puts "🔍 DRY RUN MODE - No SMS will be sent"
+  puts "=" * 60
+end
+
+if num_batches > 1
+  puts "🔁 Sending #{num_batches} batches (5 messages × #{num_batches} = #{num_batches * 5} total SMS)"
+  puts "=" * 60
+end
+
+# Verify environment
+admin_phone = ENV['ADMIN_PHONE']
+admin_swish = ENV['ADMIN_SWISH_NUMBER']
+openai_key = ENV['OPENAI_API_KEY']
+
+unless admin_phone
+  puts "❌ ERROR: ADMIN_PHONE not set in environment"
+  exit 1
+end
+
+unless admin_swish
+  puts "❌ ERROR: ADMIN_SWISH_NUMBER not set in environment"
+  exit 1
+end
+
+unless openai_key
+  puts "❌ ERROR: OPENAI_API_KEY not found (checked .env and ~/dotfiles/.secrets)"
+  exit 1
+end
+
+puts "📱 Testing SMS delivery to: #{admin_phone}"
+puts "💰 Swish recipient: #{admin_swish}"
+puts "🤖 OpenAI API key: #{openai_key[0..15]}..."
+puts ""
+
+# Create test tenant (realistic data)
+test_tenant = Tenant.new(
+  id: 'cmhqe9enc0000wopipuxgc3kw',
+  name: 'Sanna Juni Benemar',
+  email: 'sanna@example.com',
+  phone: admin_phone,
+  sms_opt_out: false,
+  payday_start_day: 25
+)
+
+# Test all 4 reminder tones
+tones = [
+  { tone: :heads_up, amount: 7045, month: '2025-11', context: 'Day 23 - Early heads-up' },
+  { tone: :first_reminder, amount: 7045, month: '2025-11', context: 'Payday - First reminder' },
+  { tone: :urgent, amount: 7045, month: '2025-11', context: 'Day 27 - Urgent deadline' },
+  { tone: :overdue, amount: 7045, month: '2025-11', context: 'Day 28+ - Overdue' }
+]
+
+all_results = []
+
+# Run batches
+num_batches.times do |batch_num|
+  if num_batches > 1
+    puts ""
+    puts "╔" + "═" * 58 + "╗"
+    puts "║" + " BATCH #{batch_num + 1} / #{num_batches}".center(58) + "║"
+    puts "╚" + "═" * 58 + "╝"
+  end
+
+  results = []
+
+  puts "=" * 60
+  puts "REMINDER MESSAGES (4 tones)"
+  puts "=" * 60
+  puts ""
+
+tones.each do |test_case|
+  puts "📝 Testing: #{test_case[:context]}"
+  puts "   Tone: #{test_case[:tone]}"
+
+  begin
+    # Generate message with LLM
+    first_name = test_tenant.name.split(' ').first
+    short_uuid = test_tenant.id[-13..-1]
+    month_compact = test_case[:month].gsub('-', '')
+    reference = "KK#{month_compact}#{first_name}#{short_uuid}"
+
+    message = MessageComposer.compose(
+      tenant_name: test_tenant.name,
+      amount: test_case[:amount],
+      month: test_case[:month],
+      recipient_phone: admin_swish,
+      reference: reference,
+      tone: test_case[:tone]
+    )
+
+    puts "   ✅ Message generated (#{message.length} chars)"
+    puts ""
+    puts "   " + "─" * 56
+    message.lines.each { |line| puts "   │ #{line.chomp}" }
+    puts "   " + "─" * 56
+    puts ""
+
+    if dry_run
+      results << { tone: test_case[:tone], status: 'dry-run', message: message }
+    else
+      # Send SMS
+      result = SmsGateway.send(
+        to: admin_phone,
+        body: message,
+        meta: {
+          tenant_id: test_tenant.id,
+          type: 'reminder',
+          tone: test_case[:tone].to_s,
+          month: test_case[:month]
+        }
+      )
+
+      puts "   📤 SMS sent! ID: #{result[:id]}, Cost: #{result[:cost]} (#{result[:parts]} part(s))"
+      results << { tone: test_case[:tone], status: 'sent', result: result }
+    end
+
+  rescue => e
+    puts "   ❌ FAILED: #{e.message}"
+    puts "   #{e.backtrace.first(3).join("\n   ")}"
+    results << { tone: test_case[:tone], status: 'error', error: e.message }
+  end
+
+  puts ""
+  sleep 2  # Rate limiting between messages
+end
+
+# Test admin alert
+puts "=" * 60
+puts "ADMIN ALERT MESSAGE"
+puts "=" * 60
+puts ""
+
+begin
+  alert_message = "🚨 Sanna Juni Benemar, Johan Andersson har inte betalt än (november 2025)"
+
+  puts "📝 Admin alert:"
+  puts ""
+  puts "   " + "─" * 56
+  puts "   │ #{alert_message}"
+  puts "   " + "─" * 56
+  puts ""
+
+  if dry_run
+    results << { type: 'admin_alert', status: 'dry-run', message: alert_message }
+  else
+    SmsGateway.send_admin_alert(alert_message)
+    puts "   📤 Admin alert sent!"
+    results << { type: 'admin_alert', status: 'sent' }
+  end
+
+rescue => e
+  puts "   ❌ FAILED: #{e.message}"
+  results << { type: 'admin_alert', status: 'error', error: e.message }
+end
+
+  # Batch results
+  all_results.concat(results)
+
+  if num_batches > 1
+    sleep 3  # Rate limiting between batches
+  end
+end  # End of batch loop
+
+# Summary
+puts ""
+puts "=" * 60
+puts "SUMMARY"
+puts "=" * 60
+
+sent_count = all_results.count { |r| r[:status] == 'sent' }
+error_count = all_results.count { |r| r[:status] == 'error' }
+dry_run_count = all_results.count { |r| r[:status] == 'dry-run' }
+
+if dry_run
+  puts "✅ #{dry_run_count} message(s) previewed (no SMS sent)"
+else
+  puts "✅ #{sent_count} SMS sent successfully"
+  puts "❌ #{error_count} error(s)" if error_count > 0
+
+  if sent_count > 0
+    total_cost = all_results
+      .select { |r| r[:status] == 'sent' && r[:result] }
+      .sum { |r| r.dig(:result, :cost) || 0 }
+
+    puts "💰 Total cost: #{total_cost} (#{total_cost / 10000.0} SEK)"
+    puts ""
+    puts "📱 Check your phone for #{sent_count} SMS message(s)!"
+  end
+end
+
+puts ""
+puts "✨ Test complete"

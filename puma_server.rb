@@ -56,6 +56,7 @@ require_relative 'handlers/tenant_handler'
 require_relative 'handlers/admin_auth_handler'
 require_relative 'handlers/signup_handler'
 require_relative 'handlers/admin_leads_handler'
+require_relative 'handlers/elks_webhooks'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
@@ -356,6 +357,11 @@ app = Rack::Builder.new do
         [405, {'Content-Type' => 'application/json'}, [Oj.dump({ error: 'Method not allowed' })]]
       end
     }
+  end
+
+  # 46elks SMS webhooks (delivery receipts + incoming SMS)
+  map "/webhooks/elks" do
+    run ElksWebhooksHandler.new
   end
 
   # Display control routes

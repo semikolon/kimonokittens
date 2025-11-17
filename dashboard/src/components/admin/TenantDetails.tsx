@@ -1,6 +1,6 @@
 // TenantDetails - Expanded content for tenant-only rows
 import React, { useMemo, useState } from 'react'
-import { DollarSign, TrendingDown, TrendingUp, Calendar } from 'lucide-react'
+import { DollarSign, TrendingDown, TrendingUp, Calendar, CheckCircle2, Clock, XCircle, MessageSquare } from 'lucide-react'
 import type { TenantMember } from '../../views/AdminDashboard'
 import { useAdminAuth } from '../../contexts/AdminAuthContext'
 import { useData } from '../../context/DataContext'
@@ -22,6 +22,16 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
   const [updatingPersonnummer, setUpdatingPersonnummer] = useState(false)
   const [updatingFacebookId, setUpdatingFacebookId] = useState(false)
   const [updatingPhone, setUpdatingPhone] = useState(false)
+
+  // Inline form editing states
+  const [editingPersonnummer, setEditingPersonnummer] = useState(false)
+  const [personnummerInput, setPersonnummerInput] = useState('')
+  const [editingFacebookId, setEditingFacebookId] = useState(false)
+  const [facebookIdInput, setFacebookIdInput] = useState('')
+  const [editingPhone, setEditingPhone] = useState(false)
+  const [phoneInput, setPhoneInput] = useState('')
+  const [editingRoom, setEditingRoom] = useState(false)
+
   const { ensureAuth } = useAdminAuth()
   const { state } = useData()
   const rentData = state.rentData
@@ -93,6 +103,132 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
     return pnr // Fallback for unexpected formats
   }
 
+  const handleSavePersonnummer = async () => {
+    const trimmed = personnummerInput.trim()
+    if (!trimmed) {
+      alert('Personnummer kan inte vara tomt')
+      return
+    }
+    // Basic client-side validation
+    const digitsOnly = trimmed.replace(/\D/g, '')
+    if (digitsOnly.length !== 10 && digitsOnly.length !== 12) {
+      alert('Personnummer måste vara 10 eller 12 siffror (YYMMDD-XXXX eller YYYYMMDD-XXXX)')
+      return
+    }
+    try {
+      setUpdatingPersonnummer(true)
+      const adminToken = await ensureAuth()
+      if (!adminToken) return
+      const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/personnummer`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Token': adminToken
+        },
+        body: JSON.stringify({ personnummer: trimmed })
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Kunde inte uppdatera personnummer')
+      }
+      setEditingPersonnummer(false)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Kunde inte uppdatera personnummer')
+    } finally {
+      setUpdatingPersonnummer(false)
+    }
+  }
+
+  const handleSaveFacebookId = async () => {
+    const trimmed = facebookIdInput.trim()
+    if (!trimmed) {
+      alert('Facebook ID kan inte vara tomt')
+      return
+    }
+    try {
+      setUpdatingFacebookId(true)
+      const adminToken = await ensureAuth()
+      if (!adminToken) return
+      const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/facebook-id`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Token': adminToken
+        },
+        body: JSON.stringify({ facebook_id: trimmed })
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Kunde inte uppdatera Facebook ID')
+      }
+      setEditingFacebookId(false)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Kunde inte uppdatera Facebook ID')
+    } finally {
+      setUpdatingFacebookId(false)
+    }
+  }
+
+  const handleSavePhone = async () => {
+    const trimmed = phoneInput.trim()
+    if (!trimmed) {
+      alert('Telefonnummer kan inte vara tomt')
+      return
+    }
+    try {
+      setUpdatingPhone(true)
+      const adminToken = await ensureAuth()
+      if (!adminToken) return
+      const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/phone`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Token': adminToken
+        },
+        body: JSON.stringify({ phone: trimmed })
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Kunde inte uppdatera telefonnummer')
+      }
+      setEditingPhone(false)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Kunde inte uppdatera telefonnummer')
+    } finally {
+      setUpdatingPhone(false)
+    }
+  }
+
+  const handleSaveRoom = async () => {
+    const trimmed = roomInput.trim()
+    if (!trimmed) {
+      alert('Rumsnamn kan inte vara tomt')
+      return
+    }
+    try {
+      setUpdatingRoom(true)
+      const adminToken = await ensureAuth()
+      if (!adminToken) return
+      const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/room`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Token': adminToken
+        },
+        body: JSON.stringify({ room: trimmed })
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Kunde inte uppdatera rum')
+      }
+      setEditingRoom(false)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Kunde inte uppdatera rum')
+    } finally {
+      setUpdatingRoom(false)
+    }
+  }
+
   return (
     <div className="p-6 space-y-6 bg-slate-900/60">
       {/* Room Adjustment */}
@@ -130,53 +266,44 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
             </div>
           )}
           {!tenant.has_completed_contract && (
-            <button
-              onClick={async () => {
-                const newPersonnummer = window.prompt(
-                  'Ange personnummer (YYYYMMDD-XXXX eller YYMMDD-XXXX)',
-                  tenant.tenant_personnummer || ''
-                )
-                if (newPersonnummer === null) return
-                const trimmed = newPersonnummer.trim()
-                if (!trimmed) {
-                  alert('Personnummer kan inte vara tomt')
-                  return
-                }
-                // Basic client-side validation
-                const digitsOnly = trimmed.replace(/\D/g, '')
-                if (digitsOnly.length !== 10 && digitsOnly.length !== 12) {
-                  alert('Personnummer måste vara 10 eller 12 siffror (YYMMDD-XXXX eller YYYYMMDD-XXXX)')
-                  return
-                }
-                try {
-                  setUpdatingPersonnummer(true)
-                  const adminToken = await ensureAuth()
-                  if (!adminToken) return
-                  const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/personnummer`, {
-                    method: 'PATCH',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'X-Admin-Token': adminToken
-                    },
-                    body: JSON.stringify({ personnummer: trimmed })
-                  })
-                  if (!response.ok) {
-                    const error = await response.json()
-                    throw new Error(error.error || 'Kunde inte uppdatera personnummer')
-                  }
-                } catch (error) {
-                  alert(error instanceof Error ? error.message : 'Kunde inte uppdatera personnummer')
-                } finally {
-                  setUpdatingPersonnummer(false)
-                }
-              }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                       bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                       transition-all border border-purple-900/30"
-              disabled={updatingPersonnummer}
-            >
-              {updatingPersonnummer ? 'Sparar…' : (tenant.tenant_personnummer ? 'Ändra personnummer' : 'Lägg till personnummer')}
-            </button>
+            !editingPersonnummer ? (
+              <button
+                onClick={() => {
+                  setPersonnummerInput(tenant.tenant_personnummer || '')
+                  setEditingPersonnummer(true)
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                         bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                         transition-all border border-purple-900/30"
+              >
+                {tenant.tenant_personnummer ? 'Ändra personnummer' : 'Lägg till personnummer'}
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={personnummerInput}
+                  onChange={(e) => setPersonnummerInput(e.target.value)}
+                  placeholder="YYYYMMDD-XXXX"
+                  autoFocus
+                  className="px-3 py-2 rounded-lg bg-slate-950/60 border border-purple-900/40 text-purple-100 text-sm placeholder-purple-400/40 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30"
+                />
+                <button
+                  onClick={handleSavePersonnummer}
+                  disabled={updatingPersonnummer}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {updatingPersonnummer ? 'Sparar…' : 'Spara'}
+                </button>
+                <button
+                  onClick={() => setEditingPersonnummer(false)}
+                  disabled={updatingPersonnummer}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-800/50 hover:bg-slate-700/50 text-purple-200 transition-all"
+                >
+                  Avbryt
+                </button>
+              </div>
+            )
           )}
           {tenant.has_completed_contract && tenant.tenant_personnummer && (
             <div className="text-xs text-purple-300/60 mt-1">
@@ -188,7 +315,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
         {/* Facebook ID */}
         <div>
           <h4 className="text-sm font-semibold text-purple-200 mb-3">Facebook:</h4>
-          {tenant.tenant_facebook_id && (
+          {tenant.tenant_facebook_id && !editingFacebookId && (
             <a
               href={`https://facebook.com/${tenant.tenant_facebook_id}`}
               target="_blank"
@@ -198,98 +325,92 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
               facebook.com/{tenant.tenant_facebook_id}
             </a>
           )}
-          <button
-            onClick={async () => {
-              const newFacebookId = window.prompt(
-                'Ange Facebook ID (t.ex. "john.doe" eller numeriskt ID)',
-                tenant.tenant_facebook_id || ''
-              )
-              if (newFacebookId === null) return
-              const trimmed = newFacebookId.trim()
-              if (!trimmed) {
-                alert('Facebook ID kan inte vara tomt')
-                return
-              }
-              try {
-                setUpdatingFacebookId(true)
-                const adminToken = await ensureAuth()
-                if (!adminToken) return
-                const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/facebook-id`, {
-                  method: 'PATCH',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'X-Admin-Token': adminToken
-                  },
-                  body: JSON.stringify({ facebook_id: trimmed })
-                })
-                if (!response.ok) {
-                  const error = await response.json()
-                  throw new Error(error.error || 'Kunde inte uppdatera Facebook ID')
-                }
-              } catch (error) {
-                alert(error instanceof Error ? error.message : 'Kunde inte uppdatera Facebook ID')
-              } finally {
-                setUpdatingFacebookId(false)
-              }
-            }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                     bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                     transition-all border border-purple-900/30"
-            disabled={updatingFacebookId}
-          >
-            {updatingFacebookId ? 'Sparar…' : (tenant.tenant_facebook_id ? 'Ändra Facebook ID' : 'Lägg till Facebook ID')}
-          </button>
+          {!editingFacebookId ? (
+            <button
+              onClick={() => {
+                setFacebookIdInput(tenant.tenant_facebook_id || '')
+                setEditingFacebookId(true)
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                       bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                       transition-all border border-purple-900/30"
+            >
+              {tenant.tenant_facebook_id ? 'Ändra Facebook ID' : 'Lägg till Facebook ID'}
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={facebookIdInput}
+                onChange={(e) => setFacebookIdInput(e.target.value)}
+                placeholder="john.doe"
+                autoFocus
+                className="px-3 py-2 rounded-lg bg-slate-950/60 border border-purple-900/40 text-purple-100 text-sm placeholder-purple-400/40 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30"
+              />
+              <button
+                onClick={handleSaveFacebookId}
+                disabled={updatingFacebookId}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {updatingFacebookId ? 'Sparar…' : 'Spara'}
+              </button>
+              <button
+                onClick={() => setEditingFacebookId(false)}
+                disabled={updatingFacebookId}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-800/50 hover:bg-slate-700/50 text-purple-200 transition-all"
+              >
+                Avbryt
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Phone Number */}
         <div>
           <h4 className="text-sm font-semibold text-purple-200 mb-3">Telefon:</h4>
-          {tenant.tenant_phone && (
-            <div className="text-lg text-purple-100 mb-2">
+          {tenant.tenant_phone && !editingPhone && (
+            <div className="text-lg font-mono text-purple-100 mb-2">
               {tenant.tenant_phone}
             </div>
           )}
-          <button
-            onClick={async () => {
-              const newPhone = window.prompt(
-                'Ange telefonnummer (t.ex. "0701234567" eller "+46701234567")',
-                tenant.tenant_phone || ''
-              )
-              if (newPhone === null) return
-              const trimmed = newPhone.trim()
-              if (!trimmed) {
-                alert('Telefonnummer kan inte vara tomt')
-                return
-              }
-              try {
-                setUpdatingPhone(true)
-                const adminToken = await ensureAuth()
-                if (!adminToken) return
-                const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/phone`, {
-                  method: 'PATCH',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'X-Admin-Token': adminToken
-                  },
-                  body: JSON.stringify({ phone: trimmed })
-                })
-                if (!response.ok) {
-                  const error = await response.json()
-                  throw new Error(error.error || 'Kunde inte uppdatera telefonnummer')
-                }
-              } catch (error) {
-                alert(error instanceof Error ? error.message : 'Kunde inte uppdatera telefonnummer')
-              } finally {
-                setUpdatingPhone(false)
-              }
-            }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                     bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                     transition-all border border-purple-900/30"
-            disabled={updatingPhone}
-          >
-            {updatingPhone ? 'Sparar…' : (tenant.tenant_phone ? 'Ändra telefonnummer' : 'Lägg till telefonnummer')}
-          </button>
+          {!editingPhone ? (
+            <button
+              onClick={() => {
+                setPhoneInput(tenant.tenant_phone || '')
+                setEditingPhone(true)
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                       bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                       transition-all border border-purple-900/30"
+            >
+              {tenant.tenant_phone ? 'Ändra telefonnummer' : 'Lägg till telefonnummer'}
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="tel"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value)}
+                placeholder="+46701234567"
+                autoFocus
+                className="px-3 py-2 rounded-lg bg-slate-950/60 border border-purple-900/40 text-purple-100 text-sm placeholder-purple-400/40 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30"
+              />
+              <button
+                onClick={handleSavePhone}
+                disabled={updatingPhone}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {updatingPhone ? 'Sparar…' : 'Spara'}
+              </button>
+              <button
+                onClick={() => setEditingPhone(false)}
+                disabled={updatingPhone}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-800/50 hover:bg-slate-700/50 text-purple-200 transition-all"
+              >
+                Avbryt
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -327,45 +448,41 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
           <div className="space-y-5">
             <div>
               <h4 className="text-sm font-semibold text-purple-200 mb-3">Rum:</h4>
-              <button
-                onClick={async () => {
-                  const newRoom = window.prompt('Ange nytt rumsnamn', roomInput || '')
-                  if (newRoom === null) return
-                  const trimmed = newRoom.trim()
-                  if (!trimmed) {
-                    alert('Rumsnamn kan inte vara tomt')
-                    return
-                  }
-                  try {
-                    setUpdatingRoom(true)
-                    const adminToken = await ensureAuth()
-                    if (!adminToken) return
-                    const response = await fetch(`/api/admin/contracts/tenants/${tenant.tenant_id}/room`, {
-                      method: 'PATCH',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'X-Admin-Token': adminToken
-                      },
-                      body: JSON.stringify({ room: trimmed })
-                    })
-                    if (!response.ok) {
-                      const error = await response.json()
-                      throw new Error(error.error || 'Kunde inte uppdatera rum')
-                    }
-                    setRoomInput(trimmed)
-                  } catch (error) {
-                    alert(error instanceof Error ? error.message : 'Kunde inte uppdatera rum')
-                  } finally {
-                    setUpdatingRoom(false)
-                  }
-                }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                         bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                         transition-all border border-purple-900/30"
-                disabled={updatingRoom}
-              >
-                {updatingRoom ? 'Sparar…' : 'Ändra rum'}
-              </button>
+              {!editingRoom ? (
+                <button
+                  onClick={() => setEditingRoom(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                           bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                           transition-all border border-purple-900/30"
+                >
+                  Ändra rum
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={roomInput}
+                    onChange={(e) => setRoomInput(e.target.value)}
+                    placeholder="Rum A"
+                    autoFocus
+                    className="px-3 py-2 rounded-lg bg-slate-950/60 border border-purple-900/40 text-purple-100 text-sm placeholder-purple-400/40 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30"
+                  />
+                  <button
+                    onClick={handleSaveRoom}
+                    disabled={updatingRoom}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    {updatingRoom ? 'Sparar…' : 'Spara'}
+                  </button>
+                  <button
+                    onClick={() => setEditingRoom(false)}
+                    disabled={updatingRoom}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-800/50 hover:bg-slate-700/50 text-purple-200 transition-all"
+                  >
+                    Avbryt
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>
@@ -427,6 +544,52 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
           </div>
         </div>
       )}
+
+      {/* Payment Status Section (Phase 6: Rent Reminders) */}
+      <div className="grid gap-6 md:grid-cols-3 pt-6 border-t border-purple-500/10">
+        <div>
+          <div className="text-xs text-purple-400/70 mb-1">BETALNINGSSTATUS</div>
+          <div className="flex items-center gap-2">
+            {tenant.rent_paid ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+                <span className="text-purple-100">Betald</span>
+              </>
+            ) : tenant.rent_remaining && tenant.rent_remaining > 0 ? (
+              <>
+                <Clock className="w-4 h-4 text-yellow-400" />
+                <span className="text-purple-100">
+                  {Math.round(tenant.rent_remaining).toLocaleString('sv-SE')} kr kvar
+                </span>
+              </>
+            ) : (
+              <>
+                <XCircle className="w-4 h-4 text-red-400" />
+                <span className="text-purple-100">Obetald</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-xs text-purple-400/70 mb-1">SENASTE BETALNING</div>
+          <div className="text-purple-100">
+            {tenant.last_payment_date
+              ? new Date(tenant.last_payment_date).toLocaleDateString('sv-SE')
+              : '—'}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-xs text-purple-400/70 mb-1 flex items-center gap-2">
+            <MessageSquare className="w-3 h-3" />
+            <span>SMS PÅMINNELSER</span>
+          </div>
+          <div className="text-purple-100">
+            {tenant.sms_reminder_count || 0} skickade
+          </div>
+        </div>
+      </div>
 
       {showRent && rentClarifications.length > 0 && (
         <div className="text-xs text-purple-300/60 pt-4 border-t border-purple-500/10 space-y-1">

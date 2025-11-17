@@ -30,10 +30,11 @@ module RentCalculatorSpec
       # CASCADE is needed to also truncate related tables (like _ItemOwners).
       db.class.db.run('TRUNCATE TABLE "Tenant", "RentConfig", "RentLedger" RESTART IDENTITY CASCADE;')
 
-      # Also truncate ElectricityBill if it exists
+      # Also truncate new tables if they exist
       db.class.db.run('TRUNCATE TABLE "ElectricityBill" RESTART IDENTITY CASCADE;')
+      db.class.db.run('TRUNCATE TABLE "RentReceipt", "BankTransaction" RESTART IDENTITY CASCADE;')
     rescue Sequel::DatabaseError => e
-      # Table might not exist yet (e.g., ElectricityBill), that's okay
+      # Table might not exist yet (e.g., ElectricityBill, RentReceipt), that's okay
       raise unless e.message.include?('does not exist')
     end
 

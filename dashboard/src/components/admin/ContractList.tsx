@@ -1,6 +1,7 @@
 // ContractList - List with filter toggle and keyboard navigation
 import React, { useState } from 'react'
 import { MemberRow } from './MemberRow'
+import { CompactTenantTimeline } from './CompactTenantTimeline'
 import type { Member } from '../../views/AdminDashboard'
 
 interface ContractListProps {
@@ -116,18 +117,9 @@ export const ContractList: React.FC<ContractListProps> = ({ contracts }) => {
 
       {/* Historical members section */}
       {historicalMembers.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {renderSectionHeader('Historiska', historicalMembers)}
-          {historicalMembers.map((member) => (
-            <MemberRow
-              key={member.id}
-              member={member}
-              isExpanded={expandedId === member.id}
-              isSelected={selectedId === member.id}
-              onToggle={() => setExpandedId(expandedId === member.id ? null : member.id)}
-              onSelect={() => setSelectedId(member.id)}
-            />
-          ))}
+          <CompactTenantTimeline members={historicalMembers} />
         </div>
       )}
     </div>
