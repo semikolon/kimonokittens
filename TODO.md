@@ -27,11 +27,12 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 ### ❌ Still TODO (documentation accurate):
 1. ~~**Deposit Formula Mismatch**~~ - ✅ **FIXED** (Nov 16, 2025)
-2. **Log Rotation** - Needs verification if actually needed in production
-3. **Contract Replacement Workflow** - Delete+Re-sign not yet implemented
-4. **Tenant Signup Form** - Backend handler missing (frontend HTML needed)
-5. **Heatpump Peak Avoidance** - Requires Pi Node-RED config (separate infrastructure)
-6. **Horsemen Font** - Extract from PopOS system fonts (`find /usr/share/fonts -iname "*horsemen*"`), add @font-face to signup.html
+2. ~~**Tenant Signup Form**~~ - ✅ **COMPLETE** (Nov 17, 2025) - See `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md`
+3. **Tenant Signup Deployment** - Complete pending setup actions: Cloudflare Turnstile account, database migration, SMS service (see `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md` for full checklist)
+4. **Log Rotation** - Needs verification if actually needed in production
+5. **Contract Replacement Workflow** - Delete+Re-sign not yet implemented
+6. **Heatpump Peak Avoidance** - Requires Pi Node-RED config (separate infrastructure)
+7. **Horsemen Font** - Extract from PopOS system fonts (`find /usr/share/fonts -iname "*horsemen*"`), add @font-face to signup.html
 
 **Impact:** Documentation was significantly outdated. 6 major features marked "planned" were actually shipped months ago.
 
@@ -202,8 +203,14 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
   - Homepage files: `www/` directory → deployed to `/var/www/kimonokittens/`
   - Nginx config: Public domain serves root, kiosk serves `dashboard/` subdirectory
 
-  **Status:** ✅ Nginx routes enabled (Nov 10, 2025) - `/meow`, `/curious`, `/signup` + `/api/signup` ready
-  **Pending:** Backend implementation (signup form HTML + POST /api/signup handler with rate limiting + CAPTCHA)
+  **Status:** ✅ **COMPLETE** (Nov 17, 2025) - Full implementation deployed to branch
+  **Documentation:** See `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md` for complete reference
+  **Pending Production Deployment:**
+  - [ ] Merge branch `claude/prioritize-todo-tasks-01BismLPp9uGe1itBpQNTSTi` to master
+  - [ ] Run database migration: `npx prisma migrate deploy`
+  - [ ] Register Cloudflare Turnstile account + update siteKey/secretKey
+  - [ ] (Optional) Extract Horsemen font from PopOS system fonts
+  - [ ] (Optional) Integrate SMS service for admin notifications
 
 **Priority**: MEDIUM - Improves public presence and future automation
 

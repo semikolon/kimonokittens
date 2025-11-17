@@ -104,6 +104,9 @@ export const LeadRow: React.FC<LeadRowProps> = ({
   const [toast, setToast] = React.useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [updatingStatus, setUpdatingStatus] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
+  const [converting, setConverting] = React.useState(false)
+  const [isEditingNotes, setIsEditingNotes] = React.useState(false)
+  const [notesValue, setNotesValue] = React.useState(lead.adminNotes || '')
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type })
@@ -166,10 +169,7 @@ export const LeadRow: React.FC<LeadRowProps> = ({
     }
   }
 
-  const handleAddNote = async () => {
-    const note = window.prompt('Lägg till anteckning:', lead.adminNotes || '')
-    if (note === null) return // User cancelled
-
+  const handleSaveNotes = async () => {
     try {
       const adminToken = await ensureAuth()
       if (!adminToken) return
@@ -180,17 +180,47 @@ export const LeadRow: React.FC<LeadRowProps> = ({
           'Content-Type': 'application/json',
           'X-Admin-Token': adminToken
         },
-        body: JSON.stringify({ admin_notes: note })
+        body: JSON.stringify({ admin_notes: notesValue })
       })
 
       if (response.ok) {
         showToast('Anteckning sparad!', 'success')
+        setIsEditingNotes(false)
       } else {
         const data = await response.json()
         showToast(data.error || 'Kunde inte spara anteckning', 'error')
       }
     } catch (error) {
       showToast('Fel vid sparande', 'error')
+    }
+  }
+
+  const handleConvertToTenant = async () => {
+    if (!window.confirm(`Konvertera ${lead.name} till hyresgäst? Detta skapar en tenant-post i systemet.`)) return
+
+    try {
+      const adminToken = await ensureAuth()
+      if (!adminToken) return
+
+      setConverting(true)
+      const response = await fetch(`/api/admin/leads/${lead.id}/convert`, {
+        method: 'POST',
+        headers: {
+          'X-Admin-Token': adminToken
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        showToast(`Konverterad till hyresgäst! Tenant ID: ${data.tenant_id.slice(0, 8)}...`, 'success')
+      } else {
+        const data = await response.json()
+        showToast(data.error || 'Kunde inte konvertera till hyresgäst', 'error')
+      }
+    } catch (error) {
+      showToast('Fel vid konvertering', 'error')
+    } finally {
+      setConverting(false)
     }
   }
 
@@ -353,14 +383,48 @@ export const LeadRow: React.FC<LeadRowProps> = ({
           <div>
             <div className="text-purple-300/60 text-sm mb-2 flex items-center justify-between">
               <span>Anteckningar</span>
-              <button
-                onClick={handleAddNote}
-                className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
-              >
-                {lead.adminNotes ? 'Redigera' : 'Lägg till'}
-              </button>
+              {!isEditingNotes && (
+                <button
+                  onClick={() => {
+                    setNotesValue(lead.adminNotes || '')
+                    setIsEditingNotes(true)
+                  }}
+                  className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                >
+                  {lead.adminNotes ? 'Redigera' : 'Lägg till'}
+                </button>
+              )}
             </div>
-            {lead.adminNotes ? (
+            {isEditingNotes ? (
+              <div className="space-y-2">
+                <textarea
+                  value={notesValue}
+                  onChange={(e) => setNotesValue(e.target.value)}
+                  className="w-full bg-slate-900/60 text-purple-100 rounded-lg p-3 border border-purple-500/20
+                           focus:outline-none focus:border-purple-500/40 resize-y min-h-[100px]"
+                  placeholder="Lägg till anteckningar..."
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveNotes}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-cyan-600/80 hover:bg-cyan-600
+                             text-white transition-all"
+                  >
+                    Spara
+                  </button>
+                  <button
+                    onClick={() => {
+                      setNotesValue(lead.adminNotes || '')
+                      setIsEditingNotes(false)
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700/50 hover:bg-slate-700
+                             text-purple-200 transition-all"
+                  >
+                    Avbryt
+                  </button>
+                </div>
+              </div>
+            ) : lead.adminNotes ? (
               <div className="text-purple-100 bg-slate-900/40 rounded-lg p-3 whitespace-pre-wrap">
                 {lead.adminNotes}
               </div>
@@ -423,6 +487,16 @@ export const LeadRow: React.FC<LeadRowProps> = ({
                            text-white transition-all disabled:opacity-50"
                 >
                   Godkänn
+                </button>
+              )}
+              {lead.status === 'approved' && (
+                <button
+                  onClick={handleConvertToTenant}
+                  disabled={converting}
+                  className="px-3 py-2 rounded-lg text-xs font-medium bg-purple-600/80 hover:bg-purple-600
+                           text-white transition-all disabled:opacity-50"
+                >
+                  {converting ? 'Konverterar...' : 'Konvertera till hyresgäst'}
                 </button>
               )}
             </div>
