@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="sv" style="background-color: rgb(25, 20, 30);">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Ansök om att bo på Kimonokittens kollektiv" />
+    <title>Intresseanmälan - Kimonokittens</title>
+
+    <!-- Tailwind CDN for unified styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              'horsemen': ['Horsemen', 'sans-serif']
+            },
+            animation: {
+              'dashboard-first': 'dashboard-first 18s ease-in-out infinite',
+              'dashboard-second': 'dashboard-second 22s ease-in-out infinite',
+              'dashboard-third': 'dashboard-third 20s ease-in-out infinite reverse',
+              'dashboard-fourth': 'dashboard-fourth 16s ease-in-out infinite',
+              'dashboard-fifth': 'dashboard-fifth 24s ease-in-out infinite'
+            }
+          }
+        }
+      }
+    </script>
+
+    <style>
+      /* TODO: Font will be loaded when extracted from PopOS system fonts */
+      /* @font-face {
+        font-family: 'Horsemen';
+        src: url('/fonts/Horsemen.woff2') format('woff2');
+        font-display: swap;
+      } */
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: rgb(25, 20, 30);
+        color: white;
+      }
+
+      /* Gradient blob animations (from dashboard) */
+      @keyframes dashboard-first {
+        0%, 100% {
+          transform: translate(0, 0) rotate(0deg) scale(1);
+        }
+        33% {
+          transform: translate(30%, 20%) rotate(120deg) scale(1.1);
+        }
+        66% {
+          transform: translate(-20%, 30%) rotate(240deg) scale(0.9);
+        }
+      }
+
+      @keyframes dashboard-second {
+        0%, 100% {
+          transform: translate(0, 0) rotate(0deg) scale(1);
+        }
+        33% {
+          transform: translate(-25%, -25%) rotate(-120deg) scale(0.95);
+        }
+        66% {
+          transform: translate(25%, -15%) rotate(120deg) scale(1.05);
+        }
+      }
+
+      @keyframes dashboard-third {
+        0%, 100% {
+          transform: translate(0, 0) rotate(0deg) scale(1);
+        }
+        50% {
+          transform: translate(15%, -30%) rotate(180deg) scale(1.1);
+        }
+      }
+
+      @keyframes dashboard-fourth {
+        0%, 100% {
+          transform: translate(0, 0) rotate(0deg) scale(1);
+        }
+        25% {
+          transform: translate(-30%, 10%) rotate(90deg) scale(0.9);
+        }
+        50% {
+          transform: translate(20%, -20%) rotate(180deg) scale(1.1);
+        }
+        75% {
+          transform: translate(-10%, 30%) rotate(270deg) scale(0.95);
+        }
+      }
+
+      @keyframes dashboard-fifth {
+        0%, 100% {
+          transform: translate(0, 0) rotate(0deg) scale(1);
+        }
+        20% {
+          transform: translate(25%, 15%) rotate(72deg) scale(1.05);
+        }
+        40% {
+          transform: translate(-15%, -25%) rotate(144deg) scale(0.9);
+        }
+        60% {
+          transform: translate(20%, -10%) rotate(216deg) scale(1.1);
+        }
+        80% {
+          transform: translate(-25%, 20%) rotate(288deg) scale(0.95);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="signup-root"></div>
+    <script type="module" src="/src/signup.tsx"></script>
+  </body>
+</html>
