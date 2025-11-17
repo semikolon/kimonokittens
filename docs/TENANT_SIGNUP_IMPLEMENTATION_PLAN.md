@@ -1,24 +1,39 @@
 # Tenant Signup Form - Comprehensive Implementation Plan
 
-**Status**: ⚠️ REVISED - Architecture corrected based on nginx security config
+**Status**: ✅ FINALIZED - Hybrid static/React architecture with shared components
 **Created**: November 16, 2025
-**Revised**: November 17, 2025 (static HTML architecture)
-**Estimated effort**: 4-6 hours (reduced from 6-8 hours due to static HTML simplicity)
-**Complexity**: Medium (Static HTML + vanilla JS, CAPTCHA, rate limiting, admin UI extension)
+**Revised**: November 17, 2025 (Vite multi-page build with React bundle)
+**Estimated effort**: 5-7 hours
+**Complexity**: Medium (Vite multi-page config, shared React components, CAPTCHA, rate limiting, admin UI)
 
 ---
 
-## 🔒 CRITICAL ARCHITECTURE DECISION
+## 🏗️ ARCHITECTURE: THE BEST OF BOTH WORLDS
 
-**Based on nginx configuration analysis** (`deployment/nginx-kimonokittens-https-split.conf`):
+### **The Solution: Static HTML + React Bundle from Shared Components**
 
-The nginx config uses **split architecture**:
-- **Public domain** (`kimonokittens.com`): Only homepage + signup routes + webhooks
-- **Localhost**: Full React dashboard (internal kiosk only)
+**Nginx requirement**: Serve static files only (no Node.js runtime)
+**User preference**: Share React components and styling with dashboard
+**Implementation**: Vite multi-page build outputting separate bundles
 
-**Line 99-101 of nginx config explicitly blocks dashboard access from public internet.**
+### **How It Works**
 
-**THEREFORE: Signup form MUST be static HTML file, NOT React component.**
+1. **Dashboard codebase** creates components in `dashboard/src/components/signup/`
+2. **Vite builds TWO separate entry points**:
+   - Main dashboard: `src/main.tsx` → `/var/www/kimonokittens/dashboard/`
+   - Signup form: `src/signup.tsx` → `/var/www/kimonokittens/signup.html` + bundle
+3. **Nginx serves signup as static files** (no difference from nginx perspective)
+4. **React components are shared** between both builds (single source of truth)
+5. **Tailwind config is unified** (consistent styling automatically)
+
+### **Benefits**
+
+✅ **Security**: Static files served by nginx (meets security requirement)
+✅ **Code reuse**: Shared React components (no duplication)
+✅ **Unified styling**: Same Tailwind config, same design tokens
+✅ **Maintainability**: Edit once, builds update both pages
+✅ **Type safety**: Full TypeScript across both entry points
+✅ **Developer experience**: Hot module reload works for both builds
 
 ---
 
@@ -28,14 +43,18 @@ Implement a public tenant signup form accessible at `/meow` (canonical) + `/anso
 
 **Key decisions:**
 - Separate `TenantLead` model (not `Tenant`) to differentiate applicants from approved tenants
-- **STATIC HTML PAGE** at `/var/www/kimonokittens/signup.html` (NOT React component)
-- Vanilla JavaScript with Cloudflare Turnstile widget
+- **HYBRID ARCHITECTURE**: Static HTML loading React bundle from shared dashboard components
+- Vite multi-page build: separate entry points for dashboard + signup
+- Tailwind CDN for instant styling (user preference for unification)
 - Minimal required fields: name + (email OR Facebook ID)
 - Contact method selection (radio choice)
 - Move-in flexibility (dropdown + "other" option)
-- Cloudflare Turnstile CAPTCHA
-- Rate limiting: 2 submissions per IP per day
-- SMS alert to Fredrik only (no applicant notification)
+- Cloudflare Turnstile CAPTCHA (React component)
+- Rate limiting: 2 submissions per IP per day (PostgreSQL storage)
+- SMS alert to Fredrik only (placeholder stub for now)
+- Success modal stays open (no auto-close)
+- Horsemen font: Self-hosted from PopOS system fonts
+- Logo: Same file as homepage, rendered at 400px width
 - Admin leads section below TenantForm in admin dashboard (React component, localhost-only)
 
 ---
@@ -150,21 +169,46 @@ Background: Animated purple gradient blobs (from App.tsx)
 
 ### File Structure
 
-**PUBLIC WEBSITE** (static HTML served by nginx):
+**DASHBOARD CODEBASE** (development):
+```
+dashboard/
+├── src/
+│   ├── main.tsx                  ← Dashboard entry point (existing)
+│   ├── signup.tsx                ← NEW: Signup entry point
+│   ├── components/
+│   │   ├── signup/               ← NEW: Shared signup components
+│   │   │   ├── SignupForm.tsx    ← Main form component
+│   │   │   ├── ContactMethod.tsx ← Radio + conditional input
+│   │   │   ├── MoveInField.tsx   ← Dropdown with conditionals
+│   │   │   └── SuccessModal.tsx  ← Post-submission overlay
+│   │   └── admin/
+│   │       ├── LeadsList.tsx     ← NEW: Admin leads section
+│   │       └── LeadRow.tsx       ← NEW: Individual lead row
+│   └── index.css                 ← Shared styles (gradient blobs, etc.)
+├── index.html                    ← Dashboard HTML template
+├── signup.html                   ← NEW: Signup HTML template
+├── vite.config.ts                ← UPDATE: Multi-page build config
+└── tailwind.config.js            ← Shared Tailwind config
+```
+
+**VITE BUILD OUTPUT** (production):
 ```
 /var/www/kimonokittens/
-├── index.html              ← Homepage (already exists)
-├── logo.png                ← Logo (already exists)
-├── signup.html             ← NEW: Signup form (this file)
-├── signup.css              ← NEW: Styles (extracted from dashboard patterns)
-└── signup.js               ← NEW: Vanilla JavaScript for form handling
+├── index.html                    ← Homepage (existing)
+├── logo.png                      ← Logo (existing)
+├── signup.html                   ← NEW: Signup page (loads React bundle)
+├── fonts/
+│   └── Horsemen.woff2            ← NEW: Self-hosted font from PopOS
+└── assets/
+    ├── signup-abc123.js          ← NEW: Signup React bundle
+    ├── signup-abc123.css         ← NEW: Signup styles (Tailwind + animations)
+    └── dashboard-xyz789.js       ← Existing dashboard bundle
 ```
 
 **NGINX ROUTING** (already configured in `nginx-kimonokittens-https-split.conf`):
 - `/meow`, `/curious`, `/signup` → serves `/var/www/kimonokittens/signup.html` (lines 54-57)
 - `/api/signup` → proxies to backend port 3001 (lines 60-67)
-
-**NO CHANGES NEEDED** to React dashboard or routing - signup is completely separate static site.
+- Signup bundle loads just like any static React SPA (no special nginx config needed)
 
 ### Design Tokens (From Existing Codebase)
 
@@ -358,6 +402,448 @@ if (!captchaToken) {
     'SKICKA'
   )}
 </button>
+```
+
+---
+
+## 💻 COMPLETE REACT COMPONENT EXAMPLES
+
+### `SignupPage.tsx` - Full Implementation
+
+```tsx
+import { useState } from 'react'
+import SignupForm from '../components/signup/SignupForm'
+import SuccessModal from '../components/signup/SuccessModal'
+
+export default function SignupPage() {
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  return (
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated gradient blobs background (shared from App.tsx) */}
+      <div className="gradients-container">
+        <div className="gradient gradient-first animate-dashboard-first"></div>
+        <div className="gradient gradient-second animate-dashboard-second"></div>
+        <div className="gradient gradient-third animate-dashboard-third"></div>
+        <div className="gradient gradient-fourth animate-dashboard-fourth"></div>
+        <div className="gradient gradient-fifth animate-dashboard-fifth"></div>
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 container mx-auto px-4 py-12">
+        {/* Header: Logo + Heading horizontal layout */}
+        <div className="flex items-center justify-center gap-8 mb-8">
+          <h1 className="font-horsemen text-4xl text-purple-100 uppercase tracking-wide">
+            Intresseanmälan
+          </h1>
+          <img src="/logo.png" alt="Kimonokittens" className="w-[400px]" />
+        </div>
+
+        {/* Subheading */}
+        <p className="text-center text-purple-200 text-lg mb-12">
+          Fyll i formuläret nedan så kontaktar vi dig inom några dagar.
+        </p>
+
+        {/* Form container */}
+        <div className="max-w-[600px] mx-auto w-[60%]">
+          <SignupForm onSuccess={() => setShowSuccess(true)} />
+        </div>
+      </div>
+
+      {/* Success modal */}
+      {showSuccess && (
+        <SuccessModal onClose={() => setShowSuccess(false)} />
+      )}
+    </div>
+  )
+}
+```
+
+### `SignupForm.tsx` - Full Implementation
+
+```tsx
+import { useState } from 'react'
+import { Turnstile } from '@marsidev/react-turnstile'
+import { Loader2 } from 'lucide-react'
+import ContactMethod from './ContactMethod'
+import MoveInField from './MoveInField'
+
+interface SignupFormProps {
+  onSuccess: () => void
+}
+
+export default function SignupForm({ onSuccess }: SignupFormProps) {
+  const [name, setName] = useState('')
+  const [contactMethod, setContactMethod] = useState<'email' | 'facebook'>('facebook')
+  const [contactValue, setContactValue] = useState('')
+  const [phone, setPhone] = useState('')
+  const [moveIn, setMoveIn] = useState('')
+  const [moveInExtra, setMoveInExtra] = useState('')
+  const [motivation, setMotivation] = useState('')
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    if (!captchaToken) {
+      setError('Vänligen slutför CAPTCHA-verifieringen')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          contact_method: contactMethod,
+          [contactMethod === 'email' ? 'email' : 'facebook_id']: contactValue,
+          phone: phone || null,
+          move_in_flexibility: moveIn,
+          move_in_extra: moveInExtra || null,
+          motivation: motivation || null,
+          captcha: captchaToken
+        })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Något gick fel')
+      }
+
+      // Success!
+      onSuccess()
+
+      // Reset form
+      setName('')
+      setContactValue('')
+      setPhone('')
+      setMoveIn('')
+      setMoveInExtra('')
+      setMotivation('')
+      setCaptchaToken(null)
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Något gick fel')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Name field */}
+      <div>
+        <label className="block text-purple-200 text-sm font-medium mb-2">
+          Namn *
+        </label>
+        <input
+          type="text"
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
+                     text-purple-100 placeholder-purple-300/40
+                     focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+          placeholder="Lisa Andersson"
+        />
+      </div>
+
+      {/* Contact method */}
+      <ContactMethod
+        method={contactMethod}
+        value={contactValue}
+        onMethodChange={setContactMethod}
+        onValueChange={setContactValue}
+      />
+
+      {/* Phone (optional) */}
+      <div>
+        <label className="block text-purple-200 text-sm font-medium mb-2">
+          Telefon (valfritt)
+        </label>
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
+                     text-purple-100 placeholder-purple-300/40
+                     focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+          placeholder="070-123 45 67"
+        />
+      </div>
+
+      {/* Move-in flexibility */}
+      <MoveInField
+        value={moveIn}
+        extraValue={moveInExtra}
+        onValueChange={setMoveIn}
+        onExtraChange={setMoveInExtra}
+      />
+
+      {/* Motivation */}
+      <div>
+        <label className="block text-purple-200 text-sm font-medium mb-2">
+          Vem är du och varför vill du bo här? (valfritt)
+        </label>
+        <textarea
+          value={motivation}
+          onChange={(e) => setMotivation(e.target.value)}
+          rows={6}
+          className="w-full px-6 py-4 text-xl bg-slate-900/60 border border-purple-900/30 rounded-xl
+                     text-purple-100 placeholder-purple-300/40
+                     focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20
+                     resize-none"
+          placeholder="Berätta lite om dig själv..."
+        />
+      </div>
+
+      {/* CAPTCHA */}
+      <Turnstile
+        siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+        onSuccess={(token) => setCaptchaToken(token)}
+        theme="dark"
+        size="invisible"
+      />
+
+      {/* Error message */}
+      {error && (
+        <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-xl text-red-300 text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Submit button */}
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-3 px-8 py-4 text-lg font-medium
+                   text-white rounded-xl transition-all
+                   disabled:opacity-50 disabled:cursor-not-allowed
+                   focus:outline-none focus:ring-2 focus:ring-purple-500/50
+                   hover:brightness-110"
+        style={{
+          backgroundImage: 'linear-gradient(180deg, #cb6f38 0%, #903f14 100%)'
+        }}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Skickar...
+          </>
+        ) : (
+          'SKICKA'
+        )}
+      </button>
+    </form>
+  )
+}
+```
+
+### `ContactMethod.tsx` - Full Implementation
+
+```tsx
+interface ContactMethodProps {
+  method: 'email' | 'facebook'
+  value: string
+  onMethodChange: (method: 'email' | 'facebook') => void
+  onValueChange: (value: string) => void
+}
+
+export default function ContactMethod({
+  method,
+  value,
+  onMethodChange,
+  onValueChange
+}: ContactMethodProps) {
+  return (
+    <div>
+      <label className="block text-purple-200 text-sm font-medium mb-2">
+        Hur vill du bli kontaktad? *
+      </label>
+
+      {/* Radio buttons */}
+      <div className="flex gap-4 mb-4">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="contactMethod"
+            value="email"
+            checked={method === 'email'}
+            onChange={() => onMethodChange('email')}
+            className="w-4 h-4 text-purple-500"
+          />
+          <span className="text-purple-100">E-post</span>
+        </label>
+
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="contactMethod"
+            value="facebook"
+            checked={method === 'facebook'}
+            onChange={() => onMethodChange('facebook')}
+            className="w-4 h-4 text-purple-500"
+          />
+          <span className="text-purple-100">Facebook Messenger</span>
+        </label>
+      </div>
+
+      {/* Conditional input field */}
+      {method === 'email' && (
+        <input
+          type="email"
+          required
+          value={value}
+          onChange={(e) => onValueChange(e.target.value)}
+          className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
+                     text-purple-100 placeholder-purple-300/40
+                     focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+          placeholder="lisa@example.com"
+        />
+      )}
+
+      {method === 'facebook' && (
+        <input
+          type="text"
+          required
+          value={value}
+          onChange={(e) => onValueChange(e.target.value)}
+          className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
+                     text-purple-100 placeholder-purple-300/40
+                     focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+          placeholder="lisa.andersson"
+        />
+      )}
+    </div>
+  )
+}
+```
+
+### `MoveInField.tsx` - Full Implementation
+
+```tsx
+interface MoveInFieldProps {
+  value: string
+  extraValue: string
+  onValueChange: (value: string) => void
+  onExtraChange: (value: string) => void
+}
+
+export default function MoveInField({
+  value,
+  extraValue,
+  onValueChange,
+  onExtraChange
+}: MoveInFieldProps) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-purple-200 text-sm font-medium mb-2">
+          Inflyttningsflexibilitet *
+        </label>
+        <select
+          required
+          value={value}
+          onChange={(e) => {
+            onValueChange(e.target.value)
+            // Clear extra value when changing selection
+            if (e.target.value !== 'specific' && e.target.value !== 'other') {
+              onExtraChange('')
+            }
+          }}
+          className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
+                     text-purple-100
+                     focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+        >
+          <option value="">Välj alternativ...</option>
+          <option value="immediate">Omgående</option>
+          <option value="1month">1 månads uppsägningstid</option>
+          <option value="2months">2 månaders uppsägningstid</option>
+          <option value="3months">3 månaders uppsägningstid</option>
+          <option value="specific">Specifikt datum</option>
+          <option value="other">Annat</option>
+        </select>
+      </div>
+
+      {/* Conditional date picker */}
+      {value === 'specific' && (
+        <input
+          type="date"
+          required
+          value={extraValue}
+          onChange={(e) => onExtraChange(e.target.value)}
+          className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
+                     text-purple-100
+                     focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+        />
+      )}
+
+      {/* Conditional text field */}
+      {value === 'other' && (
+        <input
+          type="text"
+          required
+          value={extraValue}
+          onChange={(e) => onExtraChange(e.target.value)}
+          className="w-full px-6 py-4 text-2xl bg-slate-900/60 border border-purple-900/30 rounded-xl
+                     text-purple-100 placeholder-purple-300/40
+                     focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+          placeholder="Beskriv din flexibilitet..."
+        />
+      )}
+    </div>
+  )
+}
+```
+
+### `SuccessModal.tsx` - Full Implementation
+
+```tsx
+import { X } from 'lucide-react'
+
+interface SuccessModalProps {
+  onClose: () => void
+}
+
+export default function SuccessModal({ onClose }: SuccessModalProps) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-slate-900 border border-purple-500/30 rounded-2xl p-8 max-w-md mx-4 relative
+                   shadow-2xl shadow-purple-500/20"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-purple-300 hover:text-purple-100 transition-colors"
+        >
+          <X size={24} />
+        </button>
+
+        {/* Success message */}
+        <div className="text-center">
+          <div className="text-6xl mb-4">✨</div>
+          <h2 className="text-2xl font-bold text-purple-100 mb-2">
+            Tack för din ansökan!
+          </h2>
+          <p className="text-purple-200">
+            Vi kontaktar dig inom några dagar.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
 ```
 
 ---
@@ -1112,56 +1598,164 @@ case 'leads_updated':
   - [ ] Add `broadcast_leads_updated` method
   - [ ] Add `fetch_leads_data` method
 
-### Phase 2: Frontend - Static Signup Page (1.5-2 hours)
+### Phase 2: Frontend - Signup React Components (2-3 hours)
 
-- [ ] **2.1** Create `/var/www/kimonokittens/signup.html`
-  - [ ] HTML structure with semantic markup
-  - [ ] Meta tags (viewport, charset, description)
-  - [ ] Logo + heading layout (horizontal with Horsemen font)
-  - [ ] Form container (600px / 60% width, centered)
-  - [ ] All form fields (see Form Fields Specification section)
-  - [ ] Cloudflare Turnstile widget div
-  - [ ] Success modal HTML (hidden by default)
-  - [ ] Link to signup.css
-  - [ ] Script tags: Turnstile CDN + signup.js
+- [ ] **2.1** Install dependencies
+  ```bash
+  cd dashboard
+  npm install @marsidev/react-turnstile
+  ```
 
-- [ ] **2.2** Create `/var/www/kimonokittens/signup.css`
-  - [ ] Animated gradient blobs background (5 divs with keyframes)
-  - [ ] Purple color palette (matching CLAUDE.md)
-  - [ ] Typography styles (Horsemen font for heading)
-  - [ ] Form input styles (text-2xl, slate-900/60 backgrounds, purple borders)
-  - [ ] Orange gradient button with glow effect
-  - [ ] Contact method radio button styles
-  - [ ] Move-in dropdown styles
-  - [ ] Success modal overlay + fade animations
-  - [ ] Mobile responsive breakpoints
-  - [ ] Loading spinner animation
+- [ ] **2.2** Extract Horsemen font from PopOS production
+  ```bash
+  # SSH to production kiosk (ssh pop as kimonokittens user)
+  # Find font file:
+  find /usr/share/fonts ~/.local/share/fonts -iname "*horsemen*" -type f
+  # Copy to project:
+  scp pop:/path/to/Horsemen.ttf dashboard/public/fonts/
+  # Convert to woff2 for web (using fonttools or online converter)
+  ```
 
-- [ ] **2.3** Create `/var/www/kimonokittens/signup.js`
-  - [ ] Form validation logic
-  - [ ] Contact method radio listener (toggle email/facebook field)
-  - [ ] Move-in dropdown listener (show/hide date/other field)
-  - [ ] Turnstile callback handler
-  - [ ] Form submit handler:
-    - [ ] Prevent default
-    - [ ] Validate required fields
-    - [ ] Check CAPTCHA token present
-    - [ ] Show loading state
-    - [ ] POST to /api/signup
-    - [ ] Handle success → show modal
-    - [ ] Handle errors → display inline
-    - [ ] Reset form on success
-  - [ ] Success modal close handler
-  - [ ] Auto-close modal after 5 seconds
+- [ ] **2.3** Create `dashboard/signup.html` (Vite template)
+  ```html
+  <!DOCTYPE html>
+  <html lang="sv">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta name="description" content="Ansök om att bo på Kimonokittens kollektiv" />
+      <title>Intresseanmälan - Kimonokittens</title>
+      <!-- Tailwind CDN for instant unified styling -->
+      <script src="https://cdn.tailwindcss.com"></script>
+      <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              fontFamily: {
+                'horsemen': ['Horsemen', 'sans-serif']
+              }
+            }
+          }
+        }
+      </script>
+      <style>
+        @font-face {
+          font-family: 'Horsemen';
+          src: url('/fonts/Horsemen.woff2') format('woff2');
+          font-display: swap;
+        }
+        html, body {
+          margin: 0;
+          padding: 0;
+          background-color: rgb(25, 20, 30);
+        }
+      </style>
+    </head>
+    <body>
+      <div id="signup-root"></div>
+      <script type="module" src="/src/signup.tsx"></script>
+    </body>
+  </html>
+  ```
 
-- [ ] **2.4** Copy logo to `/var/www/kimonokittens/logo.png`
-  - [ ] Already exists from homepage, verify path
+- [ ] **2.4** Create `dashboard/src/signup.tsx` (entry point)
+  ```tsx
+  import React from 'react'
+  import ReactDOM from 'react-dom/client'
+  import SignupPage from './pages/SignupPage'
+  import './index.css'  // Shared styles (gradient blobs, etc.)
 
-- [ ] **2.5** Verify Horsemen font loads correctly
-  - [ ] Check if font CSS needs to be copied from dashboard build
-  - [ ] Or link to Google Fonts / external CDN if available
+  ReactDOM.createRoot(document.getElementById('signup-root')!).render(
+    <React.StrictMode>
+      <SignupPage />
+    </React.StrictMode>,
+  )
+  ```
 
-**Note**: No React Router, no npm dependencies, no dashboard changes. Signup is completely standalone static site.
+- [ ] **2.5** Create `dashboard/src/pages/SignupPage.tsx`
+  - [ ] Full-page container with gradient blobs background
+  - [ ] Logo (400px width) + "INTRESSEANMÄLAN" heading (Horsemen font)
+  - [ ] Subheading: "Fyll i formuläret nedan..."
+  - [ ] Center form container (600px / 60% width)
+  - [ ] Import and render `<SignupForm />`
+
+- [ ] **2.6** Create `dashboard/src/components/signup/SignupForm.tsx`
+  - [ ] Form state (useState for all fields)
+  - [ ] Name field (text input, required)
+  - [ ] Contact method component (import ContactMethod)
+  - [ ] Phone field (tel input, optional)
+  - [ ] Move-in field component (import MoveInField)
+  - [ ] Motivation textarea (optional)
+  - [ ] Turnstile CAPTCHA component
+  - [ ] Submit button with orange gradient
+  - [ ] Loading state during submission
+  - [ ] Error handling (display inline errors)
+  - [ ] Success handler → show SuccessModal
+  - [ ] POST to `/api/signup`
+
+- [ ] **2.7** Create `dashboard/src/components/signup/ContactMethod.tsx`
+  - [ ] Radio buttons: E-post / Facebook Messenger
+  - [ ] useState for selected method
+  - [ ] Conditional rendering of email input (if email selected)
+  - [ ] Conditional rendering of Facebook ID input (if facebook selected)
+  - [ ] Validation: at least one contact method required
+
+- [ ] **2.8** Create `dashboard/src/components/signup/MoveInField.tsx`
+  - [ ] Dropdown with options:
+    - Omgående
+    - 1 månads uppsägningstid
+    - 2 månaders uppsägningstid
+    - 3 månaders uppsägningstid
+    - Specifikt datum
+    - Annat
+  - [ ] Conditional date picker (if "Specifikt datum" selected)
+  - [ ] Conditional text field (if "Annat" selected)
+  - [ ] useState for selection + conditional values
+
+- [ ] **2.9** Create `dashboard/src/components/signup/SuccessModal.tsx`
+  - [ ] Modal overlay (backdrop blur)
+  - [ ] Success message: "Tack! Vi kontaktar dig inom några dagar."
+  - [ ] Close button (X icon)
+  - [ ] **NO auto-close** (user preference)
+  - [ ] onClick backdrop → close modal
+  - [ ] Fade-in animation
+
+- [ ] **2.10** Update `dashboard/vite.config.ts` (multi-page build)
+  ```ts
+  import { defineConfig } from 'vite'
+  import react from '@vitejs/plugin-react'
+  import { resolve } from 'path'
+
+  export default defineConfig({
+    plugins: [react()],
+    build: {
+      rollupOptions: {
+        input: {
+          main: resolve(__dirname, 'index.html'),
+          signup: resolve(__dirname, 'signup.html')
+        },
+        output: {
+          // Put signup bundle at root (not in nested dir)
+          entryFileNames: (chunkInfo) => {
+            return chunkInfo.name === 'signup'
+              ? 'assets/signup-[hash].js'
+              : 'assets/[name]-[hash].js'
+          }
+        }
+      }
+    }
+  })
+  ```
+
+- [ ] **2.11** Test local build
+  ```bash
+  cd dashboard
+  npm run build
+  # Verify dist/ contains both index.html and signup.html
+  # Verify assets/ contains signup-*.js bundle
+  ls -lh dist/
+  ls -lh dist/assets/signup-*
+  ```
 
 ### Phase 3: Frontend - Admin Dashboard (1-2 hours)
 
@@ -1251,6 +1845,171 @@ case 'leads_updated':
 - [ ] Database migration applied: `npx prisma migrate deploy`
 - [ ] Nginx routing updated (if needed)
 - [ ] SMS service placeholder noted for future integration
+
+---
+
+## 🚀 DEPLOYMENT GUIDE
+
+### **Local Development**
+
+```bash
+# 1. Start backend + dashboard in dev mode
+npm run dev
+
+# 2. In separate terminal, serve signup page
+cd dashboard
+npm run dev -- --open /signup.html
+
+# Or test both builds locally:
+npm run build
+npx vite preview
+# Visit: http://localhost:4173/signup.html
+```
+
+### **Production Deployment (Webhook-Based)**
+
+The Vite multi-page build outputs **TWO separate HTML files** that need different deployment paths:
+
+```bash
+# Build command (runs on production via webhook)
+cd dashboard && npm run build
+
+# Build outputs:
+dashboard/dist/
+├── index.html              → Deploy to /var/www/kimonokittens/dashboard/
+├── signup.html             → Deploy to /var/www/kimonokittens/signup.html ← ROOT!
+├── assets/
+│   ├── dashboard-*.js      → Deploy to /var/www/kimonokittens/dashboard/assets/
+│   └── signup-*.js         → Deploy to /var/www/kimonokittens/assets/ ← ROOT!
+└── fonts/
+    └── Horsemen.woff2      → Deploy to /var/www/kimonokittens/fonts/
+```
+
+**CRITICAL**: Signup files go to `/var/www/kimonokittens/` (root), NOT `dashboard/` subdirectory!
+
+### **Update Webhook Deployment Script**
+
+Modify `deployment/scripts/webhook_puma_server.rb` frontend deployment section:
+
+```ruby
+def deploy_frontend
+  log "Building frontend..."
+  run_cmd "cd #{DEPLOY_DIR}/dashboard && npm ci"
+  run_cmd "cd #{DEPLOY_DIR}/dashboard && npx vite build"
+
+  log "Deploying dashboard to nginx..."
+  run_cmd "sudo rsync -av --delete #{DEPLOY_DIR}/dashboard/dist/ /var/www/kimonokittens/dashboard/", \
+    exclude_signup: true
+
+  log "Deploying signup to nginx root..."
+  # Deploy signup.html to root (not dashboard subdirectory)
+  run_cmd "sudo cp #{DEPLOY_DIR}/dashboard/dist/signup.html /var/www/kimonokittens/"
+  run_cmd "sudo mkdir -p /var/www/kimonokittens/assets"
+  run_cmd "sudo cp #{DEPLOY_DIR}/dashboard/dist/assets/signup-*.js /var/www/kimonokittens/assets/"
+  run_cmd "sudo cp #{DEPLOY_DIR}/dashboard/dist/assets/signup-*.css /var/www/kimonokittens/assets/"
+
+  # Deploy fonts
+  run_cmd "sudo mkdir -p /var/www/kimonokittens/fonts"
+  run_cmd "sudo cp #{DEPLOY_DIR}/dashboard/dist/fonts/* /var/www/kimonokittens/fonts/ 2>/dev/null || true"
+
+  log "✅ Frontend deployed"
+  restart_kiosk
+end
+```
+
+**OR** use symlinks for cleaner rsync (simpler approach):
+
+```bash
+# In webhook deploy script:
+cd /home/kimonokittens/Projects/kimonokittens/dashboard
+npm ci
+npx vite build
+
+# Rsync everything to root (signup.html at root)
+sudo rsync -av --delete dist/ /var/www/kimonokittens/
+
+# Dashboard index.html symlink
+sudo ln -sf /var/www/kimonokittens/index.html /var/www/kimonokittens/dashboard/index.html
+```
+
+### **Verify Deployment**
+
+```bash
+# SSH to production
+ssh pop
+
+# Check file structure
+ls -lh /var/www/kimonokittens/
+# Should show:
+# - index.html (homepage)
+# - signup.html (signup form)
+# - logo.png
+# - assets/ (JS/CSS bundles)
+# - fonts/ (Horsemen.woff2)
+# - dashboard/ (dashboard SPA)
+
+# Test signup page loads
+curl -I https://kimonokittens.com/meow
+# Should return 200 OK
+
+# Test assets load
+curl -I https://kimonokittens.com/assets/signup-*.js
+# Should return 200 OK
+```
+
+### **Environment Variables (Production)**
+
+Add to `/home/kimonokittens/.env`:
+
+```bash
+# Cloudflare Turnstile
+VITE_TURNSTILE_SITE_KEY=0x4AAAAAAA... # Get from Cloudflare dashboard
+TURNSTILE_SECRET_KEY=0x4AAAAAAA...   # Backend verification
+
+# SMS service (placeholder for now)
+SMS_SERVICE_API_KEY=placeholder
+SMS_RECIPIENT=+46701234567 # Fredrik's phone
+```
+
+### **Cloudflare Turnstile Setup**
+
+1. **Create Turnstile site** at https://dash.cloudflare.com/
+2. **Domain**: `kimonokittens.com`
+3. **Widget type**: Invisible
+4. **Copy site key** → `.env` as `VITE_TURNSTILE_SITE_KEY`
+5. **Copy secret key** → `.env` as `TURNSTILE_SECRET_KEY`
+
+### **Database Migration**
+
+```bash
+# SSH to production
+ssh pop
+
+# Run as kimonokittens user
+cd /home/kimonokittens/Projects/kimonokittens
+
+# Apply migration
+npx prisma migrate deploy
+
+# Verify
+npx prisma studio
+# Check TenantLead model exists
+```
+
+### **Testing Checklist**
+
+- [ ] **Homepage loads**: `https://kimonokittens.com/` → shows logo + Swish QR
+- [ ] **Signup loads**: `https://kimonokittens.com/meow` → shows form
+- [ ] **Signup redirects work**: `/curious`, `/signup`, `/ansok` → all show form
+- [ ] **Assets load**: Check browser console for 404s
+- [ ] **Font loads**: "INTRESSEANMÄLAN" heading shows Horsemen font
+- [ ] **Gradient blobs animate**: Background shows purple blobs moving
+- [ ] **Form submits**: Fill out form → submit → success modal appears
+- [ ] **CAPTCHA works**: No CAPTCHA error on submission
+- [ ] **Rate limiting works**: Try 3 submissions from same IP → third one blocked
+- [ ] **Admin dashboard shows lead**: Refresh dashboard → new lead appears
+- [ ] **WebSocket updates admin**: Submit form → dashboard updates without refresh
+- [ ] **SMS sent**: Check Fredrik's phone for notification (if SMS service integrated)
 
 ---
 
