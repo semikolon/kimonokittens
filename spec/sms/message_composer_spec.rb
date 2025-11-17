@@ -8,27 +8,8 @@ RSpec.describe MessageComposer do
   let(:recipient_phone) { '0736536035' }
   let(:reference) { 'KK202511Sannacmhqe9enc' }
 
-  # Mock OpenAI client to avoid actual API calls
-  let(:mock_openai_client) { instance_double(OpenAI::Client) }
-  let(:mock_response) do
-    {
-      'choices' => [
-        {
-          'message' => {
-            'content' => 'Hyran behöver betalas in idag.'
-          }
-        }
-      ]
-    }
-  end
-
-  before do
-    allow(OpenAI::Client).to receive(:new).and_return(mock_openai_client)
-    allow(mock_openai_client).to receive(:chat).and_return(mock_response)
-  end
-
   describe '.compose' do
-    it 'generates heads-up reminder (gentle tone)' do
+    it 'generates heads-up reminder with "innan 27 nov" template' do
       message = described_class.compose(
         tenant_name: tenant_name,
         amount: amount,
@@ -38,19 +19,11 @@ RSpec.describe MessageComposer do
         tone: :heads_up
       )
 
-      # LLM-generated context line
-      expect(message).to include('Hyran behöver betalas')
-
-      # Payment info block
-      expect(message).to include('Hyra november 2025: 7,046 kr')
-      expect(message).to include('Swishas till: 0736536035')
-      expect(message).to include('Referens: KK202511Sannacmhqe9enc')
-
-      # No signature (automated system)
-      expect(message).not_to include('/Fredrik')
+      # Dashboard-style single-line format
+      expect(message).to eq('Hyran för november 2025 ska betalas innan 27 nov • 7,046 kr swishas till 0736536035')
     end
 
-    it 'generates first reminder (payday tone)' do
+    it 'generates first reminder with "innan 27 nov" template' do
       message = described_class.compose(
         tenant_name: tenant_name,
         amount: amount,
@@ -60,13 +33,11 @@ RSpec.describe MessageComposer do
         tone: :first_reminder
       )
 
-      expect(message).to include('november 2025')
-      expect(message).to include('7,046 kr')
-      expect(message).to include('Swishas till:')
-      expect(message).to include('Referens:')
+      # Same format as heads_up
+      expect(message).to eq('Hyran för november 2025 ska betalas innan 27 nov • 7,046 kr swishas till 0736536035')
     end
 
-    it 'generates urgent reminder (deadline today)' do
+    it 'generates urgent reminder with "idag" template' do
       message = described_class.compose(
         tenant_name: tenant_name,
         amount: amount,
@@ -76,13 +47,10 @@ RSpec.describe MessageComposer do
         tone: :urgent
       )
 
-      expect(message).to include('november 2025')
-      expect(message).to include('7,046 kr')
-      expect(message).to include(recipient_phone)
-      expect(message).to include(reference)
+      expect(message).to eq('Hyran för november 2025 ska betalas idag • 7,046 kr swishas till 0736536035')
     end
 
-    it 'generates overdue reminder (past deadline)' do
+    it 'generates overdue reminder with "är försenad" template' do
       message = described_class.compose(
         tenant_name: tenant_name,
         amount: amount,
@@ -92,29 +60,7 @@ RSpec.describe MessageComposer do
         tone: :overdue
       )
 
-      expect(message).to include('november 2025')
-      expect(message).to include('7,046 kr')
-      expect(message).to include(recipient_phone)
-      expect(message).to include(reference)
-    end
-
-    it 'uses only first name for LLM generation' do
-      expect(mock_openai_client).to receive(:chat) do |params|
-        prompt = params[:parameters][:messages][0][:content]
-        expect(prompt).to include('Tenant: Sanna')
-        expect(prompt).not_to include('Juni')
-        expect(prompt).not_to include('Benemar')
-        mock_response
-      end
-
-      described_class.compose(
-        tenant_name: 'Sanna Juni Benemar',
-        amount: amount,
-        month: month,
-        recipient_phone: recipient_phone,
-        reference: reference,
-        tone: :heads_up
-      )
+      expect(message).to eq('Hyran för november 2025 är försenad • 7,046 kr swishas till 0736536035')
     end
 
     it 'rounds decimal amounts to integer' do
@@ -179,9 +125,7 @@ RSpec.describe MessageComposer do
       }.to raise_error(ArgumentError, /Invalid tone: invalid_tone/)
     end
 
-    it 'uses fallback when OpenAI API fails' do
-      allow(mock_openai_client).to receive(:chat).and_raise(StandardError.new('API error'))
-
+    it 'uses bullet separator between context and payment' do
       message = described_class.compose(
         tenant_name: tenant_name,
         amount: amount,
@@ -191,30 +135,10 @@ RSpec.describe MessageComposer do
         tone: :urgent
       )
 
-      # Should use fallback template
-      expect(message).to include('Hyran behöver betalas in idag.')
-      expect(message).to include('november 2025')
-      expect(message).to include(recipient_phone)
+      expect(message).to include(' • ')  # Bullet point separator
     end
 
-    it 'calls OpenAI with correct tone descriptions' do
-      expect(mock_openai_client).to receive(:chat) do |params|
-        prompt = params[:parameters][:messages][0][:content]
-        expect(prompt).to include('Early gentle reminder')
-        mock_response
-      end
-
-      described_class.compose(
-        tenant_name: tenant_name,
-        amount: amount,
-        month: month,
-        recipient_phone: recipient_phone,
-        reference: reference,
-        tone: :heads_up
-      )
-    end
-
-    it 'message structure is context line + blank line + payment block' do
+    it 'uses lowercase "swishas till" (not capitalized)' do
       message = described_class.compose(
         tenant_name: tenant_name,
         amount: amount,
@@ -224,10 +148,22 @@ RSpec.describe MessageComposer do
         tone: :urgent
       )
 
-      lines = message.split("\n")
-      expect(lines[0]).to match(/^[A-ZÅÄÖ]/)  # Starts with capital (context line)
-      expect(lines[1]).to eq('')  # Blank line
-      expect(lines[2]).to match(/^Hyra /)  # Payment block starts
+      expect(message).to include('swishas till')
+      expect(message).not_to include('Swishas till')
+    end
+
+    it 'does not include reference code in message' do
+      message = described_class.compose(
+        tenant_name: tenant_name,
+        amount: amount,
+        month: month,
+        recipient_phone: recipient_phone,
+        reference: reference,
+        tone: :urgent
+      )
+
+      expect(message).not_to include('KK202511')
+      expect(message).not_to include('Referens')
     end
   end
 
@@ -248,19 +184,19 @@ RSpec.describe MessageComposer do
     end
   end
 
-  describe '.fallback_context' do
-    it 'provides minimal fallback templates for all 4 tones' do
-      expect(described_class.send(:fallback_context, 'november 2025', :heads_up))
-        .to eq('Hyran för november behöver betalas senast 27:e.')
+  describe '.simple_context' do
+    it 'provides dashboard-style templates for all 4 tones' do
+      expect(described_class.send(:simple_context, 'november 2025', :heads_up))
+        .to eq('Hyran för november 2025 ska betalas innan 27 nov')
 
-      expect(described_class.send(:fallback_context, 'november 2025', :first_reminder))
-        .to eq('Påminnelse: hyran behöver betalas senast 27:e.')
+      expect(described_class.send(:simple_context, 'november 2025', :first_reminder))
+        .to eq('Hyran för november 2025 ska betalas innan 27 nov')
 
-      expect(described_class.send(:fallback_context, 'november 2025', :urgent))
-        .to eq('Hyran behöver betalas in idag.')
+      expect(described_class.send(:simple_context, 'november 2025', :urgent))
+        .to eq('Hyran för november 2025 ska betalas idag')
 
-      expect(described_class.send(:fallback_context, 'november 2025', :overdue))
-        .to eq('Hyran är försenad.')
+      expect(described_class.send(:simple_context, 'november 2025', :overdue))
+        .to eq('Hyran för november 2025 är försenad')
     end
   end
 end
