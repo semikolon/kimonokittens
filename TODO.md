@@ -31,6 +31,7 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 3. **Contract Replacement Workflow** - Delete+Re-sign not yet implemented
 4. **Tenant Signup Form** - Backend handler missing (frontend HTML needed)
 5. **Heatpump Peak Avoidance** - Requires Pi Node-RED config (separate infrastructure)
+6. **Horsemen Font** - Extract from PopOS system fonts (`find /usr/share/fonts -iname "*horsemen*"`), add @font-face to signup.html
 
 **Impact:** Documentation was significantly outdated. 6 major features marked "planned" were actually shipped months ago.
 
