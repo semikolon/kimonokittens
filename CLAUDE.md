@@ -814,6 +814,18 @@ sudo systemctl restart kimonokittens-dashboard
 - **pdf-reader removed** - Scrapers use Ferrum browser automation, not PDF parsing (Oct 25, 2025)
 - **No database changes via webhook** - Migrations are manual (run `production_migration.rb`)
 
+### Verification Commands
+```bash
+# Database connectivity
+ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.get_tenants.length"
+
+# API health
+curl http://localhost:3001/api/rent/friendly_message
+
+# WebSocket (check browser console)
+ws://localhost:3001
+```
+
 ---
 
 **CRITICAL: Read this file completely before working on rent calculations or database operations.**
@@ -1055,46 +1067,34 @@ npm run dev:logs     # Attach to live process logs
 
 ---
 
-## Frontend Animation Patterns
+## Frontend Development Patterns
 
-### Stable Identity Keys Prevent False Animations
-Use **stable, unchanging identifiers** for list items to prevent re-renders when data updates:
+### Animation Implementation
 
+**Stable identity keys** - Use unchanging identifiers for list items to prevent false re-renders:
 ```typescript
-// Good: Use original departure time (doesn't change when delays update)
+// ✅ Good: Use original departure time (doesn't change when delays update)
 const id = `${departure_time}-${line_number}-${destination}`
 
-// Bad: Using adjusted time would change ID when delays update
-const id = `${adjusted_time}-${line_number}-${destination}` // ❌ Triggers false animations
+// ❌ Bad: Adjusted time changes ID on every delay update
+const id = `${adjusted_time}-${line_number}-${destination}`
 ```
 
-### CSS Animation Gotchas
-**Hard-won lessons** (`dashboard/src/components/TrainWidget.tsx`):
-- **`background` shorthand resets all** → Use `background-image` when composing with `background-clip: text`
-- **Animations snap back by default** → Always add `animation-fill-mode: forwards` to prevent flash
-- **Interval = duration = race condition** → Add gap (e.g., 4s animation + 8s interval, not 4s + 4s)
-- **Gradient transparency bugs** → Use `background-repeat: repeat-x` to tile infinitely
+**CSS animation gotchas** (`TrainWidget.tsx` hard-won lessons):
+- `background` shorthand resets all → Use `background-image` when composing with `background-clip: text`
+- Animations snap back by default → Always add `animation-fill-mode: forwards`
+- Interval = duration = race condition → Add gap (e.g., 4s animation + 8s interval)
+- Gradient transparency bugs → Use `background-repeat: repeat-x` to tile infinitely
 
-### Performance Best Practices
-- **GPU acceleration**: Use `transform` and `opacity` (not `left`/`top`) for 60fps
-- **Accessibility**: Respect `prefers-reduced-motion` media query
-- **Memory**: Clean up animation states and timeouts in useEffect cleanup
+**Performance**: Use `transform`/`opacity` (not `left`/`top`) for GPU acceleration, respect `prefers-reduced-motion`, clean up animation states in useEffect cleanup.
 
-## Frontend Form Editing Patterns
+### Form Editing Patterns
 
-**Principle**: Inline forms for editing existing values; modal dialogs for auth/confirmations/wizards.
+**Inline forms** (faster, maintains context) - Text/date edits in expanded detail views, multi-field sequences with tab navigation. Pattern: Button → input + Save/Cancel inline. See `TenantDetails.tsx`.
 
-**Inline forms** (faster, maintains context):
-- Text/date field edits in expanded detail views
-- Multi-field sequences (tab navigation)
-- Pattern: Button → input + Save/Cancel inline
-- See: `TenantDetails.tsx` departure date, contact fields
+**Modal dialogs** (demands attention) - Authentication gates, destructive actions, multi-step flows, creating new entities. See `AdminAuthContext.tsx` PIN gate, `ContractDetails.tsx` cancel confirmation.
 
-**Modal dialogs** (demands attention):
-- Authentication gates, destructive actions, multi-step flows, creating new entities
-- See: `AdminAuthContext.tsx` PIN gate, `ContractDetails.tsx` cancel confirmation
-
-**Decision**: User already editing? Inline. Needs isolation/confirmation? Modal.
+**Decision guide**: User already editing → inline. Needs isolation/confirmation → modal.
 
 ---
 
@@ -1585,25 +1585,6 @@ Repository `.all()` method was using `.select()` but **missing fields**:
 
 ---
 
-## Production Deployment Reference
-
-**Status**: ✅ Dell Optiplex deployed Oct 6, 2025 - `kimonokittens_production` database operational
-
-**Deployment docs**: See `DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md` for complete hardware setup and `deployment/` folder for automation scripts.
-
-**Verification commands**:
-```bash
-# Database connectivity
-ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.get_tenants.length"
-
-# API health
-curl http://localhost:3001/api/rent/friendly_message
-
-# WebSocket (check browser console)
-ws://localhost:3001
-```
-
----
 
 ## 💸 SWISH PAYMENT INTEGRATION
 
