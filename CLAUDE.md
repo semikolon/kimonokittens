@@ -1317,35 +1317,13 @@ The kimonokittens project uses a **smart webhook system** with Puma architecture
 
 ### Deployment Scenarios
 
-#### **Scenario A: Frontend Development**
-```
-You edit: dashboard/src/components/Widget.tsx
-Webhook: Detects frontend change → npm run build → deploy to nginx → refresh kiosk
-Result: New UI appears on kiosk, backend keeps running
-```
+**Frontend only** (`dashboard/`) → npm run build → rsync to nginx → kiosk refresh (backend stays running)
 
-#### **Scenario B: Backend Development**
-```
-You edit: handlers/rent_calculator_handler.rb
-Webhook: Detects backend change → git pull → bundle install → restart service
-Result: New API behavior, frontend stays cached
-```
+**Backend only** (`.rb`, `Gemfile`) → git pull → bundle install → restart service (frontend stays cached)
 
-#### **Scenario C: Documentation**
-```
-You edit: README.md, docs/architecture.md
-Webhook: No relevant changes detected → "No deployment needed"
-Result: Zero disruption, zero resources wasted
-```
+**Docs only** (`README.md`, `docs/`) → No deployment (zero disruption)
 
-#### **Scenario D: Rapid Development (Debouncing)**
-```
-10:01 - Push typo fix → "Deployment queued (2min debounce)"
-10:02 - Push another fix → "Previous cancelled, new deployment queued"
-10:03 - Push final fix → "Previous cancelled, new deployment queued"
-10:05 - Timer fires → Deploys latest code only (all 3 fixes included)
-Result: One deployment with all changes, not three separate deployments
-```
+**Rapid pushes** → 2-min debounce cancels previous timer, always deploys latest code (one deployment with all changes)
 
 ### Webhook Endpoints
 
@@ -1376,27 +1354,15 @@ journalctl -u kimonokittens-webhook --since "5 minutes ago" | grep "Backend chan
 - `kimonokittens-dashboard`: Auto-reloads via USR1 signal ✅
 - `kimonokittens-webhook`: **Manual restart required** ⚠️
 
-### ⚠️ CRITICAL: Ruby Logger Buffering Mystery
+### ⚠️ CRITICAL: Ruby Logger Buffering
 
-**The deployment logs would appear to "stop" after rsync, but execution continued successfully.**
+**Problem**: Deployment logs appeared to "stop" after rsync, but execution actually continued (logs buffered 60+ seconds).
 
-**What happened (Oct 2-3, 2025 debugging marathon):**
-- Logs showed deployment starting, git pull, npm ci, vite build, rsync output
-- Then **complete silence** - no "✅ Frontend files deployed", no completion message
-- Looked like the thread died after rsync
-- Actually: **logs were buffered for 60 seconds** before appearing in journald
+**Root cause**: Ruby `Logger.new(STDOUT)` buffers output. rsync output fills buffer → flush, then subsequent logs sit buffered.
 
-**Root cause:** Ruby `Logger.new(STDOUT)` buffers output. rsync generates lots of output (filling buffer → flush), then subsequent log lines sit in buffer until it fills again or something forces flush.
+**Fix** (commit `4a458ca`): `$stdout.sync = true` forces immediate flush.
 
-**Fix applied (commit `4a458ca`):**
-```ruby
-$stdout.sync = true
-$stderr.sync = true
-```
-
-**Now logs appear instantly** - no more phantom "deployment hangs" that were actually just buffered logs.
-
-**Never debug without checking wider time windows** - if logs "stop", check if they appear 30-120 seconds later.
+**Debugging lesson**: If logs "stop", check wider time windows (30-120s later) before assuming hang.
 
 ### Monitoring Deployments
 
