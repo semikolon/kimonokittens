@@ -896,18 +896,15 @@ end
 - Must interpret day-of-month (25-31 vs 1-10) to determine consumption period
 - See `deployment/historical_config_migration.rb` for implementation
 
-**Quarterly Bill Savings System**:
-- **Monthly utilities**: 375 + 300 + 150 = **825 kr/month**
-- **Purpose**: Internal "savings account" for quarterly building costs
-- **Quarterly invoice**: ~2,600 kr (property tax, maintenance, building utilities)
-- **Logic**: 825 kr × 3 months = 2,475 kr ≈ quarterly invoice amount
-- **When quarterly arrives**: Replaces monthly utilities for that month
-
-**Alarm System (Larm)**: Verisure pre-installed system in building, mandatory cost, cannot be removed. Household doesn't use it, but equipment remains installed. Initially separate billing (597 kr/quarter early 2023), now consolidated into Bostadsagenturen quarterly invoice.
+**Virtual Pot System** (Nov 2025):
+- **Monthly accruals**: 754 kr building + 83 kr gas = **837 kr/month** (every month)
+- **Quarterly invoices**: Logged for audit/transparency only, **never used in calculations**
+- **No rent spikes**: Fixed monthly accruals replace old "lump sum when invoice arrives" approach
+- **Over-collection buffer**: 8.6-10.8% cushion absorbs future cost growth (exhausts ~2026)
+- **Auto-projection**: Missing quarters filled with growth-adjusted estimates (8.7% YoY, base 2,787 kr)
 
 **Example:** September 27 payment covers:
-- October base rent (advance) + October utilities (savings) + September electricity (arrears)
-- OR October base rent (advance) + Q4 quarterly invoice (if it arrives) + September electricity (arrears)
+- October base rent (advance) + October accruals (837 kr fixed) + September electricity (arrears)
 
 ## Database Safety Rules ⚠️
 
@@ -924,8 +921,14 @@ end
 
 ### Database Configuration Keys
 - **`el`**: Electricity cost (most frequently updated)
-- **`drift_rakning`**: Quarterly invoice (replaces monthly fees when present)
-- **Monthly fees**: `vattenavgift` + `va` + `larm` (used when no quarterly invoice)
+- **`drift_rakning`**: Quarterly invoice (logged for audit only, **not used in calculations**)
+- **Monthly accruals**: Always 837 kr (754 building + 83 gas), regardless of quarterly invoices
+
+### Debugging Structural Issues
+When rent calculations seem wrong, check these patterns:
+- **Config timing**: Verify `period` month = rent display month - 1 (Sept config → Oct rent)
+- **Test contamination**: Production DB has unexpected `drift_rakning` values from specs
+- **Message indicator**: API shows "uppskattade elkostnader" = projection mode (bills not arrived yet)
 
 ## Testing Best Practices 🧪
 
@@ -964,17 +967,10 @@ bundle exec rspec
 
 **See**: `docs/TESTING_GUIDE.md` for complete patterns, setup, and troubleshooting
 
-## Documentation Locations
-
-### Already Documented:
-- **`rent.rb:12-17`**: Payment structure comments
-- **`DEVELOPMENT.md:84-94`**: Electricity bill handling timeline
-- **`RENT_DATA_SOURCE_TRANSPARENCY.md`**: Data source indicators
-
-### Why This Wasn't Clear:
-1. **Scattered documentation** across multiple files
-2. **No central project-specific instructions** (this file fixes that)
-3. **Timing logic buried in code comments** rather than prominent docs
+**Related documentation**:
+- `rent.rb:12-17` - Payment structure comments (advance/arrears)
+- `DEVELOPMENT.md:84-94` - Electricity bill handling timeline
+- `RENT_DATA_SOURCE_TRANSPARENCY.md` - Data source indicators
 
 ## Quick Reference Commands
 
@@ -1006,19 +1002,6 @@ curl -s http://localhost:3001/data/temperature | jq '{temp: .supplyline_temperat
 4. **Restart processes**: `npm run dev:restart` to ensure fresh backend
 5. **Verify results**: Test API and check dashboard
 6. **Clean up**: Remove any test data from production DB
-
-## Expected Behavior
-
-### Correct October 2025 Rent:
-- **Individual rent**: 7,045 kr per person
-- **Total apartment**: 28,179 kr
-- **Data source**: "Baserad på aktuella elräkningar"
-- **Electricity**: 2,424 kr total (Fortum 792 + Vattenfall 1632)
-
-### Red Flags:
-- **7,492 kr**: Usually indicates quarterly invoice contamination
-- **7,286 kr**: Usually indicates historical/default data instead of actual bills
-- **"Baserad på uppskattade elkostnader"**: Projection mode, not actual bills
 
 ## Development Workflow
 
