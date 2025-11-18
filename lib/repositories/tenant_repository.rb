@@ -152,6 +152,9 @@ class TenantRepository < BaseRepository
     existing = dataset.where(id: tenant.id).first
     raise ArgumentError, "Tenant not found: #{tenant.id}" unless existing
 
+    # Auto-generate phoneE164 from phone field for consistency
+    phone_e164 = normalize_phone_to_e164(tenant.phone)
+
     rows_affected = dataset.where(id: tenant.id).update(
       name: tenant.name,
       email: tenant.email,
@@ -166,6 +169,7 @@ class TenantRepository < BaseRepository
       # Contract fields
       personnummer: tenant.personnummer,
       phone: tenant.phone,
+      phoneE164: phone_e164,  # Auto-synced from phone
       deposit: tenant.deposit,
       furnishingDeposit: tenant.furnishing_deposit,
       # SMS reminder fields
@@ -242,6 +246,45 @@ class TenantRepository < BaseRepository
 
   def normalize_personnummer(value)
     value.to_s.gsub(/\D/, '')
+  end
+
+  # Normalize phone number to E.164 format for SMS delivery
+  # @param phone [String, nil] Phone number in any format
+  # @return [String, nil] E.164 formatted phone (+467XXXXXXXX) or nil
+  #
+  # Handles Swedish phone numbers:
+  # - "07XXXXXXXX" → "+467XXXXXXXX"
+  # - "+46 7XX XX XX XX" → "+467XXXXXXXX" (strips spaces)
+  # - "073-976 44 79" → "+46739764479" (strips dashes and spaces)
+  #
+  # Returns nil for:
+  # - Empty/nil input
+  # - Invalid formats (non-Swedish, wrong length, etc.)
+  def normalize_phone_to_e164(phone)
+    return nil if phone.nil? || phone.to_s.strip.empty?
+
+    # Strip all non-digit characters except leading +
+    cleaned = phone.to_s.strip
+    has_plus = cleaned.start_with?('+')
+    digits = cleaned.gsub(/\D/, '')
+
+    # Swedish mobile starting with 07 (without country code)
+    if digits =~ /^07\d{8}$/
+      return "+46#{digits[1..-1]}"
+    end
+
+    # Already in E.164 format: +467XXXXXXXX (with country code)
+    if has_plus && digits =~ /^467\d{8}$/
+      return "+#{digits}"
+    end
+
+    # Country code without +: 467XXXXXXXX
+    if digits =~ /^467\d{8}$/
+      return "+#{digits}"
+    end
+
+    # Invalid format - return nil (don't guess)
+    nil
   end
 
   # Convert domain object to database hash
