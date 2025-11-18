@@ -832,20 +832,12 @@ ws://localhost:3001
 
 ## Rent Calculation Timing Quirks ⚠️
 
-### The Core Confusion: September Config → October Rent
-**The dashboard calls for current month config but shows NEXT month's rent.**
+**Critical**: Dashboard requests current month config but shows NEXT month's rent. Config month = rent month - 1 (Sept config → Oct rent). Rent paid in advance, electricity in arrears.
 
-- **Today: September 27, 2025**
-- **Dashboard requests: September 2025 config** (`/api/rent/friendly_message` with no params)
-- **Actually shows: October 2025 rent** ("Hyran för oktober 2025 ska betalas innan 27 sep")
-
-**WHY:** Rent is paid **in advance** for the upcoming month, but operational costs (electricity) are paid **in arrears** for the previous month.
-
-### Database Period Logic
+**Database logic:**
 ```ruby
-# To show October 2025 rent on September 27:
-db.set_config('el', 2424, Time.new(2025, 9, 1))  # September period
-# NOT: Time.new(2025, 10, 1)  # This would be wrong!
+# October 2025 rent → September config
+db.set_config('el', 2424, Time.new(2025, 9, 1))  # September period, NOT October!
 ```
 
 ### Payment Structure & Quarterly Savings Mechanism
@@ -869,44 +861,23 @@ db.set_config('el', 2424, Time.new(2025, 9, 1))  # September period
 
 ### Electricity Bill Due Date Timing ⚡
 
-**CRITICAL: Bills have variable due dates that determine WHICH CONFIG PERIOD uses them.**
+**Key question:** When did the bill ARRIVE and become available for rent calculation?
 
-The key question is: **When did the bill ARRIVE and become available for rent calculation?**
+**Due date determines config period:**
+- **Day 25-31**: Config = due month (bill arrived same month)
+- **Day 1-10**: Config = due month - 1 (bill arrived previous month)
 
-**Two patterns based on due date day:**
+**Example (August 2025 consumption):**
+- Bills arrive mid-Sept → Vattenfall due Sept 30 (day 30) + Fortum due Oct 1 (day 1)
+- Both use **Sept config** → October rent
+- Flow: Aug consumption → Sept bills arrive → Sept config → Oct rent
 
-1. **End-of-month bills** (day 25-31):
-   - Due: Sept 30 → Bill arrived **September** → **Config period: September**
-   - Example: Due July 31 → arrived July → July config → August rent
-
-2. **Start-of-month bills** (day 1-10):
-   - Due: Oct 1 → Bill arrived **September** (late Sept) → **Config period: September**
-   - Example: Due Aug 1 → arrived July → July config → August rent
-
-**Concrete example: August 2025 consumption**
-- Bills arrive mid-September
-- **Vattenfall** due Sept 30 (day 30): Config = **Sept** (due month)
-- **Fortum** due Oct 1 (day 1): Config = **Sept** (due month - 1)
-- Both bills total 2424 kr in **September config** → Used for **October rent**
-
-**The rule (for migration scripts):**
+**Migration script rule:**
 ```ruby
-if due_day >= 25
-  config_month = due_month        # Bill arrived same month as due
-else
-  config_month = due_month - 1    # Bill arrived month before due
-end
+config_month = (due_day >= 25) ? due_month : due_month - 1
 ```
 
-**Why this matters:**
-- **Don't think "consumption month"** - think "when did bill arrive?"
-- **Config period** = month when bills became available
-- **Complete flow**: Aug consumption → Sept bills arrive → Sept config → Oct rent
-
-**Historical data files:**
-- `electricity_bills_history.txt` contains actual due dates
-- Must interpret day-of-month (25-31 vs 1-10) to determine consumption period
-- See `deployment/historical_config_migration.rb` for implementation
+**Historical data:** `electricity_bills_history.txt` + `deployment/historical_config_migration.rb`
 
 **Virtual Pot System** (Nov 2025):
 - **Monthly accruals**: 754 kr building + 83 kr gas = **837 kr/month** (every month)
@@ -1067,34 +1038,41 @@ npm run dev:logs     # Attach to live process logs
 
 ---
 
-## Frontend Development Patterns
+## Frontend Development
 
-### Animation Implementation
+### Environment & Workflow
 
-**Stable identity keys** - Use unchanging identifiers for list items to prevent false re-renders:
-```typescript
-// ✅ Good: Use original departure time (doesn't change when delays update)
-const id = `${departure_time}-${line_number}-${destination}`
-
-// ❌ Bad: Adjusted time changes ID on every delay update
-const id = `${adjusted_time}-${line_number}-${destination}`
+**SSH port forwarding** (Mac → Linux dev machine):
+```bash
+# ~/.ssh/config on Mac
+Host kimonokittens
+  HostName <linux-ip>
+  User fredrik
+  LocalForward 5175 localhost:5175  # Vite dev server
+  LocalForward 3001 localhost:3001  # Ruby backend API
 ```
 
-**CSS animation gotchas** (`TrainWidget.tsx` hard-won lessons):
-- `background` shorthand resets all → Use `background-image` when composing with `background-clip: text`
-- Animations snap back by default → Always add `animation-fill-mode: forwards`
-- Interval = duration = race condition → Add gap (e.g., 4s animation + 8s interval)
-- Gradient transparency bugs → Use `background-repeat: repeat-x` to tile infinitely
+**Development loop:**
+1. SSH with forwarding: `ssh kimonokittens`
+2. Start dev servers: `cd ~/Projects/kimonokittens && bin/dev start`
+3. Open browser on Mac: `http://localhost:5175`
+4. Edit code → Vite HMR auto-reloads → push → webhook deploys to production
 
-**Performance**: Use `transform`/`opacity` (not `left`/`top`) for GPU acceleration, respect `prefers-reduced-motion`, clean up animation states in useEffect cleanup.
+**Dependencies** (fredrik dev checkout): Ruby (rbenv), Bundle (`bundle install`), Node/npm (`npm install` in dashboard/)
 
-### Form Editing Patterns
+### Implementation Patterns
 
-**Inline forms** (faster, maintains context) - Text/date edits in expanded detail views, multi-field sequences with tab navigation. Pattern: Button → input + Save/Cancel inline. See `TenantDetails.tsx`.
+**Animation** - Stable identity keys prevent false re-renders:
+```typescript
+// ✅ Good: const id = `${departure_time}-${line_number}-${destination}`
+// ❌ Bad:  const id = `${adjusted_time}-${line_number}-${destination}` // Changes on delays
+```
 
-**Modal dialogs** (demands attention) - Authentication gates, destructive actions, multi-step flows, creating new entities. See `AdminAuthContext.tsx` PIN gate, `ContractDetails.tsx` cancel confirmation.
+**CSS gotchas** (`TrainWidget.tsx`): `background` shorthand resets all → use `background-image` with `background-clip: text`; add `animation-fill-mode: forwards`; interval ≠ duration (race condition); use `background-repeat: repeat-x` for gradients.
 
-**Decision guide**: User already editing → inline. Needs isolation/confirmation → modal.
+**Performance**: `transform`/`opacity` for GPU acceleration, respect `prefers-reduced-motion`, clean up in useEffect.
+
+**Forms** - Inline (text/date edits, maintains context) vs Modal (auth/destructive/multi-step, demands attention). Decision: Already editing → inline. Needs isolation → modal.
 
 ---
 
@@ -1217,40 +1195,6 @@ ssh pop -l kimonokittens
   - Deploy handbook publicly under domain
   - Sunset Pi Agoo server (keep Node-RED/MQTT)
 
-### Frontend Development Workflow
-
-**Problem**: Can't see frontend changes visually - display is downstairs, SSH session has no browser.
-
-**Solution**: SSH port forwarding from Mac (where user types) to Linux dev machine.
-
-**Setup** (one-time, user does this on Mac):
-```bash
-# ~/.ssh/config on Mac
-Host kimonokittens
-  HostName <linux-ip>
-  User fredrik
-  LocalForward 5175 localhost:5175  # Vite dev server
-  LocalForward 3001 localhost:3001  # Ruby backend API
-```
-
-**Workflow**:
-1. SSH from Mac with forwarding: `ssh kimonokittens` (or manual: `ssh -L 5175:localhost:5175 -L 3001:localhost:3001 fredrik@<ip>`)
-2. Start dev servers in Linux terminal: `cd ~/Projects/kimonokittens && bin/dev start`
-3. Open browser on Mac: `http://localhost:5175`
-4. Edit code in Claude Code (Linux side)
-5. Vite HMR auto-reloads browser on Mac
-6. Push changes when ready → webhook deploys to production
-
-**Dependencies** (in fredrik dev checkout):
-- Ruby: Via rbenv (same as kimonokittens user)
-- Bundle: `bundle install` in project root
-- Node/npm: `npm install` in dashboard/ subdirectory
-- Verify: `bin/dev status` should show clean state
-
-**Production Deployment**:
-- Push to GitHub → webhook auto-deploys → production kiosk updates
-- See 👤 SESSION CONTEXT & PERMISSIONS for complete workflow details
-
 ### Monitoring Production Kiosk Display 📸
 
 **Problem**: The production kiosk display is physically located in the hallway downstairs - not visible from SSH sessions.
@@ -1288,13 +1232,10 @@ curl -s http://localhost:3001/api/screenshot/latest > /tmp/dashboard.png
 
 ## 🔄 SMART WEBHOOK DEPLOYMENT SYSTEM
 
-### Overview: Modern Event-Driven Deployment
+**Smart change detection** + **2-min debounce** + **component-specific deployment** (Puma + Rack architecture)
 
-The kimonokittens project uses a **smart webhook system** with Puma architecture for automated deployments. The system analyzes changed files and only deploys what's necessary, with intelligent debouncing for rapid development workflows.
-
-**Status**: ✅ **WORKING** (Oct 2, 2025) - Core pipeline functional: git pull → npm ci --legacy-peer-deps → vite build → rsync deploy
-**Known Issue**: Kiosk reload trigger logs stop after rsync (deployment succeeds, reload uncertain)
-**Architecture**: Unified Puma + Rack across all services (dashboard port 3001, webhook port 49123)
+**Status**: ✅ **WORKING** (Oct 2, 2025) - Core pipeline: git pull → npm ci → vite build → rsync deploy
+**Architecture**: Unified Puma + Rack (dashboard port 3001, webhook port 49123)
 
 ### Key Features
 
@@ -1314,16 +1255,6 @@ The kimonokittens project uses a **smart webhook system** with Puma architecture
 - **Webhook never touches database** - deployments are code-only
 - **Schema migrations are manual** - run `npx prisma migrate deploy` deliberately in production
 - **Zero database risk** from automated code deployments
-
-### Deployment Scenarios
-
-**Frontend only** (`dashboard/`) → npm run build → rsync to nginx → kiosk refresh (backend stays running)
-
-**Backend only** (`.rb`, `Gemfile`) → git pull → bundle install → restart service (frontend stays cached)
-
-**Docs only** (`README.md`, `docs/`) → No deployment (zero disruption)
-
-**Rapid pushes** → 2-min debounce cancels previous timer, always deploys latest code (one deployment with all changes)
 
 ### Webhook Endpoints
 
