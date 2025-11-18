@@ -14,6 +14,8 @@
 
 **Core principle**: Never risk repeating the same costly mistakes. Document hard-won lessons concisely so future developers avoid the same pitfalls.
 
+**Documentation editing principle**: Focus on **filler reduction** and **structural consolidation** while preserving **100% of operational/troubleshooting value**. Condense verbose examples, eliminate redundant sections, merge scattered content - but never delete hard-won technical lessons or critical debugging knowledge.
+
 **Cross-machine development**: Machine-specific specs (hardware, OS versions, GPU flags) should be documented in **BOTH** the global `~/.claude/CLAUDE.md` (for other projects on that machine) **AND** the project `CLAUDE.md` (so Claude Code agents on other development machines know the production environment details). This enables effective debugging and deployment decisions from any development workstation.
 
 **Purpose**: Keep CLAUDE.md focused, actionable, and maintainable. Future developers should find critical operational knowledge quickly without wading through historical minutiae.
