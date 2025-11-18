@@ -1074,7 +1074,23 @@ Host kimonokittens
 
 **Performance**: `transform`/`opacity` for GPU acceleration, respect `prefers-reduced-motion`, clean up in useEffect.
 
-**Forms** - Inline (text/date edits, maintains context) vs Modal (auth/destructive/multi-step, demands attention). Decision: Already editing → inline. Needs isolation → modal.
+**Form Editing Patterns:**
+
+**Inline forms** (faster, maintains context):
+- Text/date field edits in expanded detail views
+- Multi-field sequences with tab navigation
+- Pattern: Button → input reveals inline + Save/Cancel buttons
+- Examples: `TenantDetails.tsx` departure date, contact fields
+- Use when: User already viewing/editing the entity
+
+**Modal dialogs** (demands attention, isolates action):
+- Authentication gates (PIN entry)
+- Destructive actions (delete confirmation)
+- Multi-step flows (wizards, onboarding)
+- Creating new entities (separate from existing data)
+- Examples: `AdminAuthContext.tsx` PIN gate, `ContractDetails.tsx` cancel confirmation
+
+**Decision guide**: User already editing an existing item → inline keeps flow. Need user focus/confirmation or creating something new → modal provides isolation.
 
 ---
 
