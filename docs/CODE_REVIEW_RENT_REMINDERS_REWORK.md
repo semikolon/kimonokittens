@@ -824,3 +824,117 @@ end
 **Implementation & Testing**: Claude Code (Sonnet 4.5)  
 **Bank Sync**: 396 real transactions synced  
 **Final Status**: ✅ Production ready with comprehensive test coverage
+
+---
+
+## 📝 Post-Implementation Simplification (Nov 18, 2025)
+
+### Final User Decision: Dashboard-Style Templates Over LLM
+
+After testing the LLM hybrid approach in production with real SMS sends, user feedback indicated messages were **"very repetitive and verbose"** despite LLM variation attempts.
+
+**User directive**: "Let's make it exactly as concise as this, just use this oneliner from the dashboard."
+
+### Simplified Implementation (Current Production Code)
+
+**Message format** (70-83 chars, single-line):
+```
+Hyran för november 2025 ska betalas innan 27 nov • 7,046 kr swishas till 0736536035
+```
+
+**Key changes from LLM hybrid approach:**
+1. **Removed LLM generation entirely** - Marked as DEPRECATED but kept in code for reference
+2. **Single-line format** - Context • Payment info (no multi-line block)
+3. **No reference code displayed** - User preference: "Leave out reference for now actually altogether"
+4. **Bullet separator (•)** - Visual separation instead of newlines
+5. **Lowercase "swishas till"** - Casual, friendly tone
+6. **Fixed templates only** - Deterministic, no API calls, zero variance
+
+### Implementation Details
+
+**New compose method** (`lib/sms/message_composer.rb:41-52`):
+```ruby
+def self.compose(tenant_name:, amount:, month:, recipient_phone:, reference:, tone:)
+  raise ArgumentError, "Invalid tone: #{tone}. Must be one of #{VALID_TONES}" unless VALID_TONES.include?(tone)
+
+  rounded_amount = amount.round
+  month_full = format_month_full(month)
+
+  # Simple context template based on tone
+  context = simple_context(month_full, tone)
+
+  # Dashboard-style format: Context • Amount kr swishas till Phone
+  "#{context} • #{format_amount(rounded_amount)} kr swishas till #{recipient_phone}"
+end
+```
+
+**Simple context templates** (`lib/sms/message_composer.rb:59-70`):
+```ruby
+def self.simple_context(month_full, tone)
+  case tone
+  when :heads_up, :first_reminder
+    "Hyran för #{month_full} ska betalas innan 27 nov"
+  when :urgent
+    "Hyran för #{month_full} ska betalas idag"
+  when :overdue
+    "Hyran för #{month_full} är försenad"
+  else
+    raise ArgumentError, "Unknown tone: #{tone}"
+  end
+end
+```
+
+### Rationale for Simplification
+
+1. **User preference validated** - Real SMS sends showed LLM variance felt repetitive, not helpful
+2. **Dashboard consistency** - Messages match exactly what dashboard displays
+3. **Zero API dependencies** - No OpenAI calls = no failures, no costs, instant generation
+4. **Cleaner appearance** - Single line more readable on phone screens
+5. **Easier testing** - Deterministic output, exact string matching in tests
+
+### Git History Preservation
+
+User explicitly requested: **"First I want the old way committed, so revert that most recent code change first, commit everything how it was, so we have that in our git history"**
+
+**Commits:**
+- `fee5122` - LLM hybrid approach (Nov 17, preserved in history)
+- `98f1ead` - Dashboard-style template simplification (Nov 18, current production)
+
+### Test Updates
+
+**Before** (LLM hybrid): Regex matching with fallback behavior tests
+**After** (Templates): Exact string matching, simpler test suite
+
+**Test results**: 13/13 passing (reduced from 14, removed LLM-specific test)
+
+**Example test** (`spec/sms/message_composer_spec.rb:12-24`):
+```ruby
+it 'generates heads-up reminder with "innan 27 nov" template' do
+  message = described_class.compose(
+    tenant_name: tenant_name,
+    amount: amount,
+    month: month,
+    recipient_phone: recipient_phone,
+    reference: reference,
+    tone: :heads_up
+  )
+
+  expect(message).to eq('Hyran för november 2025 ska betalas innan 27 nov • 7,046 kr swishas till 0736536035')
+end
+```
+
+### Production Impact
+
+- **Character count**: 70-83 chars (well under 160-char SMS limit)
+- **Message cost**: Same (single SMS part)
+- **Delivery**: Unchanged (46elks alphanumeric sender "Katten")
+- **Payment matching**: Unchanged (Tier 1: reference, Tier 2: phone, Tier 3: name+amount)
+- **Reference code**: Still generated but not displayed in SMS (available for future use)
+
+### Final Architecture Decision
+
+**Template-based messaging is the production standard.** LLM generation code preserved in codebase (marked DEPRECATED) for reference but not used. Future enhancements (e.g., personality customization) would reconsider LLM approach, but current simplicity prioritized.
+
+---
+**Last Updated**: Nov 18, 2025  
+**Implementation Status**: ✅ Production deployed with template-based messaging
