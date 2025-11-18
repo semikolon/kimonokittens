@@ -113,7 +113,6 @@ model TenantLead {
   @@index([createdAt(sort: Desc)])
   @@index([ipAddress, createdAt]) // For rate limiting queries
 }
-}
 
 model SignedContract {
   id                     String                @id
