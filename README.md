@@ -12,7 +12,7 @@ This repo is a **production monorepo** for managing a shared rental property (ko
 | **Contract System** | Tenant signup (`/meow`), BankID e-signing (Zigned), admin dashboard with real-time contract tracking | ✅ **Production** |
 | **Rent Reminders** | Bank sync (Lunchflow API), SMS automation (46elks), GPT-5-mini message composition, payment matching | 🟡 **Ready (not deployed)** |
 | **Dashboard** | Real-time kiosk display: weather, transit (SL), Strava, temperature, rent, todo, heatpump schedule | ✅ **Production** |
-| `handbook/` | Live wiki & handbook for the kollektiv (React + Ruby) | 🟡 **Partial** |
+| `handbook/` | Live wiki & handbook with planned git-backed proposal workflow (branch-per-proposal, approval merges to master) | 🟡 **Partial** |
 | `bankbuster/` | Automated Bankgirot camt.054 parser (Ruby + Vue) | ⏸️ **Legacy** |
 
 
