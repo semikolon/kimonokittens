@@ -67,6 +67,14 @@ class TenantRepository < BaseRepository
     row && hydrate(row)
   end
 
+  # Find tenant by phone number (E.164 format)
+  # @param phone [String] Phone number in E.164 format (e.g., "+46701234567")
+  # @return [Tenant, nil]
+  def find_by_phone_e164(phone)
+    row = dataset.where(phoneE164: phone).first
+    row && hydrate(row)
+  end
+
   # Find all tenants active on a specific date
   # @param date [Date] Date to check
   # @return [Array<Tenant>]
@@ -159,7 +167,10 @@ class TenantRepository < BaseRepository
       personnummer: tenant.personnummer,
       phone: tenant.phone,
       deposit: tenant.deposit,
-      furnishingDeposit: tenant.furnishing_deposit
+      furnishingDeposit: tenant.furnishing_deposit,
+      # SMS reminder fields
+      smsOptOut: tenant.sms_opt_out,
+      paydayStartDay: tenant.payday_start_day
     )
 
     raise "Update failed: database returned 0 rows affected for tenant #{tenant.id} (record exists but update was rejected)" if rows_affected == 0
@@ -221,7 +232,10 @@ class TenantRepository < BaseRepository
       personnummer: row[:personnummer],
       phone: row[:phone],
       deposit: row[:deposit],
-      furnishing_deposit: row[:furnishingDeposit]
+      furnishing_deposit: row[:furnishingDeposit],
+      # SMS reminder fields
+      sms_opt_out: row[:smsOptOut] || false,
+      payday_start_day: row[:paydayStartDay] || 25
     )
   end
 
@@ -250,7 +264,10 @@ class TenantRepository < BaseRepository
       personnummer: tenant.personnummer,
       phone: tenant.phone,
       deposit: tenant.deposit,
-      furnishingDeposit: tenant.furnishing_deposit
+      furnishingDeposit: tenant.furnishing_deposit,
+      # SMS reminder fields
+      smsOptOut: tenant.sms_opt_out,
+      paydayStartDay: tenant.payday_start_day
     }
   end
 end

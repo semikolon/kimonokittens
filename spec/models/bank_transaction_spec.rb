@@ -1,0 +1,497 @@
+require_relative '../spec_helper'
+require_relative '../../lib/models/bank_transaction'
+
+RSpec.describe BankTransaction, 'domain model' do
+  describe 'initialization' do
+    it 'creates transaction with required fields' do
+      tx = BankTransaction.new(
+        id: 'test123',
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.new(2025, 11, 15, 10, 30),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103, reference: 1803968388237103IN,messageToRecipient: KK-2025-11-Sanna-cmhqe9enc',
+        counterparty: '+46702894437',
+        raw_json: { 'id' => 'lf_tx_abc123', 'merchant' => 'Swish Mottagen' }
+      )
+
+      expect(tx.id).to eq('test123')
+      expect(tx.external_id).to eq('lf_tx_abc123')
+      expect(tx.amount).to eq(7045.0)
+      expect(tx.description).to eq('from: +46702894437    1803968388237103, reference: 1803968388237103IN,messageToRecipient: KK-2025-11-Sanna-cmhqe9enc')
+    end
+
+    it 'allows nil counterparty' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 100.0,
+        currency: 'SEK',
+        description: 'Test transaction',
+        raw_json: {}
+      )
+
+      expect(tx.counterparty).to be_nil
+    end
+
+    it 'parses string amounts to float' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: '7045.50',
+        currency: 'SEK',
+        description: 'Test',
+        raw_json: {}
+      )
+
+      expect(tx.amount).to eq(7045.50)
+    end
+
+    it 'requires external_id' do
+      expect {
+        BankTransaction.new(
+          account_id: '4065',
+          booked_at: DateTime.now,
+          amount: 100.0,
+          currency: 'SEK',
+          description: 'Test',
+          raw_json: {}
+        )
+      }.to raise_error(ArgumentError, /missing keyword.*external_id/i)
+    end
+
+    it 'requires booked_at' do
+      expect {
+        BankTransaction.new(
+          external_id: 'lf_tx_abc123',
+          account_id: '4065',
+          amount: 100.0,
+          currency: 'SEK',
+          description: 'Test',
+          raw_json: {}
+        )
+      }.to raise_error(ArgumentError, /missing keyword.*booked_at/i)
+    end
+
+    it 'requires amount' do
+      expect {
+        BankTransaction.new(
+          external_id: 'lf_tx_abc123',
+          account_id: '4065',
+          booked_at: DateTime.now,
+          currency: 'SEK',
+          description: 'Test',
+          raw_json: {}
+        )
+      }.to raise_error(ArgumentError, /missing keyword.*amount/i)
+    end
+  end
+
+  describe '#swish_payment?' do
+    it 'returns true when merchant contains Swish Mottagen (received)' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103, reference: 1803968388237103IN',
+        raw_json: { 'merchant' => 'Swish Mottagen' }
+      )
+
+      expect(tx.swish_payment?).to be true
+    end
+
+    it 'returns true when merchant contains Swish Skickad (sent)' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'from: +46760177088    1803970570800935, reference: 1803970570800935IN',
+        raw_json: { 'merchant' => 'Swish Skickad' }
+      )
+
+      expect(tx.swish_payment?).to be true
+    end
+
+    it 'returns false when merchant does not contain Swish' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 100.0,
+        currency: 'SEK',
+        description: 'Grocery store purchase',
+        raw_json: { 'merchant' => 'ICA Supermarket' }
+      )
+
+      expect(tx.swish_payment?).to be false
+    end
+
+    it 'returns false when merchant is nil' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 100.0,
+        currency: 'SEK',
+        description: 'Bank transfer',
+        raw_json: {}
+      )
+
+      expect(tx.swish_payment?).to be false
+    end
+  end
+
+  describe '#matches_rent?' do
+    it 'returns true when amount matches expected rent (within tolerance)' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH payment',
+        raw_json: {}
+      )
+
+      expect(tx.matches_rent?(7045.0)).to be true
+    end
+
+    it 'returns true when amount within ±1 SEK tolerance' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7045.5,
+        currency: 'SEK',
+        description: 'SWISH payment',
+        raw_json: {}
+      )
+
+      expect(tx.matches_rent?(7045.0)).to be true
+      expect(tx.matches_rent?(7046.0)).to be true
+      expect(tx.matches_rent?(7044.5)).to be true  # 1.0 SEK difference
+      expect(tx.matches_rent?(7044.0)).to be false # 1.5 SEK difference (exceeds tolerance)
+    end
+
+    it 'returns false when amount differs by more than tolerance' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'SWISH payment',
+        raw_json: {}
+      )
+
+      expect(tx.matches_rent?(7100.0)).to be false
+      expect(tx.matches_rent?(6900.0)).to be false
+    end
+
+    it 'handles negative amounts (debits)' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: -7045.0,
+        currency: 'SEK',
+        description: 'SWISH payment',
+        raw_json: {}
+      )
+
+      # Should match absolute value
+      expect(tx.matches_rent?(7045.0)).to be true
+    end
+  end
+
+  describe '#belongs_to_tenant?' do
+    let(:tenant) do
+      double(
+        'Tenant',
+        id: 'cmhqe9enc0000wopipuxgc3kw',
+        name: 'Sanna Juni Benemar',
+        phone: '+46702894437'
+      )
+    end
+
+    it 'returns true when reference code contains tenant ID suffix' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'KK-2025-11-Sanna-cmhqe9enc',
+        raw_json: { 'merchant' => 'Swish Mottagen' }
+      )
+
+      expect(tx.belongs_to_tenant?(tenant)).to be true
+    end
+
+    it 'returns true when phone number matches (Tier 2)' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103, reference: 1803968388237103IN',
+        raw_json: {}
+      )
+
+      expect(tx.belongs_to_tenant?(tenant)).to be true
+    end
+
+    it 'returns true when counterparty name fuzzy matches tenant name (Tier 3)' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'Bank transfer',
+        counterparty: 'Sanna Benemar',
+        raw_json: { 'merchant' => 'Nordea' }
+      )
+
+      expect(tx.belongs_to_tenant?(tenant)).to be true
+    end
+
+    it 'returns true for close name matches' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'Bank transfer',
+        counterparty: 'S. Benemar',
+        raw_json: { 'merchant' => 'SEB' }
+      )
+
+      expect(tx.belongs_to_tenant?(tenant)).to be true
+    end
+
+    it 'returns false when no match found' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'from: +46701234567    1803970570800935, reference: 1803970570800935IN',
+        counterparty: '+46701234567',
+        raw_json: { 'merchant' => 'Swish Mottagen' }
+      )
+
+      expect(tx.belongs_to_tenant?(tenant)).to be false
+    end
+
+    it 'returns false when counterparty nil and no reference code' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'from: +46701234567    1803970570800935, reference: 1803970570800935IN',
+        raw_json: { 'merchant' => 'Swish Mottagen' }
+      )
+
+      expect(tx.belongs_to_tenant?(tenant)).to be false
+    end
+  end
+
+  describe '#extract_phone_number' do
+    it 'extracts phone number from Lunchflow format' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103, reference: 1803968388237103IN',
+        raw_json: {}
+      )
+
+      expect(tx.extract_phone_number).to eq('+46702894437')
+    end
+
+    it 'extracts phone with messageToRecipient' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46738307222    1803803512048894, reference: 1803803512048894IN,messageToRecipient: Hyra FB',
+        raw_json: {}
+      )
+
+      expect(tx.extract_phone_number).to eq('+46738307222')
+    end
+
+    it 'returns nil when no phone found' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 100.0,
+        currency: 'SEK',
+        description: 'Regular bank transfer',
+        raw_json: {}
+      )
+
+      expect(tx.extract_phone_number).to be_nil
+    end
+
+    it 'returns nil when description is nil' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 100.0,
+        currency: 'SEK',
+        raw_json: {}
+      )
+
+      expect(tx.extract_phone_number).to be_nil
+    end
+  end
+
+  describe '#phone_matches?' do
+    let(:tenant) do
+      double(
+        'Tenant',
+        id: 'cmhqe9enc0000wopipuxgc3kw',
+        name: 'Sanna Juni Benemar',
+        phone: '+46702894437'
+      )
+    end
+
+    it 'returns true when phone matches (E.164 format)' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103, reference: 1803968388237103IN',
+        raw_json: {}
+      )
+
+      expect(tx.phone_matches?(tenant)).to be true
+    end
+
+    it 'returns true when phone matches with different formatting' do
+      tenant_with_spaces = double('Tenant', phone: '+46 70 289 44 37')
+
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103',
+        raw_json: {}
+      )
+
+      expect(tx.phone_matches?(tenant_with_spaces)).to be true
+    end
+
+    it 'returns false when phone does not match' do
+      different_phone_tenant = double('Tenant', phone: '+46701234567')
+
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103',
+        raw_json: {}
+      )
+
+      expect(tx.phone_matches?(different_phone_tenant)).to be false
+    end
+
+    it 'returns false when tenant has no phone' do
+      no_phone_tenant = double('Tenant', phone: nil)
+
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 7577.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103',
+        raw_json: {}
+      )
+
+      expect(tx.phone_matches?(no_phone_tenant)).to be false
+    end
+
+    it 'returns false when transaction has no phone' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 100.0,
+        currency: 'SEK',
+        description: 'Regular bank transfer',
+        raw_json: {}
+      )
+
+      expect(tx.phone_matches?(tenant)).to be false
+    end
+  end
+
+  describe '#to_h' do
+    it 'serializes all fields' do
+      tx = BankTransaction.new(
+        id: 'test123',
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.new(2025, 11, 15, 10, 30),
+        amount: 7045.0,
+        currency: 'SEK',
+        description: 'from: +46702894437    1803968388237103, reference: 1803968388237103IN',
+        counterparty: '+46702894437',
+        raw_json: { 'merchant' => 'Swish Mottagen' },
+        created_at: DateTime.new(2025, 11, 15, 10, 35)
+      )
+
+      hash = tx.to_h
+      expect(hash[:id]).to eq('test123')
+      expect(hash[:externalId]).to eq('lf_tx_abc123')
+      expect(hash[:accountId]).to eq('4065')
+      expect(hash[:amount]).to eq(7045.0)
+      expect(hash[:currency]).to eq('SEK')
+      expect(hash[:description]).to eq('from: +46702894437    1803968388237103, reference: 1803968388237103IN')
+      expect(hash[:counterparty]).to eq('+46702894437')
+      expect(hash[:rawJson]).to eq({ 'merchant' => 'Swish Mottagen' })
+    end
+
+    it 'handles nil values' do
+      tx = BankTransaction.new(
+        external_id: 'lf_tx_abc123',
+        account_id: '4065',
+        booked_at: DateTime.now,
+        amount: 100.0,
+        currency: 'SEK',
+        raw_json: {}
+      )
+
+      hash = tx.to_h
+      expect(hash[:description]).to eq('')  # Defaults to empty string (DB constraint NOT NULL)
+      expect(hash[:counterparty]).to be_nil
+    end
+  end
+end

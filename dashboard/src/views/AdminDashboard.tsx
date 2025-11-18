@@ -4,7 +4,9 @@ import React from 'react'
 import { Wifi, WifiOff } from 'lucide-react'
 import { ContractList } from '../components/admin/ContractList'
 import { TenantForm } from '../components/admin/TenantForm'
+import { LeadsList } from '../components/admin/LeadsList'
 import { useContracts } from '../hooks/useContracts'
+import { useLeads } from '../hooks/useLeads'
 import { useData } from '../context/DataContext'
 
 // TypeScript interfaces matching requirements
@@ -25,6 +27,12 @@ export interface SignedContract {
   tenant_furnishing_deposit?: number
   current_rent?: number        // Current rent for tenant
   has_completed_contract?: boolean // Whether tenant has any completed contracts
+  // Payment status fields (Phase 6: Rent Reminders)
+  rent_paid?: boolean          // Whether current month rent is fully paid
+  rent_amount?: number         // Current month rent amount in SEK
+  rent_remaining?: number      // Amount still owed for current month
+  last_payment_date?: string   // Most recent payment date (ISO 8601)
+  sms_reminder_count?: number  // Number of SMS reminders sent this month
   case_id: string              // Zigned agreement ID
   pdf_url: string              // Generated PDF path
   status: 'pending' | 'landlord_signed' | 'tenant_signed' | 'completed' | 'expired' | 'cancelled' | 'failed'
@@ -78,6 +86,12 @@ export interface TenantMember {
   status: string
   has_completed_contract?: boolean
   created_at: Date
+  // Payment status fields (Phase 6: Rent Reminders)
+  rent_paid?: boolean
+  rent_amount?: number
+  rent_remaining?: number
+  last_payment_date?: string
+  sms_reminder_count?: number
 }
 
 export type Member = SignedContract | TenantMember
@@ -128,7 +142,8 @@ const Widget = ({
 
 export const AdminDashboard: React.FC = () => {
   const { state } = useData()
-  const { contracts, loading, error } = useContracts()
+  const { contracts, loading: contractsLoading, error: contractsError } = useContracts()
+  const { leads, loading: leadsLoading, error: leadsError } = useLeads()
   // Track connection status for UI feedback
   const isConnected = state.connectionStatus === 'open'
   const isReconnecting = state.connectionStatus === 'connecting'
@@ -139,7 +154,7 @@ export const AdminDashboard: React.FC = () => {
   // Real-time updates via DataContext - no separate WebSocket needed
   // Backend handlers call DataBroadcaster.broadcast_contract_list_changed which sends fresh data
 
-  if (loading) {
+  if (contractsLoading) {
     return (
       <Widget title="Medlemmar" horsemenFont={true} accent={true}>
         <div className="text-purple-200">Laddar medlemmar...</div>
@@ -147,10 +162,10 @@ export const AdminDashboard: React.FC = () => {
     )
   }
 
-  if (error) {
+  if (contractsError) {
     return (
       <Widget title="Medlemmar" horsemenFont={true} accent={true}>
-        <div className="text-red-400">Fel vid laddning: {error}</div>
+        <div className="text-red-400">Fel vid laddning: {contractsError}</div>
       </Widget>
     )
   }
@@ -187,6 +202,19 @@ export const AdminDashboard: React.FC = () => {
       {/* Tenant creation form - darker style matching electricity anomaly widget */}
       <div className="mt-6 backdrop-blur-sm bg-purple-900/15 rounded-2xl shadow-md border border-purple-900/10 p-8">
         <TenantForm />
+      </div>
+
+      {/* Tenant leads section */}
+      <div className="mt-6">
+        <Widget title="Intresseanmälningar" horsemenFont={true} accent={true}>
+          {leadsLoading ? (
+            <div className="text-purple-200">Laddar anmälningar...</div>
+          ) : leadsError ? (
+            <div className="text-red-400">Fel vid laddning: {leadsError}</div>
+          ) : (
+            <LeadsList leads={leads} />
+          )}
+        </Widget>
       </div>
     </>
   )

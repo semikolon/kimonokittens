@@ -76,9 +76,43 @@ model Tenant {
   deposit           Decimal?         @db.Decimal(10, 2)
   furnishingDeposit Decimal?         @db.Decimal(10, 2)
   status            String?          @default("active")
+  phoneE164         String?
+  paydayStartDay    Int              @default(25)
+  smsOptOut         Boolean          @default(false)
   RentLedger        RentLedger[]
   SignedContract    SignedContract[]
   CoOwnedItem       CoOwnedItem[]    @relation("ItemOwners")
+  TenantLead        TenantLead?
+  RentReceipt       RentReceipt[]
+  SmsEvent          SmsEvent[]
+
+  @@index([phoneE164])
+}
+
+model TenantLead {
+  id                  String    @id @default(cuid())
+  name                String
+  email               String?
+  facebookId          String?
+  phone               String?
+  contactMethod       String // "email" or "facebook"
+  moveInFlexibility   String // "immediate", "1month", "2months", "3months", "specific", "other"
+  moveInExtra         String? // Date string or text description
+  motivation          String?   @db.Text
+  status              String    @default("pending_review") // pending_review, contacted, interview_scheduled, approved, rejected, converted
+  adminNotes          String?   @db.Text
+  source              String?   @default("web_form") // Track application source
+  ipAddress           String
+  userAgent           String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  convertedToTenantId String?   @unique
+  convertedToTenant   Tenant?   @relation(fields: [convertedToTenantId], references: [id])
+
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@index([ipAddress, createdAt]) // For rate limiting queries
+}
 }
 
 model SignedContract {
@@ -149,4 +183,57 @@ model ContractParticipant {
   @@index([contractId])
   @@index([personalNumber])
   @@index([status])
+}
+
+model BankTransaction {
+  id           String        @id @default(cuid())
+  externalId   String        @unique
+  accountId    String
+  bookedAt     DateTime
+  amount       Decimal       @db.Decimal(12, 2)
+  currency     String        @default("SEK")
+  description  String
+  counterparty String?
+  rawJson      Json
+  createdAt    DateTime      @default(now())
+  RentReceipt  RentReceipt[]
+
+  @@index([bookedAt(sort: Desc)])
+  @@index([accountId, bookedAt(sort: Desc)])
+}
+
+model RentReceipt {
+  id          String           @id @default(cuid())
+  month       String
+  tenantId    String
+  amount      Decimal          @db.Decimal(12, 2)
+  matchedTxId String?
+  matchedVia  String
+  paidAt      DateTime
+  partial     Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  Tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  Transaction BankTransaction? @relation(fields: [matchedTxId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, month])
+  @@index([paidAt(sort: Desc)])
+  @@index([matchedTxId])
+}
+
+model SmsEvent {
+  id         String    @id @default(cuid())
+  tenantId   String?
+  month      String?
+  direction  String
+  providerId String?
+  body       String
+  parts      Int?
+  status     String?
+  meta       Json?
+  createdAt  DateTime  @default(now())
+  Tenant     Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, month])
+  @@index([direction, createdAt(sort: Desc)])
+  @@index([providerId])
 }

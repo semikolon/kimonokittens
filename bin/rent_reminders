@@ -1,0 +1,241 @@
+#!/usr/bin/env ruby
+
+# Rent Reminder Scheduling Script
+#
+# Daily cron job that sends rent reminders based on payment status and timing.
+#
+# Timing:
+# - Day 23, 09:45: Heads-up reminder
+# - Payday, 09:45: First reminder
+# - Day 27, 10:00: Urgent reminder
+# - Day 27, 16:45: Very urgent reminder
+# - Day 28+, 09:45 & 16:45: Overdue (twice daily)
+#
+# Admin alerts:
+# - Day 27, 10:00: Warning
+# - Day 27, 17:00: Critical
+# - Day 28+, 10:00: Daily overdue alert
+#
+# Usage:
+#   bundle exec ruby bin/rent_reminders           # Live mode
+#   bundle exec ruby bin/rent_reminders --dry-run # Test mode (no SMS sent)
+#
+# PRESERVED LOGIC from implementation plan (Phase 5)
+
+require 'dotenv/load'
+require 'time'
+require_relative '../lib/persistence'
+require_relative '../lib/sms/gateway'
+require_relative '../lib/sms/message_composer'
+
+# Parse command line flags
+dry_run = ARGV.include?('--dry-run')
+
+if dry_run
+  puts "🔍 DRY RUN MODE - No SMS will be sent"
+  puts "=" * 60
+end
+
+# Current date/time
+now = Time.now
+current_month = now.strftime('%Y-%m')
+current_day = now.day
+current_hour = now.hour
+
+puts "🕐 Running rent reminders for #{current_month} (day #{current_day}, hour #{current_hour})"
+
+# Get admin Swish number from environment
+admin_swish_number = ENV['ADMIN_SWISH_NUMBER']
+unless admin_swish_number
+  puts "❌ ERROR: ADMIN_SWISH_NUMBER not set in environment"
+  exit 1
+end
+
+# Get all active tenants (not opted out, not departed)
+all_tenants = Persistence.tenants.all
+active_tenants = all_tenants.select do |t|
+  !t.sms_opt_out &&
+  (!t.departure_date || t.departure_date > now.to_date)
+end
+
+puts "👥 Found #{all_tenants.length} total tenants, #{active_tenants.length} active"
+
+# Helper: Generate reference code for tenant (no dashes for iPhone copy compatibility)
+def generate_reference(tenant, month)
+  # KK202511Sannacmhqe9enc
+  short_uuid = tenant.id[-13..-1]  # Last 13 chars of CUID
+  first_name = tenant.name.split(' ').first
+  month_compact = month.gsub('-', '')  # "2025-11" → "202511"
+  "KK#{month_compact}#{first_name}#{short_uuid}"
+end
+
+# Process each active tenant
+reminders_sent = 0
+
+active_tenants.each do |tenant|
+  # Get rent ledger for current month
+  ledger = Persistence.rent_ledger.find_by_tenant_and_period(
+    tenant.id,
+    Date.parse("#{current_month}-01")
+  )
+
+  unless ledger
+    puts "  ⚠️  #{tenant.name}: No ledger entry for #{current_month}"
+    next
+  end
+
+  # Check payment status
+  receipts = Persistence.rent_receipts.find_by_tenant(
+    tenant.id,
+    year: now.year,
+    month: now.month
+  )
+  total_paid = receipts.sum(&:amount)
+  remaining = ledger.amount_due - total_paid
+
+  # Skip if already paid
+  if remaining <= 0
+    puts "  ✅ #{tenant.name}: Fully paid (#{total_paid.round} kr)"
+    next
+  end
+
+  # Determine if we should send reminder and which tone
+  should_send = false
+  tone = nil
+
+  # Timing logic (4 tones, all once daily)
+  if current_day == 23 && current_hour == 9
+    # Heads up reminder (day 23, 09:45)
+    should_send = true
+    tone = :heads_up
+  elsif current_day == tenant.payday_start_day && current_hour == 9
+    # First payment reminder (payday, 09:45)
+    should_send = true
+    tone = :first_reminder
+  elsif current_day == 27 && current_hour == 9
+    # Urgent reminder (deadline day 27, 09:45)
+    should_send = true
+    tone = :urgent
+  elsif current_day >= 28 && current_hour == 9
+    # Overdue reminder (day 28+, 09:45 once daily)
+    # Rationale: Lunchflow syncs once per 24h, second reminder has no new payment data
+    should_send = true
+    tone = :overdue
+  end
+
+  unless should_send
+    puts "  ⏭️  #{tenant.name}: No reminder scheduled for this hour (#{remaining.round} kr remaining)"
+    next
+  end
+
+  # Check idempotency: don't send same reminder twice in same day
+  # (except for overdue which is sent twice daily)
+  today_start = Time.new(now.year, now.month, now.day, 0, 0, 0, now.utc_offset)
+  today_end = today_start + (24 * 60 * 60)
+
+  # Query SMS events for today
+  today_events = Persistence.sms_events.all.select do |event|
+    event.tenant_id == tenant.id &&
+    event.direction == 'out' &&
+    event.created_at >= today_start &&
+    event.created_at < today_end &&
+    event.meta && event.meta['tone'] == tone.to_s
+  end
+
+  # Skip if already sent today (all tones now once daily)
+  if today_events.any?
+    puts "  🔁 #{tenant.name}: #{tone} reminder already sent today"
+    next
+  end
+
+  # Generate reminder message (LLM hybrid approach)
+  reference = generate_reference(tenant, current_month)
+  message = MessageComposer.compose(
+    tenant_name: tenant.name,
+    amount: remaining,
+    month: current_month,
+    recipient_phone: admin_swish_number,
+    reference: reference,
+    tone: tone
+  )
+
+  if dry_run
+    puts "\n  📱 Would send #{tone} reminder to #{tenant.name} (#{tenant.phone})"
+    puts "     Amount: #{remaining.round} kr"
+    puts "     Reference: #{reference}"
+    puts "     Message:\n"
+    message.lines.each { |line| puts "       #{line}" }
+  else
+    # Send SMS
+    begin
+      SmsGateway.send_reminder(
+        to: tenant.phone,
+        body: message,
+        tenant_id: tenant.id,
+        month: current_month,
+        tone: tone.to_s
+      )
+
+      puts "  📤 Sent #{tone} reminder to #{tenant.name} (#{remaining.round} kr remaining)"
+      reminders_sent += 1
+    rescue => e
+      puts "  ❌ Failed to send to #{tenant.name}: #{e.message}"
+    end
+  end
+end
+
+puts "\n📊 Summary: #{reminders_sent} reminder(s) sent"
+
+# Admin deadline alerts (10:00 on 27th, 17:00 on 27th, daily after)
+if (current_day == 27 && [10, 17].include?(current_hour)) ||
+   (current_day >= 28 && current_hour == 10)
+
+  puts "\n🚨 Checking for admin alerts..."
+
+  unpaid_tenants = active_tenants.select do |tenant|
+    ledger = Persistence.rent_ledger.find_by_tenant_and_period(
+      tenant.id,
+      Date.parse("#{current_month}-01")
+    )
+    next false unless ledger
+
+    receipts = Persistence.rent_receipts.find_by_tenant(
+      tenant.id,
+      year: now.year,
+      month: now.month
+    )
+    total_paid = receipts.sum(&:amount)
+    remaining = ledger.amount_due - total_paid
+
+    remaining > 0
+  end
+
+  if unpaid_tenants.any?
+    names = unpaid_tenants.map(&:name).join(', ')
+    urgency = if current_day == 27 && current_hour == 10
+      "⚠️"
+    elsif current_day == 27 && current_hour == 17
+      "🚨"
+    else
+      "❗"
+    end
+
+    alert_message = "#{urgency} #{names} har inte betalt än (#{current_month})"
+
+    if dry_run
+      puts "\n  📲 Would send admin alert:"
+      puts "     #{alert_message}"
+    else
+      begin
+        SmsGateway.send_admin_alert(alert_message)
+        puts "  📤 Sent admin alert about #{unpaid_tenants.length} unpaid tenant(s)"
+      rescue => e
+        puts "  ❌ Failed to send admin alert: #{e.message}"
+      end
+    end
+  else
+    puts "  ✅ All tenants have paid - no admin alert needed"
+  end
+end
+
+puts "\n✨ Rent reminders job complete"

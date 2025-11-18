@@ -65,3 +65,9 @@ logs/
 
 # Generated contract PDFs (keep source .md files)
 /contracts/*.pdf
+
+# Serena MCP cache
+.serena/
+
+# Bank sync cursor state (ephemeral machine state)
+state/

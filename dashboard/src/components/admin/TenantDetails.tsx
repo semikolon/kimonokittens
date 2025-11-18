@@ -1,6 +1,6 @@
 // TenantDetails - Expanded content for tenant-only rows
 import React, { useMemo, useState } from 'react'
-import { DollarSign, TrendingDown, TrendingUp, Calendar } from 'lucide-react'
+import { DollarSign, TrendingDown, TrendingUp, Calendar, CheckCircle2, Clock, XCircle, MessageSquare } from 'lucide-react'
 import type { TenantMember } from '../../views/AdminDashboard'
 import { useAdminAuth } from '../../contexts/AdminAuthContext'
 import { useData } from '../../context/DataContext'
@@ -544,6 +544,52 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
           </div>
         </div>
       )}
+
+      {/* Payment Status Section (Phase 6: Rent Reminders) */}
+      <div className="grid gap-6 md:grid-cols-3 pt-6 border-t border-purple-500/10">
+        <div>
+          <div className="text-xs text-purple-400/70 mb-1">BETALNINGSSTATUS</div>
+          <div className="flex items-center gap-2">
+            {tenant.rent_paid ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+                <span className="text-purple-100">Betald</span>
+              </>
+            ) : tenant.rent_remaining && tenant.rent_remaining > 0 ? (
+              <>
+                <Clock className="w-4 h-4 text-yellow-400" />
+                <span className="text-purple-100">
+                  {Math.round(tenant.rent_remaining).toLocaleString('sv-SE')} kr kvar
+                </span>
+              </>
+            ) : (
+              <>
+                <XCircle className="w-4 h-4 text-red-400" />
+                <span className="text-purple-100">Obetald</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-xs text-purple-400/70 mb-1">SENASTE BETALNING</div>
+          <div className="text-purple-100">
+            {tenant.last_payment_date
+              ? new Date(tenant.last_payment_date).toLocaleDateString('sv-SE')
+              : '—'}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-xs text-purple-400/70 mb-1 flex items-center gap-2">
+            <MessageSquare className="w-3 h-3" />
+            <span>SMS PÅMINNELSER</span>
+          </div>
+          <div className="text-purple-100">
+            {tenant.sms_reminder_count || 0} skickade
+          </div>
+        </div>
+      </div>
 
       {showRent && rentClarifications.length > 0 && (
         <div className="text-xs text-purple-300/60 pt-4 border-t border-purple-500/10 space-y-1">

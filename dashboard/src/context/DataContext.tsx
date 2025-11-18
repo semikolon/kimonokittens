@@ -166,6 +166,31 @@ interface ElectricityDailyCostsData {
   generated_at?: string
 }
 
+// Tenant Lead interface (signup applications)
+interface TenantLead {
+  id: string
+  name: string
+  email?: string
+  facebookId?: string
+  phone?: string
+  contactMethod: 'email' | 'facebook'
+  moveInFlexibility: string
+  moveInExtra?: string
+  motivation?: string
+  status: 'pending_review' | 'contacted' | 'interview_scheduled' | 'approved' | 'rejected' | 'converted'
+  adminNotes?: string
+  source?: string
+  createdAt: string
+  updatedAt: string
+  convertedToTenantId?: string
+}
+
+interface AdminLeadsData {
+  leads: TenantLead[]
+  total: number
+  generated_at?: string
+}
+
 // Admin contracts interfaces (unified member list: contracts + tenants)
 interface SignedContract {
   type: 'contract'
@@ -262,6 +287,7 @@ interface DashboardState {
   electricityPriceData: ElectricityPriceData | null
   electricityDailyCostsData: ElectricityDailyCostsData | null
   adminContractsData: AdminContractsData | null
+  adminLeadsData: AdminLeadsData | null
   deploymentStatus: DeploymentStatus | null
   connectionStatus: 'connecting' | 'open' | 'closed'
   lastUpdated: {
@@ -274,6 +300,7 @@ interface DashboardState {
     electricity: number | null
     electricityDailyCosts: number | null
     adminContracts: number | null
+    adminLeads: number | null
   }
 }
 
@@ -288,6 +315,7 @@ type DashboardAction =
   | { type: 'SET_ELECTRICITY_PRICE_DATA'; payload: ElectricityPriceData }
   | { type: 'SET_ELECTRICITY_DAILY_COSTS_DATA'; payload: ElectricityDailyCostsData }
   | { type: 'SET_ADMIN_CONTRACTS_DATA'; payload: AdminContractsData }
+  | { type: 'SET_ADMIN_LEADS_DATA'; payload: AdminLeadsData }
   | { type: 'SET_DEPLOYMENT_STATUS'; payload: DeploymentStatus }
   | { type: 'SET_CONNECTION_STATUS'; payload: 'connecting' | 'open' | 'closed' }
 
@@ -302,6 +330,7 @@ const initialState: DashboardState = {
   electricityPriceData: null,
   electricityDailyCostsData: null,
   adminContractsData: null,
+  adminLeadsData: null,
   deploymentStatus: null,
   connectionStatus: 'connecting',
   lastUpdated: {
@@ -313,7 +342,8 @@ const initialState: DashboardState = {
     todo: null,
     electricity: null,
     electricityDailyCosts: null,
-    adminContracts: null
+    adminContracts: null,
+    adminLeads: null
   }
 }
 
@@ -373,6 +403,12 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         ...state,
         adminContractsData: action.payload,
         lastUpdated: { ...state.lastUpdated, adminContracts: Date.now() }
+      }
+    case 'SET_ADMIN_LEADS_DATA':
+      return {
+        ...state,
+        adminLeadsData: action.payload,
+        lastUpdated: { ...state.lastUpdated, adminLeads: Date.now() }
       }
     case 'SET_DEPLOYMENT_STATUS':
       return {
@@ -514,6 +550,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             break
           case 'admin_contracts_data':
             dispatch({ type: 'SET_ADMIN_CONTRACTS_DATA', payload: message.payload })
+            break
+          case 'admin_leads_data':
+            dispatch({ type: 'SET_ADMIN_LEADS_DATA', payload: message.payload })
             break
           case 'reload':
             console.log('Reload message received from server')

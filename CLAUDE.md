@@ -1567,3 +1567,77 @@ curl http://localhost:3001/api/rent/friendly_message
 # WebSocket (check browser console)
 ws://localhost:3001
 ```
+
+---
+
+## 💸 SWISH PAYMENT INTEGRATION
+
+**Status**: ❌ **Swish Handel/Commerce REJECTED** (Nov 15, 2025) - Exploitative pricing model
+
+### Pricing Reality (Swedbank, Nov 2025)
+
+**Swish Handel/Commerce API costs:**
+- Setup fee: 1,000 SEK per phone number
+- Annual fee: 480 SEK minimum
+- Transaction fee: 3 SEK per Swish payment
+- **Total first year (60 transactions)**: 1,000 + 480 + 180 = **1,660 SEK**
+
+**Analysis**: ~80% profit margin, ruthless pricing for what should be basic digital infrastructure. This is greed, not innovation. Honest house-share flows get punished while Swish profits from fraud prevention theater.
+
+**Decision**: Reject Swish Handel integration. Use manual SMS instructions instead.
+
+### What Swish Limits for Non-Merchants
+
+**P2P Swish (free, what we use):**
+- ✅ Phone number matching (Tier 2 payment reconciliation)
+- ✅ Manual payment entry via app
+- ❌ No deep links with pre-filled amount/number/message
+- ❌ No API access
+- ❌ No payment request tokens
+- ❌ No QR code generation via official API
+
+**Only merchants get:**
+- `swish://paymentrequest?token=...` deep links (requires Commerce API)
+- Payment request token generation
+- Delivery receipts / payment tracking
+- One-tap payment UX
+
+### Implemented Solution: Manual SMS Instructions
+
+**SMS format** (≤140 chars, no premium fees):
+```
+Hyra nov: 7,045 kr
+Till: 0736536035
+Medd: KK202511Sannacmhqe9enc
+
+(Öppna Swish-appen manuellt)
+```
+
+**Why this works:**
+- ✅ **Reference most exact** - Tier 1 when present (manual entry required)
+- ✅ **Phone highly reliable** - Tier 2, rent = exact amount + payday timing (distinguishable from non-rent)
+- ✅ **Long-tap to copy** - no dashes in reference for iPhone compatibility
+- ✅ **Zero cost** - no Swish Handel fees
+- ✅ **Fully automated matching** - Lunchflow extracts phone from description
+
+**Payment matching tiers:**
+1. **Tier 1**: Reference code (most exact, but requires manual entry in Swish)
+2. **Tier 2**: Phone number (reliable - rent payments distinguishable via amount+timing)
+3. **Tier 3**: Amount + fuzzy name (fallback for bank transfers)
+
+**Lunchflow daily sync** (research confirmed Nov 15, 2025):
+- Transactions sync **once per 24 hours** (not real-time)
+- Max delay: 24 hours from bank posting → Lunchflow API
+- Strategic pivot: 1 reminder/day with daily escalation (not hourly)
+
+### Failed Deep Link Research (Nov 15, 2025)
+
+**Tested and rejected:**
+- ❌ `swish://` - Does NOT render as clickable link in SMS (tested on iPhone)
+- ❌ `swish://payment?number=...&amount=...` - Invalid format (merchant-only)
+- ❌ Rich text links in SMS - Not supported (iOS/Android limitation)
+- ✅ QR codes via public API (`https://mpc.getswish.net/qrg-swish/api/v1/prefilled`) - DO work for P2P without merchant account, but deemed overkill for this use case
+
+**Why Swish limits deep links**: Anti-fraud design + profit extraction. Legitimate use cases (house-shares, clubs, small businesses) are collateral damage.
+
+---
