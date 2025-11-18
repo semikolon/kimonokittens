@@ -999,6 +999,14 @@ curl -s http://localhost:3001/api/rent/friendly_message | jq .message
 curl -s http://localhost:3001/data/temperature | jq '{temp: .supplyline_temperature, disabled: .heatpump_disabled, demand: .heating_demand}'
 ```
 
+### Rent Config Change Workflow:
+1. **Before making rent changes**: Read this file (timing quirks above)
+2. **Check database state**: Use quick reference commands above
+3. **Update configs**: Use correct timing (current month period for next month rent)
+4. **Restart processes**: `npm run dev:restart` to ensure fresh backend
+5. **Verify results**: Test API and check dashboard
+6. **Clean up**: Remove any test data from production DB
+
 ## Expected Behavior
 
 ### Correct October 2025 Rent:
@@ -1052,15 +1060,6 @@ npm run dev:logs     # Attach to live process logs
 - ✅ **Cleanup logic is solid**: Aggressive cleanup handles orphaned processes from ANY source
 - ✅ **Commands are idempotent**: Safe to run multiple times, won't break on re-run
 - ⚠️ **Error output may be hidden**: Check `BashOutput` tool, not just system reminders
-
-### Code Change Workflow
-
-1. **Before making rent changes**: Read this file
-2. **Check database state**: Use quick reference commands above
-3. **Update configs**: Use correct timing (current month period for next month rent)
-4. **Restart processes**: `npm run dev:restart` to ensure fresh backend
-5. **Verify results**: Test API and check dashboard
-6. **Clean up**: Remove any test data from production DB
 
 ## Kiosk Display Optimization
 
