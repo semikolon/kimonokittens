@@ -54,6 +54,51 @@
 
 ---
 
+## 👤 SESSION CONTEXT & PERMISSIONS
+
+**This Claude Code session runs as the `fredrik` user** (development environment)
+
+### User & Checkout Matrix
+
+| User | Sudo Access | Checkout Location | Purpose |
+|------|-------------|-------------------|---------|
+| **fredrik** | ✅ Yes (TTY required) | `/home/fredrik/Projects/kimonokittens/` | Development & git operations |
+| **kimonokittens** | ❌ No | `/home/kimonokittens/Projects/kimonokittens/` | Production services only |
+
+### Claude Code Capabilities & Limitations
+
+**What Claude Code CAN do:**
+- ✅ Access production database via `DATABASE_URL` environment variable
+- ✅ Read files from both checkouts (dev and prod)
+- ✅ Run non-privileged commands as fredrik user
+- ✅ Git operations (commit, push) in dev checkout
+
+**What Claude Code CANNOT do:**
+- ❌ Run `sudo` commands - requires TTY for password input
+- ❌ Access kimonokittens user directly - session runs as fredrik
+- ❌ Restart systemd services - requires sudo (tell user the command instead)
+
+### Working Directory Protocol
+
+**Development workflow (ALWAYS follow):**
+```bash
+# ✅ CORRECT: Work in dev checkout
+cd /home/fredrik/Projects/kimonokittens/
+# Edit files, commit, push to trigger webhook deployment
+
+# ❌ WRONG: Never edit production directly
+cd /home/kimonokittens/Projects/kimonokittens/  # Read-only verification only!
+```
+
+**Why this matters:**
+- Webhook deployments ensure consistent deployment process
+- Easy to accidentally edit prod files when cd'd to prod directory
+- All changes MUST go through git → webhook flow
+
+**Deployment flow:** Edit in dev → commit → push → webhook auto-deploys to prod
+
+---
+
 ## ⚠️ CRITICAL: PROCESS MANAGEMENT PROTOCOL
 
 **Status**: ✅ PRODUCTION (Oct 26, 2025) | **Deep Dive**: `docs/PROCESS_MANAGEMENT_DEEP_DIVE.md`
@@ -70,12 +115,9 @@ lsof -ti :3001 :5175
 
 ### ⚠️ Sudo Commands - Tell User to Run
 
-**Claude Code cannot run `sudo` commands requiring password input.** Always tell user the exact command, never attempt to run directly.
+**Claude Code cannot run `sudo` commands** (requires TTY for password input). Always tell user the exact command instead of attempting to run it.
 
-**Dell Production Server - User Permissions:**
-- **fredrik user**: Has sudo access ✅
-- **kimonokittens user**: NOT in sudoers ❌
-- **All sudo commands must run as fredrik user**, not kimonokittens
+**See**: 👤 SESSION CONTEXT & PERMISSIONS section above for complete user/permission details.
 
 ### 🔒 Public API Security
 
@@ -135,18 +177,10 @@ lsof -ti :3001 :5175
 - User may want to review changes locally before production rollout
 
 **Webhook deployments MANDATORY** - never edit production checkout directly:
-- ❌ **NEVER** run `git pull` in `/home/kimonokittens/Projects/kimonokittens/`
-- ❌ **NEVER** edit files in `/home/kimonokittens/Projects/kimonokittens/` directly
-- ✅ **ALWAYS** edit in dev checkout: `/home/fredrik/Projects/kimonokittens/`
-- ✅ **ALWAYS** commit to dev → push to trigger webhook (ONLY after user authorization)
+- All changes MUST go through: dev checkout → git push → webhook → production
+- See 👤 SESSION CONTEXT & PERMISSIONS for complete checkout/workflow details
 - Webhook broken? Fix webhook, don't work around
-- Check: `journalctl -u kimonokittens-webhook -f`
-
-**🔴 STAY IN DEV DIRECTORY - NEVER `cd` TO PRODUCTION:**
-- ❌ **NEVER** `cd /home/kimonokittens/Projects/kimonokittens/` except for read-only verification
-- ✅ **ALWAYS** work from `/home/fredrik/Projects/kimonokittens/` (dev checkout)
-- ✅ **If you need to check production state**: Use full paths or `cd` temporarily then immediately return to dev
-- **Why**: Easy to accidentally edit production files when in prod directory, breaking webhook deployments
+- Monitor: `journalctl -u kimonokittens-webhook -f`
 
 **⚠️ SYSTEMD ENVIRONMENTFILE REMOVED (Nov 12, 2025):**
 Systemd's `EnvironmentFile` doesn't support `${VAR}` expansion - it loads literal strings. Services now use `require 'dotenv/load'` exclusively for .env loading. This enables variable substitution (`ZIGNED_WEBHOOK_SECRET=${ZIGNED_WEBHOOK_SECRET_REAL}`) and prevents systemd from overriding dotenv values. **Never re-add EnvironmentFile to service files.**
@@ -1117,6 +1151,59 @@ const id = `${adjusted_time}-${line_number}-${destination}` // ❌ Triggers fals
 - Sent via `/api/rent/friendly_message` in `heating_cost_line` field
 - Auto-updates monthly as ElectricityProjector recalculates
 
+### Electricity Usage Anomaly Detection 📊
+
+**Location**: ElectricityWidget sparkline bars - days with anomalous consumption glow with intensity proportional to excess
+
+**What the anomaly detection measures:**
+- **90-day linear regression**: Correlates daily electricity consumption with outdoor temperature
+- **Expected baseline**: For any given temperature, predicts "normal" consumption based on historical pattern
+- **Anomaly threshold**: ±20% deviation from expected consumption for that temperature
+- **Cost impact**: Excess consumption × actual peak/offpeak pricing = real money wasted/saved
+
+**Peak/offpeak pricing IS included:**
+- Each hour classified as peak (Mon-Fri 06:00-22:00, winter months) or offpeak
+- Peak rate: 53.6 öre/kWh transfer vs offpeak 21.4 öre/kWh (2.5× difference)
+- Daily average price calculated from hourly peak/offpeak rates
+- Anomaly cost uses actual prices for when excess consumption occurred
+
+**Root causes of anomalies** (principled reasoning):
+
+1. **Heating/cooling (70-80% of electricity cost)** - Dominant factor:
+   - Heatpump running during expensive peak hours instead of optimizing for offpeak
+   - Indoor temperature set too high/low for outdoor conditions
+   - Manual overrides (e.g., kitchen floor heating +10°C)
+   - Heatpump not following Tibber price-optimized schedule
+
+2. **Additional occupancy (5-15% impact)**:
+   - Extra person in household increases baseline (cooking, hot water, devices)
+   - Example: Since Nov 2 → higher consumption independent of temperature
+
+3. **Behavioral changes (5-10% impact)**:
+   - More time working from home (computers, monitors, lights)
+   - Seasonal activity patterns (more cooking in winter)
+   - Appliance usage spikes (laundry, dishwasher)
+
+4. **Equipment issues (<5% impact)**:
+   - Inefficient appliances
+   - Insulation problems
+   - HVAC system malfunctions
+
+**The disambiguation challenge:**
+- Regression can't separate "extra person" from "heatpump poor scheduling"
+- It only knows: "For this temperature, we used more kWh than expected"
+- BUT: The cost is accurate - real excess consumption at real prices
+
+**Example interpretation:**
+```
+Nov 15: +35% anomaly, +127 kr cost
+→ Could be: Heatpump ran 10 kWh during peak hours (53.6 öre) instead of waiting for offpeak (21.4 öre)
+→ Same 10 kWh costs 32 kr more just from timing
+→ Plus: Higher baseline from extra person + manual heating overrides
+```
+
+**Practical use:** The anomaly bar effectively answers "How much money are we wasting due to poor heatpump scheduling + behavioral changes?" even if we can't perfectly separate the factors.
+
 ## Project Quirks & Technical Debt 🔧
 
 ### Test Database Contamination
@@ -1217,8 +1304,7 @@ Host kimonokittens
 
 **Production Deployment**:
 - Push to GitHub → webhook auto-deploys → production kiosk updates
-- Never edit production checkout directly
-- Always develop in fredrik checkout, deploy via git
+- See 👤 SESSION CONTEXT & PERMISSIONS for complete workflow details
 
 ### Monitoring Production Kiosk Display 📸
 
