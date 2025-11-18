@@ -1,22 +1,24 @@
-# Kimonokittens – Meta Repository
+# Kimonokittens – Rental Management & Home Automation Platform
 
 > **Note:** For all recent technical decisions, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
-This repo is a **multi-project monorepo** for home-automation and finance tools. The dashboard runs on a **Dell Optiplex 7010 kiosk in the hallway**. Additional services (Node-RED, MQTT) are transitioning from the Raspberry Pi 3B+.
+This repo is a **production monorepo** for managing a shared rental property (kollektiv) and home automation. The system runs on a **Dell Optiplex 7010 kiosk** (hallway display) with **automated rent calculations, contract management, and real-time monitoring**.
 
-Active sub-projects:
+**Core Systems:**
 
-| Path | Purpose |
-|------|---------|
-| `dashboard/` | Real-time home automation dashboard (React + TypeScript) |
-| `handbook/` | Live wiki & handbook for the kollektiv (React + Ruby) |
-| `bankbuster/`| Automated downloader & parser for Bankgirot camt.054 reports (Ruby + Vue dashboard) |
-| `rent.rb`   | Core logic for the rent calculation system, integrated with the backend. |
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| **Rent Management** | Automated rent calculation with electricity bill scraping (Vattenfall + Fortum), time-of-use pricing, quarterly projections | ✅ **Production** |
+| **Contract System** | Tenant signup (`/meow`), BankID e-signing (Zigned), admin dashboard with real-time contract tracking | ✅ **Production** |
+| **Rent Reminders** | Bank sync (Lunchflow API), SMS automation (46elks), GPT-5-mini message composition, payment matching | 🟡 **Ready (not deployed)** |
+| **Dashboard** | Real-time kiosk display: weather, transit (SL), Strava, temperature, rent, todo, heatpump schedule | ✅ **Production** |
+| `handbook/` | Live wiki & handbook with planned git-backed proposal workflow (branch-per-proposal, approval merges to master) | 🟡 **Partial** |
+| `bankbuster/` | Automated Bankgirot camt.054 parser (Ruby + Vue) | ⏸️ **Legacy** |
 
 
 ## Development Workflow
 
-**IMPORTANT**: Use the foolproof process management protocol documented in `CLAUDE.md`:
+**Process Management** (see `CLAUDE.md` for full protocol):
 
 ```bash
 npm run dev          # Start all development processes (frontend + backend)
@@ -25,46 +27,88 @@ npm run dev:restart  # Clean restart (prevents cache/stale process issues)
 npm run dev:status   # Check what's running
 ```
 
-Architecture:
+**Architecture:**
 
 ```bash
-├── bin/dev               # Development orchestration script (Overmind/Foreman)
-├── puma_server.rb        # Ruby backend server (WebSocket + REST APIs)
-├── dashboard/            # React frontend (Vite dev server)
-├── handlers/             # API endpoints (weather, transit, temperature, etc.)
-├── bankbuster/           # Bank scraper
-├── handbook/             # Wiki SPA & API
-└── legacy/               # Deprecated Agoo server files
+├── puma_server.rb        # Ruby backend (Puma + WebSocket, port 3001)
+├── dashboard/            # React frontend (Vite, port 5175)
+├── handlers/             # API endpoints (30+ handlers for rent, contracts, weather, transit, etc.)
+├── lib/                  # Core domain models & services (rent calculator, contract generator, etc.)
+├── prisma/               # Database schema & migrations (PostgreSQL)
+├── bin/                  # CLI scripts (rent_reminders, bank_sync, etc.)
+├── contracts/            # Contract templates & signed PDFs
+└── deployment/           # Production deployment scripts & docs
 ```
+
+**Tech Stack:** Ruby 3.3.8 • PostgreSQL 18 • React 19 • Vite • Prisma • Puma • Nginx
 
 ---
 
 ## Dashboard System
 
-The dashboard (`dashboard/`) is a React frontend that displays real-time home automation data including temperature, weather, transit, and Strava activity information.
+The **hallway kiosk** (`dashboard/`) displays real-time data via WebSocket updates on a portrait-oriented 24" monitor. Features include:
 
-### Known Issues & Workarounds
+**Widgets:**
+- **Weather** - Current conditions + forecast (WeatherAPI with AQI)
+- **Transit** - Live SL train/bus departures with urgency animations (Framer Motion)
+- **Temperature** - Heatpump schedule visualization (16-hour bar with supply line glow + time cursor)
+- **Strava** - Recent activity stats
+- **Rent** - Current month's rent calculation with electricity projections
+- **Todo** - Household tasks from `household_todos.md`
+- **Clock** - Gradient-animated time display with Three.js aurora shader background
 
-**Thermiq Heatpump Time Offset**: The Thermiq smart heatpump device clock is currently misconfigured by exactly -1 hour. The dashboard automatically compensates for this in `TemperatureWidget.tsx` with a fixed offset:
+**Key Features:**
+- **Sleep Schedule** - Adaptive brightness (0.7-1.5) + fade-out/wake transitions (configurable via `config/sleep_schedule.json`)
+- **Admin View** - Tab-key access to contract management, tenant leads, signing progress (PIN-protected)
+- **Auto-reload** - WebSocket-triggered refresh after GitHub webhook deployments
+- **GPU-accelerated** - NVIDIA GTX 1650 with WebGL shaders + CSS animations
 
-```typescript
-const THERMIQ_TIME_OFFSET_HOURS = -1
-```
-
-This ensures the heatpump schedule visualization displays correctly relative to the device's actual operational state. Remove this offset when the device clock is corrected.
-
-**Schedule Bar Time Cursor**: The 16-hour schedule bar features a sliding time cursor that moves from left (18% at 7am) to right (81% at 11pm) throughout the day, providing a visual sense of day progression. At night (midnight-6am), it resets to the morning view showing future heating schedules.
+**Thermiq Heatpump Time Offset**: Device clock is -1 hour off. Dashboard auto-compensates in `TemperatureWidget.tsx:THERMIQ_TIME_OFFSET_HOURS`. Remove when device is corrected.
 
 ---
 
-## Rent Calculator System
+## Rent Management System
 
-A Ruby system for calculating rent distribution among roommates and maintaining historical records of rent payments.
+**Automated rent calculation** with fair distribution among active tenants, prorated stays, room adjustments, and real-time electricity cost tracking.
 
-For detailed technical implementation guides, testing strategies, and recent architectural decisions, please see [**DEVELOPMENT.md**](DEVELOPMENT.md).
+**Key Features:**
+- **Automated Bill Scraping** - Daily cron jobs fetch Vattenfall (3am) + Fortum (4am) invoices via browser automation
+- **Time-of-Use Pricing** - Peak/off-peak grid rates (53.60 vs 21.40 öre/kWh) for winter months
+- **Quarterly Projections** - Growth-adjusted estimates (8.7% YoY) when drift_rakning not yet available
+- **Real-time API** - `/api/rent/friendly_message` for voice assistants + WebSocket broadcast to dashboard
+- **Contract Management** - Tenant signup (`/meow`), BankID e-signing (Zigned), admin dashboard with signing progress
+- **Payment Automation** *(ready, not deployed)* - Bank sync (Lunchflow), SMS reminders (46elks), GPT-5-mini message composer
 
-For a log of major accomplishments and project milestones, see [**DONE.md**](DONE.md).
+**Database:** PostgreSQL with Prisma (models: Tenant, RentConfig, ElectricityBill, SignedContract, BankTransaction, RentReceipt, SmsEvent)
 
-> For Agoo WebSocket integration details (status code 101, con_id gotcha), see DEVELOPMENT.md.
+**CLI Tools:**
+```bash
+bin/rent_reminders       # Check overdue payments + send SMS reminders
+bin/bank_sync            # Sync bank transactions from Lunchflow API
+```
 
-> For handler/server stability patterns and the upcoming Git-backed proposal workflow, see [DEVELOPMENT.md](DEVELOPMENT.md).
+For implementation details, see [**DEVELOPMENT.md**](DEVELOPMENT.md) and [**TODO.md**](TODO.md).
+
+---
+
+## Production Deployment
+
+**Environment:** Dell Optiplex 7010 running Pop!_OS 22.04 with NVIDIA GTX 1650
+
+**Services:**
+- `kimonokittens-dashboard` - Puma server (port 3001) via systemd user service
+- `kimonokittens-kiosk` - Chrome kiosk mode (fullscreen, GPU-accelerated)
+- `kimonokittens-webhook` - GitHub webhook receiver (port 49123, auto-deploy on push)
+- `nginx` - Reverse proxy + static file serving
+
+**Automation:**
+- Push to `master` → webhook → `npm ci` + `vite build` + `rsync` → browser auto-reload
+- Database migrations: Manual via `npx prisma migrate deploy` (safety measure)
+- Cron jobs: Electricity bill scraping (3am, 4am daily)
+
+**Key Files:**
+- `.env` - Environment variables (not committed)
+- `config/sleep_schedule.json` - Display sleep/wake schedule
+- `deployment/` - Deployment scripts & documentation
+
+See [**DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md**](DELL_OPTIPLEX_KIOSK_DEPLOYMENT.md) for full setup guide.
