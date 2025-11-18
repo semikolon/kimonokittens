@@ -1129,11 +1129,10 @@ const id = `${adjusted_time}-${line_number}-${destination}` // ❌ Triggers fals
 3. **React Context** manages centralized state with useReducer
 4. **Widgets** consume via `useData()` hook
 
-### Performance Caching
-**Electricity regression** (90-day linear model) cached until midnight - deterministic daily calculation runs once/day instead of every 5min broadcast (99.65% reduction, ~90% CPU savings for handler). Cache invalidates when `Date.today` changes.
-
 ### Data Refresh Flow
-**Backend**: DataBroadcaster fetches handlers every 5-600s → checks cache → computes if needed → broadcasts via WebSocket. **Frontend**: Receives updates → React rerenders widgets. **Key**: Regression data changes once daily (midnight cache invalidation), but frontend receives WebSocket updates every 5min regardless.
+**Backend**: DataBroadcaster fetches handlers every 5-600s → checks cache → computes if needed → broadcasts via WebSocket. **Frontend**: Receives updates → React rerenders widgets.
+
+**Performance**: Electricity anomaly regression (90-day linear model) cached until midnight - runs once/day instead of every 5min broadcast (99.65% reduction, ~90% CPU savings). Cache invalidates when `Date.today` changes, but WebSocket sends updates every 5min regardless.
 
 ### Heating Cost Display (RentWidget) 🌡️
 **Location**: Displayed below electricity source line in RentWidget
@@ -1153,56 +1152,20 @@ const id = `${adjusted_time}-${line_number}-${destination}` // ❌ Triggers fals
 
 ### Electricity Usage Anomaly Detection 📊
 
-**Location**: ElectricityWidget sparkline bars - days with anomalous consumption glow with intensity proportional to excess
+**What it measures**: ElectricityWidget sparkline bars glow when consumption deviates ±20% from temperature-based baseline (90-day linear regression). Cost impact = excess kWh × actual peak/offpeak pricing.
 
-**What the anomaly detection measures:**
-- **90-day linear regression**: Correlates daily electricity consumption with outdoor temperature
-- **Expected baseline**: For any given temperature, predicts "normal" consumption based on historical pattern
-- **Anomaly threshold**: ±20% deviation from expected consumption for that temperature
-- **Cost impact**: Excess consumption × actual peak/offpeak pricing = real money wasted/saved
+**Peak/offpeak pricing included**: Peak 53.6 öre/kWh (Mon-Fri 06:00-22:00, winter), offpeak 21.4 öre/kWh (2.5× difference). Daily cost uses hourly rates for when consumption occurred.
 
-**Peak/offpeak pricing IS included:**
-- Each hour classified as peak (Mon-Fri 06:00-22:00, winter months) or offpeak
-- Peak rate: 53.6 öre/kWh transfer vs offpeak 21.4 öre/kWh (2.5× difference)
-- Daily average price calculated from hourly peak/offpeak rates
-- Anomaly cost uses actual prices for when excess consumption occurred
+**Root causes** (heating dominates 70-80% of electricity cost):
+1. Heatpump running during peak instead of offpeak (poor Node-RED scheduling)
+2. Manual overrides (kitchen floor heating +10°C)
+3. Additional occupancy (+1 person since Nov 2)
+4. Behavioral changes (more cooking, WFH)
+5. Equipment issues (insulation, inefficiency)
 
-**Root causes of anomalies** (principled reasoning):
+**Baseline drift limitation**: 90-day window will eventually adopt wasteful non-peak-optimized schedule as new baseline. Comparison only valid during transition periods. Example: Nov 1-12 showed +142 SEK excess spend - this is ongoing waste until Node-RED peak/offpeak scheduling fixed.
 
-1. **Heating/cooling (70-80% of electricity cost)** - Dominant factor:
-   - Heatpump running during expensive peak hours instead of optimizing for offpeak
-   - Indoor temperature set too high/low for outdoor conditions
-   - Manual overrides (e.g., kitchen floor heating +10°C)
-   - Heatpump not following Tibber price-optimized schedule
-
-2. **Additional occupancy (5-15% impact)**:
-   - Extra person in household increases baseline (cooking, hot water, devices)
-   - Example: Since Nov 2 → higher consumption independent of temperature
-
-3. **Behavioral changes (5-10% impact)**:
-   - More time working from home (computers, monitors, lights)
-   - Seasonal activity patterns (more cooking in winter)
-   - Appliance usage spikes (laundry, dishwasher)
-
-4. **Equipment issues (<5% impact)**:
-   - Inefficient appliances
-   - Insulation problems
-   - HVAC system malfunctions
-
-**The disambiguation challenge:**
-- Regression can't separate "extra person" from "heatpump poor scheduling"
-- It only knows: "For this temperature, we used more kWh than expected"
-- BUT: The cost is accurate - real excess consumption at real prices
-
-**Example interpretation:**
-```
-Nov 15: +35% anomaly, +127 kr cost
-→ Could be: Heatpump ran 10 kWh during peak hours (53.6 öre) instead of waiting for offpeak (21.4 öre)
-→ Same 10 kWh costs 32 kr more just from timing
-→ Plus: Higher baseline from extra person + manual heating overrides
-```
-
-**Practical use:** The anomaly bar effectively answers "How much money are we wasting due to poor heatpump scheduling + behavioral changes?" even if we can't perfectly separate the factors.
+**Current use**: Indicates money wasted from poor heatpump timing + behavioral factors (can't disambiguate, but cost is accurate).
 
 ## Project Quirks & Technical Debt 🔧
 
