@@ -80,6 +80,16 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 **Created:** Nov 15, 2025 after display rotation reset incident
 
 ---
+
+## ⚠️ Logo Burn-In Prevention - Implement Pixel Drift
+
+**Issue:** Static logo in ClockWidget may cause LCD image persistence after 6-12 months of 24/7 display.
+
+**Recommended approach:** Subtle pixel drift - shift entire display 2-4px every 15min using CSS `transform: translate()`. Imperceptible to users, prevents static elements from burning into exact pixels. GPU-accelerated, zero performance cost, preserves aesthetic.
+
+**Implementation:** Add React hook to ClockWidget with `setInterval` updating random X/Y offsets (-3 to +3px), apply via wrapper div with `transition: transform 2s ease-in-out`. ~15 lines of code, 5min task.
+
+---
 ## 🚀 PRODUCTION DEPLOYMENT - Dell Optiplex Kiosk ✅ COMPLETE
 
 **Goal:** Deploy Kimonokittens dashboard as production kiosk on Dell Optiplex
