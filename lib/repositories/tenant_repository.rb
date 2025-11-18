@@ -231,6 +231,7 @@ class TenantRepository < BaseRepository
       # Contract fields
       personnummer: row[:personnummer],
       phone: row[:phone],
+      phone_e164: row[:phoneE164],
       deposit: row[:deposit],
       furnishing_deposit: row[:furnishingDeposit],
       # SMS reminder fields

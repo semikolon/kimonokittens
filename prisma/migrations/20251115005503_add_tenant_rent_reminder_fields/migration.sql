@@ -5,17 +5,19 @@ ALTER TABLE "Tenant"
   ADD COLUMN "smsOptOut" BOOLEAN NOT NULL DEFAULT false;
 
 -- Migrate existing phone numbers to E.164 format (Swedish numbers only)
--- This assumes existing phone format is "0701234567" or "+46701234567"
+-- Strip spaces, dashes, and other non-digit characters to handle messy input
 UPDATE "Tenant"
 SET "phoneE164" = CASE
-  -- Already in E.164 format
-  WHEN "phone" LIKE '+46%' THEN "phone"
-  -- Swedish mobile (starts with 07)
-  WHEN "phone" LIKE '07%' THEN '+46' || SUBSTRING("phone" FROM 2)
+  -- Already starts with +46, strip non-digits except leading +
+  WHEN "phone" LIKE '+46%' THEN
+    '+46' || REGEXP_REPLACE(SUBSTRING("phone" FROM 4), '[^0-9]', '', 'g')
+  -- Swedish mobile (starts with 07), strip non-digits
+  WHEN "phone" ~ '^0?7[0-9]' THEN
+    '+46' || REGEXP_REPLACE(SUBSTRING("phone" FROM CASE WHEN "phone" LIKE '07%' THEN 2 ELSE 1 END), '[^0-9]', '', 'g')
   -- Other formats (keep null for manual validation)
   ELSE NULL
 END
-WHERE "phone" IS NOT NULL;
+WHERE "phone" IS NOT NULL AND "phone" != '';
 
 -- Add check constraint for E.164 format validation
 ALTER TABLE "Tenant"

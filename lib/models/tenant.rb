@@ -29,7 +29,7 @@ class Tenant
               :room_adjustment, :room, :start_date, :departure_date,
               :status, :created_at, :updated_at,
               # Contract fields:
-              :personnummer, :phone,
+              :personnummer, :phone, :phone_e164,
               :deposit, :furnishing_deposit,
               # SMS reminder fields:
               :sms_opt_out, :payday_start_day
@@ -41,7 +41,7 @@ class Tenant
                  room_adjustment: nil, room: nil, start_date: nil, departure_date: nil,
                  status: nil, created_at: nil, updated_at: nil,
                  # Contract fields:
-                 personnummer: nil, phone: nil,
+                 personnummer: nil, phone: nil, phone_e164: nil,
                  deposit: nil, furnishing_deposit: nil,
                  # SMS reminder fields:
                  sms_opt_out: false, payday_start_day: 25)
@@ -60,6 +60,7 @@ class Tenant
     # Contract fields
     @personnummer = personnummer
     @phone = phone
+    @phone_e164 = phone_e164
     @deposit = parse_decimal(deposit)
     @furnishing_deposit = parse_decimal(furnishing_deposit)
     # SMS reminder fields

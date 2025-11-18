@@ -160,7 +160,7 @@ active_tenants.each do |tenant|
   )
 
   if dry_run
-    puts "\n  📱 Would send #{tone} reminder to #{tenant.name} (#{tenant.phone})"
+    puts "\n  📱 Would send #{tone} reminder to #{tenant.name} (#{tenant.phone_e164})"
     puts "     Amount: #{remaining.round} kr"
     puts "     Reference: #{reference}"
     puts "     Message:\n"
@@ -169,14 +169,14 @@ active_tenants.each do |tenant|
     # Send SMS
     begin
       SmsGateway.send_reminder(
-        to: tenant.phone,
+        to: tenant.phone_e164,
         body: message,
         tenant_id: tenant.id,
         month: current_month,
         tone: tone.to_s
       )
 
-      puts "  📤 Sent #{tone} reminder to #{tenant.name} (#{remaining.round} kr remaining)"
+      puts "  📤 Sent #{tone} reminder to #{tenant.name} at #{tenant.phone_e164} (#{remaining.round} kr remaining)"
       reminders_sent += 1
     rescue => e
       puts "  ❌ Failed to send to #{tenant.name}: #{e.message}"
