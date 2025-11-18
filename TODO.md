@@ -759,6 +759,7 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Testing**: Validate against Jan/Feb/Mar 2025 invoices with mixed peak/off-peak rates
   - **Node-RED Migration**: Replace Tibber spot price queries with elprisetjustnu.se + peak logic
   - **Heatpump Optimization**: Target 22:00-06:00 + weekends for heating during winter
+  - [ ] **Future enhancement**: Consider reimplementing ps-strategy-lowest-price logic as custom Node-RED function (simple select cheapest N hours logic, removes dependency on node-red-contrib-power-saver package) - LOW PRIORITY
 
 ### API Integration
 - [x] Expose rent calculator as API for voice/LLM assistants:
