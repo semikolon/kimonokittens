@@ -4,6 +4,15 @@ require 'dotenv'
 Dotenv.load('.env.test')
 
 # ============================================================================
+# WebMock Configuration - Global HTTP Control
+# ============================================================================
+# Industry best practice: Disable external HTTP by default, allow localhost
+# This prevents accidental external calls and ensures test determinism
+require 'webmock/rspec'
+
+WebMock.enable!
+
+# ============================================================================
 # SAFETY GUARDS - Prevent catastrophic database contamination
 # ============================================================================
 
@@ -50,4 +59,27 @@ RSpec.configure do |config|
   # Run specs in random order to detect order dependencies
   config.order = :random
   Kernel.srand config.seed
+
+  # ============================================================================
+  # WebMock Lifecycle Management
+  # ============================================================================
+  # Establish baseline: no external HTTP, localhost allowed (for Ferrum/Chrome)
+  config.before(:suite) do
+    WebMock.disable_net_connect!(allow_localhost: true)
+  end
+
+  # After each test: reset stubs AND re-apply baseline
+  # CRITICAL: reset! clears allowed hosts, must reapply!
+  config.after(:each) do
+    WebMock.reset!
+    WebMock.disable_net_connect!(allow_localhost: true)
+  end
+
+  # Allow specific tests to use real HTTP via :real_http tag
+  # Usage: it "calls external API", :real_http do
+  config.around(:each, :real_http) do |example|
+    WebMock.allow_net_connect!
+    example.run
+    WebMock.disable_net_connect!(allow_localhost: true)
+  end
 end

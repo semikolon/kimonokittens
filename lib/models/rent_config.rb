@@ -30,7 +30,7 @@ class RentConfig
   # Configuration key classification based on business logic
   # PRESERVED from rent_db.rb:107-108
   PERIOD_SPECIFIC_KEYS = %w[el drift_rakning saldo_innan extra_in].freeze
-  PERSISTENT_KEYS = %w[kallhyra bredband vattenavgift va larm].freeze
+  PERSISTENT_KEYS = %w[kallhyra bredband vattenavgift va larm gas].freeze
 
   # Default values for persistent keys when no configuration is found
   # Updated Oct 2025 to reflect actual 2025 quarterly invoice average (754 kr/month)
@@ -39,7 +39,8 @@ class RentConfig
     bredband: 400,
     vattenavgift: 343,  # 45.5% of 754 kr/month
     va: 274,            # 36.4% of 754 kr/month
-    larm: 137           # 18.2% of 754 kr/month
+    larm: 137,          # 18.2% of 754 kr/month
+    gas: 83             # Gas for stove: 500 kr per 6 months = 83 kr/month baseline
   }.freeze
 
   attr_reader :id, :key, :value, :period, :created_at, :updated_at

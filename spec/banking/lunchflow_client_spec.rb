@@ -9,13 +9,8 @@ RSpec.describe LunchflowClient do
   let(:client) { described_class.new(api_key) }
   let(:base_url) { 'https://www.lunchflow.app/api/v1' }
 
-  before do
-    WebMock.disable_net_connect!(allow_localhost: true)
-  end
-
-  after do
-    WebMock.reset!
-  end
+  # WebMock now configured globally in spec_helper.rb
+  # No local before/after hooks needed
 
   describe '#initialize' do
     it 'accepts an API key' do
