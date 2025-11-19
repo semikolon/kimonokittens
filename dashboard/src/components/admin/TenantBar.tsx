@@ -39,7 +39,7 @@ export const TenantBar: React.FC<TenantBarProps> = ({
 
     return {
       leftOffset: daysFromStart * pixelPerDay,
-      width: Math.max(tenure * pixelPerDay, 24), // Minimum 24px
+      width: Math.max(tenure * pixelPerDay, 120), // Minimum 120px (fits "FirstName L." format)
       tenureDays: tenure,
     }
   }, [member, timelineStart, pixelPerDay])

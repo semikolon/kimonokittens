@@ -77,10 +77,12 @@ export const CompactTenantTimeline: React.FC<CompactTenantTimelineProps> = ({
     // Calculate total days
     const totalDays = daysBetween(earliestStart, latestEnd)
 
-    // Add 5% padding on each side for visual breathing room
-    const paddingDays = Math.floor(totalDays * 0.05)
-    const timelineStart = subDays(earliestStart, paddingDays)
-    const timelineEnd = addDays(latestEnd, paddingDays)
+    // Add minimal left padding (7 days) and larger right padding (30 days) to ensure
+    // bars at the right edge have room for their minimum width (180px) plus duration labels
+    const leftPaddingDays = 7
+    const rightPaddingDays = 30  // Extra space for minimum bar width + labels
+    const timelineStart = subDays(earliestStart, leftPaddingDays)
+    const timelineEnd = addDays(latestEnd, rightPaddingDays)
     const totalTimelineDays = daysBetween(timelineStart, timelineEnd)
 
     // Calculate pixel-to-day ratio
