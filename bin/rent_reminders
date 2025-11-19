@@ -25,6 +25,7 @@
 require 'dotenv/load'
 require 'time'
 require_relative '../lib/persistence'
+require_relative '../lib/models/rent_ledger'
 require_relative '../lib/sms/gateway'
 require_relative '../lib/sms/message_composer'
 
@@ -149,11 +150,17 @@ active_tenants.each do |tenant|
   end
 
   # Generate reminder message (LLM hybrid approach)
+  # Convert config month to rent month for SMS display
+  # (ledger.period is config month, but SMS shows rent month)
+  config_period = Date.parse("#{current_month}-01")
+  rent_month_time = RentLedger.config_to_rent_month(config_period)
+  rent_month_display = rent_month_time.strftime('%Y-%m')  # e.g., "2025-12" for December
+
   reference = generate_reference(tenant, current_month)
   message = MessageComposer.compose(
     tenant_name: tenant.name,
     amount: remaining,
-    month: current_month,
+    month: rent_month_display,  # Rent month, not config month
     recipient_phone: admin_swish_number,
     reference: reference,
     tone: tone
