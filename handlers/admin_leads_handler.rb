@@ -91,7 +91,13 @@ class AdminLeadsHandler
       }
     end
 
-    [200, { 'Content-Type' => 'application/json' }, [leads_json.to_json]]
+    # Wrap in object with leads array and total count (matches AdminLeadsData interface)
+    response = {
+      leads: leads_json,
+      total: leads_json.length
+    }
+
+    [200, { 'Content-Type' => 'application/json' }, [response.to_json]]
   end
 
   def get_statistics
