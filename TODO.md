@@ -925,6 +925,9 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 - [ ] Immediate confirmation instead of hourly bank sync lag (better UX)
 - [ ] Refund capability via API for overpayments or cancellations
 
+**RentConfig Admin UI:**
+- [ ] Add admin UI fields for `extra_in`, `saldo_innan`, and other manual RentConfig adjustments (allows adding unexpected costs/income before ledger population on day 22)
+
 ---
 
 ## Infrastructure & DevOps
