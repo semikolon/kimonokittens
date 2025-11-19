@@ -50,7 +50,7 @@ RSpec.describe ElksWebhooksHandler do
       allow(mock_sms_repo).to receive(:create).and_return(double(id: 'evt123'))
 
       # Mock rent data
-      ledger = double('ledger', amount_due: 7045.0)
+      ledger = double('ledger', amount_due: 7045.0, period_swedish: 'december 2025')
       allow(Persistence).to receive(:rent_ledger).and_return(
         double(find_by_tenant_and_period: ledger)
       )
