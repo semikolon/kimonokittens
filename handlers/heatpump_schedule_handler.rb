@@ -25,14 +25,17 @@ class HeatpumpScheduleHandler
     @price_handler = heatpump_price_handler
   end
 
-  def call(req)
+  def call(env)
+    # Wrap env in Rack::Request for convenient access
+    req = Rack::Request.new(env)
+
     # Parse query parameters
-    params = Rack::Utils.parse_query(req.query_string)
+    params = req.params
     hours_on = (params['hours_on'] || DEFAULT_HOURS_ON).to_i
     max_price = params['max_price'] ? params['max_price'].to_f : DEFAULT_MAX_PRICE
 
     # Get prices from heatpump_price_handler
-    status, headers, body = @price_handler.call(req)
+    status, headers, body = @price_handler.call(env)
     return [status, headers, body] unless status == 200
 
     price_data = Oj.load(body.first)
