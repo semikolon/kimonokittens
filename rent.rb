@@ -395,14 +395,10 @@ module RentCalculator
         tenant_repo = Persistence.tenants
         ledger_repo = Persistence.rent_ledger
 
+        # RentLedger period semantics: Use config month (not rent month)
+        # Example: Oct config → period 2025-10-01 (not 2025-11-01)
+        # The RentLedger model's period_swedish() method converts config→rent for display
         config_period = Time.utc(config.year, config.month, 1)
-        rent_month = config.month + 1
-        rent_year = config.year
-        if rent_month > 12
-          rent_month = 1
-          rent_year += 1
-        end
-        rent_period = Time.utc(rent_year, rent_month, 1)
 
         config.to_h.each do |key, value|
           next if value.nil? || value == 0
@@ -427,7 +423,7 @@ module RentCalculator
 
           ledger_repo.upsert_entry(
             tenant_id: tenant_id,
-            period: rent_period,
+            period: config_period,  # Changed: Now uses config month (unified semantics)
             amount_due: amount,
             days_stayed: days_stayed,
             room_adjustment: room_adjustment,

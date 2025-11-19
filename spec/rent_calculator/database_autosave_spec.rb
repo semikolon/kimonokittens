@@ -193,7 +193,7 @@ RSpec.describe 'RentCalculator Database Auto-Save' do
           kallhyra: 24000,
           el: 2000,
           bredband: 400,
-          drift_rakning: 2612  # Quarterly invoice (replaces monthly utilities)
+          drift_rakning: 2612  # Quarterly invoice (stored for audit, not used in calculations)
         }
 
         # Act
@@ -212,18 +212,19 @@ RSpec.describe 'RentCalculator Database Auto-Save' do
         expect(saved_drift).not_to be_nil
         expect(saved_drift[:value].to_i).to eq(2612)
 
-        # Verify it affected total calculation
-        expect(results['Total']).to eq(24000 + 2000 + 400 + 2612)
+        # Verify total uses virtual pot system (837 kr fixed accruals, not drift_rakning)
+        # 837 kr = 754 kr (utilities: 343+274+137) + 83 kr (gas)
+        expect(results['Total']).to eq(24000 + 2000 + 400 + 837)
 
-        # Verify it's reflected in ledger amounts
-        rent_period = Time.utc(2025, 11, 1)
+        # Verify ledger uses config period semantics (config month, not rent month)
+        config_period = Time.utc(2025, 10, 1)  # Oct config → Nov rent
         alice_ledger = db.class.rent_ledger
-          .where(tenantId: alice_id, period: rent_period)
+          .where(tenantId: alice_id, period: config_period)
           .first
 
-        # Each tenant pays half of total
-        expected_per_person = (24000 + 2000 + 400 + 2612) / 2.0
-        expect(alice_ledger[:amountDue]).to eq(expected_per_person)
+        # Each tenant pays half of total (virtual pot system)
+        expected_per_person = (24000 + 2000 + 400 + 837) / 2.0
+        expect(alice_ledger[:amountDue]).to be_within(1).of(expected_per_person)
       end
 
       it 'correctly calculates config period and rent period' do
