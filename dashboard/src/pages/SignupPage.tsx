@@ -21,11 +21,11 @@ export default function SignupPage() {
         {/* Header: Logo + Heading horizontal layout */}
         <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-8">
           <h1 className="font-horsemen text-4xl md:text-5xl text-purple-100 uppercase tracking-wide text-center md:text-left">
-            Intresseanmälan
+            Bo med oss
           </h1>
           <img
             src="/logo.png"
-            alt="Kimonokittens"
+            alt="Kimono Kittens"
             className="w-full max-w-[400px] md:w-[400px]"
           />
         </div>

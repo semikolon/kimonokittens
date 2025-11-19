@@ -162,7 +162,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
                    text-white rounded-xl transition-all
                    disabled:opacity-50 disabled:cursor-not-allowed
                    focus:outline-none focus:ring-2 focus:ring-purple-500/50
-                   hover:brightness-110"
+                   button-cursor-glow button-glow-orange button-hover-brighten"
         style={{
           backgroundImage: 'linear-gradient(180deg, #cb6f38 0%, #903f14 100%)'
         }}

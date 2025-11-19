@@ -1,8 +1,8 @@
 # Master Production Deployment Plan - November 2025
 
 **Created**: November 18, 2025 at 01:50
-**Status**: ✅ Ready for Cron Job Setup
-**Last Updated**: November 18, 2025 at 13:30
+**Status**: ✅ Ready for API/Browser Testing
+**Last Updated**: November 19, 2025 at 12:30
 
 ### 🎯 CURRENT PROGRESS
 
@@ -13,13 +13,17 @@
 - Phone conversion fixed (spaces/dashes stripped)
 - Code updated to use phoneE164 for SMS
 - **Phone sync issue fixed** - phoneE164 auto-regenerated on update (commit 3f8afc9)
+- **State directory + log files created** (Nov 19 12:18)
+- **Phone E.164 conversion completed** - 3 tenants converted (Fredrik, Frida, Sanna)
+- **Log file ownership corrected** - Changed to kimonokittens:kimonokittens
+- **Cron jobs configured** - Bank sync 3x/day (8am, 2pm, 8pm) + reminders once daily (9:45am)
 
 ### ✅ READY FOR NEXT PHASE
 
-**Remaining Tasks** (User must do):
-- Set up cron jobs for bank sync + rent reminders
+**Remaining Tasks**:
+- API endpoint testing (signup, rate limiting, admin leads)
 - Browser testing of tenant signup + admin dashboard
-- External service setup (Cloudflare Turnstile, Lunchflow, 46elks)
+- External service setup (Cloudflare Turnstile - optional)
 
 ---
 
@@ -339,20 +343,24 @@ git push origin master  # Triggers webhook redeploy
 
 ### Phase 5: Cron Jobs (Rent Reminders)
 
-#### 5.1 Add Cron Jobs to kimonokittens User
+#### 5.1 Add Cron Jobs to kimonokittens User ✅ COMPLETED (Nov 19, 2025)
 ```bash
 sudo crontab -e -u kimonokittens
 ```
 
-**Add:**
+**Added:**
 ```cron
-# Hourly bank sync (5 minutes past the hour)
-5 * * * * /bin/bash -l -c 'eval "$(rbenv init -)"; cd /home/kimonokittens/Projects/kimonokittens && timeout 5m bundle exec ruby bin/bank_sync >> logs/bank_sync.log 2>&1'
+# Bank sync 3x daily (morning, midday, evening) - Lunchflow syncs once per 24h
+5 8,14,20 * * * /bin/bash -l -c 'eval "$(rbenv init -)"; cd /home/kimonokittens/Projects/kimonokittens && timeout 5m bundle exec ruby bin/bank_sync >> logs/bank_sync.log 2>&1'
 
-# Rent reminders at 09:45 and 16:45 daily
+# Rent reminders once daily at 09:45 - Per CODE_REVIEW decision (twice daily rejected)
 45 9 * * * /bin/bash -l -c 'eval "$(rbenv init -)"; cd /home/kimonokittens/Projects/kimonokittens && timeout 2m bundle exec ruby bin/rent_reminders >> logs/reminders.log 2>&1'
-45 16 * * * /bin/bash -l -c 'eval "$(rbenv init -)"; cd /home/kimonokittens/Projects/kimonokittens && timeout 2m bundle exec ruby bin/rent_reminders >> logs/reminders.log 2>&1'
 ```
+
+**Frequency rationale:**
+- **Bank sync 3x/day** (not hourly): Lunchflow syncs once per 24h, 3x polling captures transactions with <8h lag
+- **Reminders once daily** (not twice): Second reminder same day has no new payment data (Lunchflow constraint)
+- Per CODE_REVIEW_RENT_REMINDERS_REWORK.md (Nov 17, 2025) superseding earlier twice-daily plan
 
 **Critical flags explained:**
 - `eval "$(rbenv init -)"` - Loads Ruby environment
@@ -360,10 +368,10 @@ sudo crontab -e -u kimonokittens
 - `bundle exec` - Required for vendor/bundle gems
 - `>> logs/*.log 2>&1` - Append stdout+stderr to logs
 
-#### 5.2 Verify Cron Jobs Added
+#### 5.2 Verify Cron Jobs Added ✅ COMPLETED
 ```bash
 sudo crontab -l -u kimonokittens | grep -E "(bank_sync|rent_reminders)"
-# Should show 3 cron jobs
+# Should show 2 cron jobs (bank_sync, rent_reminders)
 ```
 
 #### 5.3 Test Cron Execution (Schedule at Specific Time)
