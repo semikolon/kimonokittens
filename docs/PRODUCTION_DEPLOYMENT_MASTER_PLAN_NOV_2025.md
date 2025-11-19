@@ -779,3 +779,32 @@ http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 **Deployment Owner**: Fredrik (user)
 **Assistant**: Serverside CC Agent (kimonokittens user)
 **Timeline**: 4-6 weeks for complete rollout (phased approach)
+
+---
+
+## 📋 APPENDIX: Current Work Session (November 19, 2025)
+
+### Status: Paused Mid-Implementation
+
+**Context:** Discovered architectural inconsistency while implementing December rent ledger population.
+
+**The Issue:**
+- RentConfig.period = config month (Nov config → Dec rent) ✅
+- RentLedger.period = rent month (Dec ledger = Dec rent) ✅
+- **Problem:** Same field name, different semantics → confusion for devs/agents
+- `bin/populate_monthly_ledger` script has bug (uses same month for both)
+
+**Decision:** Unify semantics - both should use config month for coherence.
+
+**Next Steps:**
+1. Launch subagent to assess feasibility (identify all code changes needed)
+2. Fix RentConfig/RentLedger period semantics if feasible
+3. Fix `bin/populate_monthly_ledger` script bug
+4. Create December 2025 rent ledger entries (original goal)
+5. Decide Rasmus departure date (Nov 30 vs Dec 1)
+6. Fix >= bug in populate_monthly_ledger:28
+7. Fill historical gaps (Sept, Oct 2025 ledgers)
+
+**Why Paused:** Need architectural clarity before creating more data with potentially wrong semantics.
+
+**Resume Point:** Launch feasibility subagent to grep all RentLedger.period usage and assess migration complexity.
