@@ -110,7 +110,7 @@ export const CompactTenantTimeline: React.FC<CompactTenantTimelineProps> = ({
       ref={containerRef}
       className="relative w-full"
       style={{
-        minHeight: `${30 + validMembers.length * 26 + 10}px`, // Axis + bars + padding
+        minHeight: `${30 + validMembers.length * 52 + 10}px`, // Axis + bars (44px height + 8px gap) + padding
       }}
     >
       {/* Timeline axis with date markers */}

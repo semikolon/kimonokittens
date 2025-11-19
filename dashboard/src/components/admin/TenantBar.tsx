@@ -54,25 +54,21 @@ export const TenantBar: React.FC<TenantBarProps> = ({
     if (barWidth === 0) {
       return { type: 'outside', text: member.tenant_name, truncate: false }
     }
-    return calculateNamePlacement(barWidth, member.tenant_name || '', '12px Inter')
+    return calculateNamePlacement(barWidth, member.tenant_name || '', '16px Inter')
   }, [barWidth, member.tenant_name])
 
-  // Determine bar color based on contract status
+  // Determine bar styling based on contract status (match MemberRow)
   const hasCompletedContract = member.type === 'contract' && member.status === 'completed'
-  const barGradient = hasCompletedContract
-    ? 'bg-gradient-to-r from-cyan-500/80 to-cyan-600/80'
-    : 'bg-gradient-to-r from-purple-500/60 to-purple-600/60'
-
-  const borderColor = hasCompletedContract
-    ? 'border-t border-cyan-400/30'
-    : 'border-t border-purple-400/30'
+  const barBackground = hasCompletedContract
+    ? 'bg-slate-900/40 border-cyan-500/10'
+    : 'bg-slate-900/40 border-purple-500/10'
 
   return (
     <div
       className="absolute"
       style={{
-        height: '22px',
-        top: `${index * 26}px`, // Stack vertically
+        height: '44px',
+        top: `${index * 52}px`, // Stack vertically with 52px spacing
         left: 0,
         right: 0,
       }}
@@ -80,8 +76,8 @@ export const TenantBar: React.FC<TenantBarProps> = ({
       {/* The bar itself */}
       <div
         ref={barRef}
-        className={`absolute h-full rounded ${barGradient} ${borderColor} cursor-pointer transition-all duration-200 ${
-          isHovered ? 'brightness-110 -translate-y-0.5 shadow-lg z-10' : ''
+        className={`absolute h-full rounded-xl border ${barBackground} cursor-pointer transition-all duration-200 ${
+          isHovered ? 'bg-purple-900/10 shadow-lg z-10' : ''
         }`}
         style={{
           left: `${leftOffset}px`,
@@ -95,8 +91,8 @@ export const TenantBar: React.FC<TenantBarProps> = ({
       >
         {/* Name inside bar */}
         {namePlacement.type === 'inside' && (
-          <div className="absolute inset-0 flex items-center justify-center px-2">
-            <span className="text-white font-medium text-xs drop-shadow-sm truncate">
+          <div className="absolute inset-0 flex items-center justify-center px-3">
+            <span className="text-white font-medium text-base drop-shadow-sm truncate">
               {namePlacement.text}
             </span>
           </div>
@@ -108,10 +104,10 @@ export const TenantBar: React.FC<TenantBarProps> = ({
         <div
           className="absolute top-0 h-full flex items-center"
           style={{
-            left: `${leftOffset + width + 8}px`, // 8px gap after bar
+            left: `${leftOffset + width + 12}px`, // 12px gap after bar
           }}
         >
-          <span className="text-purple-200 font-normal text-xs whitespace-nowrap">
+          <span className="text-purple-200 font-medium text-base whitespace-nowrap">
             {namePlacement.text}
           </span>
         </div>
@@ -123,11 +119,11 @@ export const TenantBar: React.FC<TenantBarProps> = ({
         style={{
           left:
             namePlacement.type === 'outside'
-              ? `${leftOffset + width + 8 + (namePlacement.text.length * 7) + 12}px` // After name
-              : `${leftOffset + width + 8}px`, // After bar
+              ? `${leftOffset + width + 12 + (namePlacement.text.length * 9) + 16}px` // After name
+              : `${leftOffset + width + 12}px`, // After bar
         }}
       >
-        <span className="text-purple-300/60 text-[10px] font-normal whitespace-nowrap">
+        <span className="text-purple-300/70 text-sm font-normal whitespace-nowrap">
           {formatDuration(tenureDays)}
         </span>
       </div>

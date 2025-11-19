@@ -36,16 +36,19 @@ export function measureTextWidth(text: string, font: string): number {
 }
 
 /**
- * Generate initials from a full name
- * @param fullName - Full name (e.g., "Frans Lukas Otis Pirat Lövenvald")
- * @returns Initials with dots (e.g., "F.L.O.P.L.")
+ * Generate short name from a full name
+ * @param fullName - Full name (e.g., "Amanda Persson" or "Frans Lukas Otis Pirat Lövenvald")
+ * @returns First name + last initial (e.g., "Amanda P." or "Frans L.")
  */
 export function getInitials(fullName: string): string {
-  return fullName
-    .split(' ')
-    .filter(word => word.length > 0) // Filter empty strings
-    .map(word => word[0]?.toUpperCase() || '')
-    .join('.')
+  const words = fullName.split(' ').filter(word => word.length > 0)
+  if (words.length === 0) return ''
+  if (words.length === 1) return words[0] // Just first name if only one word
+
+  // Return first name + last initial
+  const firstName = words[0]
+  const lastInitial = words[words.length - 1][0]?.toUpperCase() || ''
+  return `${firstName} ${lastInitial}.`
 }
 
 /**

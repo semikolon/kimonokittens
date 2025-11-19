@@ -54,7 +54,7 @@ export function maxDate(dates: Date[]): Date {
 
 /**
  * Format a duration in days to human-readable Swedish format
- * Examples: "5d", "3v", "2m", "1å 3m", "2å"
+ * Examples: "5d", "3v", "2m", "1år 3m", "2år"
  */
 export function formatDuration(days: number): string {
   if (days < 7) {
@@ -76,8 +76,8 @@ export function formatDuration(days: number): string {
   const months = Math.floor(remainingDays / 30)
 
   if (months === 0) {
-    return `${years}å`
+    return `${years}år`
   }
 
-  return `${years}å ${months}m`
+  return `${years}år ${months}m`
 }
