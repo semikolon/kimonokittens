@@ -110,23 +110,46 @@ rspec                   # Wrong gem versions or missing gems
 
 ## Rent Calculation Timing Quirks ⚠️
 
-**Critical**: Dashboard requests current month config but shows NEXT month's rent. Config month = rent month - 1 (Sept config → Oct rent). Rent paid in advance, electricity in arrears.
+### Critical: Config Period = Rent Month - 1
 
-**Database logic:**
+**The system stores rent parameters one month early because rent is paid in advance.**
+
+**Concrete example (November 2025):**
+- **Today: November 19, 2025**
+- **Dashboard requests: November config** (`/api/rent/friendly_message`)
+- **Actually displays: December 2025 rent** ("Hyran för december 2025 ska betalas innan 27 nov")
+
+**WHY:** Rent is paid **in advance** for the upcoming month, but operational costs (electricity) are paid **in arrears** for the previous month. Therefore, November's config stores December's rent parameters.
+
+### Database Period Logic
+
 ```ruby
-# October 2025 rent → September config
-db.set_config('el', 2424, Time.new(2025, 9, 1))  # September period, NOT October!
+# To show December 2025 rent on November 27:
+db.set_config('el', 3869, Time.new(2025, 11, 1))  # November period
+# NOT: Time.new(2025, 12, 1)  # This would be wrong!
+
+# Or: October 2025 rent on September 27:
+db.set_config('el', 2424, Time.new(2025, 9, 1))   # September period
 ```
+
+**The rule:** Config month = rent month - 1 (Nov config → Dec rent).
+
+### RentLedger Population Timing
+
+**Script timing:** Run `bin/populate_monthly_ledger 2025 12` in late November (day 22) to create December rent ledger entries. (Automated via cron in production.)
 
 ### Payment Structure & Quarterly Savings Mechanism
 
 **Regular Monthly Payments (Advance)**:
-- **Base rent** (`kallhyra`): October housing
-- **Internet** (`bredband`): October service
+- **Base rent** (`kallhyra`): December housing
+- **Internet** (`bredband`): December service
 - **Utilities** (`vattenavgift`, `va`, `larm`): Building up savings for quarterly bills
 
 **Arrears Payments**:
-- **Electricity** (`el`): September consumption bills
+- **Electricity** (`el`): November consumption bills
+
+**Example:** November 27 payment covers:
+- December base rent (advance) + December utilities (savings) + November electricity (arrears)
 
 ### Electricity Automation Status ⚡
 
