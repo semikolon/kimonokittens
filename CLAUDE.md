@@ -20,6 +20,8 @@
 
 **Purpose**: Keep CLAUDE.md focused, actionable, and maintainable. Future developers should find critical operational knowledge quickly without wading through historical minutiae.
 
+**Subdirectory organization (large projects):** Split CLAUDE.md by domain (`/dashboard` for frontend, `/lib` for backend). Root keeps cross-cutting concerns + overviews; subdirectories contain implementation details with reference links (minimal redundancy).
+
 ---
 
 ## 💻 Production Environment (Dell Optiplex 7010)
