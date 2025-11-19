@@ -181,7 +181,9 @@ config_month = (due_day >= 25) ? due_month : due_month - 1
 **Historical data:** `electricity_bills_history.txt` + `deployment/historical_config_migration.rb`
 
 **Virtual Pot System** (Nov 2025):
-- **Monthly accruals**: 754 kr building + 83 kr gas = **837 kr/month** (every month)
+- **Monthly utilities**: Uses provided values OR defaults (343+274+137=754 kr) if not provided
+- **Gas**: Always adds 83 kr baseline (regardless of provided utilities)
+- **Total accruals**: Typically 754 kr utilities + 83 kr gas = 837 kr/month (when using defaults)
 - **Quarterly invoices**: Logged for audit/transparency only, **never used in calculations**
 - **No rent spikes**: Fixed monthly accruals replace old "lump sum when invoice arrives" approach
 - **Over-collection buffer**: 8.6-10.8% cushion absorbs future cost growth (exhausts ~2026)

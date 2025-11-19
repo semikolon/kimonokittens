@@ -137,7 +137,7 @@ module RentCalculator
     # - drift_rakning stored in DB for tracking/projections but NOT used in billing
     # - Dashboard shows virtual pot balance and warns if insufficient for upcoming invoices
     def drift_total
-      monthly_building_ops = vattenavgift + va + larm  # Always 754 kr
+      monthly_building_ops = vattenavgift + va + larm  # Provided values or 754 kr default
       monthly_gas = gas  # Always 83 kr
 
       # NEVER use drift_rakning amount here - it creates rent spikes and inflates annual average

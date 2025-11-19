@@ -104,14 +104,15 @@ RSpec.describe 'RentCalculator Database Auto-Save' do
         )
 
         # Assert - RentLedger entries created with audit trail
-        rent_period = Time.utc(2025, 11, 1)  # October config → November rent
+        # After migration: RentLedger.period uses config month (not rent month)
+        config_period = Time.utc(2025, 10, 1)  # Oct config → Nov rent
 
         alice_ledger = db.class.rent_ledger
-          .where(tenantId: alice_id, period: rent_period)
+          .where(tenantId: alice_id, period: config_period)
           .first
 
         bob_ledger = db.class.rent_ledger
-          .where(tenantId: bob_id, period: rent_period)
+          .where(tenantId: bob_id, period: config_period)
           .first
 
         # Verify Alice's entry (full month)
@@ -152,9 +153,10 @@ RSpec.describe 'RentCalculator Database Auto-Save' do
         )
 
         # Verify initial entry
-        rent_period = Time.utc(2025, 11, 1)
+        # After migration: RentLedger.period uses config month (not rent month)
+        config_period = Time.utc(2025, 10, 1)  # Oct config → Nov rent
         initial_entries = db.class.rent_ledger
-          .where(tenantId: alice_id, period: rent_period)
+          .where(tenantId: alice_id, period: config_period)
           .all
         expect(initial_entries.count).to eq(1)
         initial_amount = initial_entries.first[:amountDue]
@@ -170,7 +172,7 @@ RSpec.describe 'RentCalculator Database Auto-Save' do
 
         # Assert - entry updated, not duplicated
         updated_entries = db.class.rent_ledger
-          .where(tenantId: alice_id, period: rent_period)
+          .where(tenantId: alice_id, period: config_period)
           .all
 
         expect(updated_entries.count).to eq(1), "Should have exactly one entry (updated, not duplicated)"
@@ -251,10 +253,10 @@ RSpec.describe 'RentCalculator Database Auto-Save' do
           .all
         expect(config_entries.count).to be > 0
 
-        # Assert - Ledger saved to November period (config month + 1)
-        rent_period = Time.utc(2025, 11, 1)
+        # Assert - After migration: Ledger also uses config period (unified semantics)
+        # Ledger saved to October period (same as config), display conversion handled by model
         ledger_entries = db.class.rent_ledger
-          .where(period: rent_period)
+          .where(period: config_period)
           .all
         expect(ledger_entries.count).to eq(2)  # Alice and Bob
       end
@@ -283,17 +285,17 @@ RSpec.describe 'RentCalculator Database Auto-Save' do
           .all
         expect(config_entries.count).to be > 0
 
-        # Assert - Ledger saved to January 2026 (year rollover)
-        rent_period = Time.utc(2026, 1, 1)
+        # Assert - After migration: Ledger uses config period (December), not rent period (January)
+        # Ledger saved to December 2025 (same as config), display conversion handled by model
         ledger_entries = db.class.rent_ledger
-          .where(period: rent_period)
+          .where(period: config_period)
           .all
         expect(ledger_entries.count).to eq(2)
 
         alice_ledger = ledger_entries.find { |e| e[:tenantId] == alice_id }
         expect(alice_ledger).not_to be_nil
         # Compare dates (ignore timezone differences)
-        expect(alice_ledger[:period].to_date).to eq(rent_period.to_date)
+        expect(alice_ledger[:period].to_date).to eq(config_period.to_date)
       end
 
       it 'does not save zero or nil config values' do
@@ -364,10 +366,10 @@ RSpec.describe 'RentCalculator Database Auto-Save' do
 
         # Assert - no database entries created
         config_period = Time.utc(2025, 10, 1)
-        rent_period = Time.utc(2025, 11, 1)
 
         expect(db.class.rent_configs.where(period: config_period).count).to eq(0)
-        expect(db.class.rent_ledger.where(period: rent_period).count).to eq(0)
+        # After migration: Ledger uses config period too
+        expect(db.class.rent_ledger.where(period: config_period).count).to eq(0)
       end
 
       it 'still returns correct calculation results' do
@@ -395,7 +397,8 @@ RSpec.describe 'RentCalculator Database Auto-Save' do
         )
 
         # Assert - calculation still works
-        expected_total = 24000 + 2000 + 400 + 375 + 300 + 150
+        # Virtual pot: provided utilities (825 kr) + gas always added (83 kr)
+        expected_total = 24000 + 2000 + 400 + 375 + 300 + 150 + 83
         expect(results['Total']).to eq(expected_total)
         # Amounts are rounded, so both tenants should have equal amounts
         expect(results['Rent per Roommate']['Alice']).to eq(results['Rent per Roommate']['Bob'])
