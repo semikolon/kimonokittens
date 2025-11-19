@@ -81,3 +81,16 @@ export function formatDuration(days: number): string {
 
   return `${years}år ${months}m`
 }
+
+/**
+ * Format date to Swedish format (DD MMM YYYY)
+ * Examples: "15 jan 2023", "3 dec 2024"
+ */
+export function formatDate(date: Date | undefined): string {
+  if (!date) return '—'
+  return date.toLocaleDateString('sv-SE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}

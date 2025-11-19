@@ -4,9 +4,8 @@
  */
 import React, { useMemo, useRef, useEffect, useState } from 'react'
 import type { Member } from '../../views/AdminDashboard'
-import { daysBetween, formatDuration } from '../../utils/dateCalculations'
+import { daysBetween, formatDuration, formatDate } from '../../utils/dateCalculations'
 import { calculateNamePlacement } from '../../utils/textMeasurement'
-import { TenantTooltip } from './TenantTooltip'
 
 interface TenantBarProps {
   member: Member
@@ -88,6 +87,7 @@ export const TenantBar: React.FC<TenantBarProps> = ({
         tabIndex={0}
         role="button"
         aria-label={`${member.tenant_name}: ${formatDuration(tenureDays)}`}
+        title={`${formatDate(member.tenant_start_date)} → ${formatDate(member.tenant_departure_date)}`}
       >
         {/* Name inside bar */}
         {namePlacement.type === 'inside' && (
@@ -127,11 +127,6 @@ export const TenantBar: React.FC<TenantBarProps> = ({
           {formatDuration(tenureDays)}
         </span>
       </div>
-
-      {/* Tooltip on hover */}
-      {isHovered && barRef.current && (
-        <TenantTooltip member={member} barElement={barRef.current} tenureDays={tenureDays} />
-      )}
     </div>
   )
 }
