@@ -118,7 +118,7 @@ RSpec.describe ContractGeneratorHtml do
       end
 
       it 'includes logo path' do
-        expect(template_data[:logo_path]).to include('logo.png')
+        expect(template_data[:logo_path]).to include('logo-80pct-saturated-2000w.png')
         expect(File.exist?(template_data[:logo_path])).to be true
       end
     end
