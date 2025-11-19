@@ -49,6 +49,7 @@ require_relative 'handlers/heating_cost_handler'
 require_relative 'handlers/electricity_price_handler'
 require_relative 'handlers/electricity_stats_handler'
 require_relative 'handlers/heatpump_price_handler'
+require_relative 'handlers/heatpump_schedule_handler'
 require_relative 'handlers/screenshot_handler'
 require_relative 'handlers/zigned_webhook_handler'
 require_relative 'handlers/contract_pdf_handler'
@@ -65,6 +66,7 @@ heating_cost_handler = HeatingCostHandler.new
 electricity_price_handler = ElectricityPriceHandler.new
 electricity_stats_handler = ElectricityStatsHandler.new(electricity_price_handler)
 heatpump_price_handler = HeatpumpPriceHandler.new(electricity_price_handler)
+heatpump_schedule_handler = HeatpumpScheduleHandler.new(heatpump_price_handler)
 screenshot_handler = ScreenshotHandler.new
 proxy_handler = ProxyHandler.new
 static_handler = StaticHandler.new
@@ -456,6 +458,10 @@ app = Rack::Builder.new do
 
   map "/api/heatpump/prices" do
     run heatpump_price_handler
+  end
+
+  map "/api/heatpump/schedule" do
+    run heatpump_schedule_handler
   end
 
   map "/data" do

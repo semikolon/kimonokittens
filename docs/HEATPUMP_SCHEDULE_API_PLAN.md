@@ -665,44 +665,42 @@ function selectCheapestHours(prices, hoursOn, maxPrice) {
 
 ---
 
-## Next Steps
+## Implementation Status
 
-### This Week (Nov 17-24, 2025)
+### ✅ COMPLETED (Nov 19, 2025)
 
-1. **Implement Dell API endpoint** ← START HERE
-   - Create `handlers/heatpump_price_handler.rb`
-   - Copy methods from electricity_stats_handler
-   - Add route to puma_server.rb
-   - Test endpoint locally
+1. **Dell API endpoint** - `/api/heatpump/prices`
+   - ✅ Created `handlers/heatpump_price_handler.rb`
+   - ✅ Reuses ElectricityProjector for peak/off-peak logic
+   - ✅ Returns Tibber-compatible format (viewer.homes[].currentSubscription.priceInfo)
+   - ✅ Split into today/tomorrow arrays
+   - ✅ Deployed to production
 
-2. **Validate price calculations**
-   - Compare with electricity_stats_handler
-   - Spot-check 10 known dates
-   - Verify peak/off-peak classification
+2. **ps-strategy algorithm research**
+   - ✅ Analyzed node-red-contrib-power-saver source code
+   - ✅ Identified simple algorithm: sort by price, select N cheapest hours
+   - ✅ Decision: Reimplement in Ruby for better integration
 
-3. **Deploy to production Dell**
-   - Commit to git
-   - Push to GitHub (webhook deploy)
-   - Test on production: http://pop:3001/api/heatpump/prices
+### 🚀 IN PROGRESS (Nov 19, 2025)
 
-### Next Week (Nov 25-Dec 1, 2025)
+3. **Schedule generation endpoint** - `/api/heatpump/schedule`
+   - Implements ps-strategy-lowest-price algorithm in Ruby
+   - Accepts parameters: hours_on, max_price
+   - Returns ready-to-use schedule (no Node-RED processing needed)
+   - Benefits: Dashboard integration, simpler Node-RED, single source of truth
 
-4. **Node-RED integration** (requires Dell machine + Pi SSH)
-   - Claude Code session on Dell
-   - SSH to Pi, backup flows
-   - Create test tab in Node-RED
-   - Add HTTP request node
-   - Test ps-strategy format compatibility
+### Next Steps
 
-5. **Shadow mode testing** (3 days minimum)
-   - Test flow runs parallel to production
-   - Log both schedules
-   - Analyze differences
+4. **Node-RED integration** (simpler than originally planned)
+   - Replace Tibber Query + ps-strategy nodes with single HTTP request
+   - Point to: `http://192.168.4.84:3001/api/heatpump/schedule?hours_on=12&max_price=2.2`
+   - Shadow mode testing (3 days)
+   - Production cutover
 
-6. **Production cutover** (when validated)
-   - Disable Tibber flow
-   - Enable Dell API flow
-   - Monitor temperatures
+5. **Dashboard integration** (future enhancement)
+   - Add widget to adjust hours_on slider (9-14 hours)
+   - Show projected daily cost based on schedule
+   - Real-time schedule visualization
 
 ---
 
