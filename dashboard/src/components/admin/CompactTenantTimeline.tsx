@@ -77,16 +77,18 @@ export const CompactTenantTimeline: React.FC<CompactTenantTimelineProps> = ({
     // Calculate total days
     const totalDays = daysBetween(earliestStart, latestEnd)
 
-    // Symmetric padding on both sides (45 days) to match tenant rows and form layout
-    // Provides consistent spacing and room for bars + duration labels at edges
-    const leftPaddingDays = 45
-    const rightPaddingDays = 45
+    // Minimal date padding (15 days each side) for timeline calculation efficiency
+    // Visual spacing comes from container padding (px-12), not date range padding
+    const leftPaddingDays = 15
+    const rightPaddingDays = 15
     const timelineStart = subDays(earliestStart, leftPaddingDays)
     const timelineEnd = addDays(latestEnd, rightPaddingDays)
     const totalTimelineDays = daysBetween(timelineStart, timelineEnd)
 
-    // Calculate pixel-to-day ratio
-    const pixelPerDay = containerWidth / totalTimelineDays
+    // Calculate pixel-to-day ratio (subtract 96px for px-12 padding on both sides)
+    const horizontalPadding = 96 // 48px on each side
+    const availableWidth = containerWidth - horizontalPadding
+    const pixelPerDay = availableWidth / totalTimelineDays
 
     return {
       timelineStart,
@@ -110,7 +112,7 @@ export const CompactTenantTimeline: React.FC<CompactTenantTimelineProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full"
+      className="relative w-full px-12"
       style={{
         minHeight: `${30 + validMembers.length * 52 + 10}px`, // Axis + bars (44px height + 8px gap) + padding
       }}
