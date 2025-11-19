@@ -34,12 +34,18 @@ puts ""
 puts "⚠️  This will shift ALL periods by -1 month"
 puts "   Example: 2025-11-01 → 2025-10-01"
 puts ""
-print "Continue? (yes/no): "
-response = gets.chomp.downcase
 
-unless response == 'yes'
-  puts "❌ Migration cancelled"
-  exit 0
+# Check for --yes flag or non-interactive mode
+auto_confirm = ARGV.include?('--yes') || !$stdin.tty?
+
+unless auto_confirm
+  print "Continue? (yes/no): "
+  response = gets.chomp.downcase
+
+  unless response == 'yes'
+    puts "❌ Migration cancelled"
+    exit 0
+  end
 end
 
 puts ""
