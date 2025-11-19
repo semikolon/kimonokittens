@@ -1,0 +1,98 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'dotenv/load'
+require 'sequel'
+
+puts "🔄 RentLedger Period Migration Script"
+puts "=" * 50
+puts ""
+
+# Connect to database
+db = Sequel.connect(ENV['DATABASE_URL'])
+
+# Show current state
+puts "📊 Current RentLedger state (BEFORE migration):"
+before_count = db[:RentLedger].count
+puts "  Total entries: #{before_count}"
+
+if before_count > 0
+  sample = db[:RentLedger]
+    .order(Sequel.desc(:period))
+    .limit(10)
+    .select(:period, :tenantId, :amountDue)
+    .all
+
+  puts "\n  Sample entries:"
+  sample.each do |row|
+    tenant_short = row[:tenantId][0..15]
+    puts "    #{row[:period].strftime('%Y-%m-%d')} | ...#{tenant_short} | #{row[:amountDue]} kr"
+  end
+end
+
+puts ""
+puts "⚠️  This will shift ALL periods by -1 month"
+puts "   Example: 2025-11-01 → 2025-10-01"
+puts ""
+print "Continue? (yes/no): "
+response = gets.chomp.downcase
+
+unless response == 'yes'
+  puts "❌ Migration cancelled"
+  exit 0
+end
+
+puts ""
+puts "🔧 Running migration..."
+
+# Execute migration
+db.run('UPDATE "RentLedger" SET period = period - INTERVAL \'1 month\' WHERE period IS NOT NULL')
+
+puts "✅ Migration complete!"
+puts ""
+
+# Show after state
+puts "📊 RentLedger state (AFTER migration):"
+after_count = db[:RentLedger].count
+puts "  Total entries: #{after_count}"
+
+if after_count > 0
+  sample = db[:RentLedger]
+    .order(Sequel.desc(:period))
+    .limit(10)
+    .select(:period, :tenantId, :amountDue)
+    .all
+
+  puts "\n  Sample entries:"
+  sample.each do |row|
+    tenant_short = row[:tenantId][0..15]
+    puts "    #{row[:period].strftime('%Y-%m-%d')} | ...#{tenant_short} | #{row[:amountDue]} kr"
+  end
+end
+
+puts ""
+
+# Check for duplicate period+tenant combinations
+puts "🔍 Checking for duplicates..."
+duplicates = db[:RentLedger]
+  .select(:period, :tenantId)
+  .group(:period, :tenantId)
+  .having { count.function.* > 1 }
+  .all
+
+if duplicates.empty?
+  puts "  ✅ No duplicates found"
+else
+  puts "  ⚠️  WARNING: Found #{duplicates.length} duplicate period+tenant combinations:"
+  duplicates.each do |dup|
+    puts "    - Period: #{dup[:period]}, Tenant: #{dup[:tenantId][0..15]}..."
+  end
+end
+
+puts ""
+puts "✨ Migration script complete!"
+puts ""
+puts "Next steps:"
+puts "  1. Run tests: bundle exec rspec"
+puts "  2. Update code files to use config month semantics"
+puts "  3. Create RentPeriodHelper for display layer"
