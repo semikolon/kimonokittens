@@ -123,7 +123,7 @@ export const TenantBar: React.FC<TenantBarProps> = ({
               : `${leftOffset + width + 12}px`, // After bar
         }}
       >
-        <span className="text-purple-300/70 text-sm font-normal whitespace-nowrap">
+        <span className="text-purple-300/70 text-sm font-normal whitespace-nowrap mr-4">
           {formatDuration(tenureDays)}
         </span>
       </div>
