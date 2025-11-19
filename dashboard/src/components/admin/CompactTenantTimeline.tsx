@@ -3,7 +3,7 @@
  * Replaces vertical MemberRow list to save ~54% vertical space
  */
 import React, { useRef, useState, useEffect, useMemo } from 'react'
-import { Member } from '../../views/AdminDashboard'
+import type { Member } from '../../views/AdminDashboard'
 import { daysBetween, minDate, maxDate, addDays, subDays } from '../../utils/dateCalculations'
 import { TimelineAxis } from './TimelineAxis'
 import { TenantBar } from './TenantBar'

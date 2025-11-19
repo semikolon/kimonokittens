@@ -245,12 +245,21 @@ export const MemberRow: React.FC<MemberRowProps> = ({
       `}
     >
       {/* Collapsed row header */}
-      <button
+      <div
         onClick={() => {
           onSelect()
           onToggle() // All rows are now expandable
         }}
-        className="w-full p-4 flex items-center gap-4 text-left"
+        className="w-full p-4 flex items-center gap-4 text-left cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onSelect()
+            onToggle()
+          }
+        }}
       >
         {/* Expand icon (all rows are expandable) */}
         <ChevronRight
@@ -341,7 +350,7 @@ export const MemberRow: React.FC<MemberRowProps> = ({
             )}
           </div>
         </div>
-      </button>
+      </div>
 
       {/* Error message in collapsed state */}
       {isContract && (member as SignedContract).error_message && !isExpanded && (

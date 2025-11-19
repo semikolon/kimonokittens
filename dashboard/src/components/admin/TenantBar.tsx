@@ -3,7 +3,7 @@
  * Renders horizontal bar proportional to tenure duration
  */
 import React, { useMemo, useRef, useEffect, useState } from 'react'
-import { Member } from '../../views/AdminDashboard'
+import type { Member } from '../../views/AdminDashboard'
 import { daysBetween, formatDuration } from '../../utils/dateCalculations'
 import { calculateNamePlacement } from '../../utils/textMeasurement'
 import { TenantTooltip } from './TenantTooltip'

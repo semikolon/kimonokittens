@@ -3,7 +3,7 @@
  * Positioned above bar (or below if near top edge)
  */
 import React, { useEffect, useState } from 'react'
-import { Member } from '../../views/AdminDashboard'
+import type { Member } from '../../views/AdminDashboard'
 import { formatDuration } from '../../utils/dateCalculations'
 import { MapPin, Calendar, CheckCircle2, XCircle } from 'lucide-react'
 
