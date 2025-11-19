@@ -126,6 +126,9 @@ class ElksWebhooksHandler
 
     return "Kunde inte hitta hyresinfo för #{current_month}" unless ledger
 
+    # Get rent month for display (ledger.period is config month)
+    rent_month_display = ledger.period_swedish  # e.g., "December 2025"
+
     # Get existing receipts
     receipts = Persistence.rent_receipts.find_by_tenant_and_month(
       tenant.id,
@@ -135,13 +138,13 @@ class ElksWebhooksHandler
     remaining = ledger.amount_due - total_paid
 
     if remaining <= 0
-      "Hyra #{current_month}: Betald (#{ledger.amount_due.round} kr)"
+      "Hyra #{rent_month_display}: Betald (#{ledger.amount_due.round} kr)"
     else
       # Generate reference code and Swish link
       ref = generate_reference(tenant, current_month)
       swish_link = generate_swish_link(tenant.phone, remaining, ref)
 
-      "Hyra #{current_month}: #{remaining.round} kr kvar\nRef: #{ref}\nLänk: #{swish_link}"
+      "Hyra #{rent_month_display}: #{remaining.round} kr kvar\nRef: #{ref}\nLänk: #{swish_link}"
     end
   end
 
