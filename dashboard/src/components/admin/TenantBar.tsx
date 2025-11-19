@@ -54,7 +54,7 @@ export const TenantBar: React.FC<TenantBarProps> = ({
     if (barWidth === 0) {
       return { type: 'outside', text: member.tenant_name, truncate: false }
     }
-    return calculateNamePlacement(barWidth, member.tenant_name || '', '16px Inter')
+    return calculateNamePlacement(barWidth, member.tenant_name || '', '18px Inter')
   }, [barWidth, member.tenant_name])
 
   // Determine bar styling based on contract status (match MemberRow)
@@ -92,7 +92,7 @@ export const TenantBar: React.FC<TenantBarProps> = ({
         {/* Name inside bar */}
         {namePlacement.type === 'inside' && (
           <div className="absolute inset-0 flex items-center justify-center px-3">
-            <span className="text-white font-medium text-base drop-shadow-sm truncate">
+            <span className="text-white font-medium text-lg drop-shadow-sm truncate">
               {namePlacement.text}
             </span>
           </div>
@@ -107,7 +107,7 @@ export const TenantBar: React.FC<TenantBarProps> = ({
             left: `${leftOffset + width + 12}px`, // 12px gap after bar
           }}
         >
-          <span className="text-purple-200 font-medium text-base whitespace-nowrap">
+          <span className="text-purple-200 font-medium text-lg whitespace-nowrap">
             {namePlacement.text}
           </span>
         </div>
@@ -123,7 +123,7 @@ export const TenantBar: React.FC<TenantBarProps> = ({
               : `${leftOffset + width + 12}px`, // After bar
         }}
       >
-        <span className="text-purple-300/70 text-sm font-normal whitespace-nowrap mr-4">
+        <span className="text-purple-300/70 text-base font-normal whitespace-nowrap mr-4">
           {formatDuration(tenureDays)}
         </span>
       </div>

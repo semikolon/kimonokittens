@@ -77,9 +77,9 @@ export const CompactTenantTimeline: React.FC<CompactTenantTimelineProps> = ({
     // Calculate total days
     const totalDays = daysBetween(earliestStart, latestEnd)
 
-    // Date padding: minimal left, generous right for duration labels
+    // Date padding: zero left for perfect alignment, generous right for duration labels
     // Timeline inherits parent container padding to match tenant rows exactly
-    const leftPaddingDays = 3  // Minimal padding for exact left alignment with tenant rows
+    const leftPaddingDays = 0  // No padding - leftmost bar aligns exactly with container edge
     const rightPaddingDays = 50  // Extra space for duration labels (e.g., "1år 9m")
     const timelineStart = subDays(earliestStart, leftPaddingDays)
     const timelineEnd = addDays(latestEnd, rightPaddingDays)
