@@ -5,12 +5,17 @@ require 'dotenv/load'
 require 'date'
 require_relative '../lib/persistence'
 require_relative '../lib/models/rent_config'
+require_relative '../lib/models/rent_ledger'
 
-# Parse command line arguments
+# Parse command line arguments (config month, not rent month)
 year = ARGV[0]&.to_i || Time.now.year
 month = ARGV[1]&.to_i || Time.now.month
 
-puts "🏠 Populating rent ledger for #{year}-#{month.to_s.rjust(2, '0')}"
+# Calculate rent month for display (config month + 1)
+config_period = Time.utc(year, month, 1)
+rent_month_display = RentLedger.swedish_rent_month(config_period)
+
+puts "🏠 Populating rent ledger for #{rent_month_display} (config: #{year}-#{month.to_s.rjust(2, '0')})"
 
 # Get rent configuration for this period
 config = RentConfig.for_period(year: year, month: month, repository: Persistence.rent_configs)
@@ -24,8 +29,8 @@ period_end = Date.new(year, month, -1) # Last day of month
 tenants = Persistence.tenants.all.select do |tenant|
   # Tenant is active if:
   # - start_date is on or before period_end
-  # - departure_date is nil OR after period_start
-  tenant.start_date <= period_end && (!tenant.departure_date || tenant.departure_date > period_start)
+  # - departure_date is nil OR on/after period_start (inclusive)
+  tenant.start_date <= period_end && (!tenant.departure_date || tenant.departure_date >= period_start)
 end
 
 if tenants.empty?
@@ -99,7 +104,7 @@ tenants.each do |tenant|
     days_stayed: days_stayed,
     room_adjustment: tenant_room_adj,
     base_monthly_rent: base_per_person,
-    calculation_title: period.strftime('%B %Y'),
+    calculation_title: RentLedger.swedish_rent_month(period),  # Rent month, not config month
     calculation_date: Time.now.utc
   )
 
