@@ -69,10 +69,12 @@ export const TenantBar: React.FC<TenantBarProps> = ({
 
   return (
     <div
-      className="relative mb-1"
+      className="absolute"
       style={{
         height: '22px',
         top: `${index * 26}px`, // Stack vertically
+        left: 0,
+        right: 0,
       }}
     >
       {/* The bar itself */}

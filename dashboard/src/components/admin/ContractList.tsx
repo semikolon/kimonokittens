@@ -13,7 +13,7 @@ export const ContractList: React.FC<ContractListProps> = ({ contracts }) => {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   // Segment members into current vs historical (memoized to stabilize references)
-  const { currentMembers, historicalMembers } = React.useMemo(() => {
+  const { currentMembers, historicalMembers} = React.useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
