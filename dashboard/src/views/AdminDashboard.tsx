@@ -206,7 +206,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Tenant leads section */}
       <div className="mt-6">
-        <Widget title="Intresseanmälningar" horsemenFont={true} accent={true}>
+        <Widget title="Intresserade" horsemenFont={true} accent={true}>
           {leadsLoading ? (
             <div className="text-purple-200">Laddar anmälningar...</div>
           ) : leadsError ? (
