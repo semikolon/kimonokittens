@@ -115,6 +115,8 @@ ps aux | grep -E "(npm run dev|ruby.*puma|vite.*5175)" | grep -v grep
 lsof -ti :3001 :5175
 ```
 
+**BashOutput for background commands may be stale** - System reminders about "new output available" can refer to hours-old processes. Always verify process is actually running before trusting output.
+
 **Issues**: [#7838](https://github.com/anthropics/claude-code/issues/7838), [#1481](https://github.com/anthropics/claude-code/issues/1481), [#759](https://github.com/anthropics/claude-code/issues/759)
 
 ### ⚠️ Sudo Commands - Tell User to Run
