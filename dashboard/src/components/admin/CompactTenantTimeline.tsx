@@ -79,7 +79,7 @@ export const CompactTenantTimeline: React.FC<CompactTenantTimelineProps> = ({
 
     // Date padding: minimal left, generous right for duration labels
     // Timeline inherits parent container padding to match tenant rows exactly
-    const leftPaddingDays = 10
+    const leftPaddingDays = 3  // Minimal padding for exact left alignment with tenant rows
     const rightPaddingDays = 50  // Extra space for duration labels (e.g., "1år 9m")
     const timelineStart = subDays(earliestStart, leftPaddingDays)
     const timelineEnd = addDays(latestEnd, rightPaddingDays)
