@@ -20,7 +20,7 @@
 
 **Purpose**: Keep CLAUDE.md focused, actionable, and maintainable. Future developers should find critical operational knowledge quickly without wading through historical minutiae.
 
-**Subdirectory organization (large projects):** Split CLAUDE.md by domain (`/dashboard` for frontend, `/lib` for backend). Root keeps cross-cutting concerns + overviews; subdirectories contain implementation details with reference links (minimal redundancy).
+**Subdirectory organization (large projects):** Split CLAUDE.md by domain (`/dashboard` for frontend, `/lib` for backend). Root keeps cross-cutting concerns + overviews; subdirectories contain implementation details with reference links (minimal redundancy). Decision criteria: Does it affect BOTH frontend and backend developers (deployment, git, database)? → Root. Only one domain (UI colors, Ruby gems, React patterns)? → Subdirectory.
 
 ---
 
@@ -148,28 +148,9 @@ lsof -ti :3001 :5175
 
 ## 🎨 UI COLOR SCHEME
 
-**CRITICAL: Never use green or emerald colors for success states, buttons, or positive indicators.**
+**For complete color palette and usage guidelines:** See `/dashboard/CLAUDE.md`
 
-**Approved Color Palette:**
-- **Primary**: Purple (`purple-100` through `purple-900`) - Main brand color, headings, accents
-- **Background**: Slate (`slate-700` through `slate-900`) - Dark backgrounds, surfaces
-- **Success/Positive**: Cyan (`cyan-300` through `cyan-600`) - Turquoise/aqua tone, NOT green/emerald
-- **Warning/Pending**: Yellow (`yellow-300` through `yellow-600`) - Pending states, warnings
-- **Error/Negative**: Red (`red-300` through `red-600`) - Errors, failures, negative adjustments
-- **Info/Secondary**: Blue (`blue-300` through `blue-600`) - Informational states
-- **Neutral**: Slate (`slate-300` through `slate-600`) - Neutral/inactive states
-- **Alert**: Orange (`orange-300` through `orange-600`) - Alerts, expirations
-
-**Forbidden Colors:**
-- ❌ **Green** (`green-*`) - Never use for any purpose
-- ❌ **Emerald** (`emerald-*`) - Never use for any purpose
-- ❌ **Lime** (`lime-*`) - Never use for any purpose
-
-**Examples:**
-- ✅ Completed status: `text-cyan-400`, `bg-cyan-400/20 border-cyan-400/30`
-- ✅ Action button: `bg-cyan-600/80 hover:bg-cyan-600`
-- ✅ Room discount: `text-cyan-400` (negative adjustment = discount)
-- ❌ Never: `text-green-400`, `bg-emerald-600`, etc.
+**Critical rule**: Never use green/emerald for success states - use cyan instead.
 
 ### 🚨 Production Deployment
 
@@ -355,32 +336,9 @@ Authorization: Bearer <access_token>
 
 ## ⚠️ CRITICAL: RUBY SCRIPT EXECUTION PROTOCOL
 
-**🔥 ALWAYS USE `bundle exec` FOR RUBY SCRIPTS 🔥**
+**For complete Ruby execution guidelines:** See `/lib/CLAUDE.md`
 
-This project uses **`--deployment` mode with `vendor/bundle`** for gem isolation. Ruby scripts MUST run via `bundle exec` to access installed gems.
-
-### ✅ CORRECT EXECUTION:
-```bash
-bundle exec ruby script.rb
-bundle exec ruby -e "require_relative 'lib/contract_signer'; ..."
-bundle exec rspec
-```
-
-### ❌ WRONG EXECUTION (Will fail with LoadError):
-```bash
-ruby script.rb          # Can't find gems in vendor/bundle
-ruby -e "..."           # Can't load bundled dependencies
-rspec                   # Wrong gem versions or missing gems
-```
-
-### 🚨 WHY THIS MATTERS:
-- **Without `bundle exec`**: Ruby uses system gems, ignoring `vendor/bundle`
-- **Result**: `LoadError: cannot load such file` even though gems are installed
-- **Production context**: All production code uses bundler's isolated gem environment
-
-**Rule of thumb**: If the project has a `Gemfile` and `vendor/bundle`, ALWAYS prefix with `bundle exec`.
-
-**Lesson learned**: Nov 12, 2025 - Repeatedly failed to run contract signing scripts without `bundle exec` despite `vendor/bundle` clearly existing.
+**Critical rule**: ALWAYS use `bundle exec` for Ruby scripts - this project uses `--deployment` mode with `vendor/bundle`.
 
 ---
 
@@ -428,69 +386,6 @@ sanna = repo.find_by_id('cmhqe9enc0000wopipuxgc3kw')  # SUCCESS
 
 ---
 
-### 📊 DATABASE QUERY QUICK REFERENCE
-
-**Essential commands for querying the persistence layer without confusion.**
-
-#### Quick List All Contracts
-```bash
-cd /home/kimonokittens/Projects/kimonokittens && ruby -e "
-require 'dotenv/load'
-require_relative 'lib/persistence'
-
-RentDb.instance.class.db[:SignedContract].order(Sequel.desc(:createdAt)).each do |c|
-  tenant = Persistence.tenants.find_by_id(c[:tenantId])
-  created = c[:createdAt].strftime('%m-%d %H:%M')
-  puts \"#{created} | #{tenant&.name || 'Unknown'} | #{c[:caseId]} | test: #{c[:testMode]} | status: #{c[:status]}\"
-end
-"
-```
-
-#### Repository Access Patterns
-```ruby
-require 'dotenv/load'
-require_relative 'lib/persistence'
-
-# Get repositories
-contract_repo = Persistence.signed_contracts
-tenant_repo = Persistence.tenants
-
-# Find by case ID (Zigned's identifier)
-contract = contract_repo.find_by_case_id('cmhvx172q067g4cqks8wpyd5h')
-
-# Find by tenant
-contracts = contract_repo.find_by_tenant_id(tenant_id)
-
-# Raw Sequel queries (returns hashes with camelCase keys)
-all_contracts = RentDb.instance.class.db[:SignedContract]
-  .order(Sequel.desc(:createdAt))
-  .all
-
-# Filter by test mode
-prod_contracts = RentDb.instance.class.db[:SignedContract]
-  .where(testMode: false)
-  .all
-```
-
-#### Key Field Mapping
-- **Raw Sequel** (hashes): `:testMode`, `:caseId`, `:tenantId`, `:createdAt`
-- **Repository** (models): `.test_mode`, `.case_id`, `.tenant_id`, `.created_at`
-
-#### Available Repository Methods
-```ruby
-repo.find_by_id(id)                  # => SignedContract or nil
-repo.find_by_case_id(case_id)       # => SignedContract or nil
-repo.find_by_tenant_id(tenant_id)   # => Array<SignedContract>
-repo.find_completed                  # => Array (status: completed)
-repo.find_expiring_soon(days: 7)    # => Array (pending + expires soon)
-repo.statistics                      # => Hash with counts by status
-```
-
-**Important**: Always `require 'dotenv/load'` first to load DATABASE_URL from .env. Repository methods return domain models; raw Sequel returns hashes.
-
-**Created**: Nov 12, 2025 - After repeated confusion about correct query syntax.
-
----
 
 ### 🧹 Cache Cleanup After Major Changes
 
@@ -549,42 +444,16 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 ---
 
-## 📊 Quarterly Invoice Auto-Projection System
-
-**Status**: ✅ **PRODUCTION** (Oct 25, 2025) - Proactive growth-adjusted projections
-**Documentation**: `docs/QUARTERLY_INVOICE_RECURRENCE_PLAN.md`
-
-**Architecture**: RentConfig.for_period → QuarterlyInvoiceProjector → Auto-populate when missing
-**Pattern**: Quarterly months (Apr/Jul/Oct) = 3× yearly building operations invoices
-**Growth Rate**: 8.7% annual (2024 → 2025: 7,689 kr → 8,361 kr historical trend)
-**Base Amount**: 2,787 kr (2025 average of all drifträkningar)
-
-**Key Features**:
-- **Proactive auto-population**: Dashboard requests auto-create projections when drift_rakning missing
-- **Growth-adjusted formula**: `2,787 × (1.087 ^ years_forward)` → Apr 2026 = 3,030 kr, Apr 2027 = 3,294 kr
-- **Projection tracking**: Database `isProjection` flag distinguishes actual vs projected invoices
-- **Manual override**: PUT /api/rent/config automatically clears projection flag on updates
-- **API transparency**: `quarterly_invoice_projection` boolean + Swedish disclaimer in messages
-
-**Implementation**:
-- **Service**: `lib/services/quarterly_invoice_projector.rb` (projection calculations)
-- **Model**: `lib/models/rent_config.rb` (auto-population logic in `for_period`)
-- **Repository**: `lib/repositories/rent_config_repository.rb` (`save_with_projection_flag` method)
-- **Handler**: `handlers/rent_calculator_handler.rb` (API response includes projection status)
-
-**Production Data**:
-- Oct 2025: 2,797 kr (actual invoice, isProjection=false) → Nov rent: 7,577 kr/person
-- Apr 2026: 3,029 kr (auto-projected, isProjection=true) → May rent shows disclaimer
-
----
 
 ## 🏗️ Repository Architecture Pattern
 
 **Status**: ✅ **PRODUCTION READY** (October 2025) - Full domain model migration complete
 
-### Current Architecture
+**For complete Ruby implementation guide:** See `/lib/CLAUDE.md`
 
-The codebase uses **clean architecture** with domain models, repositories, and services:
+### Architecture Overview
+
+Clean architecture with domain models, repositories, and services:
 
 ```
 Handlers → Services → Domain Models + Repositories → Database
@@ -592,59 +461,15 @@ Handlers → Services → Domain Models + Repositories → Database
     Persistence (centralized access)
 ```
 
-### Single Source of Truth (SSoT)
-**Tenant is the master data source** - all handlers fetch tenant data (name, startDate, departureDate, etc.) live from `Tenant` table via repository at request time. No duplication, no cache. Admin contracts handler enriches contract data with tenant fields on-the-fly, ensuring changes to tenant records immediately reflect in all views.
-
-### Quick Reference
-
-**Access repositories:**
-```ruby
-require_relative 'lib/persistence'
-
-Persistence.tenants           # TenantRepository
-Persistence.rent_configs      # RentConfigRepository
-Persistence.rent_ledger       # RentLedgerRepository
-Persistence.electricity_bills # ElectricityBillRepository
-```
-
-**Domain model methods:**
-```ruby
-# Electricity billing period calculation:
-ElectricityBill.calculate_bill_period(due_date)  # → consumption period Date
-
-# Rent configuration with carry-forward logic:
-RentConfig.for_period(year: 2025, month: 10, repository: Persistence.rent_configs)
-
-# Tenant days stayed calculation:
-tenant.days_stayed_in_period(period_start, period_end)
-```
-
-**Services for transactions:**
-```ruby
-# Store electricity bill + auto-aggregate + update RentConfig:
-ApplyElectricityBill.call(
-  provider: 'Vattenfall',
-  amount: 1685.69,
-  due_date: Date.new(2025, 11, 3)
-)
-# Automatically: stores bill → aggregates period → updates RentConfig → notifies WebSocket
-```
-
-### Architecture Layers
-
+**Architecture layers:**
 1. **Domain Models** (`lib/models/`) - Business logic, NO database access
 2. **Repositories** (`lib/repositories/`) - Persistence only, NO business rules
 3. **Services** (`lib/services/`) - Multi-table transactions
 4. **Persistence** (`lib/persistence.rb`) - Singleton repository access
-5. **RentDb** (`lib/rent_db.rb`) - Thin compatibility wrapper (deprecated for new code)
 
-### Documentation
+**Single Source of Truth (SSoT):** Tenant is the master data source - all handlers fetch tenant data live from database via repository. No duplication, no cache. Changes to tenant records immediately reflect in all views.
 
-For LLM assistants and future developers:
-- **Complete API guide**: `docs/MODEL_ARCHITECTURE.md` (800+ lines)
-- **Migration commits**: d96d76f (models), d7b75ec (handlers), 7df8296 (tests)
-- **Business logic preservation**: Verified in test suite (spec/models/, spec/repositories/, spec/services/)
-- **Test coverage**: 37 tests for domain layer (all passing)
+**Documentation**: `docs/MODEL_ARCHITECTURE.md` (800+ lines), test coverage: 37 tests for domain layer (all passing)
 
 ---
 
@@ -834,64 +659,11 @@ ws://localhost:3001
 
 **CRITICAL: Read this file completely before working on rent calculations or database operations.**
 
-## Rent Calculation Timing Quirks ⚠️
+## Rent Calculation Timing & Business Logic
 
-**Critical**: Dashboard requests current month config but shows NEXT month's rent. Config month = rent month - 1 (Sept config → Oct rent). Rent paid in advance, electricity in arrears.
+**For complete rent calculation details:** See `/lib/CLAUDE.md`
 
-**Database logic:**
-```ruby
-# October 2025 rent → September config
-db.set_config('el', 2424, Time.new(2025, 9, 1))  # September period, NOT October!
-```
-
-### Payment Structure & Quarterly Savings Mechanism
-
-**Regular Monthly Payments (Advance)**:
-- **Base rent** (`kallhyra`): October housing
-- **Internet** (`bredband`): October service
-- **Utilities** (`vattenavgift`, `va`, `larm`): Building up savings for quarterly bills
-
-**Arrears Payments**:
-- **Electricity** (`el`): September consumption bills
-
-### Electricity Automation Status ⚡
-
-**Status**: ✅ **FULLY AUTOMATED** (Oct 24, 2025) - No manual entry required for rent calculations
-
-- **Peak/off-peak pricing**: Implemented with 0.6-4.3% winter accuracy (exceeds 5-6% target) - see `docs/ELECTRICITY_AUTOMATION_COMPLETION_SUMMARY.md`
-- **Dual-scraper system**: Vattenfall (3am) + Fortum (4am) cron jobs auto-fetch invoices, aggregate totals, update RentConfig - see `docs/PRODUCTION_CRON_DEPLOYMENT.md`
-- **Rent calculation**: Fully automated from bill arrival through WebSocket broadcast - zero manual intervention needed
-- **Quarterly invoice auto-projection**: Growth-adjusted projections (8.7% YoY) for Apr/Jul/Oct when actual invoices not yet received - see `docs/QUARTERLY_INVOICE_RECURRENCE_PLAN.md`
-
-### Electricity Bill Due Date Timing ⚡
-
-**Key question:** When did the bill ARRIVE and become available for rent calculation?
-
-**Due date determines config period:**
-- **Day 25-31**: Config = due month (bill arrived same month)
-- **Day 1-10**: Config = due month - 1 (bill arrived previous month)
-
-**Example (August 2025 consumption):**
-- Bills arrive mid-Sept → Vattenfall due Sept 30 (day 30) + Fortum due Oct 1 (day 1)
-- Both use **Sept config** → October rent
-- Flow: Aug consumption → Sept bills arrive → Sept config → Oct rent
-
-**Migration script rule:**
-```ruby
-config_month = (due_day >= 25) ? due_month : due_month - 1
-```
-
-**Historical data:** `electricity_bills_history.txt` + `deployment/historical_config_migration.rb`
-
-**Virtual Pot System** (Nov 2025):
-- **Monthly accruals**: 754 kr building + 83 kr gas = **837 kr/month** (every month)
-- **Quarterly invoices**: Logged for audit/transparency only, **never used in calculations**
-- **No rent spikes**: Fixed monthly accruals replace old "lump sum when invoice arrives" approach
-- **Over-collection buffer**: 8.6-10.8% cushion absorbs future cost growth (exhausts ~2026)
-- **Auto-projection**: Missing quarters filled with growth-adjusted estimates (8.7% YoY, base 2,787 kr)
-
-**Example:** September 27 payment covers:
-- October base rent (advance) + October accruals (837 kr fixed) + September electricity (arrears)
+**Critical concept**: Config month = rent month - 1 (Sept config → Oct rent). Rent paid in advance, electricity in arrears. See `/lib/CLAUDE.md` for payment structure, virtual pot system, electricity automation, and bill timing details.
 
 ## Database Safety Rules ⚠️
 
@@ -919,45 +691,11 @@ When rent calculations seem wrong, check these patterns:
 
 ## Testing Best Practices 🧪
 
-**Status**: ✅ PRODUCTION READY (October 4, 2025) - 39/39 tests passing
-**Documentation**: `docs/TESTING_GUIDE.md` (complete reference)
+**For complete backend testing guide:** See `/lib/CLAUDE.md`
 
-### Critical Rules
+**Status**: ✅ 39/39 tests passing | **Documentation**: `docs/TESTING_GUIDE.md`
 
-1. **Test database isolation** - Tests ALWAYS use `kimonokittens_test` database (4-layer defense in depth)
-2. **spec_helper.rb MUST be first require** - Loads `.env.test` before any code
-3. **Sequel API**: Use `db.class.db.run()` not `db.conn.exec()` (pre-2025 upgrade)
-4. **Default utilities**: Calculator adds 825 kr when utilities not provided
-5. **Rounding tolerance**: Use `be_within(1).of(...)` for financial totals
-6. **Timestamp comparison**: Compare `.to_date` not full timestamps (timezone differences)
-
-### Quick Commands
-
-```bash
-# Run tests (one file at a time for easier fixes)
-bundle exec rspec spec/rent_calculator/calculator_spec.rb
-
-# Verify dev database untouched after tests
-ruby -e "require 'dotenv/load'; require_relative 'lib/rent_db'; puts RentDb.instance.get_tenants.length"  # Should show 8
-
-# Full test suite
-bundle exec rspec
-```
-
-### When Tests Fail
-
-**Code behavior likely evolved legitimately** - update test expectations, not implementation:
-- Message format changes → Update regex/string matchers
-- Rounding differences → Add tolerance
-- Default values → Accept calculator's defaults
-- Timezone handling → Compare dates not timestamps
-
-**See**: `docs/TESTING_GUIDE.md` for complete patterns, setup, and troubleshooting
-
-**Related documentation**:
-- `rent.rb:12-17` - Payment structure comments (advance/arrears)
-- `DEVELOPMENT.md:84-94` - Electricity bill handling timeline
-- `RENT_DATA_SOURCE_TRANSPARENCY.md` - Data source indicators
+**Core philosophy**: Test database isolation (use `kimonokittens_test` database), spec_helper.rb must be first require, update test expectations when code evolves legitimately.
 
 ## Quick Reference Commands
 
@@ -1033,10 +771,7 @@ npm run dev:logs     # Attach to live process logs
 
 ## Kiosk Display Optimization
 
-**WebGL Shader Impact** (`animated-shader-background.tsx`):
-- +7-8% GPU, +16-21°C temp, +23-24W power, increased fan noise
-- **Recommendation**: Disable for 24/7 use (reduces wear, ~200 kWh/year saved, quieter)
-- To disable: Comment out `<AnoAI />` in `App.tsx`
+**For WebGL shader performance impact and optimization recommendations:** See `/dashboard/CLAUDE.md`
 
 **Note**: Hardware specs and Chrome GPU flags are in `~/.claude/CLAUDE.md` (global, machine-specific)
 
@@ -1044,108 +779,34 @@ npm run dev:logs     # Attach to live process logs
 
 ## Frontend Development
 
-### Environment & Workflow
+**For complete frontend development guide:** See `/dashboard/CLAUDE.md`
 
-**SSH port forwarding** (Mac → Linux dev machine):
-```bash
-# ~/.ssh/config on Mac
-Host kimonokittens
-  HostName <linux-ip>
-  User fredrik
-  LocalForward 5175 localhost:5175  # Vite dev server
-  LocalForward 3001 localhost:3001  # Ruby backend API
-```
-
-**Development loop:**
-1. SSH with forwarding: `ssh kimonokittens`
-2. Start dev servers: `cd ~/Projects/kimonokittens && bin/dev start`
-3. Open browser on Mac: `http://localhost:5175`
-4. Edit code → Vite HMR auto-reloads → push → webhook deploys to production
-
-**Dependencies** (fredrik dev checkout): Ruby (rbenv), Bundle (`bundle install`), Node/npm (`npm install` in dashboard/)
-
-### Implementation Patterns
-
-**Animation** - Stable identity keys prevent false re-renders:
-```typescript
-// ✅ Good: const id = `${departure_time}-${line_number}-${destination}`
-// ❌ Bad:  const id = `${adjusted_time}-${line_number}-${destination}` // Changes on delays
-```
-
-**CSS gotchas** (`TrainWidget.tsx`): `background` shorthand resets all → use `background-image` with `background-clip: text`; add `animation-fill-mode: forwards`; interval ≠ duration (race condition); use `background-repeat: repeat-x` for gradients.
-
-**Performance**: `transform`/`opacity` for GPU acceleration, respect `prefers-reduced-motion`, clean up in useEffect.
-
-**Form Editing Patterns:**
-
-**Inline forms** (faster, maintains context):
-- Text/date field edits in expanded detail views
-- Multi-field sequences with tab navigation
-- Pattern: Button → input reveals inline + Save/Cancel buttons
-- Examples: `TenantDetails.tsx` departure date, contact fields
-- Use when: User already viewing/editing the entity
-
-**Modal dialogs** (demands attention, isolates action):
-- Authentication gates (PIN entry)
-- Destructive actions (delete confirmation)
-- Multi-step flows (wizards, onboarding)
-- Creating new entities (separate from existing data)
-- Examples: `AdminAuthContext.tsx` PIN gate, `ContractDetails.tsx` cancel confirmation
-
-**Decision guide**: User already editing an existing item → inline keeps flow. Need user focus/confirmation or creating something new → modal provides isolation.
+**Key topics covered:**
+- SSH port forwarding setup (Mac → Linux dev machine)
+- Vite development workflow and HMR
+- Animation patterns, CSS gotchas, performance optimization
+- Form editing patterns (inline vs modal dialogs)
 
 ---
 
 ## WebSocket Architecture ⚡
 
-### DataBroadcaster URLs - FIXED ✅
-**Environment variable solution implemented**: `lib/data_broadcaster.rb` now uses `ENV['API_BASE_URL']`
+**For backend implementation:** See `/lib/CLAUDE.md` (DataBroadcaster, refresh intervals, performance caching)
+**For frontend integration:** See `/dashboard/CLAUDE.md` (React Context, widget patterns)
 
-**Production ready**: Set `API_BASE_URL=https://your-domain.com` in production environment
+### Data Flow Overview
 
-### Data Flow
+```
+Backend (Ruby) → WebSocket → Frontend (React)
+DataBroadcaster → puma_server.rb → React Context → Widgets
+```
+
 1. **Ruby DataBroadcaster** fetches from HTTP endpoints every 30-600s
 2. **Custom WebSocket** (`puma_server.rb`) publishes to frontend via raw socket handling
 3. **React Context** manages centralized state with useReducer
 4. **Widgets** consume via `useData()` hook
 
-### Data Refresh Flow
-**Backend**: DataBroadcaster fetches handlers every 5-600s → checks cache → computes if needed → broadcasts via WebSocket. **Frontend**: Receives updates → React rerenders widgets.
-
-**Performance**: Electricity anomaly regression (90-day linear model) cached until midnight - runs once/day instead of every 5min broadcast (99.65% reduction, ~90% CPU savings). Cache invalidates when `Date.today` changes, but WebSocket sends updates every 5min regardless.
-
-### Heating Cost Display (RentWidget) 🌡️
-**Location**: Displayed below electricity source line in RentWidget
-
-**Calculation**: Uses ElectricityProjector (trailing 12-month baseline + seasonal patterns)
-- **Current (Oct 2025)**: "2 °C varmare skulle kosta 143 kr/mån (36 kr/person); 2 °C kallare skulle spara 130 kr/mån (33 kr/person)"
-- **February 2026 (predicted)**: "2 °C varmare skulle kosta 451 kr/mån (113 kr/person); 2 °C kallare skulle spara 409 kr/mån (102 kr/person)"
-
-**Why February costs 3.5× more**:
-- Seasonal multiplier: Feb = 2.04x vs Sep = 0.56x (winter vs fall)
-- More heating usage = larger impact per degree adjustment
-
-**Architecture**:
-- Shared module: `lib/heating_cost_calculator.rb`
-- Sent via `/api/rent/friendly_message` in `heating_cost_line` field
-- Auto-updates monthly as ElectricityProjector recalculates
-
-### Electricity Usage Anomaly Detection 📊
-
-**What it measures**: ElectricityWidget sparkline bars glow when consumption deviates ±20% from temperature-based baseline (90-day linear regression). Cost impact = excess kWh × actual peak/offpeak pricing.
-
-**Peak/offpeak pricing included**: Peak 53.6 öre/kWh (Mon-Fri 06:00-22:00, winter), offpeak 21.4 öre/kWh (2.5× difference). Daily cost uses hourly rates for when consumption occurred.
-
-**Root causes** (heating dominates 70-80% of electricity cost):
-1. Heatpump running during peak instead of offpeak (poor Node-RED scheduling)
-2. Manual overrides (kitchen floor heating +10°C)
-3. Additional occupancy (+1 person since Nov 2)
-4. Behavioral changes (more cooking, WFH)
-5. Equipment issues (insulation, inefficiency)
-
-**Baseline drift limitation**: 90-day window will eventually adopt wasteful non-peak-optimized schedule as new baseline. Comparison only valid during transition periods. Example: Nov 1-12 showed +142 SEK excess spend - this is ongoing waste until Node-RED peak/offpeak scheduling fixed.
-
-**Current use**: Indicates money wasted from poor heatpump timing + behavioral factors (can't disambiguate, but cost is accurate).
+**Performance**: Electricity anomaly regression (90-day model) cached until midnight - runs once/day instead of every 5min (99.65% reduction, ~90% CPU savings).
 
 ## Project Quirks & Technical Debt 🔧
 
@@ -1388,93 +1049,15 @@ The Puma architecture is designed for:
 
 ---
 
-## 📝 CONTRACT SIGNING SYSTEM (Zigned E-Signature Integration)
+## 📝 Contract Signing & Admin UI
 
-**Status**: ✅ **PRODUCTION READY** (Nov 11, 2025) - All 14 webhook event types implemented
+**For backend implementation:** See `/lib/CLAUDE.md` (Zigned webhooks, API endpoints, validation)
+**For frontend admin UI:** See `/dashboard/CLAUDE.md` (contract creation flow, status display)
 
-### Key Files
-- `handlers/zigned_webhook_handler.rb` - Webhook handler (14 events, HMAC-SHA256 signature verification)
-- `lib/contract_signer.rb` - PDF generation + Zigned API v3 client
-- `lib/models/signed_contract.rb`, `lib/models/contract_participant.rb` - Domain models
-- `lib/repositories/signed_contract_repository.rb`, `lib/repositories/contract_participant_repository.rb` - Persistence
-- Database: `SignedContract`, `ContractParticipant` tables (Prisma schema)
+**Status**: ✅ **PRODUCTION READY** (Nov 11-14, 2025) - Zigned integration + admin contact management
 
-### Critical Implementation Details
-- **Personal number lookup**: Zigned webhooks don't send `personal_number` - handler uses email matching + tenant DB query (`handlers/zigned_webhook_handler.rb:682-708`)
-- **Signing URL variants**: Zigned API uses both `signing_url` AND `signing_room_url` - handler checks both with `||` fallback (`handlers/zigned_webhook_handler.rb:661`)
-- **Webhook endpoint**: `POST /api/webhooks/zigned` (port 3001)
-- **Signature verification**: Stripe-style timestamped HMAC-SHA256 prevents replay attacks
+**Critical requirement**: Tenant must have `personnummer` before contract creation (legally required for Swedish rental contracts)
 
-### Monitoring
-```bash
-# Real-time contract events
-journalctl -u kimonokittens-dashboard -f | grep -E "(📝|✍️|🎉|📥|❌)"
-
-# All Zigned webhooks
-journalctl -u kimonokittens-dashboard | grep -E "(agreement|participant|email_event)"
-```
-
-### Documentation
-- `docs/ZIGNED_WEBHOOK_FIELD_MAPPING.md` - Real payload analysis → database field mapping
-- `docs/ZIGNED_WEBHOOK_TESTING_STATUS.md` - Bug fixes log (Nov 11: repository.update, personal_number lookup)
-- `docs/zigned-api-spec.yaml` - Complete OpenAPI 3.0 spec (21,571 lines)
-
-### Recent Work (Nov 11, 2025)
-- Fixed 2 critical bugs revealed by test contract `cmhuyr9pt010x4cqk5tova6bd`
-- Implemented all failure handlers (identity, PDF validation, email delivery)
-- Complete 14-event coverage: 6 lifecycle + 8 tracking events
-- Commits: eff6ccf (complete handler), 1a1d4de (personal_number), 281c137 (repository.update)
-
----
-
-## 👤 ADMIN CONTRACT UI & CONTACT MANAGEMENT
-
-**Status**: ✅ **PRODUCTION** (Nov 14, 2025) - Tenant contact fields + contract creation validation
-
-### Contact Management Endpoints
-
-**3-column tenant contact grid** (personnummer, Facebook ID, phone):
-
-```bash
-# Update personnummer (Swedish format: 10 or 12 digits)
-PATCH /api/admin/contracts/tenants/:id/personnummer
-Body: { "personnummer": "YYYYMMDD-XXXX" }
-Validation: 10 or 12 digits (ignoring non-digits)
-
-# Update Facebook ID (any string)
-PATCH /api/admin/contracts/tenants/:id/facebook-id
-Body: { "facebook_id": "john.doe" }
-
-# Update phone (Swedish: 9-15 digits)
-PATCH /api/admin/contracts/tenants/:id/phone
-Body: { "phone": "+46701234567" }
-Validation: 9-15 digits with optional +
-```
-
-### Security & Validation
-
-- **All endpoints PIN-gated**: Require `X-Admin-Token` header
-- **Personnummer locked after signing**: Cannot edit if `has_completed_contract = true`
-- **Contract creation requires personnummer**: 400 error if missing - legally required for Swedish rental contracts
-
-### UI Behavior
-
-- **Obfuscation**: Personnummer shows as `YYMMDD-****` (first 6 visible, last 4 hidden)
-- **Clickable links**: Facebook → `facebook.com/{id}`, Phone → `tel:{phone}`
-- **Inline editing**: `window.prompt` for quick updates
-- **Real-time updates**: WebSocket broadcast refreshes admin UI
-
-### Critical: Contract Creation Requirements
-
-**Required tenant fields** (line 502-506 in `handlers/admin_contracts_handler.rb`):
-- `name`
-- `email`
-- `personnummer` ← **MOST COMMON MISSING FIELD**
-- `start_date`
-
-If any field missing: `400 Bad Request` with error message identifying missing field.
-
----
 
 ## ⚠️ REPOSITORY PATTERN GOTCHA
 
