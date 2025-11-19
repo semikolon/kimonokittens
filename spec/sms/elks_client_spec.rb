@@ -7,17 +7,39 @@ RSpec.describe ElksClient do
   let(:mock_response) { instance_double(Net::HTTPSuccess) }
 
   before do
+    # Allow original ENV access for most keys (http_proxy, etc)
+    allow(ENV).to receive(:[]).and_call_original
+    # Override specific test values
     allow(ENV).to receive(:[]).with('ELKS_USERNAME').and_return('test_user')
     allow(ENV).to receive(:[]).with('ELKS_PASSWORD').and_return('test_pass')
     allow(ENV).to receive(:[]).with('API_BASE_URL').and_return('https://kimonokittens.com')
+    allow(ENV).to receive(:[]).with('RACK_ENV').and_return('test')
   end
 
   describe '#send' do
     context 'successful SMS sending' do
       before do
+        # Mock Net::HTTP layer to avoid real API calls
+        # Use actual Net::HTTPSuccess instance so case/when matching works
+        mock_response = Net::HTTPSuccess.new('1.1', '200', 'OK')
+        allow(mock_response).to receive(:body).and_return({
+          id: "s#{SecureRandom.hex(8)}",
+          status: 'created',
+          from: 'Katten',
+          to: '+46701234567',
+          parts: 1,
+          cost: 5000
+        }.to_json)
+
+        mock_http = double('http')
+        allow(mock_http).to receive(:use_ssl=)
+        allow(mock_http).to receive(:verify_mode=)
+        allow(mock_http).to receive(:request).and_return(mock_response)
+        allow(Net::HTTP).to receive(:new).and_return(mock_http)
+
         # Mock Persistence layer to avoid database
         sms_events_repo = double('sms_events_repo')
-        allow(sms_events_repo).to receive(:create).and_return(double(id: 'evt123'))
+        allow(sms_events_repo).to receive(:save).and_return(double(id: 'evt123'))
         allow(Persistence).to receive(:sms_events).and_return(sms_events_repo)
       end
 
@@ -33,7 +55,7 @@ RSpec.describe ElksClient do
         expect(result[:status]).to eq('created')
         expect(result[:cost]).to eq(5000)  # 1 part * 5000
         expect(result[:parts]).to eq(1)
-        expect(result[:from]).to eq('KimonoKittens')
+        expect(result[:from]).to eq('Katten')  # Updated sender ID
         expect(result[:to]).to eq('+46701234567')
       end
 
@@ -41,7 +63,7 @@ RSpec.describe ElksClient do
         sms_events_repo = double('sms_events_repo')
         allow(Persistence).to receive(:sms_events).and_return(sms_events_repo)
 
-        expect(sms_events_repo).to receive(:create) do |event|
+        expect(sms_events_repo).to receive(:save) do |event|  # Updated: create → save
           expect(event.phone_number).to eq('+46701234567')
           expect(event.message_body).to eq('Rent reminder')
           expect(event.provider_id).to start_with('s')  # Random ID from mock
@@ -69,7 +91,7 @@ RSpec.describe ElksClient do
         sms_events_repo = double('sms_events_repo')
         allow(Persistence).to receive(:sms_events).and_return(sms_events_repo)
 
-        expect(sms_events_repo).to receive(:create) do |event|
+        expect(sms_events_repo).to receive(:save) do |event|  # Updated: create → save
           # Repository will calculate parts internally
           expect(event.message_body.length).to eq(320)
           double(id: 'evt789')

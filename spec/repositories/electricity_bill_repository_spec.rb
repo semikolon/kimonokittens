@@ -24,11 +24,11 @@ RSpec.describe ElectricityBillRepository do
       expect(result[:bill_period]).to eq(Date.new(2025, 10, 1))
     end
 
-    it 'skips duplicates based on provider/date/amount' do
+    it 'preserves historical bills (past months)' do
       repo.store_with_deduplication(provider: 'Vattenfall', amount: amount, due_date: due_date)
       result = repo.store_with_deduplication(provider: 'Vattenfall', amount: amount, due_date: due_date)
       expect(result[:inserted]).to be false
-      expect(result[:reason]).to eq('duplicate')
+      expect(result[:reason]).to eq('historical_preserved')  # Nov 3 → Oct period = past month
     end
   end
 

@@ -29,7 +29,7 @@ RSpec.describe ApplyElectricityBill do
     expect(config.value).to eq('1685')
   end
 
-  it 'skips duplicates but still returns aggregated total' do
+  it 'preserves historical bills but still returns aggregated total' do
     described_class.call(
       provider: 'Vattenfall',
       amount: 1200,
@@ -47,7 +47,7 @@ RSpec.describe ApplyElectricityBill do
     )
 
     expect(result[:inserted]).to be false
-    expect(result[:reason]).to eq('duplicate')
+    expect(result[:reason]).to eq('historical_preserved')  # Nov 3 → Oct period = past month
     expect(result[:aggregated_total]).to eq(1200)
   end
 end

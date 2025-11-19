@@ -7,11 +7,9 @@ require_relative '../models/sms_event'
 #
 # Sends SMS via 46elks API and logs events to database.
 #
-# IMPORTANT: Currently MOCKS actual API calls because user hasn't signed up
-# for 46elks yet. After signup, uncomment the actual HTTP request code.
-#
 # Authentication: Basic Auth with ELKS_USERNAME and ELKS_PASSWORD
 # Webhook: Delivery receipts sent to API_BASE_URL/webhooks/elks/dlr
+# Testing: Tests mock Net::HTTP layer to avoid real API calls
 #
 # @example Send SMS
 #   client = ElksClient.new
@@ -51,7 +49,7 @@ class ElksClient
       params[:whendelivered] = webhook_url
     end
 
-    # Send actual request to 46elks API
+    # Send request to 46elks API (tests mock Net::HTTP layer)
     result = send_http_request(params)
 
     # Log SMS event to database
@@ -62,8 +60,7 @@ class ElksClient
 
   private
 
-  # TODO: UNCOMMENT FOR PRODUCTION
-  # Send actual HTTP request to 46elks API
+  # Send HTTP request to 46elks API
   #
   # @param params [Hash] Form data parameters
   # @return [Hash] Parsed JSON response
@@ -100,8 +97,8 @@ class ElksClient
     end
   end
 
-  # MOCK: Simulate 46elks API response
-  # TODO: REMOVE THIS after 46elks signup and uncomment send_http_request
+  # Mock 46elks API response for development/manual testing
+  # Production code uses send_http_request; tests mock Net::HTTP layer
   #
   # @param to [String] Phone number
   # @param body [String] Message text
