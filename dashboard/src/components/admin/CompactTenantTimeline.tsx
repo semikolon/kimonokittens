@@ -85,8 +85,8 @@ export const CompactTenantTimeline: React.FC<CompactTenantTimelineProps> = ({
     const timelineEnd = addDays(latestEnd, rightPaddingDays)
     const totalTimelineDays = daysBetween(timelineStart, timelineEnd)
 
-    // Calculate pixel-to-day ratio (subtract 96px for px-12 padding on both sides)
-    const horizontalPadding = 96 // 48px on each side
+    // Calculate pixel-to-day ratio (subtract 32px for px-4 padding on both sides)
+    const horizontalPadding = 32 // 16px on each side
     const availableWidth = containerWidth - horizontalPadding
     const pixelPerDay = availableWidth / totalTimelineDays
 
@@ -112,7 +112,7 @@ export const CompactTenantTimeline: React.FC<CompactTenantTimelineProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full px-12"
+      className="relative w-full px-4"
       style={{
         minHeight: `${30 + validMembers.length * 52 + 10}px`, // Axis + bars (44px height + 8px gap) + padding
       }}
