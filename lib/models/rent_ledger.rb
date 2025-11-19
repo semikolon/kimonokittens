@@ -13,15 +13,21 @@ require 'time'
 # - Complete audit trail of HOW amount was calculated
 # - Preserves context even if rules/prices change later
 #
-# @example Create ledger entry for March 2025 rent
+# IMPORTANT: Period semantics (unified with RentConfig)
+# - period field = config month (when costs were incurred)
+# - Rent month = period + 1 month (paid in advance)
+# - Use .period_swedish or .config_to_rent_month for display
+#
+# @example Create ledger entry for April 2025 rent (paid in March)
 #   entry = RentLedger.new(
 #     tenant_id: 'cuid123',
-#     period: Time.utc(2025, 3, 1),
+#     period: Time.utc(2025, 3, 1),      # March config period
 #     amount_due: 7045,
 #     days_stayed: 31,
 #     room_adjustment: 0,
-#     calculation_title: 'Mars 2025'
+#     calculation_title: 'April 2025'    # April rent
 #   )
+#   entry.period_swedish  # => "April 2025" (converts config→rent month)
 class RentLedger
   attr_reader :id, :tenant_id, :period, :amount_due, :amount_paid,
               :payment_date, :days_stayed, :room_adjustment,
@@ -79,15 +85,40 @@ class RentLedger
     'unpaid'
   end
 
-  # Get period as Swedish month name
-  # @return [String] e.g., "Mars 2025"
-  def period_swedish
+  # Convert config period to rent month
+  # Since rent is paid in advance, the rent month is always period + 1 month
+  # @param config_period [Time, Date] Config period (month when costs incurred)
+  # @return [Time] Rent month (month of housing being paid for)
+  # @example
+  #   RentLedger.config_to_rent_month(Time.utc(2025, 11, 1))
+  #   # => 2025-12-01 (November config → December rent)
+  def self.config_to_rent_month(config_period)
+    date = config_period.to_date
+    next_month = date.next_month
+    Time.utc(next_month.year, next_month.month, 1)
+  end
+
+  # Get Swedish month name for the rent month (config period + 1)
+  # @param config_period [Time, Date] Config period
+  # @return [String] Swedish rent month name, e.g., "December 2025"
+  # @example
+  #   RentLedger.swedish_rent_month(Time.utc(2025, 11, 1))
+  #   # => "December 2025" (November config → December rent)
+  def self.swedish_rent_month(config_period)
+    rent_month = config_to_rent_month(config_period)
     months = {
       1 => 'Januari', 2 => 'Februari', 3 => 'Mars', 4 => 'April',
       5 => 'Maj', 6 => 'Juni', 7 => 'Juli', 8 => 'Augusti',
       9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'December'
     }
-    "#{months[period.month]} #{period.year}"
+    "#{months[rent_month.month]} #{rent_month.year}"
+  end
+
+  # Get period as Swedish rent month name
+  # Note: After migration, period = config month, so we convert to rent month
+  # @return [String] e.g., "December 2025" (for November config period)
+  def period_swedish
+    self.class.swedish_rent_month(period)
   end
 
   # Check if this is a full month stay
