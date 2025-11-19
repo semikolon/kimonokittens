@@ -796,10 +796,12 @@ http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
 **Decision:** Unify semantics - both should use config month for coherence.
 
+**Migration Plan:** See `docs/RENT_LEDGER_PERIOD_MIGRATION_PLAN.md` for detailed execution plan (8 phases, 16 files, database migration strategy).
+
 **Next Steps:**
-1. Launch subagent to assess feasibility (identify all code changes needed)
-2. Fix RentConfig/RentLedger period semantics if feasible
-3. Fix `bin/populate_monthly_ledger` script bug
+1. ✅ Feasibility assessment completed - migration is feasible
+2. ✅ Comprehensive migration plan created
+3. Execute migration (database + 16 files across 8 phases)
 4. Create December 2025 rent ledger entries (original goal)
 5. Decide Rasmus departure date (Nov 30 vs Dec 1)
 6. Fix >= bug in populate_monthly_ledger:28
@@ -807,4 +809,4 @@ http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
 **Why Paused:** Need architectural clarity before creating more data with potentially wrong semantics.
 
-**Resume Point:** Launch feasibility subagent to grep all RentLedger.period usage and assess migration complexity.
+**Resume Point:** Execute migration via subagent following RENT_LEDGER_PERIOD_MIGRATION_PLAN.md.
