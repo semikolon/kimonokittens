@@ -42,28 +42,50 @@ class HeatpumpPriceHandler
         ElectricityProjector::GRID_TRANSFER_PEAK_EXCL_VAT :
         ElectricityProjector::GRID_TRANSFER_OFFPEAK_EXCL_VAT
 
-      # Calculate total price: (spot + grid + tax) × VAT
-      # Same formula as ElectricityProjector#project_from_consumption_and_pricing (lines 283-288)
-      total_excl_vat = spot_price + grid_rate + ElectricityProjector::ENERGY_TAX_EXCL_VAT
-      total_incl_vat = total_excl_vat * 1.25  # VAT multiplier
+      # Calculate components (matching Tibber format)
+      # energy: spot price only
+      # tax: grid transfer + energy tax
+      # total: (energy + tax) × VAT
+      energy = spot_price
+      tax = grid_rate + ElectricityProjector::ENERGY_TAX_EXCL_VAT
+      total = (energy + tax) * 1.25  # VAT multiplier
 
       {
-        'startsAt' => timestamp,              # ISO 8601 timestamp
-        'total' => total_incl_vat.round(4),   # Final price incl VAT
-        'breakdown' => {
-          'spot' => spot_price.round(4),
-          'grid' => grid_rate,
-          'tax' => ElectricityProjector::ENERGY_TAX_EXCL_VAT,
-          'isPeak' => is_peak
-        }
+        'total' => total.round(4),
+        'energy' => energy.round(4),
+        'tax' => tax.round(4),
+        'startsAt' => timestamp  # Keep full ISO 8601 with timezone
       }
     end
 
+    # Split into today and tomorrow arrays (matching Tibber structure)
+    now = Time.now
+    today_start = Time.new(now.year, now.month, now.day, 0, 0, 0, now.utc_offset)
+    tomorrow_start = today_start + (24 * 60 * 60)
+    day_after_start = tomorrow_start + (24 * 60 * 60)
+
+    today_prices = calculated_prices.select do |p|
+      t = Time.parse(p['startsAt'])
+      t >= today_start && t < tomorrow_start
+    end
+
+    tomorrow_prices = calculated_prices.select do |p|
+      t = Time.parse(p['startsAt'])
+      t >= tomorrow_start && t < day_after_start
+    end
+
+    # Tibber-compatible nested structure
     response = {
-      'region' => 'SE3',
-      'prices' => calculated_prices,
-      'generated_at' => Time.now.utc.iso8601,
-      'generated_timestamp' => Time.now.to_i
+      'viewer' => {
+        'homes' => [{
+          'currentSubscription' => {
+            'priceInfo' => {
+              'today' => today_prices,
+              'tomorrow' => tomorrow_prices
+            }
+          }
+        }]
+      }
     }
 
     [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(response) ]]
