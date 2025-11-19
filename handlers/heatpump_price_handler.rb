@@ -22,9 +22,9 @@ class HeatpumpPriceHandler
     @projector = ElectricityProjector.new
   end
 
-  def call(req)
+  def call(env)
     # Fetch spot prices from elprisetjustnu.se API
-    status, headers, body = @electricity_price_handler.call(req)
+    status, headers, body = @electricity_price_handler.call(env)
     return [status, headers, body] unless status == 200
 
     price_data = Oj.load(body.first)
