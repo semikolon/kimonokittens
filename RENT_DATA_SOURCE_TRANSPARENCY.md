@@ -11,10 +11,11 @@ The rent widget currently displays calculated rent amounts without indicating wh
    - Takes precedence over all other sources
    - Example: `el: 2_470 + 1_757` in monthly calculation scripts
 
-2. **Fallback: Historical Bills (`electricity_bills_history.txt`)**
-   - Real historical data from Vattenfall (elnät) and Fortum (förbrukning) 2023-2024
-   - Used by `get_historical_electricity_cost()` method for forecasting
-   - Looks up same month from previous year when current bills unavailable
+2. **Fallback: ElectricityBill Database Table**
+   - Real historical data from Vattenfall (elnät) and Fortum (förbrukning) 2023-2025
+   - Populated via automated scrapers (`vattenfall.rb`, `fortum.rb`)
+   - Used for historical forecasting and accuracy validation
+   - Queried via `Persistence.electricity_bills` repository
    - Example data: `2024-10-01 1164 kr` (Vattenfall), `2024-10-01 138 kr` (Fortum)
 
 3. **Safety Defaults (Config::DEFAULTS)**
@@ -32,9 +33,10 @@ The rent widget currently displays calculated rent amounts without indicating wh
   - `get_historical_electricity_cost()` method (lines 365-413)
   - `extract_config()` method (lines 331-363)
 
-- **Historical Data**: `/Users/fredrikbranstrom/Projects/kimonokittens/electricity_bills_history.txt`
-  - Vattenfall bills: 2023-04-04 to 2024-10-01
-  - Fortum bills: 2023-03-31 to 2024-10-01
+- **Historical Data**: ElectricityBill database table (via `Persistence.electricity_bills`)
+  - Coverage: 2023-03 to 2025-11 (64 bills total)
+  - Providers: Vattenfall (grid connection) + Fortum (consumption)
+  - Updated automatically by scrapers
 
 - **Frontend Widget**: `/Users/fredrikbranstrom/Projects/kimonokittens/dashboard/src/components/RentWidget.tsx`
   - Currently displays friendly_message without data source context

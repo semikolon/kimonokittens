@@ -71,3 +71,4 @@ logs/
 
 # Bank sync cursor state (ephemeral machine state)
 state/
+.worktrees/

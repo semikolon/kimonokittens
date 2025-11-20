@@ -13,6 +13,28 @@ require 'webmock/rspec'
 WebMock.enable!
 
 # ============================================================================
+# VCR Configuration - Record/Replay HTTP Interactions
+# ============================================================================
+# VCR records real HTTP interactions and replays them in tests
+# Provides realistic API responses without network calls in CI/CD
+require 'vcr'
+
+VCR.configure do |config|
+  config.cassette_library_dir = 'spec/fixtures/vcr_cassettes'
+  config.hook_into :webmock
+  config.configure_rspec_metadata!
+
+  # Don't record localhost (for Ferrum/Chrome DevTools Protocol)
+  config.ignore_localhost = true
+
+  # Only record if cassette doesn't exist (prevents accidental re-recording)
+  config.default_cassette_options = {
+    record: :once,
+    match_requests_on: [:method, :uri, :body]
+  }
+end
+
+# ============================================================================
 # SAFETY GUARDS - Prevent catastrophic database contamination
 # ============================================================================
 
