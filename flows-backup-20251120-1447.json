@@ -1,0 +1,1160 @@
+[
+    {
+        "id": "db249d99091c0d52",
+        "type": "tab",
+        "label": "Heatpump data flow",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "29fc90c7785979ef",
+        "type": "tab",
+        "label": "Energy price optimization",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "96b06c57169845a8",
+        "type": "mqtt-broker",
+        "name": "Pi MQTT",
+        "broker": "192.168.4.66",
+        "port": "1883",
+        "clientid": "NodeRED",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "5",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "ce5b57bc09b0b3d9",
+        "type": "tibber-api-endpoint",
+        "queryUrl": "https://api.tibber.com/v1-beta/gql",
+        "feedConnectionTimeout": "30",
+        "feedTimeout": "60",
+        "queryRequestTimeout": "30",
+        "name": "Tibber"
+    },
+    {
+        "id": "859113d175b03f09",
+        "type": "ui-base",
+        "name": "My Dashboard",
+        "path": "/dashboard",
+        "appIcon": "",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
+        ],
+        "showPathInSidebar": false,
+        "showPageTitle": true,
+        "navigationStyle": "default",
+        "titleBarStyle": "default",
+        "showReconnectNotification": true,
+        "notificationDisplayTime": 1,
+        "showDisconnectNotification": true
+    },
+    {
+        "id": "a455e58d97980c47",
+        "type": "ui-theme",
+        "name": "Default Theme",
+        "colors": {
+            "surface": "#ffffff",
+            "primary": "#0094CE",
+            "bgPage": "#eeeeee",
+            "groupBg": "#ffffff",
+            "groupOutline": "#cccccc"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "fda383392750f71d",
+        "type": "ui-page",
+        "name": "Temperature",
+        "ui": "859113d175b03f09",
+        "path": "/temperature",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "a455e58d97980c47",
+        "breakpoints": [
+            {
+                "name": "Default",
+                "px": "0",
+                "cols": "3"
+            },
+            {
+                "name": "Tablet",
+                "px": "576",
+                "cols": "6"
+            },
+            {
+                "name": "Small Desktop",
+                "px": "768",
+                "cols": "9"
+            },
+            {
+                "name": "Desktop",
+                "px": "1024",
+                "cols": "12"
+            }
+        ],
+        "order": 1,
+        "className": "",
+        "visible": "true",
+        "disabled": "false"
+    },
+    {
+        "id": "26940c3f2d4769cc",
+        "type": "ui-group",
+        "name": "Over time",
+        "page": "fda383392750f71d",
+        "width": "6",
+        "height": "1",
+        "order": 1,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "f71cdfba7d2fad60",
+        "type": "ui-theme",
+        "name": "Theme 2",
+        "colors": {
+            "surface": "#ffffff",
+            "primary": "#0094CE",
+            "bgPage": "#eeeeee",
+            "groupBg": "#ffffff",
+            "groupOutline": "#cccccc"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "1",
+        "type": "http in",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "url": "/data/temperature",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 160,
+        "y": 500,
+        "wires": [
+            [
+                "2"
+            ]
+        ]
+    },
+    {
+        "id": "2",
+        "type": "change",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\t    \"indoor_temperature\": $join([$string($round($globalContext('indoor_temperature'),0)), \"º\"]),\t    \"target_temperature\": $join([$string($round($globalContext('target_temperature'),0)), \"º\"]),\t    \"supplyline_temperature\": $join([$string($round($globalContext('supplyline_temperature'),0)), \"º\"]),\t    \"hotwater_temperature\": $join([$string($round($globalContext('hotwater_temperature'),0)), \"º\"]),\t    \"indoor_humidity\": $join([$string($round($globalContext('indoor_humidity'),0)), \"%\"]),\t    \"heatpump_disabled\": $globalContext('heatpump_disabled'),\t    \"heating_demand\": ($number($globalContext('heating_demand')) >= 10) ? \"JA\" : \"NEJ\",\t    \"current_schedule\": $globalContext('current_schedule'),\t    \"schedule_data\": $globalContext('schedule_data'),\t    \"last_updated_time\": $fromMillis($number($globalContext(\"last_updated\"))*1000, '[H01].[m01]', '+0100'),\t    \"last_updated_date\": $fromMillis($number($globalContext(\"last_updated\"))*1000, '[D] [MN,*-3]', '+0100')\t}",
+                "tot": "jsonata"
+            }
+        ],
+        "x": 400,
+        "y": 500,
+        "wires": [
+            [
+                "3",
+                "4ed25a5dff8519da"
+            ]
+        ]
+    },
+    {
+        "id": "3",
+        "type": "http response",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 610,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "4",
+        "type": "mqtt in",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "topic": "shellies/shellyht-21E1FE/sensor/temperature",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "96b06c57169845a8",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 230,
+        "y": 220,
+        "wires": [
+            [
+                "6"
+            ]
+        ]
+    },
+    {
+        "id": "6",
+        "type": "change",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "indoor_temperature",
+                "pt": "global",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "x": 570,
+        "y": 220,
+        "wires": [
+            [
+                "f51db462f31ae54a"
+            ]
+        ]
+    },
+    {
+        "id": "4ed25a5dff8519da",
+        "type": "debug",
+        "z": "db249d99091c0d52",
+        "name": "http response",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "f51db462f31ae54a",
+        "type": "debug",
+        "z": "db249d99091c0d52",
+        "name": "temperature changed",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 860,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "a67d2e8ed510c692",
+        "type": "change",
+        "z": "db249d99091c0d52",
+        "name": "set global variables",
+        "rules": [
+            {
+                "t": "set",
+                "p": "last_updated",
+                "pt": "global",
+                "to": "payload[\"timestamp\"]",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "heatpump_disabled",
+                "pt": "global",
+                "to": "payload[\"EVU\"]",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "indoor_temperature_from_heatpump",
+                "pt": "global",
+                "to": "payload[\"INDR_T\"]",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "supplyline_temperature",
+                "pt": "global",
+                "to": "payload[\"d5\"]",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "hotwater_temperature",
+                "pt": "global",
+                "to": "payload[\"d7\"]",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "heating_demand",
+                "pt": "global",
+                "to": "payload[\"d21\"]",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "offline_percentage",
+                "pt": "global",
+                "to": "payload[\"offlinePercentage\"]",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "target_temperature",
+                "pt": "global",
+                "to": "payload[\"d3\"]",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "heatpump",
+                "pt": "global",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "x": 690,
+        "y": 420,
+        "wires": [
+            [
+                "c56d8565ecf356e5"
+            ]
+        ]
+    },
+    {
+        "id": "b9dcc9df2e5ae078",
+        "type": "mqtt in",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "topic": "ThermIQ/ThermIQ-room2-jj/data",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "96b06c57169845a8",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 190,
+        "y": 420,
+        "wires": [
+            [
+                "outageTracker"
+            ]
+        ]
+    },
+    {
+        "id": "c56d8565ecf356e5",
+        "type": "debug",
+        "z": "db249d99091c0d52",
+        "name": "heatpump data push",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "{\t    \"indoor_temperature\": $join([$string($round($globalContext('indoor_temperature'),1)), \"º\"]),\t    \"target_temperature\": $join([$string($round($globalContext('target_temperature'),1)), \"º\"]),\t    \"supplyline_temperature\": $join([$string($round($globalContext('supplyline_temperature'),1)), \"º\"]),\t    \"hotwater_temperature\": $join([$string($round($globalContext('hotwater_temperature'),1)), \"º\"]),\t    \"indoor_humidity\": $join([$string($round($globalContext('indoor_humidity'),0)), \"%\"]),\t    \"heatpump_disabled\": $globalContext('heatpump_disabled'),\t    \"heating_demand\": ($number($globalContext('heating_demand')) >= 10) ? \"JA\" : \"NEJ\",\t    \"current_schedule\": $globalContext('current_schedule'),\t    \"last_updated_time\": $fromMillis($number($globalContext(\"last_updated\"))*1000, '[H01].[m01]', '+0100'),\t    \"last_updated_date\": $fromMillis($number($globalContext(\"last_updated\"))*1000, '[D] [MN,*-3]', '+0100'),\t    \"offline_percentage\": $join([$string($round($globalContext('offline_percentage'),0)), \"%\"]),\t    \"outages\": $globalContext('outages'),\t    \"heatpump\": $globalContext('heatpump')\t}",
+        "targetType": "jsonata",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 960,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "b4b2c58b8555c224",
+        "type": "debug",
+        "z": "db249d99091c0d52",
+        "name": "humidity changed",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 850,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "e78f73895712d153",
+        "type": "change",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "indoor_humidity",
+                "pt": "global",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "x": 560,
+        "y": 280,
+        "wires": [
+            [
+                "b4b2c58b8555c224"
+            ]
+        ]
+    },
+    {
+        "id": "edcfff8fa463ee9c",
+        "type": "mqtt in",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "topic": "shellies/shellyht-21E1FE/sensor/humidity",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "96b06c57169845a8",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 220,
+        "y": 280,
+        "wires": [
+            [
+                "e78f73895712d153"
+            ]
+        ]
+    },
+    {
+        "id": "0b58f0f55860b4c6",
+        "type": "mqtt in",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "topic": "shellies/shellyht-21E1FE/sensor/temperature",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "96b06c57169845a8",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 230,
+        "y": 80,
+        "wires": [
+            [
+                "bce1bdbff99f5966"
+            ]
+        ]
+    },
+    {
+        "id": "bce1bdbff99f5966",
+        "type": "function",
+        "z": "db249d99091c0d52",
+        "name": "temperature to INDR_T",
+        "func": "var room_temp = msg.payload;\n\nmsg.payload={INDR_T:room_temp};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 80,
+        "wires": [
+            [
+                "85125c5cb9477284"
+            ]
+        ]
+    },
+    {
+        "id": "85125c5cb9477284",
+        "type": "json",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": true,
+        "x": 630,
+        "y": 140,
+        "wires": [
+            [
+                "00301e7660496c3b",
+                "1fb7c31cd3c9b6b4"
+            ]
+        ]
+    },
+    {
+        "id": "00301e7660496c3b",
+        "type": "mqtt out",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "topic": "ThermIQ/ThermIQ-room2-jj/set",
+        "qos": "2",
+        "retain": "true",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "96b06c57169845a8",
+        "x": 930,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "1fb7c31cd3c9b6b4",
+        "type": "debug",
+        "z": "db249d99091c0d52",
+        "name": "INDR_T set on heatpump",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 910,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "outageTracker",
+        "type": "function",
+        "z": "db249d99091c0d52",
+        "name": "Outage Tracker",
+        "func": "const lastUpdated = global.get('last_seen') || Date.now();\nconst currentTime = Date.now();\nconst waitSeconds = 62 * 1000; // 62 seconds in milliseconds\nconst totalMonitoringPeriod = 72 * 60 * 60 * 1000; // 72 hours in milliseconds\n\n// Get the stored outages\nlet outages = global.get('outages') || [];\nlet totalOfflineTime = 0;\n\n// Remove outages that are older than 72 hours\noutages = outages.filter(outage => (currentTime - outage) < totalMonitoringPeriod);\n\n// If the device is currently offline, add the current timestamp to outages\nif ((currentTime - lastUpdated) > waitSeconds) {\n    outages.push(currentTime);\n}\n\n// Calculate the total offline time based on the filtered outages\nif (outages.length > 0) {\n    // Get the most recent outage, assuming it's the current one\n    let mostRecentOutage = outages[outages.length - 1];\n    totalOfflineTime = currentTime - mostRecentOutage;\n    \n    // Add the duration of all past outages within the window\n    for (let i = 0; i < outages.length - 1; i++) {\n        totalOfflineTime += outages[i + 1] - outages[i];\n    }\n}\n\n// Update variables\nglobal.set('last_seen', currentTime);\nglobal.set('outages', outages);\n\n// Calculate offline percentage\nconst offlinePercentage = (totalOfflineTime / totalMonitoringPeriod) * 100;\n\nmsg.payload['offlinePercentage'] = offlinePercentage; //.toFixed(2); // Keeping two decimal points\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 420,
+        "wires": [
+            [
+                "a67d2e8ed510c692"
+            ]
+        ]
+    },
+    {
+        "id": "58873e520e0561cd",
+        "type": "inject",
+        "z": "db249d99091c0d52",
+        "name": "Manually set temperature",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "18.02",
+        "payloadType": "num",
+        "x": 270,
+        "y": 140,
+        "wires": [
+            [
+                "bce1bdbff99f5966"
+            ]
+        ]
+    },
+    {
+        "id": "2f8f6e9e3ec387ec",
+        "type": "ui-chart",
+        "z": "db249d99091c0d52",
+        "group": "26940c3f2d4769cc",
+        "name": "Temperatures over time",
+        "label": "temperatures",
+        "order": 1,
+        "chartType": "line",
+        "category": "topic",
+        "categoryType": "msg",
+        "xAxisLabel": "",
+        "xAxisProperty": "",
+        "xAxisPropertyType": "timestamp",
+        "xAxisType": "time",
+        "xAxisFormat": "",
+        "xAxisFormatType": "auto",
+        "xmin": "",
+        "xmax": "",
+        "yAxisLabel": "",
+        "yAxisProperty": "payload",
+        "yAxisPropertyType": "msg",
+        "ymin": "",
+        "ymax": "",
+        "bins": 10,
+        "action": "append",
+        "stackSeries": false,
+        "pointShape": "circle",
+        "pointRadius": 4,
+        "showLegend": true,
+        "removeOlder": "2",
+        "removeOlderUnit": "3600",
+        "removeOlderPoints": "",
+        "colors": [
+            "#0095ff",
+            "#ff0000",
+            "#ff7f0e",
+            "#2ca02c",
+            "#a347e1",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "textColor": [
+            "#666666"
+        ],
+        "textColorDefault": true,
+        "gridColor": [
+            "#e5e5e5"
+        ],
+        "gridColorDefault": true,
+        "width": 6,
+        "height": "5",
+        "className": "",
+        "interpolation": "linear",
+        "x": 790,
+        "y": 660,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "31e5c6a44f363939",
+        "type": "function",
+        "z": "db249d99091c0d52",
+        "name": "Format temperature variables",
+        "func": "node.send([\n    { topic: \"Indoor Temperature\", payload: global.get(\"indoor_temperature\"), timestamp: Date.now() },\n    { topic: \"Supply Line Temperature\", payload: global.get(\"supplyline_temperature\"), timestamp: Date.now() },\n    { topic: \"Hot Water Temperature\", payload: global.get(\"hotwater_temperature\"), timestamp: Date.now() }\n]);\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 390,
+        "y": 660,
+        "wires": [
+            [
+                "394e258559f6339b"
+            ]
+        ]
+    },
+    {
+        "id": "4f9524ee4c3da055",
+        "type": "inject",
+        "z": "db249d99091c0d52",
+        "name": "Log temps!",
+        "props": [],
+        "repeat": "60",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 150,
+        "y": 660,
+        "wires": [
+            [
+                "31e5c6a44f363939"
+            ]
+        ]
+    },
+    {
+        "id": "394e258559f6339b",
+        "type": "split",
+        "z": "db249d99091c0d52",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 610,
+        "y": 660,
+        "wires": [
+            [
+                "2f8f6e9e3ec387ec"
+            ]
+        ]
+    },
+    {
+        "id": "d8725861d54f9a5d",
+        "type": "template",
+        "z": "29fc90c7785979ef",
+        "name": "Tibber price today and tomorrow",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "text",
+        "syntax": "mustache",
+        "template": "{   viewer {     homes {       currentSubscription{         priceInfo{           current{             total             energy             tax             startsAt           }           today {             total             energy             tax             startsAt           }           tomorrow {             total             energy             tax             startsAt           }         }       }     }   } }",
+        "output": "str",
+        "x": 500,
+        "y": 60,
+        "wires": [
+            [
+                "ceeb9385f18d3d97"
+            ]
+        ]
+    },
+    {
+        "id": "4e3b509aecb5102b",
+        "type": "inject",
+        "z": "29fc90c7785979ef",
+        "name": "Tibber price template",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{   viewer {     homes {       currentSubscription{         priceInfo{           current{             total             energy             tax             startsAt           }                   }       }     }   } }",
+        "payloadType": "str",
+        "x": 160,
+        "y": 60,
+        "wires": [
+            [
+                "d8725861d54f9a5d"
+            ]
+        ]
+    },
+    {
+        "id": "bc9b3b8e56a7413a",
+        "type": "inject",
+        "z": "29fc90c7785979ef",
+        "name": "Tibber price template",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{   viewer {     homes {       currentSubscription{         priceInfo{           current{             total             energy             tax             startsAt           }           today {             total             energy             tax             startsAt           }           tomorrow {             total             energy             tax             startsAt           }         }       }     }   } }",
+        "payloadType": "str",
+        "x": 500,
+        "y": 120,
+        "wires": [
+            [
+                "ceeb9385f18d3d97"
+            ]
+        ]
+    },
+    {
+        "id": "757efe3d87323580",
+        "type": "debug",
+        "z": "29fc90c7785979ef",
+        "name": "prices",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 910,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "4641c44af4a68a5a",
+        "type": "function",
+        "z": "29fc90c7785979ef",
+        "name": "Get Current Price and...",
+        "func": "var cur = msg.payload.viewer.homes[0].currentSubscription.priceInfo.current.total\nmsg.payload=cur;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 230,
+        "y": 540,
+        "wires": [
+            [
+                "756c8209cce0e2e7"
+            ]
+        ]
+    },
+    {
+        "id": "a50afa96508b9cab",
+        "type": "template",
+        "z": "29fc90c7785979ef",
+        "name": "EVU",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "{\"EVU\": {{payload}} }",
+        "output": "str",
+        "x": 770,
+        "y": 260,
+        "wires": [
+            [
+                "bdaf999070569c65",
+                "636ccfb79c3a5ca8"
+            ]
+        ]
+    },
+    {
+        "id": "8133a2344010b22a",
+        "type": "switch",
+        "z": "29fc90c7785979ef",
+        "name": "OR price lower than 0.3 SEK",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "lte",
+                "v": "0.3",
+                "vt": "str"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 920,
+        "y": 580,
+        "wires": [
+            [
+                "8751928b946fab25"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "8751928b946fab25",
+        "type": "template",
+        "z": "29fc90c7785979ef",
+        "name": "ON",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "0",
+        "output": "str",
+        "x": 930,
+        "y": 460,
+        "wires": [
+            [
+                "a50afa96508b9cab"
+            ]
+        ]
+    },
+    {
+        "id": "bdaf999070569c65",
+        "type": "mqtt out",
+        "z": "29fc90c7785979ef",
+        "name": "ThermIQ",
+        "topic": "ThermIQ/ThermIQ-room2-jj/set",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "96b06c57169845a8",
+        "x": 940,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "636ccfb79c3a5ca8",
+        "type": "debug",
+        "z": "29fc90c7785979ef",
+        "name": "on/off",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 930,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "756c8209cce0e2e7",
+        "type": "delay",
+        "z": "29fc90c7785979ef",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "2",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 340,
+        "y": 600,
+        "wires": [
+            [
+                "b9e0daf8ecbd2227"
+            ]
+        ]
+    },
+    {
+        "id": "1f2a08915384f40d",
+        "type": "cronplus",
+        "z": "29fc90c7785979ef",
+        "name": "At a time interval (20 mins)",
+        "outputField": "payload",
+        "timeZone": "",
+        "persistDynamic": false,
+        "commandResponseMsgOutput": "fanOut",
+        "outputs": 3,
+        "options": [
+            {
+                "name": "schedule1",
+                "topic": "topic1",
+                "payloadType": "str",
+                "payload": "{   viewer {     homes {       currentSubscription{         priceInfo{           current{             total             energy             tax             startsAt           }           today {             total             energy             tax             startsAt           }           tomorrow {             total             energy             tax             startsAt           }         }       }     }   } }",
+                "expressionType": "cron",
+                "expression": "0 0/20 * * * * *",
+                "location": "",
+                "offset": "0",
+                "solarType": "all",
+                "solarEvents": "sunrise,sunset"
+            }
+        ],
+        "x": 200,
+        "y": 100,
+        "wires": [
+            [
+                "d8725861d54f9a5d"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "ceeb9385f18d3d97",
+        "type": "tibber-query",
+        "z": "29fc90c7785979ef",
+        "name": "Tibber Query",
+        "active": true,
+        "apiEndpointRef": "ce5b57bc09b0b3d9",
+        "x": 710,
+        "y": 120,
+        "wires": [
+            [
+                "f798ba5be61f3422",
+                "757efe3d87323580",
+                "4641c44af4a68a5a"
+            ]
+        ]
+    },
+    {
+        "id": "f798ba5be61f3422",
+        "type": "ps-receive-price",
+        "z": "29fc90c7785979ef",
+        "name": "Price Receiver",
+        "x": 220,
+        "y": 280,
+        "wires": [
+            [
+                "0f944c8c2f7f82e0"
+            ]
+        ]
+    },
+    {
+        "id": "0f944c8c2f7f82e0",
+        "type": "ps-strategy-lowest-price",
+        "z": "29fc90c7785979ef",
+        "name": "Select lowest price hours",
+        "fromTime": "00",
+        "toTime": "00",
+        "hoursOn": "12",
+        "maxPrice": "2.2",
+        "doNotSplit": false,
+        "sendCurrentValueWhenRescheduling": true,
+        "outputValueForOn": "0",
+        "outputValueForOff": "1",
+        "outputValueForOntype": "str",
+        "outputValueForOfftype": "str",
+        "outputIfNoSchedule": "true",
+        "outputOutsidePeriod": "false",
+        "contextStorage": "memory",
+        "x": 430,
+        "y": 280,
+        "wires": [
+            [
+                "a50afa96508b9cab",
+                "4a8289ccae6a1764"
+            ],
+            [
+                "a50afa96508b9cab",
+                "4a8289ccae6a1764"
+            ],
+            [
+                "4a8289ccae6a1764",
+                "2e9d337a36533938"
+            ]
+        ],
+        "info": "18 hours per day\nMax price 3 kr"
+    },
+    {
+        "id": "4a8289ccae6a1764",
+        "type": "debug",
+        "z": "29fc90c7785979ef",
+        "name": "schedule",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 680,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "b9e0daf8ecbd2227",
+        "type": "function",
+        "z": "29fc90c7785979ef",
+        "name": "turn heat ON IF temp too low",
+        "func": "const now = new Date();\nconst currentHour = now.getHours(); // Feel free to use this\nconst currentMinutes = now.getMinutes();\n\nconst indoor = global.get('indoor_temperature');\nconst hotwater = global.get('hotwater_temperature');\nconst target = global.get('target_temperature');\n\n// Avoid override between 22:30 and 01:00\n//if ((currentHour === 22 && currentMinutes >= 30) || currentHour === 23 || currentHour === 0) {\n//    msg.heatPumpOn = false; // Force heat pump off\n//} else\nif (indoor <= (target) || hotwater < 40) {\n    msg.heatPumpOn = true;  // Override to ON if too cold\n} else {\n    msg.heatPumpOn = false; // No override\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 560,
+        "wires": [
+            [
+                "77bc6bf212a78b30"
+            ]
+        ]
+    },
+    {
+        "id": "77bc6bf212a78b30",
+        "type": "switch",
+        "z": "29fc90c7785979ef",
+        "name": "IF heatPumpOn",
+        "property": "heatPumpOn",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "true",
+                "vt": "jsonata"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 660,
+        "y": 480,
+        "wires": [
+            [
+                "8751928b946fab25",
+                "254ee2d2af22b229"
+            ],
+            [
+                "8133a2344010b22a"
+            ]
+        ]
+    },
+    {
+        "id": "2e9d337a36533938",
+        "type": "function",
+        "z": "29fc90c7785979ef",
+        "name": "Remember current schedule",
+        "func": "// Assume scheduleData is the parsed JSON from your schedule endpoint\nvar scheduleData = msg.payload.schedule;\nvar currentTime = new Date();\nvar currentSchedule = null;\n\n// Iterate through the schedule to find the current schedule\nfor (var i = 0; i < scheduleData.length; i++) {\n    var scheduleStart = new Date(scheduleData[i].time);\n    var scheduleEnd = new Date(scheduleData[(i + 1) % scheduleData.length].time);  // Wrap around to the start of the schedule\n\n    if (currentTime >= scheduleStart && currentTime < scheduleEnd) {\n        currentSchedule = scheduleData[i];\n        break;\n    }\n}\n\nif (currentSchedule) {\n    var onOff = currentSchedule.value ? \"på\" : \"av\";\n    var startTime = scheduleStart.getHours();\n    var endTime = scheduleEnd.getHours();\n    var scheduleString = startTime + \"-\" + endTime;\n    // + \": \" + onOff;\n\n    // Set the current schedule string in the global context\n    global.set('current_schedule', scheduleString);\n    global.set('schedule_data', scheduleData);\n}\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 720,
+        "y": 420,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "254ee2d2af22b229",
+        "type": "debug",
+        "z": "29fc90c7785979ef",
+        "name": "Indoor or hotwater temp TOO LOW",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 900,
+        "y": 540,
+        "wires": []
+    }
+]
