@@ -97,14 +97,12 @@ class TenantRepository < BaseRepository
 
   # Get all tenants ordered by name
   #
-  # PRESERVED LOGIC from rent_db.rb:77-85 (get_tenants)
+  # Fetches all columns (no SELECT enumeration) to prevent schema drift bugs.
+  # See CLAUDE.md Repository Architecture Pattern section for rationale.
   #
   # @return [Array<Tenant>]
   def all
     dataset
-      .select(:id, :name, :email, :startDate, :departureDate, :roomAdjustment, :room, :status,
-              :personnummer, :phone, :deposit, :furnishingDeposit,
-              :facebookId, :avatarUrl, :createdAt, :updatedAt)
       .order(:name)
       .map { |row| hydrate(row) }
   end
