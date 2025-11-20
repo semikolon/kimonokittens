@@ -1,6 +1,9 @@
 require 'oj'
 require 'date'
+require 'net/http'
+require 'uri'
 require_relative 'heatpump_price_handler'
+require_relative '../lib/persistence'
 
 # Heatpump Schedule Generator
 # Implements ps-strategy-lowest-price algorithm from node-red-contrib-power-saver
@@ -50,7 +53,12 @@ class HeatpumpScheduleHandler
     # Generate schedule using ps-strategy algorithm
     schedule = generate_schedule(all_prices, hours_on, max_price)
 
-    # Return ps-strategy compatible format
+    # Fetch heatpump config and apply temperature override logic
+    config = Persistence.heatpump_config.get_current
+    temps = get_current_temperatures
+    current_state = calculate_current_state(schedule, config, temps)
+
+    # Return ps-strategy compatible format with current state
     response = {
       'schedule' => build_schedule_array(schedule),
       'hours' => schedule,
@@ -65,7 +73,7 @@ class HeatpumpScheduleHandler
       'time' => Time.now.iso8601,
       'version' => '1.0.0',
       'strategyNodeId' => 'dell-ruby-scheduler',
-      'current' => true
+      'current' => current_state
     }
 
     [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(response) ]]
@@ -140,6 +148,71 @@ class HeatpumpScheduleHandler
     end
 
     schedule
+  end
+
+  # Fetch current temperatures from /data/temperature endpoint
+  # Returns hash with indoor, hotwater, and target temperatures
+  def get_current_temperatures
+    begin
+      response = Net::HTTP.get(URI('http://localhost:3001/data/temperature'))
+      data = Oj.load(response)
+      {
+        indoor: data['indoor_temperature'].to_f,
+        hotwater: data['hotwater_temperature'].to_f,
+        target: data['target_temperature'].to_f
+      }
+    rescue StandardError => e
+      puts "Error fetching temperatures: #{e.message}"
+      # Return safe defaults if fetch fails (won't trigger overrides)
+      { indoor: 21.0, hotwater: 50.0, target: 21.0 }
+    end
+  end
+
+  # Calculate current state with priority-based override logic
+  # Priority 1: Temperature emergency (safety)
+  # Priority 2: Price opportunity (opportunistic)
+  # Priority 3: Schedule (default)
+  def calculate_current_state(schedule, config, temps)
+    # Find current hour in schedule
+    now = Time.now
+    current_hour = schedule.find { |h| Time.parse(h['start']) <= now && Time.parse(h['start']) + 3600 > now }
+
+    # If no current hour found (edge case), use first hour
+    current_hour ||= schedule.first
+
+    base_state = current_hour['onOff']  # true=ON, false=OFF from schedule
+    final_state = base_state
+    override_reason = nil
+
+    # Priority 1: Temperature emergency (force ON if too cold)
+    if temps[:indoor] <= (temps[:target] - config.emergency_temp_offset) || temps[:hotwater] < config.min_hotwater
+      final_state = true
+      override_reason = 'temperature_emergency'
+
+    # Priority 2: Price opportunity (force ON if extremely cheap)
+    elsif current_hour['price'] < config.emergency_price
+      final_state = true
+      override_reason = 'price_opportunity'
+
+    # Priority 3: Schedule (use calculated schedule)
+    else
+      override_reason = base_state ? 'schedule' : 'schedule_off'
+    end
+
+    # Convert to EVU format (0=ON, 1=OFF)
+    evu_value = final_state ? 0 : 1
+
+    {
+      'state' => final_state,
+      'evu' => evu_value,
+      'reason' => override_reason,
+      'temperatures' => {
+        'indoor' => temps[:indoor],
+        'hotwater' => temps[:hotwater],
+        'target' => temps[:target]
+      },
+      'price' => current_hour['price']
+    }
   end
 
   def error_response(message)
