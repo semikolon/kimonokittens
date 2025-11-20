@@ -12,16 +12,13 @@ job_type :rbenv_exec, %Q{export PATH=~/.rbenv/shims:/usr/bin:$PATH; eval "$(rben
 set :output, "#{Dir.pwd}/cron_log.log"
 set :chronic_options, hours24: true
 
+# NOTE: This Whenever configuration is NOT currently deployed in production.
+# Production uses direct crontab entries (see docs/PRODUCTION_CRON_DEPLOYMENT.md).
+# Keeping this file for potential future migration to Whenever gem (see TODO.md).
+
 # Refresh Vattenfall electricity data every two hours
 every 2.hours do
   rbenv_exec "ruby #{Dir.pwd}/vattenfall.rb"
-end
-
-# Refresh Tibber price data every two hours (staggered with above job)
-# Adjust times here if the two scripts should not overlap.
-
-every 2.hours do
-  rbenv_exec "ruby #{Dir.pwd}/tibber.rb"
 end
 
 #every 1.day, at: '16.22' do
