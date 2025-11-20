@@ -4,6 +4,7 @@ require 'net/http'
 require 'uri'
 require_relative 'heatpump_price_handler'
 require_relative '../lib/persistence'
+require_relative '../lib/sms/gateway'
 
 # Heatpump Schedule Generator
 # Implements ps-strategy-lowest-price algorithm from node-red-contrib-power-saver
@@ -26,6 +27,7 @@ class HeatpumpScheduleHandler
 
   def initialize(heatpump_price_handler)
     @price_handler = heatpump_price_handler
+    @last_emergency_sms_time = nil  # Track when we last sent emergency SMS
   end
 
   def call(env)
@@ -35,7 +37,6 @@ class HeatpumpScheduleHandler
     # Parse query parameters
     params = req.params
     hours_on = (params['hours_on'] || DEFAULT_HOURS_ON).to_i
-    max_price = params['max_price'] ? params['max_price'].to_f : DEFAULT_MAX_PRICE
 
     # Get prices from heatpump_price_handler
     status, headers, body = @price_handler.call(env)
@@ -50,7 +51,7 @@ class HeatpumpScheduleHandler
     return error_response('No price data available') if today.empty? && tomorrow.empty?
 
     # Generate schedule using ps-strategy algorithm (process each day independently)
-    schedule = generate_schedule_per_day(today, tomorrow, hours_on, max_price)
+    schedule = generate_schedule_per_day(today, tomorrow, hours_on)
 
     # Fetch heatpump config and apply temperature override logic
     config = Persistence.heatpump_config.get_current
@@ -64,7 +65,7 @@ class HeatpumpScheduleHandler
       'source' => 'Dell API (peak/off-peak aware)',
       'config' => {
         'hoursOn' => hours_on,
-        'maxPrice' => max_price,
+        'maxPrice' => config.max_price,  # From database (informational only, not used in algorithm)
         'doNotSplit' => false,
         'outputValueForOn' => '0',    # EVU=0 (heatpump ON)
         'outputValueForOff' => '1'    # EVU=1 (heatpump OFF)
@@ -83,12 +84,12 @@ class HeatpumpScheduleHandler
   # Implements ps-strategy-lowest-price getBestX algorithm (per 24-hour period)
   # CRITICAL: Processes each day independently to ensure consistent daily heating
   # Prevents bug where all hours could be selected from one day, leaving other day with 0 hours
-  def generate_schedule_per_day(today, tomorrow, hours_on, max_price)
+  def generate_schedule_per_day(today, tomorrow, hours_on)
     # Process today's 24 hours independently
-    today_schedule = select_cheapest_hours(today, hours_on, max_price)
+    today_schedule = select_cheapest_hours(today, hours_on)
 
     # Process tomorrow's 24 hours independently
-    tomorrow_schedule = select_cheapest_hours(tomorrow, hours_on, max_price)
+    tomorrow_schedule = select_cheapest_hours(tomorrow, hours_on)
 
     # Combine into single schedule (chronological order preserved)
     today_schedule + tomorrow_schedule
@@ -96,7 +97,11 @@ class HeatpumpScheduleHandler
 
   # Select N cheapest hours from a single 24-hour period
   # Returns schedule array with onOff flags set for cheapest hours
-  def select_cheapest_hours(prices, hours_on, max_price)
+  #
+  # NOTE: maxPrice parameter removed (Nov 20, 2025) - heatpump is essential infrastructure,
+  # can't defer like washing machines. With peak/off-peak pricing (2-4 kr/kWh), maxPrice
+  # threshold became obsolete. Always select cheapest hours regardless of absolute price.
+  def select_cheapest_hours(prices, hours_on)
     return [] if prices.empty?
 
     # Sort prices by value, keeping original indices
@@ -104,18 +109,8 @@ class HeatpumpScheduleHandler
       .sort_by { |p, _| p['total'] }
       .map { |_, i| i }
 
-    # Select N cheapest hours from THIS period only
+    # Select N cheapest hours from THIS period only (regardless of price)
     on_indices = sorted_indices.first(hours_on).to_set
-
-    # Calculate average price of selected hours
-    selected_prices = on_indices.map { |i| prices[i]['total'] }
-    avg_price = selected_prices.sum / selected_prices.length.to_f
-
-    # Apply max_price filter
-    if max_price && avg_price > max_price
-      # If average exceeds max, turn everything OFF for this period
-      on_indices = Set.new
-    end
 
     # Build schedule array for this period
     prices.map.with_index do |price, i|
@@ -204,6 +199,9 @@ class HeatpumpScheduleHandler
       final_state = true
       override_reason = 'temperature_emergency'
 
+      # Send SMS alert if this is a new emergency (not sent recently)
+      send_emergency_sms_if_needed(temps, config)
+
     # Priority 2: Schedule (use calculated schedule)
     else
       override_reason = base_state ? 'schedule' : 'schedule_off'
@@ -223,6 +221,35 @@ class HeatpumpScheduleHandler
       },
       'price' => current_hour['price']
     }
+  end
+
+  # Send emergency SMS if temperature failsafe triggered
+  # Only sends once per hour to avoid spam
+  def send_emergency_sms_if_needed(temps, config)
+    now = Time.now
+
+    # Don't spam - only send if we haven't sent SMS in last hour
+    if @last_emergency_sms_time.nil? || (now - @last_emergency_sms_time) > 3600
+      begin
+        # Determine which condition triggered (concise Swedish)
+        indoor_low = temps[:indoor] <= (temps[:target] - config.emergency_temp_offset)
+        hotwater_low = temps[:hotwater] < config.min_hotwater
+
+        if indoor_low && hotwater_low
+          message = "Båda för kalla!"  # "Both too cold!"
+        elsif indoor_low
+          message = "#{temps[:indoor].round(1)}°C inne"  # "#{temp}°C indoors"
+        else
+          message = "#{temps[:hotwater].round(1)}°C vatten"  # "#{temp}°C water"
+        end
+
+        SmsGateway.send_admin_alert(message)
+        @last_emergency_sms_time = now
+        puts "📱 Emergency SMS sent: #{message}"
+      rescue => e
+        puts "⚠️  Failed to send emergency SMS: #{e.message}"
+      end
+    end
   end
 
   def error_response(message)
