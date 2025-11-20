@@ -1,0 +1,92 @@
+require_relative 'base_repository'
+require_relative '../models/heatpump_config'
+
+# HeatpumpConfigRepository handles persistence for heatpump configuration
+#
+# Provides:
+# - Singleton config access (only one config record exists)
+# - Config updates with validation
+# - Default config creation
+#
+class HeatpumpConfigRepository < BaseRepository
+  def table_name
+    :HeatpumpConfig
+  end
+
+  # Get the current heatpump configuration (singleton pattern)
+  # Creates default config if none exists
+  # @return [HeatpumpConfig]
+  def get_current
+    row = dataset.first
+
+    if row
+      hydrate(row)
+    else
+      create_default
+    end
+  end
+
+  # Update heatpump configuration
+  # @param id [String] Config ID
+  # @param params [Hash] Update parameters
+  # @return [HeatpumpConfig]
+  def update(id, params)
+    # Build update hash with only provided fields
+    update_hash = { updatedAt: Time.now }
+    update_hash[:hoursOn] = params[:hours_on] if params[:hours_on]
+    update_hash[:maxPrice] = params[:max_price] if params[:max_price]
+    update_hash[:minTemp] = params[:min_temp] if params[:min_temp]
+    update_hash[:minHotwater] = params[:min_hotwater] if params[:min_hotwater]
+    update_hash[:emergencyPrice] = params[:emergency_price] if params[:emergency_price]
+
+    dataset.where(id: id).update(update_hash)
+
+    find_by_id(id)
+  end
+
+  # Find config by ID
+  # @param id [String] Config ID
+  # @return [HeatpumpConfig, nil]
+  def find_by_id(id)
+    row = dataset.where(id: id).first
+    row && hydrate(row)
+  end
+
+  private
+
+  # Create default configuration
+  # @return [HeatpumpConfig]
+  def create_default
+    id = SecureRandom.uuid
+    now = Time.now
+
+    dataset.insert(
+      id: id,
+      hoursOn: 12,
+      maxPrice: 2.2,
+      minTemp: 20.0,
+      minHotwater: 40.0,
+      emergencyPrice: 0.3,
+      createdAt: now,
+      updatedAt: now
+    )
+
+    find_by_id(id)
+  end
+
+  # Convert database row to domain model
+  # @param row [Hash] Database row
+  # @return [HeatpumpConfig]
+  def hydrate(row)
+    HeatpumpConfig.new(
+      id: row[:id],
+      hours_on: row[:hoursOn],
+      max_price: row[:maxPrice],
+      min_temp: row[:minTemp],
+      min_hotwater: row[:minHotwater],
+      emergency_price: row[:emergencyPrice],
+      created_at: row[:createdAt],
+      updated_at: row[:updatedAt]
+    )
+  end
+end
