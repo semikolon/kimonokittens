@@ -4,12 +4,24 @@
 **Status:** IN PROGRESS - Backend API Complete ✅
 **Goal:** Make heatpump schedule parameters configurable via dashboard + move temperature override logic to backend
 
-**Progress (Nov 20, 2025 18:45):**
+**Progress (Nov 20, 2025 19:15):**
 - ✅ Database schema complete (HeatpumpConfig table with emergencyTempOffset)
 - ✅ Backend API complete (GET/PUT /api/heatpump/config)
 - ✅ Field rename complete (minTemp → emergencyTempOffset, dynamic offset design)
-- ✅ Temperature override logic (priority-based system implemented)
-- ⏳ Frontend UI (next step)
+- ✅ Temperature override logic implemented (NEEDS REVISION - see below)
+- ⚠️ **CRITICAL BUG DISCOVERED**: ps-strategy algorithm picks from 48-hour dataset, not per-day
+- 🔍 **NEEDS INVESTIGATION**: Verify whether hours_on should be per 24-hour period or global
+
+**Key Decisions (Nov 20):**
+1. **Remove price opportunity logic**: emergencyPrice field is redundant with hours_on control, rarely triggers in winter, adds unnecessary complexity
+2. **TODO for self-learning**: System should adjust hours_on dynamically to prevent temperature emergency overrides during expensive hours (see TODO.md)
+
+**Algorithm Question (CRITICAL):**
+Current implementation: Picks 12 cheapest hours from **combined 48-hour dataset** (today + tomorrow)
+- Risk: Could pick all 12 from tomorrow if tomorrow is cheaper → 0 hours today → house gets cold
+- ps-strategy docs unclear: "during a given period" within "24 hour period"
+- Node-RED config: fromTime=00, toTime=00 (suggests 24-hour rolling window?)
+- **NEXT STEP**: Test actual schedule output, compare with Node-RED, verify behavior
 
 ---
 
