@@ -19,15 +19,12 @@ RSpec.describe 'RentCalculator Integration' do
   let(:db) { RentDb.instance }
 
   describe 'GET /api/rent/forecast (forecast)' do
-    it 'generates a correct forecast for a future month' do
+    it 'generates a correct forecast for a future month',
+       vcr: { cassette_name: 'electricity_prices_2025_06' } do
       # --- Setup ---
-      # Stub electricity spot price API (prevents real HTTP calls)
-      stub_request(:get, /elprisetjustnu\.se\/api\/v1\/prices/)
-        .to_return(
-          status: 200,
-          body: Array.new(24) { |h| { time_start: "2025-06-01T#{h.to_s.rjust(2, '0')}:00:00+00:00", SEK_per_kWh: 0.5 } }.to_json,
-          headers: { 'Content-Type' => 'application/json' }
-        )
+      # VCR will record real API responses from elprisetjustnu.se
+      # First run: Records real API call → saves to cassette
+      # Subsequent runs: Replays recorded response (no network call)
 
       # Add tenants with specific start and departure dates
       db.add_tenant(name: 'Fredrik', start_date: '2023-02-01')
@@ -66,10 +63,10 @@ RSpec.describe 'RentCalculator Integration' do
       expect(config['larm']).to eq(137)          # Proportional to 754 kr/month total
 
       # 3. Correct total is calculated (including gas baseline)
-      # Note: Smart projection overrides manually set el value (1200 → 743)
-      # when no actual bills exist for the period
-      # Projection uses stubbed spot prices (0.5 SEK/kWh × consumption data)
-      expected_total = 25000 + 400 + 743 + 343 + 274 + 137 + 83
+      # Note: Smart projection uses REAL API data (via VCR cassette)
+      # Projection: 1840 kr (realistic June 2025 consumption × actual spot prices)
+      # VCR cassette contains 720 hours of real pricing from elprisetjustnu.se
+      expected_total = 25000 + 400 + 1840 + 343 + 274 + 137 + 83
       expect(final_results['total']).to eq(expected_total)
     end
   end
