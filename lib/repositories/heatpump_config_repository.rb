@@ -35,7 +35,7 @@ class HeatpumpConfigRepository < BaseRepository
     update_hash = { updatedAt: Time.now }
     update_hash[:hoursOn] = params[:hours_on] if params[:hours_on]
     update_hash[:maxPrice] = params[:max_price] if params[:max_price]
-    update_hash[:minTemp] = params[:min_temp] if params[:min_temp]
+    update_hash[:emergencyTempOffset] = params[:emergency_temp_offset] if params[:emergency_temp_offset]
     update_hash[:minHotwater] = params[:min_hotwater] if params[:min_hotwater]
     update_hash[:emergencyPrice] = params[:emergency_price] if params[:emergency_price]
 
@@ -64,7 +64,7 @@ class HeatpumpConfigRepository < BaseRepository
       id: id,
       hoursOn: 12,
       maxPrice: 2.2,
-      minTemp: 20.0,
+      emergencyTempOffset: 1.0,
       minHotwater: 40.0,
       emergencyPrice: 0.3,
       createdAt: now,
@@ -82,7 +82,7 @@ class HeatpumpConfigRepository < BaseRepository
       id: row[:id],
       hours_on: row[:hoursOn],
       max_price: row[:maxPrice],
-      min_temp: row[:minTemp],
+      emergency_temp_offset: row[:emergencyTempOffset],
       min_hotwater: row[:minHotwater],
       emergency_price: row[:emergencyPrice],
       created_at: row[:createdAt],

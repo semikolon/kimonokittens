@@ -6,21 +6,21 @@
 # @attr id [String] Unique identifier
 # @attr hours_on [Integer] Hours per day to run (5-22)
 # @attr max_price [Float] Maximum electricity price threshold (kr/kWh, 1.5-3.0)
-# @attr min_temp [Float] Minimum indoor temperature (°C, 15-23) - emergency override
+# @attr emergency_temp_offset [Float] Temperature offset below target (°C, 0.5-5.0) - emergency override
 # @attr min_hotwater [Float] Minimum hot water temperature (°C, 35-50) - emergency override
 # @attr emergency_price [Float] Emergency price threshold (kr/kWh, 0.1-1.0) - force ON below this
 # @attr created_at [Time] Creation timestamp
 # @attr updated_at [Time] Last update timestamp
 #
 class HeatpumpConfig
-  attr_reader :id, :hours_on, :max_price, :min_temp, :min_hotwater,
+  attr_reader :id, :hours_on, :max_price, :emergency_temp_offset, :min_hotwater,
               :emergency_price, :created_at, :updated_at
 
   def initialize(
     id:,
     hours_on:,
     max_price:,
-    min_temp:,
+    emergency_temp_offset:,
     min_hotwater:,
     emergency_price:,
     created_at:,
@@ -29,7 +29,7 @@ class HeatpumpConfig
     @id = id
     @hours_on = hours_on
     @max_price = max_price
-    @min_temp = min_temp
+    @emergency_temp_offset = emergency_temp_offset
     @min_hotwater = min_hotwater
     @emergency_price = emergency_price
     @created_at = created_at
@@ -43,7 +43,7 @@ class HeatpumpConfig
       id: @id,
       hours_on: @hours_on,
       max_price: @max_price,
-      min_temp: @min_temp,
+      emergency_temp_offset: @emergency_temp_offset,
       min_hotwater: @min_hotwater,
       emergency_price: @emergency_price,
       created_at: @created_at,
@@ -65,8 +65,8 @@ class HeatpumpConfig
       errors << "max_price must be between 1.5 and 3.0" unless (1.5..3.0).cover?(params[:max_price])
     end
 
-    if params[:min_temp]
-      errors << "min_temp (indoor) must be between 15.0 and 23.0" unless (15.0..23.0).cover?(params[:min_temp])
+    if params[:emergency_temp_offset]
+      errors << "emergency_temp_offset must be between 0.5 and 5.0" unless (0.5..5.0).cover?(params[:emergency_temp_offset])
     end
 
     if params[:min_hotwater]
