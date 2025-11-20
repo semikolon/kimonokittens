@@ -243,6 +243,8 @@ bin/dev nuke         # Nuclear cleanup (last resort)
 
 **Never use `--skip-generate` or `--accept-data-loss` flags without understanding WHY Prisma is warning you.**
 
+**Manual migration fixes (Nov 20, 2025):** If you manually apply a migration's SQL to fix drift, you MUST run `npx prisma migrate resolve --applied "migration_name"` to reconcile Prisma's migration history. Just applying SQL isn't enough - Prisma needs to know the migration is resolved.
+
 ### 📋 Migration Best Practices
 
 **Descriptive migration names** - Use present tense verbs: `add_room_to_tenant`, `add_contract_lifecycle_tracking`, `remove_deprecated_status_field`
@@ -502,13 +504,19 @@ Handlers → Services → Domain Models + Repositories → Database
 **Services Staying on Pi** (infrastructure/automation):
 - **DDClient**: Dynamic DNS updates for kimonokittens.com
 - **Pycalima**: Bluetooth-based bathroom fan control (hardware proximity required)
-- **Node-RED**: Temperature sensor aggregation, heatpump schedule generation (port 1880)
+- **Node-RED**: Temperature sensor aggregation, Dell API integration for heatpump control (port 1880)
+  - **Nov 20, 2025 migration**: Removed Tibber integration + ps-strategy logic → now calls Dell `/api/heatpump/schedule` endpoint
+  - Serves as transport layer: fetches schedule from Dell → sends EVU commands via MQTT
 - **Mosquitto MQTT**: Message broker for ThermIQ heatpump data (port 1883)
 
 **Services Migrating to Dell** (dashboard-relevant data):
 - **Electricity data cron jobs**: `vattenfall.rb` + `tibber.rb` (every 2 hours)
 - **Electricity JSON files**: `electricity_usage.json`, `tibber_price_data.json`
 - **Dashboard data generation**: All data consumed by widgets or useful for online handbook
+- **Heatpump schedule generation** (Nov 20, 2025): Moved from Pi Tibber/ps-strategy → Dell Ruby backend
+  - ps-strategy algorithm now in `/api/heatpump/schedule` handler
+  - Configurable parameters via database (HeatpumpConfig table) - UI in progress
+  - Temperature override logic will also move to Dell (currently broken on Pi)
 
 **Services to Sunset** (after BRF-Auto income secured):
 - **Pi Agoo server** (`json_server.rb`):
@@ -529,17 +537,19 @@ Handlers → Services → Domain Models + Repositories → Database
    - Blocks compressor at permission level, preventing **ALL heat production** (both space heating and hot water)
    - MQTT: `{"EVU":1}` = blocked, `{"EVU":0}` = allowed
    - Cannot be overridden by software - operates upstream of all internal logic
-2. **Temperature Override** (Node-RED function: "turn heat ON IF temp too low")
-   - Triggers when: `indoor ≤ target` OR `hotwater < 40°C`
-   - Forces heatpump ON regardless of schedule when conditions met
-   - Only effective when EVU allows compressor operation
-   - Location: Pi Node-RED flow at `192.168.4.66:1880`
-3. **Tibber Schedule** (Node-RED price optimization)
-   - Generates schedule from electricity prices (13h/day, maxPrice 2.2kr/kWh)
-   - Optimizes runtime for cheapest hours
-   - Subordinate to temperature override
+2. **Temperature Override** (⚠️ **BROKEN as of Nov 20, 2025** - pending migration to Dell backend)
+   - Previous implementation: Node-RED function checking `indoor ≤ target` OR `hotwater < 40°C`
+   - Broken: Depends on removed Tibber data flow
+   - **Migration plan**: Override logic moving to Dell backend in `/api/heatpump/schedule` handler
+   - See `docs/HEATPUMP_CONFIG_UI_PLAN.md` for implementation details
+3. **Dell API Schedule** (price-optimized ps-strategy, Nov 20, 2025)
+   - **Replaced** Tibber/Node-RED ps-strategy with Ruby backend implementation
+   - Generates schedule from electricity prices (configurable: hours_on 9-14, maxPrice 1.5-3.0 kr/kWh)
+   - Optimizes runtime for cheapest hours using ps-strategy algorithm
+   - Node-RED calls `/api/heatpump/schedule?hours_on=12&max_price=2.2` every 20 minutes
+   - Returns JSON with EVU state, schedule applies to MQTT
 
-**Critical**: Hot water "priority" logic operates AFTER these three layers. EVU blocking occurs at the compressor (shared heat source), preventing the reversing valve from ever switching heat destination. Temperature override explains why `heatpump_disabled=0` even when schedule shows OFF - the system stays enabled to maintain comfort, but only when EVU permits operation.
+**Critical**: Hot water "priority" logic operates AFTER these three layers. EVU blocking occurs at the compressor (shared heat source), preventing the reversing valve from ever switching heat destination. Temperature override (when working) explains why `heatpump_disabled=0` even when schedule shows OFF - system stays enabled to maintain comfort, but only when EVU permits operation.
 
 ### Production Paths & Services
 ```

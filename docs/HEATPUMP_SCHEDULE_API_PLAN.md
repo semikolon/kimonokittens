@@ -689,17 +689,58 @@ function selectCheapestHours(prices, hoursOn, maxPrice) {
    - ✅ Deployed to production (Nov 20, 2025 00:07:48 CET)
    - ✅ Tested working: returns correct schedule, rejects when avg > max_price
 
-### Next Steps (Resume from Mac)
+### ✅ COMPLETED (Nov 20, 2025)
 
-4. **Node-RED integration** - **READY TO DEPLOY**
-   - Both endpoints deployed and tested on Dell (192.168.4.84:3001)
-   - Mac Claude Code agent can continue from here (has SSH access to Pi)
-   - See "Node-RED Deployment Guide" section below for step-by-step instructions
+4. **Configuration API** - `/api/heatpump/config`
+   - ✅ Database schema: Prisma migration for `HeatpumpConfig` table
+   - ✅ Domain model: `lib/models/heatpump_config.rb` with validation
+     - hours_on: 5-22 (allows low/high runtime scenarios)
+     - max_price: 1.5-3.0 kr/kWh
+     - min_temp (indoor): 15-23°C - emergency override threshold
+     - min_hotwater: 35-50°C - emergency override threshold
+     - emergency_price: 0.1-1.0 kr/kWh - force ON below this price
+   - ✅ Repository: `lib/repositories/heatpump_config_repository.rb`
+     - Singleton pattern (one config record)
+     - Auto-creates default on first access (12h, 2.2kr, 20°C, 40°C, 0.3kr)
+     - Partial updates supported (PATCH-style)
+   - ✅ Handler: `handlers/heatpump_config_handler.rb`
+     - GET: Returns current configuration
+     - PUT: Updates configuration with validation
+   - ✅ Routes: Added to `puma_server.rb`
+   - ✅ Tested: GET/PUT endpoints working correctly
+   - ⏳ **Not yet deployed to production**
 
-5. **Dashboard integration** (future enhancement)
-   - Add widget to adjust hours_on slider (9-14 hours)
-   - Show projected daily cost based on schedule
+### Next Steps
+
+5. **Temperature override logic** - **IN PROGRESS**
+   - ⚠️ Currently BROKEN on Pi (depends on removed Tibber data flow)
+   - **Original Node-RED logic:** `if (indoor <= target || hotwater < 40)`
+   - **Target temperature source:** Physical heatpump controls via MQTT (user sets with +/- buttons)
+   - **Design principle:** Economic tradeoff - tolerate small drops during expensive hours, prevent getting TOO cold
+
+   **Override conditions (force heatpump ON if ANY met):**
+   - **Temperature safety:** `indoor <= (target - emergency_temp_offset)`
+     - Example: target=21°C, offset=1°C → override at 20°C
+     - Example: target=18°C, offset=1°C → override at 17°C (still dynamic!)
+     - Configurable offset (0.5-5.0°C) controls economic tradeoff
+   - **Hotwater:** `hotwater < min_hotwater` (configurable, defaults to 40°C)
+   - **Economic opportunity:** `current_price < emergency_price` (new - force ON during super cheap hours)
+
+   **Benefits:**
+   - ✅ User controls ONE thing (target on heatpump)
+   - ✅ We control ONE thing (offset tolerance)
+   - ✅ Dynamic threshold (no coordination needed between min_temp and target)
+   - ✅ Economic optimization (accepts small drop, prevents TOO cold)
+
+   - Remove broken Node-RED temperature override nodes after backend working
+   - See "Override Logic Implementation" section below
+
+6. **Dashboard UI** (after backend complete)
+   - HeatpumpConfigModal.tsx with 5 sliders:
+     - hours_on (5-22h), max_price (1.5-3.0kr), min_temp (15-23°C),
+     - min_hotwater (35-50°C), emergency_price (0.1-1.0kr)
    - Real-time schedule visualization
+   - Show projected daily cost based on current config
 
 ---
 
@@ -874,6 +915,70 @@ ssh pi@192.168.4.66 'sudo systemctl restart nodered'
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** November 17, 2025
-**Next Review:** After Phase 1 completion (Dell endpoint working)
+## ✅ COMPLETED: Node-RED Migration (November 20, 2025)
+
+**Status:** Node-RED successfully reconfigured to call Dell schedule API
+
+### Changes Made
+
+**Files:**
+- `flows-backup-20251120-1447.json` - Original flows (before migration)
+- `flows-modified-20251120.json` - Modified flows (Dell API integration)
+
+**Removed Nodes:**
+1. `tibber-query` (ceeb9385f18d3d97) - GraphQL query with invalid API key
+2. `ps-receive-price` (f798ba5be61f3422) - Tibber→ps-strategy format converter
+3. `ps-strategy-lowest-price` (0f944c8c2f7f82e0) - Price-based scheduling logic
+4. Old template node for Tibber format
+
+**Added Nodes:**
+1. **HTTP Request** (93fa60e5029d9954) - Calls `http://192.168.4.84:3001/api/heatpump/schedule?hours_on=12&max_price=2.2`
+2. **Extract Function** (5eb3e94b9f7d7eb3) - Extracts `current.state` from schedule response, converts to EVU (0=ON, 1=OFF)
+
+**Preserved Nodes:**
+- cronplus trigger (every 20 minutes)
+- EVU template (formats MQTT message)
+- MQTT output (publishes to ThermIQ)
+
+**Why:** Tibber API key invalid since May 2025, logic moved to Dell Ruby backend for better peak/off-peak handling.
+
+### Current Flow Architecture
+
+```
+cronplus (20 min)
+  ↓
+HTTP Request → Dell API
+  ↓
+Extract current EVU state
+  ↓
+EVU template
+  ↓
+ThermIQ MQTT
+```
+
+**Deployment:** Applied via Node-RED HTTP API (`POST /flows`) from Dell machine (Nov 20, 2025)
+
+---
+
+## 🔍 TODO: Review Prices Endpoint Necessity
+
+**Question:** Do we still need `/api/heatpump/prices` as a public endpoint?
+
+**Current Architecture:**
+- `/api/heatpump/schedule` internally calls `HeatpumpPriceHandler` to get prices
+- Schedule handler runs ps-strategy algorithm in Ruby
+- Returns final schedule with EVU values
+- **Node-RED never directly calls the prices endpoint**
+
+**Options:**
+1. **Keep as public** - Useful for debugging, future dashboard widgets
+2. **Make internal only** - Schedule handler uses it, but not exposed via puma routes
+3. **Remove completely** - Inline price logic into schedule handler
+
+**Recommendation:** Keep as public for now (debugging value), revisit after config UI complete.
+
+---
+
+**Document Version:** 1.1
+**Last Updated:** November 20, 2025
+**Next Review:** After heatpump config UI implementation
