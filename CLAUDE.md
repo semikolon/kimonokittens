@@ -471,6 +471,8 @@ Handlers → Services → Domain Models + Repositories → Database
 
 **Single Source of Truth (SSoT):** Tenant is the master data source - all handlers fetch tenant data live from database via repository. No duplication, no cache. Changes to tenant records immediately reflect in all views.
 
+**Repository SELECT Pattern:** Never enumerate fields in `.select()` - schema changes cause silent bugs (hydrate() expects new field, SELECT omits it → nil). Model `.to_h()` whitelists API exposure, making unrestricted fetch safe.
+
 **Documentation**: `docs/MODEL_ARCHITECTURE.md` (800+ lines), test coverage: 37 tests for domain layer (all passing)
 
 ---
