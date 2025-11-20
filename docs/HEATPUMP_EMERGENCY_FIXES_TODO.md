@@ -40,24 +40,24 @@
 
 **Implementation:** `send_emergency_sms_if_needed()` in `handlers/heatpump_schedule_handler.rb`
 
-### 🔧 DECISION - maxPrice Field Fate
+### 🔧 DECISION - maxPrice Field Removal
 
-**User decision:** Don't keep explicit user-set maxPrice field
+**User decision:** Remove maxPrice from HeatpumpConfig entirely
 
 **Reasoning:**
-- Users shouldn't manually track "abnormally high" prices
-- System should auto-detect via statistical analysis (rolling baseline)
-- Account for seasonal patterns while alerting on objectively high prices
-- No need to expose in UI
+- **Semantic mismatch:** HeatpumpConfig is for heatpump operation (hours_on, emergency_temp_offset), not cost awareness
+- **Wrong architectural layer:** Price thresholds apply to ALL appliances (washing machine, dryer), not just heatpump
+- **No persistence needed:** Auto-calculated values don't require database storage (calculate on-demand, cache in memory)
+- **Manual override not needed:** If 100% auto-calculated, no reason for user configuration
+- **Follows existing pattern:** Electricity anomaly detection uses in-memory caching (works great)
 
-**Database field status:** Kept dormant (safe, doesn't break anything)
-**Future replacement:** Statistical price anomaly detection (see TODO.md #9)
+**Implementation plan:**
+1. ~~Remove from schedule generation algorithm~~ ✅ **DONE** (Nov 20, 2025)
+2. Remove from database schema (future migration)
+3. Remove from model, repository, handler (cleanup)
+4. Build proper price awareness service when implementing TODO.md #9
 
-**New feature planned:** Electricity Price Awareness System
-- Predictive warnings day(s) before expensive periods
-- Dashboard sparkline enhancements (visual price peak warnings)
-- Optimize household appliance usage (washing machine, dryer, dishwasher)
-- See `TODO.md` item #9 for full spec
+**Architecture analysis:** See `docs/PRICE_AWARENESS_ARCHITECTURE_ANALYSIS.md` for complete pros/cons, decision matrix, and recommended implementation approach (on-demand calculation via PriceAwarenessService, cached in DataBroadcaster like electricity anomaly data)
 
 ### 📋 Remaining Tasks (Lower Priority)
 
