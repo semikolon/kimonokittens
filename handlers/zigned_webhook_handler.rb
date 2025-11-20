@@ -529,6 +529,14 @@ class ZignedWebhookHandler
         participant.email_delivered_at = Time.parse(created_at) if created_at
         participant_repo.update(participant)
         ZIGNED_LOGGER.info "   ✅ Participant email delivery recorded"
+
+        # Broadcast real-time update
+        @broadcaster&.broadcast_contract_update(agreement_id, 'email_delivered', {
+          participant_id: participant.id,
+          participant_name: participant.name,
+          email_delivered: true,
+          delivered_at: participant.email_delivered_at&.iso8601
+        })
       else
         ZIGNED_LOGGER.warn "   ⚠️  Participant not found for email #{participant_email} (ID: #{participant_id})"
       end
@@ -548,6 +556,11 @@ class ZignedWebhookHandler
       contract.email_delivery_status = 'delivered'
       @repository.update(contract)
       ZIGNED_LOGGER.info "   ✅ Contract email delivery status updated"
+
+      # Broadcast real-time update
+      @broadcaster&.broadcast_contract_update(agreement_id, 'all_emails_delivered', {
+        email_delivery_status: 'delivered'
+      })
     end
   end
 
@@ -645,6 +658,14 @@ class ZignedWebhookHandler
         participant.email_delivery_error = error_message if error_message
         participant_repo.update(participant)
         ZIGNED_LOGGER.warn "   ⚠️  Participant email failure recorded"
+
+        # Broadcast real-time update
+        @broadcaster&.broadcast_contract_update(agreement_id, 'email_delivery_failed', {
+          participant_id: participant.id,
+          participant_name: participant.name,
+          email_delivery_failed: true,
+          error: error_message
+        })
       else
         ZIGNED_LOGGER.warn "   ⚠️  Participant not found for email #{participant_email} (ID: #{participant_id})"
       end
@@ -779,7 +800,7 @@ class ZignedWebhookHandler
       participant_id: participant.id,
       participant_name: participant.name,
       status: new_status,
-      occurred_at: occurred_at
+      occurred_at: created_at
     })
   end
 
