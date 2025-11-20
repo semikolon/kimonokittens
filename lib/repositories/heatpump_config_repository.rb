@@ -37,7 +37,6 @@ class HeatpumpConfigRepository < BaseRepository
     update_hash[:maxPrice] = params[:max_price] if params[:max_price]
     update_hash[:emergencyTempOffset] = params[:emergency_temp_offset] if params[:emergency_temp_offset]
     update_hash[:minHotwater] = params[:min_hotwater] if params[:min_hotwater]
-    update_hash[:emergencyPrice] = params[:emergency_price] if params[:emergency_price]
 
     dataset.where(id: id).update(update_hash)
 
@@ -66,7 +65,6 @@ class HeatpumpConfigRepository < BaseRepository
       maxPrice: 2.2,
       emergencyTempOffset: 1.0,
       minHotwater: 40.0,
-      emergencyPrice: 0.3,
       createdAt: now,
       updatedAt: now
     )
@@ -84,7 +82,6 @@ class HeatpumpConfigRepository < BaseRepository
       max_price: row[:maxPrice],
       emergency_temp_offset: row[:emergencyTempOffset],
       min_hotwater: row[:minHotwater],
-      emergency_price: row[:emergencyPrice],
       created_at: row[:createdAt],
       updated_at: row[:updatedAt]
     )

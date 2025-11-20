@@ -34,7 +34,6 @@ class HeatpumpConfigHandler
       'max_price' => config.max_price,
       'emergency_temp_offset' => config.emergency_temp_offset,
       'min_hotwater' => config.min_hotwater,
-      'emergency_price' => config.emergency_price,
       'created_at' => config.created_at.iso8601,
       'updated_at' => config.updated_at.iso8601
     }
@@ -55,7 +54,6 @@ class HeatpumpConfigHandler
     update_params[:max_price] = params[:max_price].to_f if params[:max_price]
     update_params[:emergency_temp_offset] = params[:emergency_temp_offset].to_f if params[:emergency_temp_offset]
     update_params[:min_hotwater] = params[:min_hotwater].to_f if params[:min_hotwater]
-    update_params[:emergency_price] = params[:emergency_price].to_f if params[:emergency_price]
 
     # Validate parameters
     errors = HeatpumpConfig.validate(update_params)
@@ -73,7 +71,6 @@ class HeatpumpConfigHandler
       'max_price' => updated_config.max_price,
       'emergency_temp_offset' => updated_config.emergency_temp_offset,
       'min_hotwater' => updated_config.min_hotwater,
-      'emergency_price' => updated_config.emergency_price,
       'created_at' => updated_config.created_at.iso8601,
       'updated_at' => updated_config.updated_at.iso8601
     }

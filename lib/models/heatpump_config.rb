@@ -8,13 +8,12 @@
 # @attr max_price [Float] Maximum electricity price threshold (kr/kWh, 1.5-3.0)
 # @attr emergency_temp_offset [Float] Temperature offset below target (°C, 0.5-5.0) - emergency override
 # @attr min_hotwater [Float] Minimum hot water temperature (°C, 35-50) - emergency override
-# @attr emergency_price [Float] Emergency price threshold (kr/kWh, 0.1-1.0) - force ON below this
 # @attr created_at [Time] Creation timestamp
 # @attr updated_at [Time] Last update timestamp
 #
 class HeatpumpConfig
   attr_reader :id, :hours_on, :max_price, :emergency_temp_offset, :min_hotwater,
-              :emergency_price, :created_at, :updated_at
+              :created_at, :updated_at
 
   def initialize(
     id:,
@@ -22,7 +21,6 @@ class HeatpumpConfig
     max_price:,
     emergency_temp_offset:,
     min_hotwater:,
-    emergency_price:,
     created_at:,
     updated_at:
   )
@@ -31,7 +29,6 @@ class HeatpumpConfig
     @max_price = max_price
     @emergency_temp_offset = emergency_temp_offset
     @min_hotwater = min_hotwater
-    @emergency_price = emergency_price
     @created_at = created_at
     @updated_at = updated_at
   end
@@ -45,7 +42,6 @@ class HeatpumpConfig
       max_price: @max_price,
       emergency_temp_offset: @emergency_temp_offset,
       min_hotwater: @min_hotwater,
-      emergency_price: @emergency_price,
       created_at: @created_at,
       updated_at: @updated_at
     }
@@ -71,10 +67,6 @@ class HeatpumpConfig
 
     if params[:min_hotwater]
       errors << "min_hotwater must be between 35.0 and 50.0" unless (35.0..50.0).cover?(params[:min_hotwater])
-    end
-
-    if params[:emergency_price]
-      errors << "emergency_price must be between 0.1 and 1.0" unless (0.1..1.0).cover?(params[:emergency_price])
     end
 
     errors

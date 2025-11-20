@@ -243,7 +243,6 @@ model HeatpumpConfig {
   maxPrice            Float    @default(2.2)
   emergencyTempOffset Float    @default(1.0)
   minHotwater         Float    @default(40.0)
-  emergencyPrice      Float    @default(0.3)
   updatedAt           DateTime @updatedAt
   createdAt           DateTime @default(now())
 }
