@@ -43,15 +43,14 @@ class HeatpumpScheduleHandler
 
     price_data = Oj.load(body.first)
 
-    # Extract today + tomorrow prices into flat array
+    # Extract today + tomorrow prices (keep separate for per-day processing!)
     today = price_data['viewer']['homes'][0]['currentSubscription']['priceInfo']['today'] || []
     tomorrow = price_data['viewer']['homes'][0]['currentSubscription']['priceInfo']['tomorrow'] || []
-    all_prices = today + tomorrow
 
-    return error_response('No price data available') if all_prices.empty?
+    return error_response('No price data available') if today.empty? && tomorrow.empty?
 
-    # Generate schedule using ps-strategy algorithm
-    schedule = generate_schedule(all_prices, hours_on, max_price)
+    # Generate schedule using ps-strategy algorithm (process each day independently)
+    schedule = generate_schedule_per_day(today, tomorrow, hours_on, max_price)
 
     # Fetch heatpump config and apply temperature override logic
     config = Persistence.heatpump_config.get_current
@@ -81,14 +80,31 @@ class HeatpumpScheduleHandler
 
   private
 
-  # Implements ps-strategy-lowest-price getBestX algorithm
-  def generate_schedule(prices, hours_on, max_price)
+  # Implements ps-strategy-lowest-price getBestX algorithm (per 24-hour period)
+  # CRITICAL: Processes each day independently to ensure consistent daily heating
+  # Prevents bug where all hours could be selected from one day, leaving other day with 0 hours
+  def generate_schedule_per_day(today, tomorrow, hours_on, max_price)
+    # Process today's 24 hours independently
+    today_schedule = select_cheapest_hours(today, hours_on, max_price)
+
+    # Process tomorrow's 24 hours independently
+    tomorrow_schedule = select_cheapest_hours(tomorrow, hours_on, max_price)
+
+    # Combine into single schedule (chronological order preserved)
+    today_schedule + tomorrow_schedule
+  end
+
+  # Select N cheapest hours from a single 24-hour period
+  # Returns schedule array with onOff flags set for cheapest hours
+  def select_cheapest_hours(prices, hours_on, max_price)
+    return [] if prices.empty?
+
     # Sort prices by value, keeping original indices
     sorted_indices = prices.each_with_index
       .sort_by { |p, _| p['total'] }
       .map { |_, i| i }
 
-    # Select N cheapest hours
+    # Select N cheapest hours from THIS period only
     on_indices = sorted_indices.first(hours_on).to_set
 
     # Calculate average price of selected hours
@@ -97,11 +113,11 @@ class HeatpumpScheduleHandler
 
     # Apply max_price filter
     if max_price && avg_price > max_price
-      # If average exceeds max, turn everything OFF
+      # If average exceeds max, turn everything OFF for this period
       on_indices = Set.new
     end
 
-    # Build schedule array
+    # Build schedule array for this period
     prices.map.with_index do |price, i|
       is_on = on_indices.include?(i)
       {

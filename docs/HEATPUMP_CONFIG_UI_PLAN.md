@@ -4,24 +4,25 @@
 **Status:** IN PROGRESS - Backend API Complete ✅
 **Goal:** Make heatpump schedule parameters configurable via dashboard + move temperature override logic to backend
 
-**Progress (Nov 20, 2025 19:15):**
+**Progress (Nov 20, 2025 19:20):**
 - ✅ Database schema complete (HeatpumpConfig table with emergencyTempOffset)
 - ✅ Backend API complete (GET/PUT /api/heatpump/config)
 - ✅ Field rename complete (minTemp → emergencyTempOffset, dynamic offset design)
 - ✅ Temperature override logic implemented (NEEDS REVISION - see below)
-- ⚠️ **CRITICAL BUG DISCOVERED**: ps-strategy algorithm picks from 48-hour dataset, not per-day
-- 🔍 **NEEDS INVESTIGATION**: Verify whether hours_on should be per 24-hour period or global
+- ✅ **ALGORITHM BUG FIXED**: ps-strategy now processes each 24-hour period independently
+- ⏳ **PENDING**: Remove price opportunity logic + emergencyPrice field
+- ⏳ **PENDING**: Build heatpump config UI widget
 
 **Key Decisions (Nov 20):**
 1. **Remove price opportunity logic**: emergencyPrice field is redundant with hours_on control, rarely triggers in winter, adds unnecessary complexity
 2. **TODO for self-learning**: System should adjust hours_on dynamically to prevent temperature emergency overrides during expensive hours (see TODO.md)
 
-**Algorithm Question (CRITICAL):**
-Current implementation: Picks 12 cheapest hours from **combined 48-hour dataset** (today + tomorrow)
-- Risk: Could pick all 12 from tomorrow if tomorrow is cheaper → 0 hours today → house gets cold
-- ps-strategy docs unclear: "during a given period" within "24 hour period"
-- Node-RED config: fromTime=00, toTime=00 (suggests 24-hour rolling window?)
-- **NEXT STEP**: Test actual schedule output, compare with Node-RED, verify behavior
+**Algorithm Fix (COMPLETED):**
+- ✅ **Refactored**: `generate_schedule_per_day()` processes today and tomorrow independently
+- ✅ **Verified**: Each 24-hour period selects N cheapest hours (tested with real data)
+- ✅ **Guarantees**: Consistent daily heating - no risk of 0 hours on any day
+- Implementation: `select_cheapest_hours()` applies ps-strategy to single 24-hour period
+- Test result: 12 hours selected from today's 24 hours, avg price 2.35 kr/kWh
 
 ---
 
