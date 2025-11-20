@@ -1,0 +1,290 @@
+[
+  {
+    "bill_period": "2023-03-01",
+    "consumption_month": "2023-02-01",
+    "vattenfall": 601,
+    "fortum": 734,
+    "total": 1335,
+    "config_year": 2023,
+    "config_month": 3
+  },
+  {
+    "bill_period": "2023-04-01",
+    "consumption_month": "2023-03-01",
+    "vattenfall": 2231,
+    "fortum": 2408,
+    "total": 4639,
+    "config_year": 2023,
+    "config_month": 4
+  },
+  {
+    "bill_period": "2023-05-01",
+    "consumption_month": "2023-04-01",
+    "vattenfall": 1590,
+    "fortum": 1288,
+    "total": 2878,
+    "config_year": 2023,
+    "config_month": 5
+  },
+  {
+    "bill_period": "2023-06-01",
+    "consumption_month": "2023-05-01",
+    "vattenfall": 1359,
+    "fortum": 616,
+    "total": 1975,
+    "config_year": 2023,
+    "config_month": 6
+  },
+  {
+    "bill_period": "2023-07-01",
+    "consumption_month": "2023-06-01",
+    "vattenfall": 1028,
+    "fortum": 501,
+    "total": 1529,
+    "config_year": 2023,
+    "config_month": 7
+  },
+  {
+    "bill_period": "2023-08-01",
+    "consumption_month": "2023-07-01",
+    "vattenfall": 751,
+    "fortum": 416,
+    "total": 1167,
+    "config_year": 2023,
+    "config_month": 8
+  },
+  {
+    "bill_period": "2023-09-01",
+    "consumption_month": "2023-08-01",
+    "vattenfall": 918,
+    "fortum": 430,
+    "total": 1348,
+    "config_year": 2023,
+    "config_month": 9
+  },
+  {
+    "bill_period": "2023-10-01",
+    "consumption_month": "2023-09-01",
+    "vattenfall": 810,
+    "fortum": 272,
+    "total": 1082,
+    "config_year": 2023,
+    "config_month": 10
+  },
+  {
+    "bill_period": "2023-11-01",
+    "consumption_month": "2023-10-01",
+    "vattenfall": 1287,
+    "fortum": 825,
+    "total": 2112,
+    "config_year": 2023,
+    "config_month": 11
+  },
+  {
+    "bill_period": "2023-12-01",
+    "consumption_month": "2023-11-01",
+    "vattenfall": 2076,
+    "fortum": 2407,
+    "total": 4483,
+    "config_year": 2023,
+    "config_month": 12
+  },
+  {
+    "bill_period": "2024-01-01",
+    "consumption_month": "2024-12-01",
+    "vattenfall": 2013,
+    "fortum": 2626,
+    "total": 4639,
+    "config_year": 2024,
+    "config_month": 1
+  },
+  {
+    "bill_period": "2024-02-01",
+    "consumption_month": "2024-01-01",
+    "vattenfall": 3300,
+    "fortum": 3017,
+    "total": 6317,
+    "config_year": 2024,
+    "config_month": 2
+  },
+  {
+    "bill_period": "2024-03-01",
+    "consumption_month": "2024-02-01",
+    "vattenfall": 2730,
+    "fortum": 1589,
+    "total": 4319,
+    "config_year": 2024,
+    "config_month": 3
+  },
+  {
+    "bill_period": "2024-04-01",
+    "consumption_month": "2024-03-01",
+    "vattenfall": 2572,
+    "fortum": 1636,
+    "total": 4208,
+    "config_year": 2024,
+    "config_month": 4
+  },
+  {
+    "bill_period": "2024-05-01",
+    "consumption_month": "2024-04-01",
+    "vattenfall": 1888,
+    "fortum": 1397,
+    "total": 3285,
+    "config_year": 2024,
+    "config_month": 5
+  },
+  {
+    "bill_period": "2024-06-01",
+    "consumption_month": "2024-05-01",
+    "vattenfall": 1441,
+    "fortum": 415,
+    "total": 1856,
+    "config_year": 2024,
+    "config_month": 6
+  },
+  {
+    "bill_period": "2024-07-01",
+    "consumption_month": "2024-06-01",
+    "vattenfall": 1142,
+    "fortum": 355,
+    "total": 1497,
+    "config_year": 2024,
+    "config_month": 7
+  },
+  {
+    "bill_period": "2024-08-01",
+    "consumption_month": "2024-07-01",
+    "vattenfall": 1120,
+    "fortum": 144,
+    "total": 1264,
+    "config_year": 2024,
+    "config_month": 8
+  },
+  {
+    "bill_period": "2024-09-01",
+    "consumption_month": "2024-08-01",
+    "vattenfall": 1164,
+    "fortum": 138,
+    "total": 1302,
+    "config_year": 2024,
+    "config_month": 9
+  },
+  {
+    "bill_period": "2024-10-01",
+    "consumption_month": "2024-09-01",
+    "vattenfall": 1323,
+    "fortum": 276,
+    "total": 1599,
+    "config_year": 2024,
+    "config_month": 10
+  },
+  {
+    "bill_period": "2024-11-01",
+    "consumption_month": "2024-10-01",
+    "vattenfall": 1727,
+    "fortum": 482,
+    "total": 2209,
+    "config_year": 2024,
+    "config_month": 11
+  },
+  {
+    "bill_period": "2024-12-01",
+    "consumption_month": "2024-11-01",
+    "vattenfall": 2469,
+    "fortum": 1757,
+    "total": 4226,
+    "config_year": 2024,
+    "config_month": 12
+  },
+  {
+    "bill_period": "2025-01-01",
+    "consumption_month": "2025-12-01",
+    "vattenfall": 2918,
+    "fortum": 1845,
+    "total": 4763,
+    "config_year": 2025,
+    "config_month": 1
+  },
+  {
+    "bill_period": "2025-02-01",
+    "consumption_month": "2025-01-01",
+    "vattenfall": 3668,
+    "fortum": 2277,
+    "total": 5945,
+    "config_year": 2025,
+    "config_month": 2
+  },
+  {
+    "bill_period": "2025-03-01",
+    "consumption_month": "2025-02-01",
+    "vattenfall": 3331,
+    "fortum": 2605,
+    "total": 5936,
+    "config_year": 2025,
+    "config_month": 3
+  },
+  {
+    "bill_period": "2025-04-01",
+    "consumption_month": "2025-03-01",
+    "vattenfall": 2878,
+    "fortum": 1520,
+    "total": 4398,
+    "config_year": 2025,
+    "config_month": 4
+  },
+  {
+    "bill_period": "2025-05-01",
+    "consumption_month": "2025-04-01",
+    "vattenfall": 2269,
+    "fortum": 1050,
+    "total": 3319,
+    "config_year": 2025,
+    "config_month": 5
+  },
+  {
+    "bill_period": "2025-06-01",
+    "consumption_month": "2025-05-01",
+    "vattenfall": 2103,
+    "fortum": 1074,
+    "total": 3177,
+    "config_year": 2025,
+    "config_month": 6
+  },
+  {
+    "bill_period": "2025-07-01",
+    "consumption_month": "2025-06-01",
+    "vattenfall": 1585,
+    "fortum": 387,
+    "total": 1972,
+    "config_year": 2025,
+    "config_month": 7
+  },
+  {
+    "bill_period": "2025-08-01",
+    "consumption_month": "2025-07-01",
+    "vattenfall": 1330,
+    "fortum": 408,
+    "total": 1738,
+    "config_year": 2025,
+    "config_month": 8
+  },
+  {
+    "bill_period": "2025-09-01",
+    "consumption_month": "2025-08-01",
+    "vattenfall": 1632,
+    "fortum": 792,
+    "total": 2424,
+    "config_year": 2025,
+    "config_month": 9
+  },
+  {
+    "bill_period": "2025-10-01",
+    "consumption_month": "2025-09-01",
+    "vattenfall": 1685,
+    "fortum": 896,
+    "total": 2581,
+    "config_year": 2025,
+    "config_month": 10
+  }
+]

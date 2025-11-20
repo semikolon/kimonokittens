@@ -862,6 +862,8 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Priority 3**: Target 22:00-06:00 + weekends for heating during winter
   - **Blocker**: Requires Node-RED configuration changes (not code changes in this repo)
   - **Location**: Heatpump control runs on Raspberry Pi via MQTT (separate infrastructure)
+- [ ] **⚡ FUTURE: Enhance Electricity Projection Accuracy** ⏳ **PLANNED**
+  - Use Vattenfall/Fortum PDF scrapers to extract actual bill line-item breakdowns and model specific cost components (trading margins, certificates, administrative fees) instead of empirical 4.5% adjustment. See `bin/analyze_projection_accuracy.rb` for current accuracy baseline.
 
 ### API Integration
 - [x] Expose rent calculator as API for voice/LLM assistants:

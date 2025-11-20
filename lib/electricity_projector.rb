@@ -68,6 +68,12 @@ class ElectricityProjector
   FORTUM_MONTHLY_FEE = 88       # Trading service (39 kr) + Priskollen (49 kr)
   MONTHLY_FEE = VATTENFALL_MONTHLY_FEE + FORTUM_MONTHLY_FEE  # 678 kr
 
+  # Empirical adjustment for aggregate real-world costs
+  # (trading margins, administrative fees, rounding, rate application variations)
+  # Calibrated from 11 historical periods: reduces bias from -3.5% to ~0%
+  # See bin/analyze_projection_accuracy.rb for validation
+  EMPIRICAL_ADJUSTMENT = 1.045  # +4.5%
+
   # API endpoint for spot prices (SE3 region - Stockholm)
   ELPRISET_API_BASE = 'https://www.elprisetjustnu.se/api/v1/prices'
   REGION = 'SE3'  # Stockholm area
@@ -299,6 +305,9 @@ class ElectricityProjector
 
     # Add fixed monthly fees
     total_cost = variable_cost + MONTHLY_FEE
+
+    # Apply empirical adjustment for aggregate real-world costs
+    total_cost = total_cost * EMPIRICAL_ADJUSTMENT
 
     puts "      Total projected: #{total_cost.round} kr"
 

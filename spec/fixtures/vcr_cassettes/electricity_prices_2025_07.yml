@@ -1,0 +1,1801 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-01_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:36 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:21 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971929-d4a"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '92313'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=ERU%2F7E2JI2d2a1hE%2FqjSJ3p8Guztzx0Cizmfx2pLE2SEHMWDVO6sPBd0jFaxnivGGzz5FAEon4ETUEeoJqb%2BgY2FYiBNiVLTCWekRKhCEsZUlVnmjw%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f4a906ea60-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.36488,"EUR_per_kWh":0.03275,"EXR":11.141311,"time_start":"2025-07-01T00:00:00+02:00","time_end":"2025-07-01T01:00:00+02:00"},{"SEK_per_kWh":0.34159,"EUR_per_kWh":0.03066,"EXR":11.141311,"time_start":"2025-07-01T01:00:00+02:00","time_end":"2025-07-01T02:00:00+02:00"},{"SEK_per_kWh":0.34973,"EUR_per_kWh":0.03139,"EXR":11.141311,"time_start":"2025-07-01T02:00:00+02:00","time_end":"2025-07-01T03:00:00+02:00"},{"SEK_per_kWh":0.34237,"EUR_per_kWh":0.03073,"EXR":11.141311,"time_start":"2025-07-01T03:00:00+02:00","time_end":"2025-07-01T04:00:00+02:00"},{"SEK_per_kWh":0.32443,"EUR_per_kWh":0.02912,"EXR":11.141311,"time_start":"2025-07-01T04:00:00+02:00","time_end":"2025-07-01T05:00:00+02:00"},{"SEK_per_kWh":0.34416,"EUR_per_kWh":0.03089,"EXR":11.141311,"time_start":"2025-07-01T05:00:00+02:00","time_end":"2025-07-01T06:00:00+02:00"},{"SEK_per_kWh":0.368,"EUR_per_kWh":0.03303,"EXR":11.141311,"time_start":"2025-07-01T06:00:00+02:00","time_end":"2025-07-01T07:00:00+02:00"},{"SEK_per_kWh":0.48777,"EUR_per_kWh":0.04378,"EXR":11.141311,"time_start":"2025-07-01T07:00:00+02:00","time_end":"2025-07-01T08:00:00+02:00"},{"SEK_per_kWh":0.44487,"EUR_per_kWh":0.03993,"EXR":11.141311,"time_start":"2025-07-01T08:00:00+02:00","time_end":"2025-07-01T09:00:00+02:00"},{"SEK_per_kWh":0.3475,"EUR_per_kWh":0.03119,"EXR":11.141311,"time_start":"2025-07-01T09:00:00+02:00","time_end":"2025-07-01T10:00:00+02:00"},{"SEK_per_kWh":0.34092,"EUR_per_kWh":0.0306,"EXR":11.141311,"time_start":"2025-07-01T10:00:00+02:00","time_end":"2025-07-01T11:00:00+02:00"},{"SEK_per_kWh":0.18183,"EUR_per_kWh":0.01632,"EXR":11.141311,"time_start":"2025-07-01T11:00:00+02:00","time_end":"2025-07-01T12:00:00+02:00"},{"SEK_per_kWh":0.10105,"EUR_per_kWh":0.00907,"EXR":11.141311,"time_start":"2025-07-01T12:00:00+02:00","time_end":"2025-07-01T13:00:00+02:00"},{"SEK_per_kWh":0.07832,"EUR_per_kWh":0.00703,"EXR":11.141311,"time_start":"2025-07-01T13:00:00+02:00","time_end":"2025-07-01T14:00:00+02:00"},{"SEK_per_kWh":0.23207,"EUR_per_kWh":0.02083,"EXR":11.141311,"time_start":"2025-07-01T14:00:00+02:00","time_end":"2025-07-01T15:00:00+02:00"},{"SEK_per_kWh":0.165,"EUR_per_kWh":0.01481,"EXR":11.141311,"time_start":"2025-07-01T15:00:00+02:00","time_end":"2025-07-01T16:00:00+02:00"},{"SEK_per_kWh":0.49657,"EUR_per_kWh":0.04457,"EXR":11.141311,"time_start":"2025-07-01T16:00:00+02:00","time_end":"2025-07-01T17:00:00+02:00"},{"SEK_per_kWh":0.65032,"EUR_per_kWh":0.05837,"EXR":11.141311,"time_start":"2025-07-01T17:00:00+02:00","time_end":"2025-07-01T18:00:00+02:00"},{"SEK_per_kWh":0.74134,"EUR_per_kWh":0.06654,"EXR":11.141311,"time_start":"2025-07-01T18:00:00+02:00","time_end":"2025-07-01T19:00:00+02:00"},{"SEK_per_kWh":0.82669,"EUR_per_kWh":0.0742,"EXR":11.141311,"time_start":"2025-07-01T19:00:00+02:00","time_end":"2025-07-01T20:00:00+02:00"},{"SEK_per_kWh":1.00027,"EUR_per_kWh":0.08978,"EXR":11.141311,"time_start":"2025-07-01T20:00:00+02:00","time_end":"2025-07-01T21:00:00+02:00"},{"SEK_per_kWh":0.80039,"EUR_per_kWh":0.07184,"EXR":11.141311,"time_start":"2025-07-01T21:00:00+02:00","time_end":"2025-07-01T22:00:00+02:00"},{"SEK_per_kWh":0.69678,"EUR_per_kWh":0.06254,"EXR":11.141311,"time_start":"2025-07-01T22:00:00+02:00","time_end":"2025-07-01T23:00:00+02:00"},{"SEK_per_kWh":0.44955,"EUR_per_kWh":0.04035,"EXR":11.141311,"time_start":"2025-07-01T23:00:00+02:00","time_end":"2025-07-02T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:36 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-02_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:36 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:34 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"689718fa-d4c"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '92313'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=D3n%2F2KO3BXwr9y%2F707iV0Vn0hsyMLFEvA%2FHkizNUVOGpoIRBZ%2B1l6mOSOhcDa72AxHc5VfxjYZs4H%2BbyNKOWA7JW%2FM6z4h74F9MS79c8LNVicg0%3D"}]}'
+      Cf-Ray:
+      - 9a1989f4c9ac2d8d-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.43106,"EUR_per_kWh":0.0387,"EXR":11.138421,"time_start":"2025-07-02T00:00:00+02:00","time_end":"2025-07-02T01:00:00+02:00"},{"SEK_per_kWh":0.42927,"EUR_per_kWh":0.03854,"EXR":11.138421,"time_start":"2025-07-02T01:00:00+02:00","time_end":"2025-07-02T02:00:00+02:00"},{"SEK_per_kWh":0.44899,"EUR_per_kWh":0.04031,"EXR":11.138421,"time_start":"2025-07-02T02:00:00+02:00","time_end":"2025-07-02T03:00:00+02:00"},{"SEK_per_kWh":0.42827,"EUR_per_kWh":0.03845,"EXR":11.138421,"time_start":"2025-07-02T03:00:00+02:00","time_end":"2025-07-02T04:00:00+02:00"},{"SEK_per_kWh":0.3914,"EUR_per_kWh":0.03514,"EXR":11.138421,"time_start":"2025-07-02T04:00:00+02:00","time_end":"2025-07-02T05:00:00+02:00"},{"SEK_per_kWh":0.45723,"EUR_per_kWh":0.04105,"EXR":11.138421,"time_start":"2025-07-02T05:00:00+02:00","time_end":"2025-07-02T06:00:00+02:00"},{"SEK_per_kWh":0.60359,"EUR_per_kWh":0.05419,"EXR":11.138421,"time_start":"2025-07-02T06:00:00+02:00","time_end":"2025-07-02T07:00:00+02:00"},{"SEK_per_kWh":0.67889,"EUR_per_kWh":0.06095,"EXR":11.138421,"time_start":"2025-07-02T07:00:00+02:00","time_end":"2025-07-02T08:00:00+02:00"},{"SEK_per_kWh":0.66808,"EUR_per_kWh":0.05998,"EXR":11.138421,"time_start":"2025-07-02T08:00:00+02:00","time_end":"2025-07-02T09:00:00+02:00"},{"SEK_per_kWh":0.60949,"EUR_per_kWh":0.05472,"EXR":11.138421,"time_start":"2025-07-02T09:00:00+02:00","time_end":"2025-07-02T10:00:00+02:00"},{"SEK_per_kWh":0.56316,"EUR_per_kWh":0.05056,"EXR":11.138421,"time_start":"2025-07-02T10:00:00+02:00","time_end":"2025-07-02T11:00:00+02:00"},{"SEK_per_kWh":0.26699,"EUR_per_kWh":0.02397,"EXR":11.138421,"time_start":"2025-07-02T11:00:00+02:00","time_end":"2025-07-02T12:00:00+02:00"},{"SEK_per_kWh":0.22923,"EUR_per_kWh":0.02058,"EXR":11.138421,"time_start":"2025-07-02T12:00:00+02:00","time_end":"2025-07-02T13:00:00+02:00"},{"SEK_per_kWh":0.2201,"EUR_per_kWh":0.01976,"EXR":11.138421,"time_start":"2025-07-02T13:00:00+02:00","time_end":"2025-07-02T14:00:00+02:00"},{"SEK_per_kWh":0.25139,"EUR_per_kWh":0.02257,"EXR":11.138421,"time_start":"2025-07-02T14:00:00+02:00","time_end":"2025-07-02T15:00:00+02:00"},{"SEK_per_kWh":0.43718,"EUR_per_kWh":0.03925,"EXR":11.138421,"time_start":"2025-07-02T15:00:00+02:00","time_end":"2025-07-02T16:00:00+02:00"},{"SEK_per_kWh":0.5606,"EUR_per_kWh":0.05033,"EXR":11.138421,"time_start":"2025-07-02T16:00:00+02:00","time_end":"2025-07-02T17:00:00+02:00"},{"SEK_per_kWh":0.60905,"EUR_per_kWh":0.05468,"EXR":11.138421,"time_start":"2025-07-02T17:00:00+02:00","time_end":"2025-07-02T18:00:00+02:00"},{"SEK_per_kWh":0.70517,"EUR_per_kWh":0.06331,"EXR":11.138421,"time_start":"2025-07-02T18:00:00+02:00","time_end":"2025-07-02T19:00:00+02:00"},{"SEK_per_kWh":1.01616,"EUR_per_kWh":0.09123,"EXR":11.138421,"time_start":"2025-07-02T19:00:00+02:00","time_end":"2025-07-02T20:00:00+02:00"},{"SEK_per_kWh":0.99065,"EUR_per_kWh":0.08894,"EXR":11.138421,"time_start":"2025-07-02T20:00:00+02:00","time_end":"2025-07-02T21:00:00+02:00"},{"SEK_per_kWh":0.6986,"EUR_per_kWh":0.06272,"EXR":11.138421,"time_start":"2025-07-02T21:00:00+02:00","time_end":"2025-07-02T22:00:00+02:00"},{"SEK_per_kWh":0.63389,"EUR_per_kWh":0.05691,"EXR":11.138421,"time_start":"2025-07-02T22:00:00+02:00","time_end":"2025-07-02T23:00:00+02:00"},{"SEK_per_kWh":0.44799,"EUR_per_kWh":0.04022,"EXR":11.138421,"time_start":"2025-07-02T23:00:00+02:00","time_end":"2025-07-03T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:36 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-03_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:36 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:34 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"689718fa-d4a"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272607'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=AW43qXtahm0li399T0W34R7M7WzuC66kj4Sv5OHcU0wUzMmCpae3%2FILRRdmOrsDvi38gTP4k5flRX63n3FVVESm4JfRl2uhrn%2FawIOygYE81y2H5zg%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f4ed5e97af-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.35439,"EUR_per_kWh":0.03165,"EXR":11.197065,"time_start":"2025-07-03T00:00:00+02:00","time_end":"2025-07-03T01:00:00+02:00"},{"SEK_per_kWh":0.34129,"EUR_per_kWh":0.03048,"EXR":11.197065,"time_start":"2025-07-03T01:00:00+02:00","time_end":"2025-07-03T02:00:00+02:00"},{"SEK_per_kWh":0.33826,"EUR_per_kWh":0.03021,"EXR":11.197065,"time_start":"2025-07-03T02:00:00+02:00","time_end":"2025-07-03T03:00:00+02:00"},{"SEK_per_kWh":0.23626,"EUR_per_kWh":0.0211,"EXR":11.197065,"time_start":"2025-07-03T03:00:00+02:00","time_end":"2025-07-03T04:00:00+02:00"},{"SEK_per_kWh":0.1983,"EUR_per_kWh":0.01771,"EXR":11.197065,"time_start":"2025-07-03T04:00:00+02:00","time_end":"2025-07-03T05:00:00+02:00"},{"SEK_per_kWh":0.06662,"EUR_per_kWh":0.00595,"EXR":11.197065,"time_start":"2025-07-03T05:00:00+02:00","time_end":"2025-07-03T06:00:00+02:00"},{"SEK_per_kWh":0.23839,"EUR_per_kWh":0.02129,"EXR":11.197065,"time_start":"2025-07-03T06:00:00+02:00","time_end":"2025-07-03T07:00:00+02:00"},{"SEK_per_kWh":0.36043,"EUR_per_kWh":0.03219,"EXR":11.197065,"time_start":"2025-07-03T07:00:00+02:00","time_end":"2025-07-03T08:00:00+02:00"},{"SEK_per_kWh":0.24712,"EUR_per_kWh":0.02207,"EXR":11.197065,"time_start":"2025-07-03T08:00:00+02:00","time_end":"2025-07-03T09:00:00+02:00"},{"SEK_per_kWh":0.20233,"EUR_per_kWh":0.01807,"EXR":11.197065,"time_start":"2025-07-03T09:00:00+02:00","time_end":"2025-07-03T10:00:00+02:00"},{"SEK_per_kWh":0.04748,"EUR_per_kWh":0.00424,"EXR":11.197065,"time_start":"2025-07-03T10:00:00+02:00","time_end":"2025-07-03T11:00:00+02:00"},{"SEK_per_kWh":0.03695,"EUR_per_kWh":0.0033,"EXR":11.197065,"time_start":"2025-07-03T11:00:00+02:00","time_end":"2025-07-03T12:00:00+02:00"},{"SEK_per_kWh":0.01904,"EUR_per_kWh":0.0017,"EXR":11.197065,"time_start":"2025-07-03T12:00:00+02:00","time_end":"2025-07-03T13:00:00+02:00"},{"SEK_per_kWh":0.00235,"EUR_per_kWh":0.00021,"EXR":11.197065,"time_start":"2025-07-03T13:00:00+02:00","time_end":"2025-07-03T14:00:00+02:00"},{"SEK_per_kWh":0.00011,"EUR_per_kWh":1.0e-5,"EXR":11.197065,"time_start":"2025-07-03T14:00:00+02:00","time_end":"2025-07-03T15:00:00+02:00"},{"SEK_per_kWh":0.00605,"EUR_per_kWh":0.00054,"EXR":11.197065,"time_start":"2025-07-03T15:00:00+02:00","time_end":"2025-07-03T16:00:00+02:00"},{"SEK_per_kWh":0.0168,"EUR_per_kWh":0.0015,"EXR":11.197065,"time_start":"2025-07-03T16:00:00+02:00","time_end":"2025-07-03T17:00:00+02:00"},{"SEK_per_kWh":0.02698,"EUR_per_kWh":0.00241,"EXR":11.197065,"time_start":"2025-07-03T17:00:00+02:00","time_end":"2025-07-03T18:00:00+02:00"},{"SEK_per_kWh":0.03493,"EUR_per_kWh":0.00312,"EXR":11.197065,"time_start":"2025-07-03T18:00:00+02:00","time_end":"2025-07-03T19:00:00+02:00"},{"SEK_per_kWh":0.06965,"EUR_per_kWh":0.00622,"EXR":11.197065,"time_start":"2025-07-03T19:00:00+02:00","time_end":"2025-07-03T20:00:00+02:00"},{"SEK_per_kWh":0.07412,"EUR_per_kWh":0.00662,"EXR":11.197065,"time_start":"2025-07-03T20:00:00+02:00","time_end":"2025-07-03T21:00:00+02:00"},{"SEK_per_kWh":0.22047,"EUR_per_kWh":0.01969,"EXR":11.197065,"time_start":"2025-07-03T21:00:00+02:00","time_end":"2025-07-03T22:00:00+02:00"},{"SEK_per_kWh":0.12787,"EUR_per_kWh":0.01142,"EXR":11.197065,"time_start":"2025-07-03T22:00:00+02:00","time_end":"2025-07-03T23:00:00+02:00"},{"SEK_per_kWh":0.10212,"EUR_per_kWh":0.00912,"EXR":11.197065,"time_start":"2025-07-03T23:00:00+02:00","time_end":"2025-07-04T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:36 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-04_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:36 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:05 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971919-d32"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '92313'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=xPQIf%2FTfRrxKHO9Mrohu4gG5JBI4lnBZ%2Fcba8N9UFYAnD7hSP44IBjQoWe0XZft9WUputXNX45%2Fr7RP0IKm8hx0UkSxNsQ8RDdvOCqGVWnRO72fXdA%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f50d765cc8-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.01249,"EUR_per_kWh":0.00111,"EXR":11.25638,"time_start":"2025-07-04T00:00:00+02:00","time_end":"2025-07-04T01:00:00+02:00"},{"SEK_per_kWh":-0.00979,"EUR_per_kWh":-0.00087,"EXR":11.25638,"time_start":"2025-07-04T01:00:00+02:00","time_end":"2025-07-04T02:00:00+02:00"},{"SEK_per_kWh":0,"EUR_per_kWh":0,"EXR":11.25638,"time_start":"2025-07-04T02:00:00+02:00","time_end":"2025-07-04T03:00:00+02:00"},{"SEK_per_kWh":0.00946,"EUR_per_kWh":0.00084,"EXR":11.25638,"time_start":"2025-07-04T03:00:00+02:00","time_end":"2025-07-04T04:00:00+02:00"},{"SEK_per_kWh":0.02499,"EUR_per_kWh":0.00222,"EXR":11.25638,"time_start":"2025-07-04T04:00:00+02:00","time_end":"2025-07-04T05:00:00+02:00"},{"SEK_per_kWh":0.33409,"EUR_per_kWh":0.02968,"EXR":11.25638,"time_start":"2025-07-04T05:00:00+02:00","time_end":"2025-07-04T06:00:00+02:00"},{"SEK_per_kWh":0.37326,"EUR_per_kWh":0.03316,"EXR":11.25638,"time_start":"2025-07-04T06:00:00+02:00","time_end":"2025-07-04T07:00:00+02:00"},{"SEK_per_kWh":0.3709,"EUR_per_kWh":0.03295,"EXR":11.25638,"time_start":"2025-07-04T07:00:00+02:00","time_end":"2025-07-04T08:00:00+02:00"},{"SEK_per_kWh":0.35356,"EUR_per_kWh":0.03141,"EXR":11.25638,"time_start":"2025-07-04T08:00:00+02:00","time_end":"2025-07-04T09:00:00+02:00"},{"SEK_per_kWh":0.33274,"EUR_per_kWh":0.02956,"EXR":11.25638,"time_start":"2025-07-04T09:00:00+02:00","time_end":"2025-07-04T10:00:00+02:00"},{"SEK_per_kWh":0.04739,"EUR_per_kWh":0.00421,"EXR":11.25638,"time_start":"2025-07-04T10:00:00+02:00","time_end":"2025-07-04T11:00:00+02:00"},{"SEK_per_kWh":0.01756,"EUR_per_kWh":0.00156,"EXR":11.25638,"time_start":"2025-07-04T11:00:00+02:00","time_end":"2025-07-04T12:00:00+02:00"},{"SEK_per_kWh":0.00068,"EUR_per_kWh":6.0e-5,"EXR":11.25638,"time_start":"2025-07-04T12:00:00+02:00","time_end":"2025-07-04T13:00:00+02:00"},{"SEK_per_kWh":-0.01396,"EUR_per_kWh":-0.00124,"EXR":11.25638,"time_start":"2025-07-04T13:00:00+02:00","time_end":"2025-07-04T14:00:00+02:00"},{"SEK_per_kWh":-0.00428,"EUR_per_kWh":-0.00038,"EXR":11.25638,"time_start":"2025-07-04T14:00:00+02:00","time_end":"2025-07-04T15:00:00+02:00"},{"SEK_per_kWh":-0.00371,"EUR_per_kWh":-0.00033,"EXR":11.25638,"time_start":"2025-07-04T15:00:00+02:00","time_end":"2025-07-04T16:00:00+02:00"},{"SEK_per_kWh":0.02837,"EUR_per_kWh":0.00252,"EXR":11.25638,"time_start":"2025-07-04T16:00:00+02:00","time_end":"2025-07-04T17:00:00+02:00"},{"SEK_per_kWh":0.25214,"EUR_per_kWh":0.0224,"EXR":11.25638,"time_start":"2025-07-04T17:00:00+02:00","time_end":"2025-07-04T18:00:00+02:00"},{"SEK_per_kWh":0.28085,"EUR_per_kWh":0.02495,"EXR":11.25638,"time_start":"2025-07-04T18:00:00+02:00","time_end":"2025-07-04T19:00:00+02:00"},{"SEK_per_kWh":0.40534,"EUR_per_kWh":0.03601,"EXR":11.25638,"time_start":"2025-07-04T19:00:00+02:00","time_end":"2025-07-04T20:00:00+02:00"},{"SEK_per_kWh":0.41953,"EUR_per_kWh":0.03727,"EXR":11.25638,"time_start":"2025-07-04T20:00:00+02:00","time_end":"2025-07-04T21:00:00+02:00"},{"SEK_per_kWh":0.41502,"EUR_per_kWh":0.03687,"EXR":11.25638,"time_start":"2025-07-04T21:00:00+02:00","time_end":"2025-07-04T22:00:00+02:00"},{"SEK_per_kWh":0.31653,"EUR_per_kWh":0.02812,"EXR":11.25638,"time_start":"2025-07-04T22:00:00+02:00","time_end":"2025-07-04T23:00:00+02:00"},{"SEK_per_kWh":0.14937,"EUR_per_kWh":0.01327,"EXR":11.25638,"time_start":"2025-07-04T23:00:00+02:00","time_end":"2025-07-05T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:36 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-05_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:36 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:05 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971919-d4a"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272606'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=hI4p9lQmKioRoaIvQX4%2FkITuf%2FQrWDJDWrxQ%2FBwQ8sD%2Fq5rE7D6sFOk5leKfXYs2rLT5FXd31dhdFDX1Z2aqKAN%2BgJ9bzsIbYZhgLriSNEWpINqXcg%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f53af7198c-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.09288,"EUR_per_kWh":0.00825,"EXR":11.257963,"time_start":"2025-07-05T00:00:00+02:00","time_end":"2025-07-05T01:00:00+02:00"},{"SEK_per_kWh":0.06023,"EUR_per_kWh":0.00535,"EXR":11.257963,"time_start":"2025-07-05T01:00:00+02:00","time_end":"2025-07-05T02:00:00+02:00"},{"SEK_per_kWh":0.05955,"EUR_per_kWh":0.00529,"EXR":11.257963,"time_start":"2025-07-05T02:00:00+02:00","time_end":"2025-07-05T03:00:00+02:00"},{"SEK_per_kWh":0.05955,"EUR_per_kWh":0.00529,"EXR":11.257963,"time_start":"2025-07-05T03:00:00+02:00","time_end":"2025-07-05T04:00:00+02:00"},{"SEK_per_kWh":0.06,"EUR_per_kWh":0.00533,"EXR":11.257963,"time_start":"2025-07-05T04:00:00+02:00","time_end":"2025-07-05T05:00:00+02:00"},{"SEK_per_kWh":0.07081,"EUR_per_kWh":0.00629,"EXR":11.257963,"time_start":"2025-07-05T05:00:00+02:00","time_end":"2025-07-05T06:00:00+02:00"},{"SEK_per_kWh":0.0582,"EUR_per_kWh":0.00517,"EXR":11.257963,"time_start":"2025-07-05T06:00:00+02:00","time_end":"2025-07-05T07:00:00+02:00"},{"SEK_per_kWh":0.06642,"EUR_per_kWh":0.0059,"EXR":11.257963,"time_start":"2025-07-05T07:00:00+02:00","time_end":"2025-07-05T08:00:00+02:00"},{"SEK_per_kWh":0.05922,"EUR_per_kWh":0.00526,"EXR":11.257963,"time_start":"2025-07-05T08:00:00+02:00","time_end":"2025-07-05T09:00:00+02:00"},{"SEK_per_kWh":0.0421,"EUR_per_kWh":0.00374,"EXR":11.257963,"time_start":"2025-07-05T09:00:00+02:00","time_end":"2025-07-05T10:00:00+02:00"},{"SEK_per_kWh":0.02398,"EUR_per_kWh":0.00213,"EXR":11.257963,"time_start":"2025-07-05T10:00:00+02:00","time_end":"2025-07-05T11:00:00+02:00"},{"SEK_per_kWh":0.0197,"EUR_per_kWh":0.00175,"EXR":11.257963,"time_start":"2025-07-05T11:00:00+02:00","time_end":"2025-07-05T12:00:00+02:00"},{"SEK_per_kWh":0.00642,"EUR_per_kWh":0.00057,"EXR":11.257963,"time_start":"2025-07-05T12:00:00+02:00","time_end":"2025-07-05T13:00:00+02:00"},{"SEK_per_kWh":0.00417,"EUR_per_kWh":0.00037,"EXR":11.257963,"time_start":"2025-07-05T13:00:00+02:00","time_end":"2025-07-05T14:00:00+02:00"},{"SEK_per_kWh":0.00608,"EUR_per_kWh":0.00054,"EXR":11.257963,"time_start":"2025-07-05T14:00:00+02:00","time_end":"2025-07-05T15:00:00+02:00"},{"SEK_per_kWh":0.01497,"EUR_per_kWh":0.00133,"EXR":11.257963,"time_start":"2025-07-05T15:00:00+02:00","time_end":"2025-07-05T16:00:00+02:00"},{"SEK_per_kWh":0.03659,"EUR_per_kWh":0.00325,"EXR":11.257963,"time_start":"2025-07-05T16:00:00+02:00","time_end":"2025-07-05T17:00:00+02:00"},{"SEK_per_kWh":0.04942,"EUR_per_kWh":0.00439,"EXR":11.257963,"time_start":"2025-07-05T17:00:00+02:00","time_end":"2025-07-05T18:00:00+02:00"},{"SEK_per_kWh":0.20906,"EUR_per_kWh":0.01857,"EXR":11.257963,"time_start":"2025-07-05T18:00:00+02:00","time_end":"2025-07-05T19:00:00+02:00"},{"SEK_per_kWh":0.33357,"EUR_per_kWh":0.02963,"EXR":11.257963,"time_start":"2025-07-05T19:00:00+02:00","time_end":"2025-07-05T20:00:00+02:00"},{"SEK_per_kWh":0.34776,"EUR_per_kWh":0.03089,"EXR":11.257963,"time_start":"2025-07-05T20:00:00+02:00","time_end":"2025-07-05T21:00:00+02:00"},{"SEK_per_kWh":0.29428,"EUR_per_kWh":0.02614,"EXR":11.257963,"time_start":"2025-07-05T21:00:00+02:00","time_end":"2025-07-05T22:00:00+02:00"},{"SEK_per_kWh":0.25927,"EUR_per_kWh":0.02303,"EXR":11.257963,"time_start":"2025-07-05T22:00:00+02:00","time_end":"2025-07-05T23:00:00+02:00"},{"SEK_per_kWh":0.08747,"EUR_per_kWh":0.00777,"EXR":11.257963,"time_start":"2025-07-05T23:00:00+02:00","time_end":"2025-07-06T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:36 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-06_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:31 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971933-d49"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '1011'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=QNmlBZl8%2FRpKf4TjRcz7gQwAf2kk%2Fxp5%2FSC5B5K%2BVBmBUi926mHyG%2Fix9uPCSvR5ydDNUIM4fNT%2F0%2Bezl6f78nJJc2wue%2BprJbd3prSuSHO%2F7JtxIA%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f55d975cf6-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.04359,"EUR_per_kWh":0.00387,"EXR":11.264384,"time_start":"2025-07-06T00:00:00+02:00","time_end":"2025-07-06T01:00:00+02:00"},{"SEK_per_kWh":0.0365,"EUR_per_kWh":0.00324,"EXR":11.264384,"time_start":"2025-07-06T01:00:00+02:00","time_end":"2025-07-06T02:00:00+02:00"},{"SEK_per_kWh":0.0356,"EUR_per_kWh":0.00316,"EXR":11.264384,"time_start":"2025-07-06T02:00:00+02:00","time_end":"2025-07-06T03:00:00+02:00"},{"SEK_per_kWh":0.03075,"EUR_per_kWh":0.00273,"EXR":11.264384,"time_start":"2025-07-06T03:00:00+02:00","time_end":"2025-07-06T04:00:00+02:00"},{"SEK_per_kWh":0.03244,"EUR_per_kWh":0.00288,"EXR":11.264384,"time_start":"2025-07-06T04:00:00+02:00","time_end":"2025-07-06T05:00:00+02:00"},{"SEK_per_kWh":0.03875,"EUR_per_kWh":0.00344,"EXR":11.264384,"time_start":"2025-07-06T05:00:00+02:00","time_end":"2025-07-06T06:00:00+02:00"},{"SEK_per_kWh":0.0428,"EUR_per_kWh":0.0038,"EXR":11.264384,"time_start":"2025-07-06T06:00:00+02:00","time_end":"2025-07-06T07:00:00+02:00"},{"SEK_per_kWh":0.05474,"EUR_per_kWh":0.00486,"EXR":11.264384,"time_start":"2025-07-06T07:00:00+02:00","time_end":"2025-07-06T08:00:00+02:00"},{"SEK_per_kWh":0.08392,"EUR_per_kWh":0.00745,"EXR":11.264384,"time_start":"2025-07-06T08:00:00+02:00","time_end":"2025-07-06T09:00:00+02:00"},{"SEK_per_kWh":0.07885,"EUR_per_kWh":0.007,"EXR":11.264384,"time_start":"2025-07-06T09:00:00+02:00","time_end":"2025-07-06T10:00:00+02:00"},{"SEK_per_kWh":0.09214,"EUR_per_kWh":0.00818,"EXR":11.264384,"time_start":"2025-07-06T10:00:00+02:00","time_end":"2025-07-06T11:00:00+02:00"},{"SEK_per_kWh":0.10498,"EUR_per_kWh":0.00932,"EXR":11.264384,"time_start":"2025-07-06T11:00:00+02:00","time_end":"2025-07-06T12:00:00+02:00"},{"SEK_per_kWh":0.07254,"EUR_per_kWh":0.00644,"EXR":11.264384,"time_start":"2025-07-06T12:00:00+02:00","time_end":"2025-07-06T13:00:00+02:00"},{"SEK_per_kWh":0.06353,"EUR_per_kWh":0.00564,"EXR":11.264384,"time_start":"2025-07-06T13:00:00+02:00","time_end":"2025-07-06T14:00:00+02:00"},{"SEK_per_kWh":0.09169,"EUR_per_kWh":0.00814,"EXR":11.264384,"time_start":"2025-07-06T14:00:00+02:00","time_end":"2025-07-06T15:00:00+02:00"},{"SEK_per_kWh":0.11186,"EUR_per_kWh":0.00993,"EXR":11.264384,"time_start":"2025-07-06T15:00:00+02:00","time_end":"2025-07-06T16:00:00+02:00"},{"SEK_per_kWh":0.23419,"EUR_per_kWh":0.02079,"EXR":11.264384,"time_start":"2025-07-06T16:00:00+02:00","time_end":"2025-07-06T17:00:00+02:00"},{"SEK_per_kWh":0.43559,"EUR_per_kWh":0.03867,"EXR":11.264384,"time_start":"2025-07-06T17:00:00+02:00","time_end":"2025-07-06T18:00:00+02:00"},{"SEK_per_kWh":0.4321,"EUR_per_kWh":0.03836,"EXR":11.264384,"time_start":"2025-07-06T18:00:00+02:00","time_end":"2025-07-06T19:00:00+02:00"},{"SEK_per_kWh":0.42399,"EUR_per_kWh":0.03764,"EXR":11.264384,"time_start":"2025-07-06T19:00:00+02:00","time_end":"2025-07-06T20:00:00+02:00"},{"SEK_per_kWh":0.43818,"EUR_per_kWh":0.0389,"EXR":11.264384,"time_start":"2025-07-06T20:00:00+02:00","time_end":"2025-07-06T21:00:00+02:00"},{"SEK_per_kWh":0.41667,"EUR_per_kWh":0.03699,"EXR":11.264384,"time_start":"2025-07-06T21:00:00+02:00","time_end":"2025-07-06T22:00:00+02:00"},{"SEK_per_kWh":0.41464,"EUR_per_kWh":0.03681,"EXR":11.264384,"time_start":"2025-07-06T22:00:00+02:00","time_end":"2025-07-06T23:00:00+02:00"},{"SEK_per_kWh":0.39662,"EUR_per_kWh":0.03521,"EXR":11.264384,"time_start":"2025-07-06T23:00:00+02:00","time_end":"2025-07-07T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:36 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-07_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:31 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971933-d4b"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '92312'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=%2BhNRbHD7742fLM6df5AVenSGgRKsD9C0YUOkK0kAOsohuDaXs%2FRaDdzcXnoSwIBPLyYTs3gJ9L1I%2BskwcdgvedntNNGVz0S4%2Fx2rL9FBU%2FSgp1Pf7g%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f589d31888-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.37429,"EUR_per_kWh":0.03325,"EXR":11.256846,"time_start":"2025-07-07T00:00:00+02:00","time_end":"2025-07-07T01:00:00+02:00"},{"SEK_per_kWh":0.36787,"EUR_per_kWh":0.03268,"EXR":11.256846,"time_start":"2025-07-07T01:00:00+02:00","time_end":"2025-07-07T02:00:00+02:00"},{"SEK_per_kWh":0.36393,"EUR_per_kWh":0.03233,"EXR":11.256846,"time_start":"2025-07-07T02:00:00+02:00","time_end":"2025-07-07T03:00:00+02:00"},{"SEK_per_kWh":0.35842,"EUR_per_kWh":0.03184,"EXR":11.256846,"time_start":"2025-07-07T03:00:00+02:00","time_end":"2025-07-07T04:00:00+02:00"},{"SEK_per_kWh":0.35707,"EUR_per_kWh":0.03172,"EXR":11.256846,"time_start":"2025-07-07T04:00:00+02:00","time_end":"2025-07-07T05:00:00+02:00"},{"SEK_per_kWh":0.37013,"EUR_per_kWh":0.03288,"EXR":11.256846,"time_start":"2025-07-07T05:00:00+02:00","time_end":"2025-07-07T06:00:00+02:00"},{"SEK_per_kWh":0.39376,"EUR_per_kWh":0.03498,"EXR":11.256846,"time_start":"2025-07-07T06:00:00+02:00","time_end":"2025-07-07T07:00:00+02:00"},{"SEK_per_kWh":0.91417,"EUR_per_kWh":0.08121,"EXR":11.256846,"time_start":"2025-07-07T07:00:00+02:00","time_end":"2025-07-07T08:00:00+02:00"},{"SEK_per_kWh":1.0918,"EUR_per_kWh":0.09699,"EXR":11.256846,"time_start":"2025-07-07T08:00:00+02:00","time_end":"2025-07-07T09:00:00+02:00"},{"SEK_per_kWh":1.0694,"EUR_per_kWh":0.095,"EXR":11.256846,"time_start":"2025-07-07T09:00:00+02:00","time_end":"2025-07-07T10:00:00+02:00"},{"SEK_per_kWh":1.06557,"EUR_per_kWh":0.09466,"EXR":11.256846,"time_start":"2025-07-07T10:00:00+02:00","time_end":"2025-07-07T11:00:00+02:00"},{"SEK_per_kWh":1.02178,"EUR_per_kWh":0.09077,"EXR":11.256846,"time_start":"2025-07-07T11:00:00+02:00","time_end":"2025-07-07T12:00:00+02:00"},{"SEK_per_kWh":0.79676,"EUR_per_kWh":0.07078,"EXR":11.256846,"time_start":"2025-07-07T12:00:00+02:00","time_end":"2025-07-07T13:00:00+02:00"},{"SEK_per_kWh":0.72539,"EUR_per_kWh":0.06444,"EXR":11.256846,"time_start":"2025-07-07T13:00:00+02:00","time_end":"2025-07-07T14:00:00+02:00"},{"SEK_per_kWh":0.53087,"EUR_per_kWh":0.04716,"EXR":11.256846,"time_start":"2025-07-07T14:00:00+02:00","time_end":"2025-07-07T15:00:00+02:00"},{"SEK_per_kWh":0.50363,"EUR_per_kWh":0.04474,"EXR":11.256846,"time_start":"2025-07-07T15:00:00+02:00","time_end":"2025-07-07T16:00:00+02:00"},{"SEK_per_kWh":0.52536,"EUR_per_kWh":0.04667,"EXR":11.256846,"time_start":"2025-07-07T16:00:00+02:00","time_end":"2025-07-07T17:00:00+02:00"},{"SEK_per_kWh":0.74329,"EUR_per_kWh":0.06603,"EXR":11.256846,"time_start":"2025-07-07T17:00:00+02:00","time_end":"2025-07-07T18:00:00+02:00"},{"SEK_per_kWh":0.97462,"EUR_per_kWh":0.08658,"EXR":11.256846,"time_start":"2025-07-07T18:00:00+02:00","time_end":"2025-07-07T19:00:00+02:00"},{"SEK_per_kWh":1.03495,"EUR_per_kWh":0.09194,"EXR":11.256846,"time_start":"2025-07-07T19:00:00+02:00","time_end":"2025-07-07T20:00:00+02:00"},{"SEK_per_kWh":1.116,"EUR_per_kWh":0.09914,"EXR":11.256846,"time_start":"2025-07-07T20:00:00+02:00","time_end":"2025-07-07T21:00:00+02:00"},{"SEK_per_kWh":1.20392,"EUR_per_kWh":0.10695,"EXR":11.256846,"time_start":"2025-07-07T21:00:00+02:00","time_end":"2025-07-07T22:00:00+02:00"},{"SEK_per_kWh":0.78325,"EUR_per_kWh":0.06958,"EXR":11.256846,"time_start":"2025-07-07T22:00:00+02:00","time_end":"2025-07-07T23:00:00+02:00"},{"SEK_per_kWh":0.34435,"EUR_per_kWh":0.03059,"EXR":11.256846,"time_start":"2025-07-07T23:00:00+02:00","time_end":"2025-07-08T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:36 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-08_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:32 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"689718f8-d4f"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '461083'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=kuXO4SOwdZ7bst%2FNu1pQ9y%2FipVniMsMDjl9UTtO94245OauIV6WytHMDrFq0YHlI2xJCv%2BApONA8zDKwZn8RMwiCaGgMhH358kaXt0wcFHRsxSmmyA%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f5b8f19a3e-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.31233,"EUR_per_kWh":0.02796,"EXR":11.170476,"time_start":"2025-07-08T00:00:00+02:00","time_end":"2025-07-08T01:00:00+02:00"},{"SEK_per_kWh":0.09763,"EUR_per_kWh":0.00874,"EXR":11.170476,"time_start":"2025-07-08T01:00:00+02:00","time_end":"2025-07-08T02:00:00+02:00"},{"SEK_per_kWh":0.09428,"EUR_per_kWh":0.00844,"EXR":11.170476,"time_start":"2025-07-08T02:00:00+02:00","time_end":"2025-07-08T03:00:00+02:00"},{"SEK_per_kWh":0.05496,"EUR_per_kWh":0.00492,"EXR":11.170476,"time_start":"2025-07-08T03:00:00+02:00","time_end":"2025-07-08T04:00:00+02:00"},{"SEK_per_kWh":0.05373,"EUR_per_kWh":0.00481,"EXR":11.170476,"time_start":"2025-07-08T04:00:00+02:00","time_end":"2025-07-08T05:00:00+02:00"},{"SEK_per_kWh":0.09919,"EUR_per_kWh":0.00888,"EXR":11.170476,"time_start":"2025-07-08T05:00:00+02:00","time_end":"2025-07-08T06:00:00+02:00"},{"SEK_per_kWh":0.40314,"EUR_per_kWh":0.03609,"EXR":11.170476,"time_start":"2025-07-08T06:00:00+02:00","time_end":"2025-07-08T07:00:00+02:00"},{"SEK_per_kWh":0.58611,"EUR_per_kWh":0.05247,"EXR":11.170476,"time_start":"2025-07-08T07:00:00+02:00","time_end":"2025-07-08T08:00:00+02:00"},{"SEK_per_kWh":0.66408,"EUR_per_kWh":0.05945,"EXR":11.170476,"time_start":"2025-07-08T08:00:00+02:00","time_end":"2025-07-08T09:00:00+02:00"},{"SEK_per_kWh":0.48234,"EUR_per_kWh":0.04318,"EXR":11.170476,"time_start":"2025-07-08T09:00:00+02:00","time_end":"2025-07-08T10:00:00+02:00"},{"SEK_per_kWh":0.3808,"EUR_per_kWh":0.03409,"EXR":11.170476,"time_start":"2025-07-08T10:00:00+02:00","time_end":"2025-07-08T11:00:00+02:00"},{"SEK_per_kWh":0.30708,"EUR_per_kWh":0.02749,"EXR":11.170476,"time_start":"2025-07-08T11:00:00+02:00","time_end":"2025-07-08T12:00:00+02:00"},{"SEK_per_kWh":0.29736,"EUR_per_kWh":0.02662,"EXR":11.170476,"time_start":"2025-07-08T12:00:00+02:00","time_end":"2025-07-08T13:00:00+02:00"},{"SEK_per_kWh":0.28451,"EUR_per_kWh":0.02547,"EXR":11.170476,"time_start":"2025-07-08T13:00:00+02:00","time_end":"2025-07-08T14:00:00+02:00"},{"SEK_per_kWh":0.33322,"EUR_per_kWh":0.02983,"EXR":11.170476,"time_start":"2025-07-08T14:00:00+02:00","time_end":"2025-07-08T15:00:00+02:00"},{"SEK_per_kWh":0.42046,"EUR_per_kWh":0.03764,"EXR":11.170476,"time_start":"2025-07-08T15:00:00+02:00","time_end":"2025-07-08T16:00:00+02:00"},{"SEK_per_kWh":0.5344,"EUR_per_kWh":0.04784,"EXR":11.170476,"time_start":"2025-07-08T16:00:00+02:00","time_end":"2025-07-08T17:00:00+02:00"},{"SEK_per_kWh":0.71681,"EUR_per_kWh":0.06417,"EXR":11.170476,"time_start":"2025-07-08T17:00:00+02:00","time_end":"2025-07-08T18:00:00+02:00"},{"SEK_per_kWh":0.77199,"EUR_per_kWh":0.06911,"EXR":11.170476,"time_start":"2025-07-08T18:00:00+02:00","time_end":"2025-07-08T19:00:00+02:00"},{"SEK_per_kWh":1.09493,"EUR_per_kWh":0.09802,"EXR":11.170476,"time_start":"2025-07-08T19:00:00+02:00","time_end":"2025-07-08T20:00:00+02:00"},{"SEK_per_kWh":1.08097,"EUR_per_kWh":0.09677,"EXR":11.170476,"time_start":"2025-07-08T20:00:00+02:00","time_end":"2025-07-08T21:00:00+02:00"},{"SEK_per_kWh":1.03606,"EUR_per_kWh":0.09275,"EXR":11.170476,"time_start":"2025-07-08T21:00:00+02:00","time_end":"2025-07-08T22:00:00+02:00"},{"SEK_per_kWh":0.93072,"EUR_per_kWh":0.08332,"EXR":11.170476,"time_start":"2025-07-08T22:00:00+02:00","time_end":"2025-07-08T23:00:00+02:00"},{"SEK_per_kWh":0.74574,"EUR_per_kWh":0.06676,"EXR":11.170476,"time_start":"2025-07-08T23:00:00+02:00","time_end":"2025-07-09T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-09_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:32 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"689718f8-d4b"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272605'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=%2F8LwjPRwVDr7LZl4zQcOHwcg9nIRtmpxbr6fBB9jmwFxGVzTA%2BLZ1iUhhpRCD2P7%2BbyPZ3Q2Ywo2rmpB6CLhzwGarEi1TCDWpWRRHcDoVZYaVF3iDg%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f5d9d945dd-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.47207,"EUR_per_kWh":0.04231,"EXR":11.157421,"time_start":"2025-07-09T00:00:00+02:00","time_end":"2025-07-09T01:00:00+02:00"},{"SEK_per_kWh":0.47988,"EUR_per_kWh":0.04301,"EXR":11.157421,"time_start":"2025-07-09T01:00:00+02:00","time_end":"2025-07-09T02:00:00+02:00"},{"SEK_per_kWh":0.43146,"EUR_per_kWh":0.03867,"EXR":11.157421,"time_start":"2025-07-09T02:00:00+02:00","time_end":"2025-07-09T03:00:00+02:00"},{"SEK_per_kWh":0.40144,"EUR_per_kWh":0.03598,"EXR":11.157421,"time_start":"2025-07-09T03:00:00+02:00","time_end":"2025-07-09T04:00:00+02:00"},{"SEK_per_kWh":0.45902,"EUR_per_kWh":0.04114,"EXR":11.157421,"time_start":"2025-07-09T04:00:00+02:00","time_end":"2025-07-09T05:00:00+02:00"},{"SEK_per_kWh":0.62883,"EUR_per_kWh":0.05636,"EXR":11.157421,"time_start":"2025-07-09T05:00:00+02:00","time_end":"2025-07-09T06:00:00+02:00"},{"SEK_per_kWh":1.23457,"EUR_per_kWh":0.11065,"EXR":11.157421,"time_start":"2025-07-09T06:00:00+02:00","time_end":"2025-07-09T07:00:00+02:00"},{"SEK_per_kWh":1.27976,"EUR_per_kWh":0.1147,"EXR":11.157421,"time_start":"2025-07-09T07:00:00+02:00","time_end":"2025-07-09T08:00:00+02:00"},{"SEK_per_kWh":1.27016,"EUR_per_kWh":0.11384,"EXR":11.157421,"time_start":"2025-07-09T08:00:00+02:00","time_end":"2025-07-09T09:00:00+02:00"},{"SEK_per_kWh":1.03173,"EUR_per_kWh":0.09247,"EXR":11.157421,"time_start":"2025-07-09T09:00:00+02:00","time_end":"2025-07-09T10:00:00+02:00"},{"SEK_per_kWh":0.90978,"EUR_per_kWh":0.08154,"EXR":11.157421,"time_start":"2025-07-09T10:00:00+02:00","time_end":"2025-07-09T11:00:00+02:00"},{"SEK_per_kWh":0.75647,"EUR_per_kWh":0.0678,"EXR":11.157421,"time_start":"2025-07-09T11:00:00+02:00","time_end":"2025-07-09T12:00:00+02:00"},{"SEK_per_kWh":0.66286,"EUR_per_kWh":0.05941,"EXR":11.157421,"time_start":"2025-07-09T12:00:00+02:00","time_end":"2025-07-09T13:00:00+02:00"},{"SEK_per_kWh":0.49874,"EUR_per_kWh":0.0447,"EXR":11.157421,"time_start":"2025-07-09T13:00:00+02:00","time_end":"2025-07-09T14:00:00+02:00"},{"SEK_per_kWh":0.38872,"EUR_per_kWh":0.03484,"EXR":11.157421,"time_start":"2025-07-09T14:00:00+02:00","time_end":"2025-07-09T15:00:00+02:00"},{"SEK_per_kWh":0.52194,"EUR_per_kWh":0.04678,"EXR":11.157421,"time_start":"2025-07-09T15:00:00+02:00","time_end":"2025-07-09T16:00:00+02:00"},{"SEK_per_kWh":0.77131,"EUR_per_kWh":0.06913,"EXR":11.157421,"time_start":"2025-07-09T16:00:00+02:00","time_end":"2025-07-09T17:00:00+02:00"},{"SEK_per_kWh":0.91636,"EUR_per_kWh":0.08213,"EXR":11.157421,"time_start":"2025-07-09T17:00:00+02:00","time_end":"2025-07-09T18:00:00+02:00"},{"SEK_per_kWh":1.12578,"EUR_per_kWh":0.1009,"EXR":11.157421,"time_start":"2025-07-09T18:00:00+02:00","time_end":"2025-07-09T19:00:00+02:00"},{"SEK_per_kWh":1.32294,"EUR_per_kWh":0.11857,"EXR":11.157421,"time_start":"2025-07-09T19:00:00+02:00","time_end":"2025-07-09T20:00:00+02:00"},{"SEK_per_kWh":1.53303,"EUR_per_kWh":0.1374,"EXR":11.157421,"time_start":"2025-07-09T20:00:00+02:00","time_end":"2025-07-09T21:00:00+02:00"},{"SEK_per_kWh":1.49286,"EUR_per_kWh":0.1338,"EXR":11.157421,"time_start":"2025-07-09T21:00:00+02:00","time_end":"2025-07-09T22:00:00+02:00"},{"SEK_per_kWh":1.23089,"EUR_per_kWh":0.11032,"EXR":11.157421,"time_start":"2025-07-09T22:00:00+02:00","time_end":"2025-07-09T23:00:00+02:00"},{"SEK_per_kWh":0.57394,"EUR_per_kWh":0.05144,"EXR":11.157421,"time_start":"2025-07-09T23:00:00+02:00","time_end":"2025-07-10T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-10_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:47 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971943-d4b"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '92312'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=SPMejsSNXZun0svRt8udp8gzZNGtwD5pJyhz8XdzKIbFS4vw9h9gZtTQ9dslOGqtx8LCqxMGOwPMGz9VCAKTXDHOWhUarsoJ9DKdNerfhy5fnANb7g%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f5fc855bd9-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.4845,"EUR_per_kWh":0.04343,"EXR":11.155801,"time_start":"2025-07-10T00:00:00+02:00","time_end":"2025-07-10T01:00:00+02:00"},{"SEK_per_kWh":0.45505,"EUR_per_kWh":0.04079,"EXR":11.155801,"time_start":"2025-07-10T01:00:00+02:00","time_end":"2025-07-10T02:00:00+02:00"},{"SEK_per_kWh":0.42749,"EUR_per_kWh":0.03832,"EXR":11.155801,"time_start":"2025-07-10T02:00:00+02:00","time_end":"2025-07-10T03:00:00+02:00"},{"SEK_per_kWh":0.42604,"EUR_per_kWh":0.03819,"EXR":11.155801,"time_start":"2025-07-10T03:00:00+02:00","time_end":"2025-07-10T04:00:00+02:00"},{"SEK_per_kWh":0.43809,"EUR_per_kWh":0.03927,"EXR":11.155801,"time_start":"2025-07-10T04:00:00+02:00","time_end":"2025-07-10T05:00:00+02:00"},{"SEK_per_kWh":0.45505,"EUR_per_kWh":0.04079,"EXR":11.155801,"time_start":"2025-07-10T05:00:00+02:00","time_end":"2025-07-10T06:00:00+02:00"},{"SEK_per_kWh":0.76551,"EUR_per_kWh":0.06862,"EXR":11.155801,"time_start":"2025-07-10T06:00:00+02:00","time_end":"2025-07-10T07:00:00+02:00"},{"SEK_per_kWh":1.14001,"EUR_per_kWh":0.10219,"EXR":11.155801,"time_start":"2025-07-10T07:00:00+02:00","time_end":"2025-07-10T08:00:00+02:00"},{"SEK_per_kWh":1.11982,"EUR_per_kWh":0.10038,"EXR":11.155801,"time_start":"2025-07-10T08:00:00+02:00","time_end":"2025-07-10T09:00:00+02:00"},{"SEK_per_kWh":0.93742,"EUR_per_kWh":0.08403,"EXR":11.155801,"time_start":"2025-07-10T09:00:00+02:00","time_end":"2025-07-10T10:00:00+02:00"},{"SEK_per_kWh":0.74967,"EUR_per_kWh":0.0672,"EXR":11.155801,"time_start":"2025-07-10T10:00:00+02:00","time_end":"2025-07-10T11:00:00+02:00"},{"SEK_per_kWh":0.6496,"EUR_per_kWh":0.05823,"EXR":11.155801,"time_start":"2025-07-10T11:00:00+02:00","time_end":"2025-07-10T12:00:00+02:00"},{"SEK_per_kWh":0.49219,"EUR_per_kWh":0.04412,"EXR":11.155801,"time_start":"2025-07-10T12:00:00+02:00","time_end":"2025-07-10T13:00:00+02:00"},{"SEK_per_kWh":0.43017,"EUR_per_kWh":0.03856,"EXR":11.155801,"time_start":"2025-07-10T13:00:00+02:00","time_end":"2025-07-10T14:00:00+02:00"},{"SEK_per_kWh":0.4276,"EUR_per_kWh":0.03833,"EXR":11.155801,"time_start":"2025-07-10T14:00:00+02:00","time_end":"2025-07-10T15:00:00+02:00"},{"SEK_per_kWh":0.57553,"EUR_per_kWh":0.05159,"EXR":11.155801,"time_start":"2025-07-10T15:00:00+02:00","time_end":"2025-07-10T16:00:00+02:00"},{"SEK_per_kWh":0.80846,"EUR_per_kWh":0.07247,"EXR":11.155801,"time_start":"2025-07-10T16:00:00+02:00","time_end":"2025-07-10T17:00:00+02:00"},{"SEK_per_kWh":0.91678,"EUR_per_kWh":0.08218,"EXR":11.155801,"time_start":"2025-07-10T17:00:00+02:00","time_end":"2025-07-10T18:00:00+02:00"},{"SEK_per_kWh":1.06583,"EUR_per_kWh":0.09554,"EXR":11.155801,"time_start":"2025-07-10T18:00:00+02:00","time_end":"2025-07-10T19:00:00+02:00"},{"SEK_per_kWh":1.21922,"EUR_per_kWh":0.10929,"EXR":11.155801,"time_start":"2025-07-10T19:00:00+02:00","time_end":"2025-07-10T20:00:00+02:00"},{"SEK_per_kWh":1.22044,"EUR_per_kWh":0.1094,"EXR":11.155801,"time_start":"2025-07-10T20:00:00+02:00","time_end":"2025-07-10T21:00:00+02:00"},{"SEK_per_kWh":0.85453,"EUR_per_kWh":0.0766,"EXR":11.155801,"time_start":"2025-07-10T21:00:00+02:00","time_end":"2025-07-10T22:00:00+02:00"},{"SEK_per_kWh":0.46877,"EUR_per_kWh":0.04202,"EXR":11.155801,"time_start":"2025-07-10T22:00:00+02:00","time_end":"2025-07-10T23:00:00+02:00"},{"SEK_per_kWh":0.31593,"EUR_per_kWh":0.02832,"EXR":11.155801,"time_start":"2025-07-10T23:00:00+02:00","time_end":"2025-07-11T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-11_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:47 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971943-d35"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '1011'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=Q0FbA3LrGiKMllH6FBJQHrB55r%2B5vRqiLhn%2BspnqiaOPcO2cnh2lBmWSfcGjY6HA1a3b0kf7Q65f9YMU9k3H0iRPAG8HsLJNAUW7EujQyCllbgemYA%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f618aee891-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.30434,"EUR_per_kWh":0.02732,"EXR":11.13981,"time_start":"2025-07-11T00:00:00+02:00","time_end":"2025-07-11T01:00:00+02:00"},{"SEK_per_kWh":0.08099,"EUR_per_kWh":0.00727,"EXR":11.13981,"time_start":"2025-07-11T01:00:00+02:00","time_end":"2025-07-11T02:00:00+02:00"},{"SEK_per_kWh":0.05035,"EUR_per_kWh":0.00452,"EXR":11.13981,"time_start":"2025-07-11T02:00:00+02:00","time_end":"2025-07-11T03:00:00+02:00"},{"SEK_per_kWh":0.03754,"EUR_per_kWh":0.00337,"EXR":11.13981,"time_start":"2025-07-11T03:00:00+02:00","time_end":"2025-07-11T04:00:00+02:00"},{"SEK_per_kWh":0.03866,"EUR_per_kWh":0.00347,"EXR":11.13981,"time_start":"2025-07-11T04:00:00+02:00","time_end":"2025-07-11T05:00:00+02:00"},{"SEK_per_kWh":0.04356,"EUR_per_kWh":0.00391,"EXR":11.13981,"time_start":"2025-07-11T05:00:00+02:00","time_end":"2025-07-11T06:00:00+02:00"},{"SEK_per_kWh":0.10895,"EUR_per_kWh":0.00978,"EXR":11.13981,"time_start":"2025-07-11T06:00:00+02:00","time_end":"2025-07-11T07:00:00+02:00"},{"SEK_per_kWh":0.3157,"EUR_per_kWh":0.02834,"EXR":11.13981,"time_start":"2025-07-11T07:00:00+02:00","time_end":"2025-07-11T08:00:00+02:00"},{"SEK_per_kWh":0.45729,"EUR_per_kWh":0.04105,"EXR":11.13981,"time_start":"2025-07-11T08:00:00+02:00","time_end":"2025-07-11T09:00:00+02:00"},{"SEK_per_kWh":0.31403,"EUR_per_kWh":0.02819,"EXR":11.13981,"time_start":"2025-07-11T09:00:00+02:00","time_end":"2025-07-11T10:00:00+02:00"},{"SEK_per_kWh":0.08132,"EUR_per_kWh":0.0073,"EXR":11.13981,"time_start":"2025-07-11T10:00:00+02:00","time_end":"2025-07-11T11:00:00+02:00"},{"SEK_per_kWh":0.05403,"EUR_per_kWh":0.00485,"EXR":11.13981,"time_start":"2025-07-11T11:00:00+02:00","time_end":"2025-07-11T12:00:00+02:00"},{"SEK_per_kWh":0.05381,"EUR_per_kWh":0.00483,"EXR":11.13981,"time_start":"2025-07-11T12:00:00+02:00","time_end":"2025-07-11T13:00:00+02:00"},{"SEK_per_kWh":0.05225,"EUR_per_kWh":0.00469,"EXR":11.13981,"time_start":"2025-07-11T13:00:00+02:00","time_end":"2025-07-11T14:00:00+02:00"},{"SEK_per_kWh":0.05247,"EUR_per_kWh":0.00471,"EXR":11.13981,"time_start":"2025-07-11T14:00:00+02:00","time_end":"2025-07-11T15:00:00+02:00"},{"SEK_per_kWh":0.05603,"EUR_per_kWh":0.00503,"EXR":11.13981,"time_start":"2025-07-11T15:00:00+02:00","time_end":"2025-07-11T16:00:00+02:00"},{"SEK_per_kWh":0.06673,"EUR_per_kWh":0.00599,"EXR":11.13981,"time_start":"2025-07-11T16:00:00+02:00","time_end":"2025-07-11T17:00:00+02:00"},{"SEK_per_kWh":0.06027,"EUR_per_kWh":0.00541,"EXR":11.13981,"time_start":"2025-07-11T17:00:00+02:00","time_end":"2025-07-11T18:00:00+02:00"},{"SEK_per_kWh":0.07653,"EUR_per_kWh":0.00687,"EXR":11.13981,"time_start":"2025-07-11T18:00:00+02:00","time_end":"2025-07-11T19:00:00+02:00"},{"SEK_per_kWh":0.07441,"EUR_per_kWh":0.00668,"EXR":11.13981,"time_start":"2025-07-11T19:00:00+02:00","time_end":"2025-07-11T20:00:00+02:00"},{"SEK_per_kWh":0.05882,"EUR_per_kWh":0.00528,"EXR":11.13981,"time_start":"2025-07-11T20:00:00+02:00","time_end":"2025-07-11T21:00:00+02:00"},{"SEK_per_kWh":0.0508,"EUR_per_kWh":0.00456,"EXR":11.13981,"time_start":"2025-07-11T21:00:00+02:00","time_end":"2025-07-11T22:00:00+02:00"},{"SEK_per_kWh":0.03921,"EUR_per_kWh":0.00352,"EXR":11.13981,"time_start":"2025-07-11T22:00:00+02:00","time_end":"2025-07-11T23:00:00+02:00"},{"SEK_per_kWh":0.02896,"EUR_per_kWh":0.0026,"EXR":11.13981,"time_start":"2025-07-11T23:00:00+02:00","time_end":"2025-07-12T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-12_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:57 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971911-d4b"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272604'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=WasuVBuC1eeXLVX9RfmScvve7yh3aX42quzcpS6tMB0iUlfpwxqe%2BSAvGz5jfuyiIts5vxjRS8iWSzw4e6F6SsrGyvn6bZry4iYrEjVxsK%2FNuyg%3D"}]}'
+      Cf-Ray:
+      - 9a1989f6391a2df5-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.02151,"EUR_per_kWh":0.00193,"EXR":11.144544,"time_start":"2025-07-12T00:00:00+02:00","time_end":"2025-07-12T01:00:00+02:00"},{"SEK_per_kWh":0.02006,"EUR_per_kWh":0.0018,"EXR":11.144544,"time_start":"2025-07-12T01:00:00+02:00","time_end":"2025-07-12T02:00:00+02:00"},{"SEK_per_kWh":0.01114,"EUR_per_kWh":0.001,"EXR":11.144544,"time_start":"2025-07-12T02:00:00+02:00","time_end":"2025-07-12T03:00:00+02:00"},{"SEK_per_kWh":0.01048,"EUR_per_kWh":0.00094,"EXR":11.144544,"time_start":"2025-07-12T03:00:00+02:00","time_end":"2025-07-12T04:00:00+02:00"},{"SEK_per_kWh":0.00903,"EUR_per_kWh":0.00081,"EXR":11.144544,"time_start":"2025-07-12T04:00:00+02:00","time_end":"2025-07-12T05:00:00+02:00"},{"SEK_per_kWh":0.01805,"EUR_per_kWh":0.00162,"EXR":11.144544,"time_start":"2025-07-12T05:00:00+02:00","time_end":"2025-07-12T06:00:00+02:00"},{"SEK_per_kWh":0.02496,"EUR_per_kWh":0.00224,"EXR":11.144544,"time_start":"2025-07-12T06:00:00+02:00","time_end":"2025-07-12T07:00:00+02:00"},{"SEK_per_kWh":0.03499,"EUR_per_kWh":0.00314,"EXR":11.144544,"time_start":"2025-07-12T07:00:00+02:00","time_end":"2025-07-12T08:00:00+02:00"},{"SEK_per_kWh":0.03967,"EUR_per_kWh":0.00356,"EXR":11.144544,"time_start":"2025-07-12T08:00:00+02:00","time_end":"2025-07-12T09:00:00+02:00"},{"SEK_per_kWh":0.03956,"EUR_per_kWh":0.00355,"EXR":11.144544,"time_start":"2025-07-12T09:00:00+02:00","time_end":"2025-07-12T10:00:00+02:00"},{"SEK_per_kWh":0.04781,"EUR_per_kWh":0.00429,"EXR":11.144544,"time_start":"2025-07-12T10:00:00+02:00","time_end":"2025-07-12T11:00:00+02:00"},{"SEK_per_kWh":0.03388,"EUR_per_kWh":0.00304,"EXR":11.144544,"time_start":"2025-07-12T11:00:00+02:00","time_end":"2025-07-12T12:00:00+02:00"},{"SEK_per_kWh":0.01928,"EUR_per_kWh":0.00173,"EXR":11.144544,"time_start":"2025-07-12T12:00:00+02:00","time_end":"2025-07-12T13:00:00+02:00"},{"SEK_per_kWh":0.00435,"EUR_per_kWh":0.00039,"EXR":11.144544,"time_start":"2025-07-12T13:00:00+02:00","time_end":"2025-07-12T14:00:00+02:00"},{"SEK_per_kWh":0.01092,"EUR_per_kWh":0.00098,"EXR":11.144544,"time_start":"2025-07-12T14:00:00+02:00","time_end":"2025-07-12T15:00:00+02:00"},{"SEK_per_kWh":0.0331,"EUR_per_kWh":0.00297,"EXR":11.144544,"time_start":"2025-07-12T15:00:00+02:00","time_end":"2025-07-12T16:00:00+02:00"},{"SEK_per_kWh":0.0672,"EUR_per_kWh":0.00603,"EXR":11.144544,"time_start":"2025-07-12T16:00:00+02:00","time_end":"2025-07-12T17:00:00+02:00"},{"SEK_per_kWh":0.08782,"EUR_per_kWh":0.00788,"EXR":11.144544,"time_start":"2025-07-12T17:00:00+02:00","time_end":"2025-07-12T18:00:00+02:00"},{"SEK_per_kWh":0.32531,"EUR_per_kWh":0.02919,"EXR":11.144544,"time_start":"2025-07-12T18:00:00+02:00","time_end":"2025-07-12T19:00:00+02:00"},{"SEK_per_kWh":0.34626,"EUR_per_kWh":0.03107,"EXR":11.144544,"time_start":"2025-07-12T19:00:00+02:00","time_end":"2025-07-12T20:00:00+02:00"},{"SEK_per_kWh":0.34381,"EUR_per_kWh":0.03085,"EXR":11.144544,"time_start":"2025-07-12T20:00:00+02:00","time_end":"2025-07-12T21:00:00+02:00"},{"SEK_per_kWh":0.1324,"EUR_per_kWh":0.01188,"EXR":11.144544,"time_start":"2025-07-12T21:00:00+02:00","time_end":"2025-07-12T22:00:00+02:00"},{"SEK_per_kWh":0.06943,"EUR_per_kWh":0.00623,"EXR":11.144544,"time_start":"2025-07-12T22:00:00+02:00","time_end":"2025-07-12T23:00:00+02:00"},{"SEK_per_kWh":0.04959,"EUR_per_kWh":0.00445,"EXR":11.144544,"time_start":"2025-07-12T23:00:00+02:00","time_end":"2025-07-13T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-13_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:57 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971911-d4a"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '1011'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=0ThkHpuFAlJxtgCZGNtIfn0OQG0EhsPEZ2SRcLf%2BhB2pf9w1sw73iO6IAB5qKCNFZGqW%2FQk%2FEBIiEIu0shF9jU1kzE6%2FGvRe0%2BAx7hhQKfztEzMKYg%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f66f1fbc80-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.28585,"EUR_per_kWh":0.02557,"EXR":11.179213,"time_start":"2025-07-13T00:00:00+02:00","time_end":"2025-07-13T01:00:00+02:00"},{"SEK_per_kWh":0.19418,"EUR_per_kWh":0.01737,"EXR":11.179213,"time_start":"2025-07-13T01:00:00+02:00","time_end":"2025-07-13T02:00:00+02:00"},{"SEK_per_kWh":0.17059,"EUR_per_kWh":0.01526,"EXR":11.179213,"time_start":"2025-07-13T02:00:00+02:00","time_end":"2025-07-13T03:00:00+02:00"},{"SEK_per_kWh":0.14253,"EUR_per_kWh":0.01275,"EXR":11.179213,"time_start":"2025-07-13T03:00:00+02:00","time_end":"2025-07-13T04:00:00+02:00"},{"SEK_per_kWh":0.15651,"EUR_per_kWh":0.014,"EXR":11.179213,"time_start":"2025-07-13T04:00:00+02:00","time_end":"2025-07-13T05:00:00+02:00"},{"SEK_per_kWh":0.17663,"EUR_per_kWh":0.0158,"EXR":11.179213,"time_start":"2025-07-13T05:00:00+02:00","time_end":"2025-07-13T06:00:00+02:00"},{"SEK_per_kWh":0.24471,"EUR_per_kWh":0.02189,"EXR":11.179213,"time_start":"2025-07-13T06:00:00+02:00","time_end":"2025-07-13T07:00:00+02:00"},{"SEK_per_kWh":0.26763,"EUR_per_kWh":0.02394,"EXR":11.179213,"time_start":"2025-07-13T07:00:00+02:00","time_end":"2025-07-13T08:00:00+02:00"},{"SEK_per_kWh":0.2541,"EUR_per_kWh":0.02273,"EXR":11.179213,"time_start":"2025-07-13T08:00:00+02:00","time_end":"2025-07-13T09:00:00+02:00"},{"SEK_per_kWh":0.23074,"EUR_per_kWh":0.02064,"EXR":11.179213,"time_start":"2025-07-13T09:00:00+02:00","time_end":"2025-07-13T10:00:00+02:00"},{"SEK_per_kWh":0.12588,"EUR_per_kWh":0.01126,"EXR":11.179213,"time_start":"2025-07-13T10:00:00+02:00","time_end":"2025-07-13T11:00:00+02:00"},{"SEK_per_kWh":0.04807,"EUR_per_kWh":0.0043,"EXR":11.179213,"time_start":"2025-07-13T11:00:00+02:00","time_end":"2025-07-13T12:00:00+02:00"},{"SEK_per_kWh":0.02124,"EUR_per_kWh":0.0019,"EXR":11.179213,"time_start":"2025-07-13T12:00:00+02:00","time_end":"2025-07-13T13:00:00+02:00"},{"SEK_per_kWh":0.00168,"EUR_per_kWh":0.00015,"EXR":11.179213,"time_start":"2025-07-13T13:00:00+02:00","time_end":"2025-07-13T14:00:00+02:00"},{"SEK_per_kWh":0.00906,"EUR_per_kWh":0.00081,"EXR":11.179213,"time_start":"2025-07-13T14:00:00+02:00","time_end":"2025-07-13T15:00:00+02:00"},{"SEK_per_kWh":0.06137,"EUR_per_kWh":0.00549,"EXR":11.179213,"time_start":"2025-07-13T15:00:00+02:00","time_end":"2025-07-13T16:00:00+02:00"},{"SEK_per_kWh":0.17182,"EUR_per_kWh":0.01537,"EXR":11.179213,"time_start":"2025-07-13T16:00:00+02:00","time_end":"2025-07-13T17:00:00+02:00"},{"SEK_per_kWh":0.31212,"EUR_per_kWh":0.02792,"EXR":11.179213,"time_start":"2025-07-13T17:00:00+02:00","time_end":"2025-07-13T18:00:00+02:00"},{"SEK_per_kWh":0.38948,"EUR_per_kWh":0.03484,"EXR":11.179213,"time_start":"2025-07-13T18:00:00+02:00","time_end":"2025-07-13T19:00:00+02:00"},{"SEK_per_kWh":0.38892,"EUR_per_kWh":0.03479,"EXR":11.179213,"time_start":"2025-07-13T19:00:00+02:00","time_end":"2025-07-13T20:00:00+02:00"},{"SEK_per_kWh":0.38602,"EUR_per_kWh":0.03453,"EXR":11.179213,"time_start":"2025-07-13T20:00:00+02:00","time_end":"2025-07-13T21:00:00+02:00"},{"SEK_per_kWh":0.37003,"EUR_per_kWh":0.0331,"EXR":11.179213,"time_start":"2025-07-13T21:00:00+02:00","time_end":"2025-07-13T22:00:00+02:00"},{"SEK_per_kWh":0.36657,"EUR_per_kWh":0.03279,"EXR":11.179213,"time_start":"2025-07-13T22:00:00+02:00","time_end":"2025-07-13T23:00:00+02:00"},{"SEK_per_kWh":0.32822,"EUR_per_kWh":0.02936,"EXR":11.179213,"time_start":"2025-07-13T23:00:00+02:00","time_end":"2025-07-14T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-14_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:41 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971901-d4f"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272603'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=%2FFSaBgtlhqIFLUHFtbivWtWXL0Cd3f5mPZFC3o3vEol0sXfuPfrzpEzJFDBMtdbrC%2B9PhUYJudfBPGlDEIKz%2Fc0xlP39XDP9rAvlim2f2KaHLzcFTQ%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f68af027f7-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.26461,"EUR_per_kWh":0.02367,"EXR":11.179213,"time_start":"2025-07-14T00:00:00+02:00","time_end":"2025-07-14T01:00:00+02:00"},{"SEK_per_kWh":0.2266,"EUR_per_kWh":0.02027,"EXR":11.179213,"time_start":"2025-07-14T01:00:00+02:00","time_end":"2025-07-14T02:00:00+02:00"},{"SEK_per_kWh":0.24863,"EUR_per_kWh":0.02224,"EXR":11.179213,"time_start":"2025-07-14T02:00:00+02:00","time_end":"2025-07-14T03:00:00+02:00"},{"SEK_per_kWh":0.24639,"EUR_per_kWh":0.02204,"EXR":11.179213,"time_start":"2025-07-14T03:00:00+02:00","time_end":"2025-07-14T04:00:00+02:00"},{"SEK_per_kWh":0.21643,"EUR_per_kWh":0.01936,"EXR":11.179213,"time_start":"2025-07-14T04:00:00+02:00","time_end":"2025-07-14T05:00:00+02:00"},{"SEK_per_kWh":0.26439,"EUR_per_kWh":0.02365,"EXR":11.179213,"time_start":"2025-07-14T05:00:00+02:00","time_end":"2025-07-14T06:00:00+02:00"},{"SEK_per_kWh":0.28943,"EUR_per_kWh":0.02589,"EXR":11.179213,"time_start":"2025-07-14T06:00:00+02:00","time_end":"2025-07-14T07:00:00+02:00"},{"SEK_per_kWh":0.40938,"EUR_per_kWh":0.03662,"EXR":11.179213,"time_start":"2025-07-14T07:00:00+02:00","time_end":"2025-07-14T08:00:00+02:00"},{"SEK_per_kWh":0.36981,"EUR_per_kWh":0.03308,"EXR":11.179213,"time_start":"2025-07-14T08:00:00+02:00","time_end":"2025-07-14T09:00:00+02:00"},{"SEK_per_kWh":0.34331,"EUR_per_kWh":0.03071,"EXR":11.179213,"time_start":"2025-07-14T09:00:00+02:00","time_end":"2025-07-14T10:00:00+02:00"},{"SEK_per_kWh":0.29211,"EUR_per_kWh":0.02613,"EXR":11.179213,"time_start":"2025-07-14T10:00:00+02:00","time_end":"2025-07-14T11:00:00+02:00"},{"SEK_per_kWh":0.26785,"EUR_per_kWh":0.02396,"EXR":11.179213,"time_start":"2025-07-14T11:00:00+02:00","time_end":"2025-07-14T12:00:00+02:00"},{"SEK_per_kWh":0.26998,"EUR_per_kWh":0.02415,"EXR":11.179213,"time_start":"2025-07-14T12:00:00+02:00","time_end":"2025-07-14T13:00:00+02:00"},{"SEK_per_kWh":0.30933,"EUR_per_kWh":0.02767,"EXR":11.179213,"time_start":"2025-07-14T13:00:00+02:00","time_end":"2025-07-14T14:00:00+02:00"},{"SEK_per_kWh":0.31335,"EUR_per_kWh":0.02803,"EXR":11.179213,"time_start":"2025-07-14T14:00:00+02:00","time_end":"2025-07-14T15:00:00+02:00"},{"SEK_per_kWh":0.30553,"EUR_per_kWh":0.02733,"EXR":11.179213,"time_start":"2025-07-14T15:00:00+02:00","time_end":"2025-07-14T16:00:00+02:00"},{"SEK_per_kWh":0.27859,"EUR_per_kWh":0.02492,"EXR":11.179213,"time_start":"2025-07-14T16:00:00+02:00","time_end":"2025-07-14T17:00:00+02:00"},{"SEK_per_kWh":0.38982,"EUR_per_kWh":0.03487,"EXR":11.179213,"time_start":"2025-07-14T17:00:00+02:00","time_end":"2025-07-14T18:00:00+02:00"},{"SEK_per_kWh":0.64627,"EUR_per_kWh":0.05781,"EXR":11.179213,"time_start":"2025-07-14T18:00:00+02:00","time_end":"2025-07-14T19:00:00+02:00"},{"SEK_per_kWh":0.76253,"EUR_per_kWh":0.06821,"EXR":11.179213,"time_start":"2025-07-14T19:00:00+02:00","time_end":"2025-07-14T20:00:00+02:00"},{"SEK_per_kWh":0.4797,"EUR_per_kWh":0.04291,"EXR":11.179213,"time_start":"2025-07-14T20:00:00+02:00","time_end":"2025-07-14T21:00:00+02:00"},{"SEK_per_kWh":0.52464,"EUR_per_kWh":0.04693,"EXR":11.179213,"time_start":"2025-07-14T21:00:00+02:00","time_end":"2025-07-14T22:00:00+02:00"},{"SEK_per_kWh":0.34186,"EUR_per_kWh":0.03058,"EXR":11.179213,"time_start":"2025-07-14T22:00:00+02:00","time_end":"2025-07-14T23:00:00+02:00"},{"SEK_per_kWh":0.28798,"EUR_per_kWh":0.02576,"EXR":11.179213,"time_start":"2025-07-14T23:00:00+02:00","time_end":"2025-07-15T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-15_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:41 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971901-d4b"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '92311'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=6schmw9R7QgNLLtL%2FQ3Ck6%2BHPpTtYzWnY%2FrGy7L7mp9Hq7705B5Lww%2FAA71R2wek860qfJHHUo9r%2Fi881y3E6e%2Fy3XVwWD42N3bJp6PlRrQdHLQ%3D"}]}'
+      Cf-Ray:
+      - 9a1989f6af689903-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.44601,"EUR_per_kWh":0.03977,"EXR":11.214798,"time_start":"2025-07-15T00:00:00+02:00","time_end":"2025-07-15T01:00:00+02:00"},{"SEK_per_kWh":0.30818,"EUR_per_kWh":0.02748,"EXR":11.214798,"time_start":"2025-07-15T01:00:00+02:00","time_end":"2025-07-15T02:00:00+02:00"},{"SEK_per_kWh":0.24269,"EUR_per_kWh":0.02164,"EXR":11.214798,"time_start":"2025-07-15T02:00:00+02:00","time_end":"2025-07-15T03:00:00+02:00"},{"SEK_per_kWh":0.23304,"EUR_per_kWh":0.02078,"EXR":11.214798,"time_start":"2025-07-15T03:00:00+02:00","time_end":"2025-07-15T04:00:00+02:00"},{"SEK_per_kWh":0.16071,"EUR_per_kWh":0.01433,"EXR":11.214798,"time_start":"2025-07-15T04:00:00+02:00","time_end":"2025-07-15T05:00:00+02:00"},{"SEK_per_kWh":0.35024,"EUR_per_kWh":0.03123,"EXR":11.214798,"time_start":"2025-07-15T05:00:00+02:00","time_end":"2025-07-15T06:00:00+02:00"},{"SEK_per_kWh":0.42179,"EUR_per_kWh":0.03761,"EXR":11.214798,"time_start":"2025-07-15T06:00:00+02:00","time_end":"2025-07-15T07:00:00+02:00"},{"SEK_per_kWh":0.57823,"EUR_per_kWh":0.05156,"EXR":11.214798,"time_start":"2025-07-15T07:00:00+02:00","time_end":"2025-07-15T08:00:00+02:00"},{"SEK_per_kWh":0.63296,"EUR_per_kWh":0.05644,"EXR":11.214798,"time_start":"2025-07-15T08:00:00+02:00","time_end":"2025-07-15T09:00:00+02:00"},{"SEK_per_kWh":0.54235,"EUR_per_kWh":0.04836,"EXR":11.214798,"time_start":"2025-07-15T09:00:00+02:00","time_end":"2025-07-15T10:00:00+02:00"},{"SEK_per_kWh":0.53584,"EUR_per_kWh":0.04778,"EXR":11.214798,"time_start":"2025-07-15T10:00:00+02:00","time_end":"2025-07-15T11:00:00+02:00"},{"SEK_per_kWh":0.50579,"EUR_per_kWh":0.0451,"EXR":11.214798,"time_start":"2025-07-15T11:00:00+02:00","time_end":"2025-07-15T12:00:00+02:00"},{"SEK_per_kWh":0.48067,"EUR_per_kWh":0.04286,"EXR":11.214798,"time_start":"2025-07-15T12:00:00+02:00","time_end":"2025-07-15T13:00:00+02:00"},{"SEK_per_kWh":0.46833,"EUR_per_kWh":0.04176,"EXR":11.214798,"time_start":"2025-07-15T13:00:00+02:00","time_end":"2025-07-15T14:00:00+02:00"},{"SEK_per_kWh":0.43098,"EUR_per_kWh":0.03843,"EXR":11.214798,"time_start":"2025-07-15T14:00:00+02:00","time_end":"2025-07-15T15:00:00+02:00"},{"SEK_per_kWh":0.45644,"EUR_per_kWh":0.0407,"EXR":11.214798,"time_start":"2025-07-15T15:00:00+02:00","time_end":"2025-07-15T16:00:00+02:00"},{"SEK_per_kWh":0.51723,"EUR_per_kWh":0.04612,"EXR":11.214798,"time_start":"2025-07-15T16:00:00+02:00","time_end":"2025-07-15T17:00:00+02:00"},{"SEK_per_kWh":0.56074,"EUR_per_kWh":0.05,"EXR":11.214798,"time_start":"2025-07-15T17:00:00+02:00","time_end":"2025-07-15T18:00:00+02:00"},{"SEK_per_kWh":0.93397,"EUR_per_kWh":0.08328,"EXR":11.214798,"time_start":"2025-07-15T18:00:00+02:00","time_end":"2025-07-15T19:00:00+02:00"},{"SEK_per_kWh":0.9546,"EUR_per_kWh":0.08512,"EXR":11.214798,"time_start":"2025-07-15T19:00:00+02:00","time_end":"2025-07-15T20:00:00+02:00"},{"SEK_per_kWh":0.81431,"EUR_per_kWh":0.07261,"EXR":11.214798,"time_start":"2025-07-15T20:00:00+02:00","time_end":"2025-07-15T21:00:00+02:00"},{"SEK_per_kWh":0.58665,"EUR_per_kWh":0.05231,"EXR":11.214798,"time_start":"2025-07-15T21:00:00+02:00","time_end":"2025-07-15T22:00:00+02:00"},{"SEK_per_kWh":0.45846,"EUR_per_kWh":0.04088,"EXR":11.214798,"time_start":"2025-07-15T22:00:00+02:00","time_end":"2025-07-15T23:00:00+02:00"},{"SEK_per_kWh":0.43009,"EUR_per_kWh":0.03835,"EXR":11.214798,"time_start":"2025-07-15T23:00:00+02:00","time_end":"2025-07-16T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-16_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:12 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971920-d4c"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '92311'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=uI46knogVsWBg023rcXQGFaiExfTvDK9Ysphcf0YJgI%2FY5ZtdoCKDM052VX2QpHF9S2MRGuLUGrGH6aVYuFarjqUcaptQIyHSOKVn1qIH6FRWM0XDQ%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f6cc785d1d-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.38581,"EUR_per_kWh":0.03427,"EXR":11.258062,"time_start":"2025-07-16T00:00:00+02:00","time_end":"2025-07-16T01:00:00+02:00"},{"SEK_per_kWh":0.36611,"EUR_per_kWh":0.03252,"EXR":11.258062,"time_start":"2025-07-16T01:00:00+02:00","time_end":"2025-07-16T02:00:00+02:00"},{"SEK_per_kWh":0.35688,"EUR_per_kWh":0.0317,"EXR":11.258062,"time_start":"2025-07-16T02:00:00+02:00","time_end":"2025-07-16T03:00:00+02:00"},{"SEK_per_kWh":0.31613,"EUR_per_kWh":0.02808,"EXR":11.258062,"time_start":"2025-07-16T03:00:00+02:00","time_end":"2025-07-16T04:00:00+02:00"},{"SEK_per_kWh":0.15502,"EUR_per_kWh":0.01377,"EXR":11.258062,"time_start":"2025-07-16T04:00:00+02:00","time_end":"2025-07-16T05:00:00+02:00"},{"SEK_per_kWh":0.2559,"EUR_per_kWh":0.02273,"EXR":11.258062,"time_start":"2025-07-16T05:00:00+02:00","time_end":"2025-07-16T06:00:00+02:00"},{"SEK_per_kWh":0.3893,"EUR_per_kWh":0.03458,"EXR":11.258062,"time_start":"2025-07-16T06:00:00+02:00","time_end":"2025-07-16T07:00:00+02:00"},{"SEK_per_kWh":0.58429,"EUR_per_kWh":0.0519,"EXR":11.258062,"time_start":"2025-07-16T07:00:00+02:00","time_end":"2025-07-16T08:00:00+02:00"},{"SEK_per_kWh":0.67593,"EUR_per_kWh":0.06004,"EXR":11.258062,"time_start":"2025-07-16T08:00:00+02:00","time_end":"2025-07-16T09:00:00+02:00"},{"SEK_per_kWh":0.52733,"EUR_per_kWh":0.04684,"EXR":11.258062,"time_start":"2025-07-16T09:00:00+02:00","time_end":"2025-07-16T10:00:00+02:00"},{"SEK_per_kWh":0.40923,"EUR_per_kWh":0.03635,"EXR":11.258062,"time_start":"2025-07-16T10:00:00+02:00","time_end":"2025-07-16T11:00:00+02:00"},{"SEK_per_kWh":0.42657,"EUR_per_kWh":0.03789,"EXR":11.258062,"time_start":"2025-07-16T11:00:00+02:00","time_end":"2025-07-16T12:00:00+02:00"},{"SEK_per_kWh":0.41677,"EUR_per_kWh":0.03702,"EXR":11.258062,"time_start":"2025-07-16T12:00:00+02:00","time_end":"2025-07-16T13:00:00+02:00"},{"SEK_per_kWh":0.39043,"EUR_per_kWh":0.03468,"EXR":11.258062,"time_start":"2025-07-16T13:00:00+02:00","time_end":"2025-07-16T14:00:00+02:00"},{"SEK_per_kWh":0.35294,"EUR_per_kWh":0.03135,"EXR":11.258062,"time_start":"2025-07-16T14:00:00+02:00","time_end":"2025-07-16T15:00:00+02:00"},{"SEK_per_kWh":0.37613,"EUR_per_kWh":0.03341,"EXR":11.258062,"time_start":"2025-07-16T15:00:00+02:00","time_end":"2025-07-16T16:00:00+02:00"},{"SEK_per_kWh":0.39212,"EUR_per_kWh":0.03483,"EXR":11.258062,"time_start":"2025-07-16T16:00:00+02:00","time_end":"2025-07-16T17:00:00+02:00"},{"SEK_per_kWh":0.44616,"EUR_per_kWh":0.03963,"EXR":11.258062,"time_start":"2025-07-16T17:00:00+02:00","time_end":"2025-07-16T18:00:00+02:00"},{"SEK_per_kWh":0.47543,"EUR_per_kWh":0.04223,"EXR":11.258062,"time_start":"2025-07-16T18:00:00+02:00","time_end":"2025-07-16T19:00:00+02:00"},{"SEK_per_kWh":0.46912,"EUR_per_kWh":0.04167,"EXR":11.258062,"time_start":"2025-07-16T19:00:00+02:00","time_end":"2025-07-16T20:00:00+02:00"},{"SEK_per_kWh":0.44942,"EUR_per_kWh":0.03992,"EXR":11.258062,"time_start":"2025-07-16T20:00:00+02:00","time_end":"2025-07-16T21:00:00+02:00"},{"SEK_per_kWh":0.33763,"EUR_per_kWh":0.02999,"EXR":11.258062,"time_start":"2025-07-16T21:00:00+02:00","time_end":"2025-07-16T22:00:00+02:00"},{"SEK_per_kWh":0.37861,"EUR_per_kWh":0.03363,"EXR":11.258062,"time_start":"2025-07-16T22:00:00+02:00","time_end":"2025-07-16T23:00:00+02:00"},{"SEK_per_kWh":0.0644,"EUR_per_kWh":0.00572,"EXR":11.258062,"time_start":"2025-07-16T23:00:00+02:00","time_end":"2025-07-17T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-17_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:12 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971920-d4f"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272602'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=mfkVjtuJNYJb0aHoPYGAx3KODVZ%2B7sZBR2XaakciXgaA5BrMG%2F2Ho5DmUGBnPBkI6vrnEKZrqvtE%2BNsuiisW1ohstUAHRPIHzyXappFwYtdB1xg%3D"}]}'
+      Cf-Ray:
+      - 9a1989f6ecd40a39-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.05832,"EUR_per_kWh":0.00518,"EXR":11.258062,"time_start":"2025-07-17T00:00:00+02:00","time_end":"2025-07-17T01:00:00+02:00"},{"SEK_per_kWh":0.05134,"EUR_per_kWh":0.00456,"EXR":11.258062,"time_start":"2025-07-17T01:00:00+02:00","time_end":"2025-07-17T02:00:00+02:00"},{"SEK_per_kWh":0.03445,"EUR_per_kWh":0.00306,"EXR":11.258062,"time_start":"2025-07-17T02:00:00+02:00","time_end":"2025-07-17T03:00:00+02:00"},{"SEK_per_kWh":0.03918,"EUR_per_kWh":0.00348,"EXR":11.258062,"time_start":"2025-07-17T03:00:00+02:00","time_end":"2025-07-17T04:00:00+02:00"},{"SEK_per_kWh":0.03862,"EUR_per_kWh":0.00343,"EXR":11.258062,"time_start":"2025-07-17T04:00:00+02:00","time_end":"2025-07-17T05:00:00+02:00"},{"SEK_per_kWh":0.04942,"EUR_per_kWh":0.00439,"EXR":11.258062,"time_start":"2025-07-17T05:00:00+02:00","time_end":"2025-07-17T06:00:00+02:00"},{"SEK_per_kWh":0.07836,"EUR_per_kWh":0.00696,"EXR":11.258062,"time_start":"2025-07-17T06:00:00+02:00","time_end":"2025-07-17T07:00:00+02:00"},{"SEK_per_kWh":0.31478,"EUR_per_kWh":0.02796,"EXR":11.258062,"time_start":"2025-07-17T07:00:00+02:00","time_end":"2025-07-17T08:00:00+02:00"},{"SEK_per_kWh":0.34371,"EUR_per_kWh":0.03053,"EXR":11.258062,"time_start":"2025-07-17T08:00:00+02:00","time_end":"2025-07-17T09:00:00+02:00"},{"SEK_per_kWh":0.30093,"EUR_per_kWh":0.02673,"EXR":11.258062,"time_start":"2025-07-17T09:00:00+02:00","time_end":"2025-07-17T10:00:00+02:00"},{"SEK_per_kWh":0.27031,"EUR_per_kWh":0.02401,"EXR":11.258062,"time_start":"2025-07-17T10:00:00+02:00","time_end":"2025-07-17T11:00:00+02:00"},{"SEK_per_kWh":0.25803,"EUR_per_kWh":0.02292,"EXR":11.258062,"time_start":"2025-07-17T11:00:00+02:00","time_end":"2025-07-17T12:00:00+02:00"},{"SEK_per_kWh":0.24531,"EUR_per_kWh":0.02179,"EXR":11.258062,"time_start":"2025-07-17T12:00:00+02:00","time_end":"2025-07-17T13:00:00+02:00"},{"SEK_per_kWh":0.23225,"EUR_per_kWh":0.02063,"EXR":11.258062,"time_start":"2025-07-17T13:00:00+02:00","time_end":"2025-07-17T14:00:00+02:00"},{"SEK_per_kWh":0.22876,"EUR_per_kWh":0.02032,"EXR":11.258062,"time_start":"2025-07-17T14:00:00+02:00","time_end":"2025-07-17T15:00:00+02:00"},{"SEK_per_kWh":0.25409,"EUR_per_kWh":0.02257,"EXR":11.258062,"time_start":"2025-07-17T15:00:00+02:00","time_end":"2025-07-17T16:00:00+02:00"},{"SEK_per_kWh":0.28528,"EUR_per_kWh":0.02534,"EXR":11.258062,"time_start":"2025-07-17T16:00:00+02:00","time_end":"2025-07-17T17:00:00+02:00"},{"SEK_per_kWh":0.32412,"EUR_per_kWh":0.02879,"EXR":11.258062,"time_start":"2025-07-17T17:00:00+02:00","time_end":"2025-07-17T18:00:00+02:00"},{"SEK_per_kWh":0.34787,"EUR_per_kWh":0.0309,"EXR":11.258062,"time_start":"2025-07-17T18:00:00+02:00","time_end":"2025-07-17T19:00:00+02:00"},{"SEK_per_kWh":0.43479,"EUR_per_kWh":0.03862,"EXR":11.258062,"time_start":"2025-07-17T19:00:00+02:00","time_end":"2025-07-17T20:00:00+02:00"},{"SEK_per_kWh":0.41677,"EUR_per_kWh":0.03702,"EXR":11.258062,"time_start":"2025-07-17T20:00:00+02:00","time_end":"2025-07-17T21:00:00+02:00"},{"SEK_per_kWh":0.40326,"EUR_per_kWh":0.03582,"EXR":11.258062,"time_start":"2025-07-17T21:00:00+02:00","time_end":"2025-07-17T22:00:00+02:00"},{"SEK_per_kWh":0.3902,"EUR_per_kWh":0.03466,"EXR":11.258062,"time_start":"2025-07-17T22:00:00+02:00","time_end":"2025-07-17T23:00:00+02:00"},{"SEK_per_kWh":0.37636,"EUR_per_kWh":0.03343,"EXR":11.258062,"time_start":"2025-07-17T23:00:00+02:00","time_end":"2025-07-18T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-18_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:45 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971905-d4c"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '1011'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=fZ3sZElMcxa0pOb7JnInI5CO8KzujJsL7LIcXsLr7Xbsz1yghcVT153W407yqFyGck1OdMIpx4FNPxO6L%2Fmk1JC4wFwMFOwHJyOGoD0yVZim7p5EiA%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f70b364e58-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.37134,"EUR_per_kWh":0.03284,"EXR":11.307687,"time_start":"2025-07-18T00:00:00+02:00","time_end":"2025-07-18T01:00:00+02:00"},{"SEK_per_kWh":0.36411,"EUR_per_kWh":0.0322,"EXR":11.307687,"time_start":"2025-07-18T01:00:00+02:00","time_end":"2025-07-18T02:00:00+02:00"},{"SEK_per_kWh":0.36818,"EUR_per_kWh":0.03256,"EXR":11.307687,"time_start":"2025-07-18T02:00:00+02:00","time_end":"2025-07-18T03:00:00+02:00"},{"SEK_per_kWh":0.36162,"EUR_per_kWh":0.03198,"EXR":11.307687,"time_start":"2025-07-18T03:00:00+02:00","time_end":"2025-07-18T04:00:00+02:00"},{"SEK_per_kWh":0.3623,"EUR_per_kWh":0.03204,"EXR":11.307687,"time_start":"2025-07-18T04:00:00+02:00","time_end":"2025-07-18T05:00:00+02:00"},{"SEK_per_kWh":0.37903,"EUR_per_kWh":0.03352,"EXR":11.307687,"time_start":"2025-07-18T05:00:00+02:00","time_end":"2025-07-18T06:00:00+02:00"},{"SEK_per_kWh":0.41624,"EUR_per_kWh":0.03681,"EXR":11.307687,"time_start":"2025-07-18T06:00:00+02:00","time_end":"2025-07-18T07:00:00+02:00"},{"SEK_per_kWh":0.50455,"EUR_per_kWh":0.04462,"EXR":11.307687,"time_start":"2025-07-18T07:00:00+02:00","time_end":"2025-07-18T08:00:00+02:00"},{"SEK_per_kWh":0.49245,"EUR_per_kWh":0.04355,"EXR":11.307687,"time_start":"2025-07-18T08:00:00+02:00","time_end":"2025-07-18T09:00:00+02:00"},{"SEK_per_kWh":0.42506,"EUR_per_kWh":0.03759,"EXR":11.307687,"time_start":"2025-07-18T09:00:00+02:00","time_end":"2025-07-18T10:00:00+02:00"},{"SEK_per_kWh":0.30271,"EUR_per_kWh":0.02677,"EXR":11.307687,"time_start":"2025-07-18T10:00:00+02:00","time_end":"2025-07-18T11:00:00+02:00"},{"SEK_per_kWh":0.31107,"EUR_per_kWh":0.02751,"EXR":11.307687,"time_start":"2025-07-18T11:00:00+02:00","time_end":"2025-07-18T12:00:00+02:00"},{"SEK_per_kWh":0.30327,"EUR_per_kWh":0.02682,"EXR":11.307687,"time_start":"2025-07-18T12:00:00+02:00","time_end":"2025-07-18T13:00:00+02:00"},{"SEK_per_kWh":0.27681,"EUR_per_kWh":0.02448,"EXR":11.307687,"time_start":"2025-07-18T13:00:00+02:00","time_end":"2025-07-18T14:00:00+02:00"},{"SEK_per_kWh":0.27591,"EUR_per_kWh":0.0244,"EXR":11.307687,"time_start":"2025-07-18T14:00:00+02:00","time_end":"2025-07-18T15:00:00+02:00"},{"SEK_per_kWh":0.28665,"EUR_per_kWh":0.02535,"EXR":11.307687,"time_start":"2025-07-18T15:00:00+02:00","time_end":"2025-07-18T16:00:00+02:00"},{"SEK_per_kWh":0.33833,"EUR_per_kWh":0.02992,"EXR":11.307687,"time_start":"2025-07-18T16:00:00+02:00","time_end":"2025-07-18T17:00:00+02:00"},{"SEK_per_kWh":0.36151,"EUR_per_kWh":0.03197,"EXR":11.307687,"time_start":"2025-07-18T17:00:00+02:00","time_end":"2025-07-18T18:00:00+02:00"},{"SEK_per_kWh":0.50919,"EUR_per_kWh":0.04503,"EXR":11.307687,"time_start":"2025-07-18T18:00:00+02:00","time_end":"2025-07-18T19:00:00+02:00"},{"SEK_per_kWh":0.55736,"EUR_per_kWh":0.04929,"EXR":11.307687,"time_start":"2025-07-18T19:00:00+02:00","time_end":"2025-07-18T20:00:00+02:00"},{"SEK_per_kWh":0.51495,"EUR_per_kWh":0.04554,"EXR":11.307687,"time_start":"2025-07-18T20:00:00+02:00","time_end":"2025-07-18T21:00:00+02:00"},{"SEK_per_kWh":0.43772,"EUR_per_kWh":0.03871,"EXR":11.307687,"time_start":"2025-07-18T21:00:00+02:00","time_end":"2025-07-18T22:00:00+02:00"},{"SEK_per_kWh":0.39532,"EUR_per_kWh":0.03496,"EXR":11.307687,"time_start":"2025-07-18T22:00:00+02:00","time_end":"2025-07-18T23:00:00+02:00"},{"SEK_per_kWh":0.37315,"EUR_per_kWh":0.033,"EXR":11.307687,"time_start":"2025-07-18T23:00:00+02:00","time_end":"2025-07-19T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-19_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:45 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971905-d49"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '92310'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=wacdTDLTpjGpx7fzoo7ghn7%2BMo44Mwwohhg7jDfkTk5EsatW8XMsbpmJKi5jDPgJXbg3c8m4NOdJKppzFeoWV38OO4vL5%2FzyzqJzgIWn62BP3GU%3D"}]}'
+      Cf-Ray:
+      - 9a1989f72f422d92-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.27557,"EUR_per_kWh":0.0245,"EXR":11.247957,"time_start":"2025-07-19T00:00:00+02:00","time_end":"2025-07-19T01:00:00+02:00"},{"SEK_per_kWh":0.19999,"EUR_per_kWh":0.01778,"EXR":11.247957,"time_start":"2025-07-19T01:00:00+02:00","time_end":"2025-07-19T02:00:00+02:00"},{"SEK_per_kWh":0.17254,"EUR_per_kWh":0.01534,"EXR":11.247957,"time_start":"2025-07-19T02:00:00+02:00","time_end":"2025-07-19T03:00:00+02:00"},{"SEK_per_kWh":0.15072,"EUR_per_kWh":0.0134,"EXR":11.247957,"time_start":"2025-07-19T03:00:00+02:00","time_end":"2025-07-19T04:00:00+02:00"},{"SEK_per_kWh":0.17052,"EUR_per_kWh":0.01516,"EXR":11.247957,"time_start":"2025-07-19T04:00:00+02:00","time_end":"2025-07-19T05:00:00+02:00"},{"SEK_per_kWh":0.20786,"EUR_per_kWh":0.01848,"EXR":11.247957,"time_start":"2025-07-19T05:00:00+02:00","time_end":"2025-07-19T06:00:00+02:00"},{"SEK_per_kWh":0.24892,"EUR_per_kWh":0.02213,"EXR":11.247957,"time_start":"2025-07-19T06:00:00+02:00","time_end":"2025-07-19T07:00:00+02:00"},{"SEK_per_kWh":0.28401,"EUR_per_kWh":0.02525,"EXR":11.247957,"time_start":"2025-07-19T07:00:00+02:00","time_end":"2025-07-19T08:00:00+02:00"},{"SEK_per_kWh":0.2776,"EUR_per_kWh":0.02468,"EXR":11.247957,"time_start":"2025-07-19T08:00:00+02:00","time_end":"2025-07-19T09:00:00+02:00"},{"SEK_per_kWh":0.27153,"EUR_per_kWh":0.02414,"EXR":11.247957,"time_start":"2025-07-19T09:00:00+02:00","time_end":"2025-07-19T10:00:00+02:00"},{"SEK_per_kWh":0.11743,"EUR_per_kWh":0.01044,"EXR":11.247957,"time_start":"2025-07-19T10:00:00+02:00","time_end":"2025-07-19T11:00:00+02:00"},{"SEK_per_kWh":0.05422,"EUR_per_kWh":0.00482,"EXR":11.247957,"time_start":"2025-07-19T11:00:00+02:00","time_end":"2025-07-19T12:00:00+02:00"},{"SEK_per_kWh":0.03307,"EUR_per_kWh":0.00294,"EXR":11.247957,"time_start":"2025-07-19T12:00:00+02:00","time_end":"2025-07-19T13:00:00+02:00"},{"SEK_per_kWh":0.02834,"EUR_per_kWh":0.00252,"EXR":11.247957,"time_start":"2025-07-19T13:00:00+02:00","time_end":"2025-07-19T14:00:00+02:00"},{"SEK_per_kWh":0.04443,"EUR_per_kWh":0.00395,"EXR":11.247957,"time_start":"2025-07-19T14:00:00+02:00","time_end":"2025-07-19T15:00:00+02:00"},{"SEK_per_kWh":0.09223,"EUR_per_kWh":0.0082,"EXR":11.247957,"time_start":"2025-07-19T15:00:00+02:00","time_end":"2025-07-19T16:00:00+02:00"},{"SEK_per_kWh":0.29548,"EUR_per_kWh":0.02627,"EXR":11.247957,"time_start":"2025-07-19T16:00:00+02:00","time_end":"2025-07-19T17:00:00+02:00"},{"SEK_per_kWh":0.46634,"EUR_per_kWh":0.04146,"EXR":11.247957,"time_start":"2025-07-19T17:00:00+02:00","time_end":"2025-07-19T18:00:00+02:00"},{"SEK_per_kWh":0.5264,"EUR_per_kWh":0.0468,"EXR":11.247957,"time_start":"2025-07-19T18:00:00+02:00","time_end":"2025-07-19T19:00:00+02:00"},{"SEK_per_kWh":0.58489,"EUR_per_kWh":0.052,"EXR":11.247957,"time_start":"2025-07-19T19:00:00+02:00","time_end":"2025-07-19T20:00:00+02:00"},{"SEK_per_kWh":0.58647,"EUR_per_kWh":0.05214,"EXR":11.247957,"time_start":"2025-07-19T20:00:00+02:00","time_end":"2025-07-19T21:00:00+02:00"},{"SEK_per_kWh":0.59232,"EUR_per_kWh":0.05266,"EXR":11.247957,"time_start":"2025-07-19T21:00:00+02:00","time_end":"2025-07-19T22:00:00+02:00"},{"SEK_per_kWh":0.54395,"EUR_per_kWh":0.04836,"EXR":11.247957,"time_start":"2025-07-19T22:00:00+02:00","time_end":"2025-07-19T23:00:00+02:00"},{"SEK_per_kWh":0.46465,"EUR_per_kWh":0.04131,"EXR":11.247957,"time_start":"2025-07-19T23:00:00+02:00","time_end":"2025-07-20T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-20_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:36 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"689718fc-d4d"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272602'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=La8oIFaPnvwDuIooNb82%2B9QjO6Hm1sjJ4VfaxZR4nN2pHDTIEBkRe5eM4W3eoG2znJ0O%2FNKKW%2Bz%2FNAUiI0zWhkhuVEte0WEhDzsK8fskFmrWyaQ%3D"}]}'
+      Cf-Ray:
+      - 9a1989f7bdc72d5d-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.40494,"EUR_per_kWh":0.03601,"EXR":11.245095,"time_start":"2025-07-20T00:00:00+02:00","time_end":"2025-07-20T01:00:00+02:00"},{"SEK_per_kWh":0.38919,"EUR_per_kWh":0.03461,"EXR":11.245095,"time_start":"2025-07-20T01:00:00+02:00","time_end":"2025-07-20T02:00:00+02:00"},{"SEK_per_kWh":0.38582,"EUR_per_kWh":0.03431,"EXR":11.245095,"time_start":"2025-07-20T02:00:00+02:00","time_end":"2025-07-20T03:00:00+02:00"},{"SEK_per_kWh":0.38593,"EUR_per_kWh":0.03432,"EXR":11.245095,"time_start":"2025-07-20T03:00:00+02:00","time_end":"2025-07-20T04:00:00+02:00"},{"SEK_per_kWh":0.37469,"EUR_per_kWh":0.03332,"EXR":11.245095,"time_start":"2025-07-20T04:00:00+02:00","time_end":"2025-07-20T05:00:00+02:00"},{"SEK_per_kWh":0.28495,"EUR_per_kWh":0.02534,"EXR":11.245095,"time_start":"2025-07-20T05:00:00+02:00","time_end":"2025-07-20T06:00:00+02:00"},{"SEK_per_kWh":0.30733,"EUR_per_kWh":0.02733,"EXR":11.245095,"time_start":"2025-07-20T06:00:00+02:00","time_end":"2025-07-20T07:00:00+02:00"},{"SEK_per_kWh":0.30722,"EUR_per_kWh":0.02732,"EXR":11.245095,"time_start":"2025-07-20T07:00:00+02:00","time_end":"2025-07-20T08:00:00+02:00"},{"SEK_per_kWh":0.31846,"EUR_per_kWh":0.02832,"EXR":11.245095,"time_start":"2025-07-20T08:00:00+02:00","time_end":"2025-07-20T09:00:00+02:00"},{"SEK_per_kWh":0.30227,"EUR_per_kWh":0.02688,"EXR":11.245095,"time_start":"2025-07-20T09:00:00+02:00","time_end":"2025-07-20T10:00:00+02:00"},{"SEK_per_kWh":0.14101,"EUR_per_kWh":0.01254,"EXR":11.245095,"time_start":"2025-07-20T10:00:00+02:00","time_end":"2025-07-20T11:00:00+02:00"},{"SEK_per_kWh":0.05566,"EUR_per_kWh":0.00495,"EXR":11.245095,"time_start":"2025-07-20T11:00:00+02:00","time_end":"2025-07-20T12:00:00+02:00"},{"SEK_per_kWh":0.02856,"EUR_per_kWh":0.00254,"EXR":11.245095,"time_start":"2025-07-20T12:00:00+02:00","time_end":"2025-07-20T13:00:00+02:00"},{"SEK_per_kWh":0.0388,"EUR_per_kWh":0.00345,"EXR":11.245095,"time_start":"2025-07-20T13:00:00+02:00","time_end":"2025-07-20T14:00:00+02:00"},{"SEK_per_kWh":0.06016,"EUR_per_kWh":0.00535,"EXR":11.245095,"time_start":"2025-07-20T14:00:00+02:00","time_end":"2025-07-20T15:00:00+02:00"},{"SEK_per_kWh":0.20264,"EUR_per_kWh":0.01802,"EXR":11.245095,"time_start":"2025-07-20T15:00:00+02:00","time_end":"2025-07-20T16:00:00+02:00"},{"SEK_per_kWh":0.37536,"EUR_per_kWh":0.03338,"EXR":11.245095,"time_start":"2025-07-20T16:00:00+02:00","time_end":"2025-07-20T17:00:00+02:00"},{"SEK_per_kWh":0.33702,"EUR_per_kWh":0.02997,"EXR":11.245095,"time_start":"2025-07-20T17:00:00+02:00","time_end":"2025-07-20T18:00:00+02:00"},{"SEK_per_kWh":0.41753,"EUR_per_kWh":0.03713,"EXR":11.245095,"time_start":"2025-07-20T18:00:00+02:00","time_end":"2025-07-20T19:00:00+02:00"},{"SEK_per_kWh":0.4787,"EUR_per_kWh":0.04257,"EXR":11.245095,"time_start":"2025-07-20T19:00:00+02:00","time_end":"2025-07-20T20:00:00+02:00"},{"SEK_per_kWh":0.45914,"EUR_per_kWh":0.04083,"EXR":11.245095,"time_start":"2025-07-20T20:00:00+02:00","time_end":"2025-07-20T21:00:00+02:00"},{"SEK_per_kWh":0.42686,"EUR_per_kWh":0.03796,"EXR":11.245095,"time_start":"2025-07-20T21:00:00+02:00","time_end":"2025-07-20T22:00:00+02:00"},{"SEK_per_kWh":0.39785,"EUR_per_kWh":0.03538,"EXR":11.245095,"time_start":"2025-07-20T22:00:00+02:00","time_end":"2025-07-20T23:00:00+02:00"},{"SEK_per_kWh":0.3992,"EUR_per_kWh":0.0355,"EXR":11.245095,"time_start":"2025-07-20T23:00:00+02:00","time_end":"2025-07-21T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-21_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:36 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"689718fc-d4f"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272601'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=1HIllgAGKguwTA92xsF%2FAVsYRSIlc0iTcw%2F3oAkS3DEKZEStSqjfdHPO23XIafY14I9yOb8BtMWNVcYLLUcMGDrtz48i%2FQoCayRZ0lAofziJe%2B0Uzg%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f7f85d198c-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.62199,"EUR_per_kWh":0.05536,"EXR":11.235354,"time_start":"2025-07-21T00:00:00+02:00","time_end":"2025-07-21T01:00:00+02:00"},{"SEK_per_kWh":0.38245,"EUR_per_kWh":0.03404,"EXR":11.235354,"time_start":"2025-07-21T01:00:00+02:00","time_end":"2025-07-21T02:00:00+02:00"},{"SEK_per_kWh":0.39279,"EUR_per_kWh":0.03496,"EXR":11.235354,"time_start":"2025-07-21T02:00:00+02:00","time_end":"2025-07-21T03:00:00+02:00"},{"SEK_per_kWh":0.24841,"EUR_per_kWh":0.02211,"EXR":11.235354,"time_start":"2025-07-21T03:00:00+02:00","time_end":"2025-07-21T04:00:00+02:00"},{"SEK_per_kWh":0.34391,"EUR_per_kWh":0.03061,"EXR":11.235354,"time_start":"2025-07-21T04:00:00+02:00","time_end":"2025-07-21T05:00:00+02:00"},{"SEK_per_kWh":0.43649,"EUR_per_kWh":0.03885,"EXR":11.235354,"time_start":"2025-07-21T05:00:00+02:00","time_end":"2025-07-21T06:00:00+02:00"},{"SEK_per_kWh":0.47761,"EUR_per_kWh":0.04251,"EXR":11.235354,"time_start":"2025-07-21T06:00:00+02:00","time_end":"2025-07-21T07:00:00+02:00"},{"SEK_per_kWh":0.58356,"EUR_per_kWh":0.05194,"EXR":11.235354,"time_start":"2025-07-21T07:00:00+02:00","time_end":"2025-07-21T08:00:00+02:00"},{"SEK_per_kWh":0.50739,"EUR_per_kWh":0.04516,"EXR":11.235354,"time_start":"2025-07-21T08:00:00+02:00","time_end":"2025-07-21T09:00:00+02:00"},{"SEK_per_kWh":0.40852,"EUR_per_kWh":0.03636,"EXR":11.235354,"time_start":"2025-07-21T09:00:00+02:00","time_end":"2025-07-21T10:00:00+02:00"},{"SEK_per_kWh":0.24707,"EUR_per_kWh":0.02199,"EXR":11.235354,"time_start":"2025-07-21T10:00:00+02:00","time_end":"2025-07-21T11:00:00+02:00"},{"SEK_per_kWh":0.26459,"EUR_per_kWh":0.02355,"EXR":11.235354,"time_start":"2025-07-21T11:00:00+02:00","time_end":"2025-07-21T12:00:00+02:00"},{"SEK_per_kWh":0.25875,"EUR_per_kWh":0.02303,"EXR":11.235354,"time_start":"2025-07-21T12:00:00+02:00","time_end":"2025-07-21T13:00:00+02:00"},{"SEK_per_kWh":0.30223,"EUR_per_kWh":0.0269,"EXR":11.235354,"time_start":"2025-07-21T13:00:00+02:00","time_end":"2025-07-21T14:00:00+02:00"},{"SEK_per_kWh":0.27336,"EUR_per_kWh":0.02433,"EXR":11.235354,"time_start":"2025-07-21T14:00:00+02:00","time_end":"2025-07-21T15:00:00+02:00"},{"SEK_per_kWh":0.26976,"EUR_per_kWh":0.02401,"EXR":11.235354,"time_start":"2025-07-21T15:00:00+02:00","time_end":"2025-07-21T16:00:00+02:00"},{"SEK_per_kWh":0.41919,"EUR_per_kWh":0.03731,"EXR":11.235354,"time_start":"2025-07-21T16:00:00+02:00","time_end":"2025-07-21T17:00:00+02:00"},{"SEK_per_kWh":0.51076,"EUR_per_kWh":0.04546,"EXR":11.235354,"time_start":"2025-07-21T17:00:00+02:00","time_end":"2025-07-21T18:00:00+02:00"},{"SEK_per_kWh":0.55334,"EUR_per_kWh":0.04925,"EXR":11.235354,"time_start":"2025-07-21T18:00:00+02:00","time_end":"2025-07-21T19:00:00+02:00"},{"SEK_per_kWh":0.8322,"EUR_per_kWh":0.07407,"EXR":11.235354,"time_start":"2025-07-21T19:00:00+02:00","time_end":"2025-07-21T20:00:00+02:00"},{"SEK_per_kWh":0.49121,"EUR_per_kWh":0.04372,"EXR":11.235354,"time_start":"2025-07-21T20:00:00+02:00","time_end":"2025-07-21T21:00:00+02:00"},{"SEK_per_kWh":0.31515,"EUR_per_kWh":0.02805,"EXR":11.235354,"time_start":"2025-07-21T21:00:00+02:00","time_end":"2025-07-21T22:00:00+02:00"},{"SEK_per_kWh":0.24695,"EUR_per_kWh":0.02198,"EXR":11.235354,"time_start":"2025-07-21T22:00:00+02:00","time_end":"2025-07-21T23:00:00+02:00"},{"SEK_per_kWh":0.13404,"EUR_per_kWh":0.01193,"EXR":11.235354,"time_start":"2025-07-21T23:00:00+02:00","time_end":"2025-07-22T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-22_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:14 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971922-d4a"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272601'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=ngRmRGrVyVQg3mn3EDGorWZIW7H6bP%2BhWNvkQh7wb2p9XDGQI%2BiBaot2VZlP9U9V%2F4P%2FZ2%2BOrR8fWMDV3%2F3%2BRhRC1B5ZRMvKcmiSxDcOLblKvg9Veg%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f8184e75a1-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.168,"EUR_per_kWh":0.01498,"EXR":11.215273,"time_start":"2025-07-22T00:00:00+02:00","time_end":"2025-07-22T01:00:00+02:00"},{"SEK_per_kWh":0.12393,"EUR_per_kWh":0.01105,"EXR":11.215273,"time_start":"2025-07-22T01:00:00+02:00","time_end":"2025-07-22T02:00:00+02:00"},{"SEK_per_kWh":0.11754,"EUR_per_kWh":0.01048,"EXR":11.215273,"time_start":"2025-07-22T02:00:00+02:00","time_end":"2025-07-22T03:00:00+02:00"},{"SEK_per_kWh":0.11305,"EUR_per_kWh":0.01008,"EXR":11.215273,"time_start":"2025-07-22T03:00:00+02:00","time_end":"2025-07-22T04:00:00+02:00"},{"SEK_per_kWh":0.12673,"EUR_per_kWh":0.0113,"EXR":11.215273,"time_start":"2025-07-22T04:00:00+02:00","time_end":"2025-07-22T05:00:00+02:00"},{"SEK_per_kWh":0.14311,"EUR_per_kWh":0.01276,"EXR":11.215273,"time_start":"2025-07-22T05:00:00+02:00","time_end":"2025-07-22T06:00:00+02:00"},{"SEK_per_kWh":0.18651,"EUR_per_kWh":0.01663,"EXR":11.215273,"time_start":"2025-07-22T06:00:00+02:00","time_end":"2025-07-22T07:00:00+02:00"},{"SEK_per_kWh":0.22217,"EUR_per_kWh":0.01981,"EXR":11.215273,"time_start":"2025-07-22T07:00:00+02:00","time_end":"2025-07-22T08:00:00+02:00"},{"SEK_per_kWh":0.30618,"EUR_per_kWh":0.0273,"EXR":11.215273,"time_start":"2025-07-22T08:00:00+02:00","time_end":"2025-07-22T09:00:00+02:00"},{"SEK_per_kWh":0.30147,"EUR_per_kWh":0.02688,"EXR":11.215273,"time_start":"2025-07-22T09:00:00+02:00","time_end":"2025-07-22T10:00:00+02:00"},{"SEK_per_kWh":0.26849,"EUR_per_kWh":0.02394,"EXR":11.215273,"time_start":"2025-07-22T10:00:00+02:00","time_end":"2025-07-22T11:00:00+02:00"},{"SEK_per_kWh":0.24528,"EUR_per_kWh":0.02187,"EXR":11.215273,"time_start":"2025-07-22T11:00:00+02:00","time_end":"2025-07-22T12:00:00+02:00"},{"SEK_per_kWh":0.27242,"EUR_per_kWh":0.02429,"EXR":11.215273,"time_start":"2025-07-22T12:00:00+02:00","time_end":"2025-07-22T13:00:00+02:00"},{"SEK_per_kWh":0.11866,"EUR_per_kWh":0.01058,"EXR":11.215273,"time_start":"2025-07-22T13:00:00+02:00","time_end":"2025-07-22T14:00:00+02:00"},{"SEK_per_kWh":0.11226,"EUR_per_kWh":0.01001,"EXR":11.215273,"time_start":"2025-07-22T14:00:00+02:00","time_end":"2025-07-22T15:00:00+02:00"},{"SEK_per_kWh":0.14972,"EUR_per_kWh":0.01335,"EXR":11.215273,"time_start":"2025-07-22T15:00:00+02:00","time_end":"2025-07-22T16:00:00+02:00"},{"SEK_per_kWh":0.30517,"EUR_per_kWh":0.02721,"EXR":11.215273,"time_start":"2025-07-22T16:00:00+02:00","time_end":"2025-07-22T17:00:00+02:00"},{"SEK_per_kWh":0.45153,"EUR_per_kWh":0.04026,"EXR":11.215273,"time_start":"2025-07-22T17:00:00+02:00","time_end":"2025-07-22T18:00:00+02:00"},{"SEK_per_kWh":0.48618,"EUR_per_kWh":0.04335,"EXR":11.215273,"time_start":"2025-07-22T18:00:00+02:00","time_end":"2025-07-22T19:00:00+02:00"},{"SEK_per_kWh":0.50357,"EUR_per_kWh":0.0449,"EXR":11.215273,"time_start":"2025-07-22T19:00:00+02:00","time_end":"2025-07-22T20:00:00+02:00"},{"SEK_per_kWh":0.50379,"EUR_per_kWh":0.04492,"EXR":11.215273,"time_start":"2025-07-22T20:00:00+02:00","time_end":"2025-07-22T21:00:00+02:00"},{"SEK_per_kWh":0.40936,"EUR_per_kWh":0.0365,"EXR":11.215273,"time_start":"2025-07-22T21:00:00+02:00","time_end":"2025-07-22T22:00:00+02:00"},{"SEK_per_kWh":0.3553,"EUR_per_kWh":0.03168,"EXR":11.215273,"time_start":"2025-07-22T22:00:00+02:00","time_end":"2025-07-22T23:00:00+02:00"},{"SEK_per_kWh":0.20995,"EUR_per_kWh":0.01872,"EXR":11.215273,"time_start":"2025-07-22T23:00:00+02:00","time_end":"2025-07-23T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-23_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:13 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971921-d4c"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272601'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=gTFEYXGqmwdfiFvuumbgTM7RsaDQWTcyjK7takJA8Y9q8U%2FUGwMN7dT%2FWxUq6H90i0krE9YJinwfmB5cENVGfu6oQUG7nk8u4VOI%2BW2sUlTxfMRp5w%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f83bd2c9fa-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.12125,"EUR_per_kWh":0.01081,"EXR":11.216686,"time_start":"2025-07-23T00:00:00+02:00","time_end":"2025-07-23T01:00:00+02:00"},{"SEK_per_kWh":0.12944,"EUR_per_kWh":0.01154,"EXR":11.216686,"time_start":"2025-07-23T01:00:00+02:00","time_end":"2025-07-23T02:00:00+02:00"},{"SEK_per_kWh":0.10959,"EUR_per_kWh":0.00977,"EXR":11.216686,"time_start":"2025-07-23T02:00:00+02:00","time_end":"2025-07-23T03:00:00+02:00"},{"SEK_per_kWh":0.10633,"EUR_per_kWh":0.00948,"EXR":11.216686,"time_start":"2025-07-23T03:00:00+02:00","time_end":"2025-07-23T04:00:00+02:00"},{"SEK_per_kWh":0.1097,"EUR_per_kWh":0.00978,"EXR":11.216686,"time_start":"2025-07-23T04:00:00+02:00","time_end":"2025-07-23T05:00:00+02:00"},{"SEK_per_kWh":0.14582,"EUR_per_kWh":0.013,"EXR":11.216686,"time_start":"2025-07-23T05:00:00+02:00","time_end":"2025-07-23T06:00:00+02:00"},{"SEK_per_kWh":0.36993,"EUR_per_kWh":0.03298,"EXR":11.216686,"time_start":"2025-07-23T06:00:00+02:00","time_end":"2025-07-23T07:00:00+02:00"},{"SEK_per_kWh":0.18552,"EUR_per_kWh":0.01654,"EXR":11.216686,"time_start":"2025-07-23T07:00:00+02:00","time_end":"2025-07-23T08:00:00+02:00"},{"SEK_per_kWh":0.43543,"EUR_per_kWh":0.03882,"EXR":11.216686,"time_start":"2025-07-23T08:00:00+02:00","time_end":"2025-07-23T09:00:00+02:00"},{"SEK_per_kWh":0.43308,"EUR_per_kWh":0.03861,"EXR":11.216686,"time_start":"2025-07-23T09:00:00+02:00","time_end":"2025-07-23T10:00:00+02:00"},{"SEK_per_kWh":0.32461,"EUR_per_kWh":0.02894,"EXR":11.216686,"time_start":"2025-07-23T10:00:00+02:00","time_end":"2025-07-23T11:00:00+02:00"},{"SEK_per_kWh":0.29993,"EUR_per_kWh":0.02674,"EXR":11.216686,"time_start":"2025-07-23T11:00:00+02:00","time_end":"2025-07-23T12:00:00+02:00"},{"SEK_per_kWh":0.28019,"EUR_per_kWh":0.02498,"EXR":11.216686,"time_start":"2025-07-23T12:00:00+02:00","time_end":"2025-07-23T13:00:00+02:00"},{"SEK_per_kWh":0.22916,"EUR_per_kWh":0.02043,"EXR":11.216686,"time_start":"2025-07-23T13:00:00+02:00","time_end":"2025-07-23T14:00:00+02:00"},{"SEK_per_kWh":0.25137,"EUR_per_kWh":0.02241,"EXR":11.216686,"time_start":"2025-07-23T14:00:00+02:00","time_end":"2025-07-23T15:00:00+02:00"},{"SEK_per_kWh":0.31923,"EUR_per_kWh":0.02846,"EXR":11.216686,"time_start":"2025-07-23T15:00:00+02:00","time_end":"2025-07-23T16:00:00+02:00"},{"SEK_per_kWh":0.39763,"EUR_per_kWh":0.03545,"EXR":11.216686,"time_start":"2025-07-23T16:00:00+02:00","time_end":"2025-07-23T17:00:00+02:00"},{"SEK_per_kWh":0.61748,"EUR_per_kWh":0.05505,"EXR":11.216686,"time_start":"2025-07-23T17:00:00+02:00","time_end":"2025-07-23T18:00:00+02:00"},{"SEK_per_kWh":0.68141,"EUR_per_kWh":0.06075,"EXR":11.216686,"time_start":"2025-07-23T18:00:00+02:00","time_end":"2025-07-23T19:00:00+02:00"},{"SEK_per_kWh":0.7818,"EUR_per_kWh":0.0697,"EXR":11.216686,"time_start":"2025-07-23T19:00:00+02:00","time_end":"2025-07-23T20:00:00+02:00"},{"SEK_per_kWh":0.79347,"EUR_per_kWh":0.07074,"EXR":11.216686,"time_start":"2025-07-23T20:00:00+02:00","time_end":"2025-07-23T21:00:00+02:00"},{"SEK_per_kWh":0.79695,"EUR_per_kWh":0.07105,"EXR":11.216686,"time_start":"2025-07-23T21:00:00+02:00","time_end":"2025-07-23T22:00:00+02:00"},{"SEK_per_kWh":0.72976,"EUR_per_kWh":0.06506,"EXR":11.216686,"time_start":"2025-07-23T22:00:00+02:00","time_end":"2025-07-23T23:00:00+02:00"},{"SEK_per_kWh":0.65977,"EUR_per_kWh":0.05882,"EXR":11.216686,"time_start":"2025-07-23T23:00:00+02:00","time_end":"2025-07-24T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-24_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:47 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971943-d44"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272600'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=O301PxfdqiWpwwRKvu16gfunkBHxC8kfnSHShdNje0p%2B8LzFMCG4EJ%2B3BI8mPkuKn8E1UpuWhnce5XIRqUjVtdobhT7jhcDOKsFOgx3D00kxqISdww%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f868fa3ee7-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.63845,"EUR_per_kWh":0.05728,"EXR":11.146076,"time_start":"2025-07-24T00:00:00+02:00","time_end":"2025-07-24T01:00:00+02:00"},{"SEK_per_kWh":0.31878,"EUR_per_kWh":0.0286,"EXR":11.146076,"time_start":"2025-07-24T01:00:00+02:00","time_end":"2025-07-24T02:00:00+02:00"},{"SEK_per_kWh":0.38276,"EUR_per_kWh":0.03434,"EXR":11.146076,"time_start":"2025-07-24T02:00:00+02:00","time_end":"2025-07-24T03:00:00+02:00"},{"SEK_per_kWh":0.3803,"EUR_per_kWh":0.03412,"EXR":11.146076,"time_start":"2025-07-24T03:00:00+02:00","time_end":"2025-07-24T04:00:00+02:00"},{"SEK_per_kWh":0.32847,"EUR_per_kWh":0.02947,"EXR":11.146076,"time_start":"2025-07-24T04:00:00+02:00","time_end":"2025-07-24T05:00:00+02:00"},{"SEK_per_kWh":0.33862,"EUR_per_kWh":0.03038,"EXR":11.146076,"time_start":"2025-07-24T05:00:00+02:00","time_end":"2025-07-24T06:00:00+02:00"},{"SEK_per_kWh":0.36671,"EUR_per_kWh":0.0329,"EXR":11.146076,"time_start":"2025-07-24T06:00:00+02:00","time_end":"2025-07-24T07:00:00+02:00"},{"SEK_per_kWh":0.77354,"EUR_per_kWh":0.0694,"EXR":11.146076,"time_start":"2025-07-24T07:00:00+02:00","time_end":"2025-07-24T08:00:00+02:00"},{"SEK_per_kWh":0.66821,"EUR_per_kWh":0.05995,"EXR":11.146076,"time_start":"2025-07-24T08:00:00+02:00","time_end":"2025-07-24T09:00:00+02:00"},{"SEK_per_kWh":0.44807,"EUR_per_kWh":0.0402,"EXR":11.146076,"time_start":"2025-07-24T09:00:00+02:00","time_end":"2025-07-24T10:00:00+02:00"},{"SEK_per_kWh":0.44451,"EUR_per_kWh":0.03988,"EXR":11.146076,"time_start":"2025-07-24T10:00:00+02:00","time_end":"2025-07-24T11:00:00+02:00"},{"SEK_per_kWh":0.46791,"EUR_per_kWh":0.04198,"EXR":11.146076,"time_start":"2025-07-24T11:00:00+02:00","time_end":"2025-07-24T12:00:00+02:00"},{"SEK_per_kWh":0.49477,"EUR_per_kWh":0.04439,"EXR":11.146076,"time_start":"2025-07-24T12:00:00+02:00","time_end":"2025-07-24T13:00:00+02:00"},{"SEK_per_kWh":0.50157,"EUR_per_kWh":0.045,"EXR":11.146076,"time_start":"2025-07-24T13:00:00+02:00","time_end":"2025-07-24T14:00:00+02:00"},{"SEK_per_kWh":0.56076,"EUR_per_kWh":0.05031,"EXR":11.146076,"time_start":"2025-07-24T14:00:00+02:00","time_end":"2025-07-24T15:00:00+02:00"},{"SEK_per_kWh":0.70443,"EUR_per_kWh":0.0632,"EXR":11.146076,"time_start":"2025-07-24T15:00:00+02:00","time_end":"2025-07-24T16:00:00+02:00"},{"SEK_per_kWh":0.8471,"EUR_per_kWh":0.076,"EXR":11.146076,"time_start":"2025-07-24T16:00:00+02:00","time_end":"2025-07-24T17:00:00+02:00"},{"SEK_per_kWh":1.03413,"EUR_per_kWh":0.09278,"EXR":11.146076,"time_start":"2025-07-24T17:00:00+02:00","time_end":"2025-07-24T18:00:00+02:00"},{"SEK_per_kWh":1.17379,"EUR_per_kWh":0.10531,"EXR":11.146076,"time_start":"2025-07-24T18:00:00+02:00","time_end":"2025-07-24T19:00:00+02:00"},{"SEK_per_kWh":1.15195,"EUR_per_kWh":0.10335,"EXR":11.146076,"time_start":"2025-07-24T19:00:00+02:00","time_end":"2025-07-24T20:00:00+02:00"},{"SEK_per_kWh":0.9648,"EUR_per_kWh":0.08656,"EXR":11.146076,"time_start":"2025-07-24T20:00:00+02:00","time_end":"2025-07-24T21:00:00+02:00"},{"SEK_per_kWh":0.87296,"EUR_per_kWh":0.07832,"EXR":11.146076,"time_start":"2025-07-24T21:00:00+02:00","time_end":"2025-07-24T22:00:00+02:00"},{"SEK_per_kWh":0.73363,"EUR_per_kWh":0.06582,"EXR":11.146076,"time_start":"2025-07-24T22:00:00+02:00","time_end":"2025-07-24T23:00:00+02:00"},{"SEK_per_kWh":0.66765,"EUR_per_kWh":0.0599,"EXR":11.146076,"time_start":"2025-07-24T23:00:00+02:00","time_end":"2025-07-25T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-25_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:47 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971943-d4c"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '92309'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=r9MzZ1Az2xmYmFX3sFaDvY%2F25tDjA4OHH42aMTCB%2FmCGMpTmKn3tdSIGrDgfP40Ta6hnXvKWkCE6%2BF9iwtsYYdJHjJZGcXpYx2qEjXXPeTYkczR6Jw%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f89fac4e46-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.43846,"EUR_per_kWh":0.03916,"EXR":11.196545,"time_start":"2025-07-25T00:00:00+02:00","time_end":"2025-07-25T01:00:00+02:00"},{"SEK_per_kWh":0.32616,"EUR_per_kWh":0.02913,"EXR":11.196545,"time_start":"2025-07-25T01:00:00+02:00","time_end":"2025-07-25T02:00:00+02:00"},{"SEK_per_kWh":0.11152,"EUR_per_kWh":0.00996,"EXR":11.196545,"time_start":"2025-07-25T02:00:00+02:00","time_end":"2025-07-25T03:00:00+02:00"},{"SEK_per_kWh":0.10995,"EUR_per_kWh":0.00982,"EXR":11.196545,"time_start":"2025-07-25T03:00:00+02:00","time_end":"2025-07-25T04:00:00+02:00"},{"SEK_per_kWh":0.11085,"EUR_per_kWh":0.0099,"EXR":11.196545,"time_start":"2025-07-25T04:00:00+02:00","time_end":"2025-07-25T05:00:00+02:00"},{"SEK_per_kWh":0.14197,"EUR_per_kWh":0.01268,"EXR":11.196545,"time_start":"2025-07-25T05:00:00+02:00","time_end":"2025-07-25T06:00:00+02:00"},{"SEK_per_kWh":0.18844,"EUR_per_kWh":0.01683,"EXR":11.196545,"time_start":"2025-07-25T06:00:00+02:00","time_end":"2025-07-25T07:00:00+02:00"},{"SEK_per_kWh":0.48123,"EUR_per_kWh":0.04298,"EXR":11.196545,"time_start":"2025-07-25T07:00:00+02:00","time_end":"2025-07-25T08:00:00+02:00"},{"SEK_per_kWh":0.46958,"EUR_per_kWh":0.04194,"EXR":11.196545,"time_start":"2025-07-25T08:00:00+02:00","time_end":"2025-07-25T09:00:00+02:00"},{"SEK_per_kWh":0.46824,"EUR_per_kWh":0.04182,"EXR":11.196545,"time_start":"2025-07-25T09:00:00+02:00","time_end":"2025-07-25T10:00:00+02:00"},{"SEK_per_kWh":0.35807,"EUR_per_kWh":0.03198,"EXR":11.196545,"time_start":"2025-07-25T10:00:00+02:00","time_end":"2025-07-25T11:00:00+02:00"},{"SEK_per_kWh":0.40296,"EUR_per_kWh":0.03599,"EXR":11.196545,"time_start":"2025-07-25T11:00:00+02:00","time_end":"2025-07-25T12:00:00+02:00"},{"SEK_per_kWh":0.36915,"EUR_per_kWh":0.03297,"EXR":11.196545,"time_start":"2025-07-25T12:00:00+02:00","time_end":"2025-07-25T13:00:00+02:00"},{"SEK_per_kWh":0.26861,"EUR_per_kWh":0.02399,"EXR":11.196545,"time_start":"2025-07-25T13:00:00+02:00","time_end":"2025-07-25T14:00:00+02:00"},{"SEK_per_kWh":0.4042,"EUR_per_kWh":0.0361,"EXR":11.196545,"time_start":"2025-07-25T14:00:00+02:00","time_end":"2025-07-25T15:00:00+02:00"},{"SEK_per_kWh":0.40252,"EUR_per_kWh":0.03595,"EXR":11.196545,"time_start":"2025-07-25T15:00:00+02:00","time_end":"2025-07-25T16:00:00+02:00"},{"SEK_per_kWh":0.43431,"EUR_per_kWh":0.03879,"EXR":11.196545,"time_start":"2025-07-25T16:00:00+02:00","time_end":"2025-07-25T17:00:00+02:00"},{"SEK_per_kWh":0.47865,"EUR_per_kWh":0.04275,"EXR":11.196545,"time_start":"2025-07-25T17:00:00+02:00","time_end":"2025-07-25T18:00:00+02:00"},{"SEK_per_kWh":0.49701,"EUR_per_kWh":0.04439,"EXR":11.196545,"time_start":"2025-07-25T18:00:00+02:00","time_end":"2025-07-25T19:00:00+02:00"},{"SEK_per_kWh":0.53531,"EUR_per_kWh":0.04781,"EXR":11.196545,"time_start":"2025-07-25T19:00:00+02:00","time_end":"2025-07-25T20:00:00+02:00"},{"SEK_per_kWh":0.50608,"EUR_per_kWh":0.0452,"EXR":11.196545,"time_start":"2025-07-25T20:00:00+02:00","time_end":"2025-07-25T21:00:00+02:00"},{"SEK_per_kWh":0.47708,"EUR_per_kWh":0.04261,"EXR":11.196545,"time_start":"2025-07-25T21:00:00+02:00","time_end":"2025-07-25T22:00:00+02:00"},{"SEK_per_kWh":0.44316,"EUR_per_kWh":0.03958,"EXR":11.196545,"time_start":"2025-07-25T22:00:00+02:00","time_end":"2025-07-25T23:00:00+02:00"},{"SEK_per_kWh":0.4239,"EUR_per_kWh":0.03786,"EXR":11.196545,"time_start":"2025-07-25T23:00:00+02:00","time_end":"2025-07-26T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-26_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:42 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971902-d4d"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272600'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=%2B8Q0v7YpT6GvpZwb5GTEDkZtOj%2FxQWYx1UC7y%2F7rXfkrh0IJg0EIxaJgMemWHii4a9QAOUvyy9t85n3rFOZ5YYkuPeCB0hkvMQJ%2BNCAqGdIRI2c%3D"}]}'
+      Cf-Ray:
+      - 9a1989f8be652d8f-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.44437,"EUR_per_kWh":0.03977,"EXR":11.173534,"time_start":"2025-07-26T00:00:00+02:00","time_end":"2025-07-26T01:00:00+02:00"},{"SEK_per_kWh":0.43454,"EUR_per_kWh":0.03889,"EXR":11.173534,"time_start":"2025-07-26T01:00:00+02:00","time_end":"2025-07-26T02:00:00+02:00"},{"SEK_per_kWh":0.42895,"EUR_per_kWh":0.03839,"EXR":11.173534,"time_start":"2025-07-26T02:00:00+02:00","time_end":"2025-07-26T03:00:00+02:00"},{"SEK_per_kWh":0.16671,"EUR_per_kWh":0.01492,"EXR":11.173534,"time_start":"2025-07-26T03:00:00+02:00","time_end":"2025-07-26T04:00:00+02:00"},{"SEK_per_kWh":0.15866,"EUR_per_kWh":0.0142,"EXR":11.173534,"time_start":"2025-07-26T04:00:00+02:00","time_end":"2025-07-26T05:00:00+02:00"},{"SEK_per_kWh":0.14894,"EUR_per_kWh":0.01333,"EXR":11.173534,"time_start":"2025-07-26T05:00:00+02:00","time_end":"2025-07-26T06:00:00+02:00"},{"SEK_per_kWh":0.43811,"EUR_per_kWh":0.03921,"EXR":11.173534,"time_start":"2025-07-26T06:00:00+02:00","time_end":"2025-07-26T07:00:00+02:00"},{"SEK_per_kWh":0.44124,"EUR_per_kWh":0.03949,"EXR":11.173534,"time_start":"2025-07-26T07:00:00+02:00","time_end":"2025-07-26T08:00:00+02:00"},{"SEK_per_kWh":0.39666,"EUR_per_kWh":0.0355,"EXR":11.173534,"time_start":"2025-07-26T08:00:00+02:00","time_end":"2025-07-26T09:00:00+02:00"},{"SEK_per_kWh":0.37342,"EUR_per_kWh":0.03342,"EXR":11.173534,"time_start":"2025-07-26T09:00:00+02:00","time_end":"2025-07-26T10:00:00+02:00"},{"SEK_per_kWh":0.3313,"EUR_per_kWh":0.02965,"EXR":11.173534,"time_start":"2025-07-26T10:00:00+02:00","time_end":"2025-07-26T11:00:00+02:00"},{"SEK_per_kWh":0.29286,"EUR_per_kWh":0.02621,"EXR":11.173534,"time_start":"2025-07-26T11:00:00+02:00","time_end":"2025-07-26T12:00:00+02:00"},{"SEK_per_kWh":0.20124,"EUR_per_kWh":0.01801,"EXR":11.173534,"time_start":"2025-07-26T12:00:00+02:00","time_end":"2025-07-26T13:00:00+02:00"},{"SEK_per_kWh":0.12771,"EUR_per_kWh":0.01143,"EXR":11.173534,"time_start":"2025-07-26T13:00:00+02:00","time_end":"2025-07-26T14:00:00+02:00"},{"SEK_per_kWh":0.11609,"EUR_per_kWh":0.01039,"EXR":11.173534,"time_start":"2025-07-26T14:00:00+02:00","time_end":"2025-07-26T15:00:00+02:00"},{"SEK_per_kWh":0.16436,"EUR_per_kWh":0.01471,"EXR":11.173534,"time_start":"2025-07-26T15:00:00+02:00","time_end":"2025-07-26T16:00:00+02:00"},{"SEK_per_kWh":0.25185,"EUR_per_kWh":0.02254,"EXR":11.173534,"time_start":"2025-07-26T16:00:00+02:00","time_end":"2025-07-26T17:00:00+02:00"},{"SEK_per_kWh":0.47622,"EUR_per_kWh":0.04262,"EXR":11.173534,"time_start":"2025-07-26T17:00:00+02:00","time_end":"2025-07-26T18:00:00+02:00"},{"SEK_per_kWh":0.52784,"EUR_per_kWh":0.04724,"EXR":11.173534,"time_start":"2025-07-26T18:00:00+02:00","time_end":"2025-07-26T19:00:00+02:00"},{"SEK_per_kWh":0.63365,"EUR_per_kWh":0.05671,"EXR":11.173534,"time_start":"2025-07-26T19:00:00+02:00","time_end":"2025-07-26T20:00:00+02:00"},{"SEK_per_kWh":0.64158,"EUR_per_kWh":0.05742,"EXR":11.173534,"time_start":"2025-07-26T20:00:00+02:00","time_end":"2025-07-26T21:00:00+02:00"},{"SEK_per_kWh":0.69153,"EUR_per_kWh":0.06189,"EXR":11.173534,"time_start":"2025-07-26T21:00:00+02:00","time_end":"2025-07-26T22:00:00+02:00"},{"SEK_per_kWh":0.59365,"EUR_per_kWh":0.05313,"EXR":11.173534,"time_start":"2025-07-26T22:00:00+02:00","time_end":"2025-07-26T23:00:00+02:00"},{"SEK_per_kWh":0.5094,"EUR_per_kWh":0.04559,"EXR":11.173534,"time_start":"2025-07-26T23:00:00+02:00","time_end":"2025-07-27T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-27_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:42 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971902-d4c"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '1011'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=9QnzOqFkRw1ZzCVXhDb1uMVIVY1vA%2FPzyRpaHGumeXOKoWSX%2BiOtZ0wpoDvY%2FKJRSKKSL0hlTdeNn1S2NeM8cSnflemfLhvNSZzztBuySQuTpqS2xg%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f8dd72f351-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.54211,"EUR_per_kWh":0.04848,"EXR":11.182226,"time_start":"2025-07-27T00:00:00+02:00","time_end":"2025-07-27T01:00:00+02:00"},{"SEK_per_kWh":0.53485,"EUR_per_kWh":0.04783,"EXR":11.182226,"time_start":"2025-07-27T01:00:00+02:00","time_end":"2025-07-27T02:00:00+02:00"},{"SEK_per_kWh":0.50398,"EUR_per_kWh":0.04507,"EXR":11.182226,"time_start":"2025-07-27T02:00:00+02:00","time_end":"2025-07-27T03:00:00+02:00"},{"SEK_per_kWh":0.46786,"EUR_per_kWh":0.04184,"EXR":11.182226,"time_start":"2025-07-27T03:00:00+02:00","time_end":"2025-07-27T04:00:00+02:00"},{"SEK_per_kWh":0.4597,"EUR_per_kWh":0.04111,"EXR":11.182226,"time_start":"2025-07-27T04:00:00+02:00","time_end":"2025-07-27T05:00:00+02:00"},{"SEK_per_kWh":0.43678,"EUR_per_kWh":0.03906,"EXR":11.182226,"time_start":"2025-07-27T05:00:00+02:00","time_end":"2025-07-27T06:00:00+02:00"},{"SEK_per_kWh":0.42504,"EUR_per_kWh":0.03801,"EXR":11.182226,"time_start":"2025-07-27T06:00:00+02:00","time_end":"2025-07-27T07:00:00+02:00"},{"SEK_per_kWh":0.45199,"EUR_per_kWh":0.04042,"EXR":11.182226,"time_start":"2025-07-27T07:00:00+02:00","time_end":"2025-07-27T08:00:00+02:00"},{"SEK_per_kWh":0.48084,"EUR_per_kWh":0.043,"EXR":11.182226,"time_start":"2025-07-27T08:00:00+02:00","time_end":"2025-07-27T09:00:00+02:00"},{"SEK_per_kWh":0.48061,"EUR_per_kWh":0.04298,"EXR":11.182226,"time_start":"2025-07-27T09:00:00+02:00","time_end":"2025-07-27T10:00:00+02:00"},{"SEK_per_kWh":0.41318,"EUR_per_kWh":0.03695,"EXR":11.182226,"time_start":"2025-07-27T10:00:00+02:00","time_end":"2025-07-27T11:00:00+02:00"},{"SEK_per_kWh":0.38724,"EUR_per_kWh":0.03463,"EXR":11.182226,"time_start":"2025-07-27T11:00:00+02:00","time_end":"2025-07-27T12:00:00+02:00"},{"SEK_per_kWh":0.40323,"EUR_per_kWh":0.03606,"EXR":11.182226,"time_start":"2025-07-27T12:00:00+02:00","time_end":"2025-07-27T13:00:00+02:00"},{"SEK_per_kWh":0.15465,"EUR_per_kWh":0.01383,"EXR":11.182226,"time_start":"2025-07-27T13:00:00+02:00","time_end":"2025-07-27T14:00:00+02:00"},{"SEK_per_kWh":0.09896,"EUR_per_kWh":0.00885,"EXR":11.182226,"time_start":"2025-07-27T14:00:00+02:00","time_end":"2025-07-27T15:00:00+02:00"},{"SEK_per_kWh":0.18473,"EUR_per_kWh":0.01652,"EXR":11.182226,"time_start":"2025-07-27T15:00:00+02:00","time_end":"2025-07-27T16:00:00+02:00"},{"SEK_per_kWh":0.40189,"EUR_per_kWh":0.03594,"EXR":11.182226,"time_start":"2025-07-27T16:00:00+02:00","time_end":"2025-07-27T17:00:00+02:00"},{"SEK_per_kWh":0.45288,"EUR_per_kWh":0.0405,"EXR":11.182226,"time_start":"2025-07-27T17:00:00+02:00","time_end":"2025-07-27T18:00:00+02:00"},{"SEK_per_kWh":0.4729,"EUR_per_kWh":0.04229,"EXR":11.182226,"time_start":"2025-07-27T18:00:00+02:00","time_end":"2025-07-27T19:00:00+02:00"},{"SEK_per_kWh":0.72696,"EUR_per_kWh":0.06501,"EXR":11.182226,"time_start":"2025-07-27T19:00:00+02:00","time_end":"2025-07-27T20:00:00+02:00"},{"SEK_per_kWh":0.76106,"EUR_per_kWh":0.06806,"EXR":11.182226,"time_start":"2025-07-27T20:00:00+02:00","time_end":"2025-07-27T21:00:00+02:00"},{"SEK_per_kWh":0.73143,"EUR_per_kWh":0.06541,"EXR":11.182226,"time_start":"2025-07-27T21:00:00+02:00","time_end":"2025-07-27T22:00:00+02:00"},{"SEK_per_kWh":0.50488,"EUR_per_kWh":0.04515,"EXR":11.182226,"time_start":"2025-07-27T22:00:00+02:00","time_end":"2025-07-27T23:00:00+02:00"},{"SEK_per_kWh":0.44684,"EUR_per_kWh":0.03996,"EXR":11.182226,"time_start":"2025-07-27T23:00:00+02:00","time_end":"2025-07-28T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-28_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:09 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"6897191d-d4d"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272599'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=VW6A93ip1zQFP91Dp6hoAJyn8XTcIfrv1pHYEjnBbDTo2z1ZiUlOjnvMVEVQOlpysgWDtMdHcWKscDP3CrYJOc%2BVTqoYmEVLZw6%2BpE5W%2FoPzsm2wpw%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f8fbd2349b-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.48016,"EUR_per_kWh":0.04294,"EXR":11.182226,"time_start":"2025-07-28T00:00:00+02:00","time_end":"2025-07-28T01:00:00+02:00"},{"SEK_per_kWh":0.45266,"EUR_per_kWh":0.04048,"EXR":11.182226,"time_start":"2025-07-28T01:00:00+02:00","time_end":"2025-07-28T02:00:00+02:00"},{"SEK_per_kWh":0.43365,"EUR_per_kWh":0.03878,"EXR":11.182226,"time_start":"2025-07-28T02:00:00+02:00","time_end":"2025-07-28T03:00:00+02:00"},{"SEK_per_kWh":0.4105,"EUR_per_kWh":0.03671,"EXR":11.182226,"time_start":"2025-07-28T03:00:00+02:00","time_end":"2025-07-28T04:00:00+02:00"},{"SEK_per_kWh":0.41956,"EUR_per_kWh":0.03752,"EXR":11.182226,"time_start":"2025-07-28T04:00:00+02:00","time_end":"2025-07-28T05:00:00+02:00"},{"SEK_per_kWh":0.43286,"EUR_per_kWh":0.03871,"EXR":11.182226,"time_start":"2025-07-28T05:00:00+02:00","time_end":"2025-07-28T06:00:00+02:00"},{"SEK_per_kWh":0.47972,"EUR_per_kWh":0.0429,"EXR":11.182226,"time_start":"2025-07-28T06:00:00+02:00","time_end":"2025-07-28T07:00:00+02:00"},{"SEK_per_kWh":0.54949,"EUR_per_kWh":0.04914,"EXR":11.182226,"time_start":"2025-07-28T07:00:00+02:00","time_end":"2025-07-28T08:00:00+02:00"},{"SEK_per_kWh":0.57219,"EUR_per_kWh":0.05117,"EXR":11.182226,"time_start":"2025-07-28T08:00:00+02:00","time_end":"2025-07-28T09:00:00+02:00"},{"SEK_per_kWh":0.53507,"EUR_per_kWh":0.04785,"EXR":11.182226,"time_start":"2025-07-28T09:00:00+02:00","time_end":"2025-07-28T10:00:00+02:00"},{"SEK_per_kWh":0.52747,"EUR_per_kWh":0.04717,"EXR":11.182226,"time_start":"2025-07-28T10:00:00+02:00","time_end":"2025-07-28T11:00:00+02:00"},{"SEK_per_kWh":0.48408,"EUR_per_kWh":0.04329,"EXR":11.182226,"time_start":"2025-07-28T11:00:00+02:00","time_end":"2025-07-28T12:00:00+02:00"},{"SEK_per_kWh":0.48173,"EUR_per_kWh":0.04308,"EXR":11.182226,"time_start":"2025-07-28T12:00:00+02:00","time_end":"2025-07-28T13:00:00+02:00"},{"SEK_per_kWh":0.49291,"EUR_per_kWh":0.04408,"EXR":11.182226,"time_start":"2025-07-28T13:00:00+02:00","time_end":"2025-07-28T14:00:00+02:00"},{"SEK_per_kWh":0.55643,"EUR_per_kWh":0.04976,"EXR":11.182226,"time_start":"2025-07-28T14:00:00+02:00","time_end":"2025-07-28T15:00:00+02:00"},{"SEK_per_kWh":0.56817,"EUR_per_kWh":0.05081,"EXR":11.182226,"time_start":"2025-07-28T15:00:00+02:00","time_end":"2025-07-28T16:00:00+02:00"},{"SEK_per_kWh":0.65886,"EUR_per_kWh":0.05892,"EXR":11.182226,"time_start":"2025-07-28T16:00:00+02:00","time_end":"2025-07-28T17:00:00+02:00"},{"SEK_per_kWh":0.61156,"EUR_per_kWh":0.05469,"EXR":11.182226,"time_start":"2025-07-28T17:00:00+02:00","time_end":"2025-07-28T18:00:00+02:00"},{"SEK_per_kWh":0.62542,"EUR_per_kWh":0.05593,"EXR":11.182226,"time_start":"2025-07-28T18:00:00+02:00","time_end":"2025-07-28T19:00:00+02:00"},{"SEK_per_kWh":0.63705,"EUR_per_kWh":0.05697,"EXR":11.182226,"time_start":"2025-07-28T19:00:00+02:00","time_end":"2025-07-28T20:00:00+02:00"},{"SEK_per_kWh":0.62352,"EUR_per_kWh":0.05576,"EXR":11.182226,"time_start":"2025-07-28T20:00:00+02:00","time_end":"2025-07-28T21:00:00+02:00"},{"SEK_per_kWh":0.576,"EUR_per_kWh":0.05151,"EXR":11.182226,"time_start":"2025-07-28T21:00:00+02:00","time_end":"2025-07-28T22:00:00+02:00"},{"SEK_per_kWh":0.47905,"EUR_per_kWh":0.04284,"EXR":11.182226,"time_start":"2025-07-28T22:00:00+02:00","time_end":"2025-07-28T23:00:00+02:00"},{"SEK_per_kWh":0.20184,"EUR_per_kWh":0.01805,"EXR":11.182226,"time_start":"2025-07-28T23:00:00+02:00","time_end":"2025-07-29T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-29_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:47:09 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"6897191d-d4c"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272599'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=%2FJWpJu8g5KhjNiW1AneuRKqA2ttjRKU6CwksbOlGli9G3RnDYzMZGc%2BTRhCF7qUyAoADV%2FJaGllTm9YUJgyaVtIqt1OlpQCPWvDdM%2FRd5oteDgGteA%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f91ec08a18-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.20232,"EUR_per_kWh":0.01812,"EXR":11.165779,"time_start":"2025-07-29T00:00:00+02:00","time_end":"2025-07-29T01:00:00+02:00"},{"SEK_per_kWh":0.10741,"EUR_per_kWh":0.00962,"EXR":11.165779,"time_start":"2025-07-29T01:00:00+02:00","time_end":"2025-07-29T02:00:00+02:00"},{"SEK_per_kWh":0.06822,"EUR_per_kWh":0.00611,"EXR":11.165779,"time_start":"2025-07-29T02:00:00+02:00","time_end":"2025-07-29T03:00:00+02:00"},{"SEK_per_kWh":0.05974,"EUR_per_kWh":0.00535,"EXR":11.165779,"time_start":"2025-07-29T03:00:00+02:00","time_end":"2025-07-29T04:00:00+02:00"},{"SEK_per_kWh":0.05907,"EUR_per_kWh":0.00529,"EXR":11.165779,"time_start":"2025-07-29T04:00:00+02:00","time_end":"2025-07-29T05:00:00+02:00"},{"SEK_per_kWh":0.06934,"EUR_per_kWh":0.00621,"EXR":11.165779,"time_start":"2025-07-29T05:00:00+02:00","time_end":"2025-07-29T06:00:00+02:00"},{"SEK_per_kWh":0.07414,"EUR_per_kWh":0.00664,"EXR":11.165779,"time_start":"2025-07-29T06:00:00+02:00","time_end":"2025-07-29T07:00:00+02:00"},{"SEK_per_kWh":0.11166,"EUR_per_kWh":0.01,"EXR":11.165779,"time_start":"2025-07-29T07:00:00+02:00","time_end":"2025-07-29T08:00:00+02:00"},{"SEK_per_kWh":0.12037,"EUR_per_kWh":0.01078,"EXR":11.165779,"time_start":"2025-07-29T08:00:00+02:00","time_end":"2025-07-29T09:00:00+02:00"},{"SEK_per_kWh":0.27434,"EUR_per_kWh":0.02457,"EXR":11.165779,"time_start":"2025-07-29T09:00:00+02:00","time_end":"2025-07-29T10:00:00+02:00"},{"SEK_per_kWh":0.23348,"EUR_per_kWh":0.02091,"EXR":11.165779,"time_start":"2025-07-29T10:00:00+02:00","time_end":"2025-07-29T11:00:00+02:00"},{"SEK_per_kWh":0.09547,"EUR_per_kWh":0.00855,"EXR":11.165779,"time_start":"2025-07-29T11:00:00+02:00","time_end":"2025-07-29T12:00:00+02:00"},{"SEK_per_kWh":0.10284,"EUR_per_kWh":0.00921,"EXR":11.165779,"time_start":"2025-07-29T12:00:00+02:00","time_end":"2025-07-29T13:00:00+02:00"},{"SEK_per_kWh":0.05181,"EUR_per_kWh":0.00464,"EXR":11.165779,"time_start":"2025-07-29T13:00:00+02:00","time_end":"2025-07-29T14:00:00+02:00"},{"SEK_per_kWh":0.03875,"EUR_per_kWh":0.00347,"EXR":11.165779,"time_start":"2025-07-29T14:00:00+02:00","time_end":"2025-07-29T15:00:00+02:00"},{"SEK_per_kWh":0.07079,"EUR_per_kWh":0.00634,"EXR":11.165779,"time_start":"2025-07-29T15:00:00+02:00","time_end":"2025-07-29T16:00:00+02:00"},{"SEK_per_kWh":0.11177,"EUR_per_kWh":0.01001,"EXR":11.165779,"time_start":"2025-07-29T16:00:00+02:00","time_end":"2025-07-29T17:00:00+02:00"},{"SEK_per_kWh":0.16458,"EUR_per_kWh":0.01474,"EXR":11.165779,"time_start":"2025-07-29T17:00:00+02:00","time_end":"2025-07-29T18:00:00+02:00"},{"SEK_per_kWh":0.18613,"EUR_per_kWh":0.01667,"EXR":11.165779,"time_start":"2025-07-29T18:00:00+02:00","time_end":"2025-07-29T19:00:00+02:00"},{"SEK_per_kWh":0.42676,"EUR_per_kWh":0.03822,"EXR":11.165779,"time_start":"2025-07-29T19:00:00+02:00","time_end":"2025-07-29T20:00:00+02:00"},{"SEK_per_kWh":0.26117,"EUR_per_kWh":0.02339,"EXR":11.165779,"time_start":"2025-07-29T20:00:00+02:00","time_end":"2025-07-29T21:00:00+02:00"},{"SEK_per_kWh":0.18792,"EUR_per_kWh":0.01683,"EXR":11.165779,"time_start":"2025-07-29T21:00:00+02:00","time_end":"2025-07-29T22:00:00+02:00"},{"SEK_per_kWh":0.1303,"EUR_per_kWh":0.01167,"EXR":11.165779,"time_start":"2025-07-29T22:00:00+02:00","time_end":"2025-07-29T23:00:00+02:00"},{"SEK_per_kWh":0.0872,"EUR_per_kWh":0.00781,"EXR":11.165779,"time_start":"2025-07-29T23:00:00+02:00","time_end":"2025-07-30T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-30_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:59 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971913-d4e"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272598'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=gWBpyBXPLnv63NXdSVCkhsTV6ujG0ScZOw%2B7tzcvOPEKNqXBvKXmtTITp9%2BX8Fj%2B%2BGJ0jhNDqByp%2BQ599y1hJ4ZV64KIrkFXJiW0ehquhCXzojs%3D"}]}'
+      Cf-Ray:
+      - 9a1989f93eb39924-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.35059,"EUR_per_kWh":0.03146,"EXR":11.143857,"time_start":"2025-07-30T00:00:00+02:00","time_end":"2025-07-30T01:00:00+02:00"},{"SEK_per_kWh":0.34657,"EUR_per_kWh":0.0311,"EXR":11.143857,"time_start":"2025-07-30T01:00:00+02:00","time_end":"2025-07-30T02:00:00+02:00"},{"SEK_per_kWh":0.05059,"EUR_per_kWh":0.00454,"EXR":11.143857,"time_start":"2025-07-30T02:00:00+02:00","time_end":"2025-07-30T03:00:00+02:00"},{"SEK_per_kWh":0.04959,"EUR_per_kWh":0.00445,"EXR":11.143857,"time_start":"2025-07-30T03:00:00+02:00","time_end":"2025-07-30T04:00:00+02:00"},{"SEK_per_kWh":0.0711,"EUR_per_kWh":0.00638,"EXR":11.143857,"time_start":"2025-07-30T04:00:00+02:00","time_end":"2025-07-30T05:00:00+02:00"},{"SEK_per_kWh":0.2445,"EUR_per_kWh":0.02194,"EXR":11.143857,"time_start":"2025-07-30T05:00:00+02:00","time_end":"2025-07-30T06:00:00+02:00"},{"SEK_per_kWh":0.47885,"EUR_per_kWh":0.04297,"EXR":11.143857,"time_start":"2025-07-30T06:00:00+02:00","time_end":"2025-07-30T07:00:00+02:00"},{"SEK_per_kWh":0.51763,"EUR_per_kWh":0.04645,"EXR":11.143857,"time_start":"2025-07-30T07:00:00+02:00","time_end":"2025-07-30T08:00:00+02:00"},{"SEK_per_kWh":0.51808,"EUR_per_kWh":0.04649,"EXR":11.143857,"time_start":"2025-07-30T08:00:00+02:00","time_end":"2025-07-30T09:00:00+02:00"},{"SEK_per_kWh":0.50515,"EUR_per_kWh":0.04533,"EXR":11.143857,"time_start":"2025-07-30T09:00:00+02:00","time_end":"2025-07-30T10:00:00+02:00"},{"SEK_per_kWh":0.34011,"EUR_per_kWh":0.03052,"EXR":11.143857,"time_start":"2025-07-30T10:00:00+02:00","time_end":"2025-07-30T11:00:00+02:00"},{"SEK_per_kWh":0.38157,"EUR_per_kWh":0.03424,"EXR":11.143857,"time_start":"2025-07-30T11:00:00+02:00","time_end":"2025-07-30T12:00:00+02:00"},{"SEK_per_kWh":0.27013,"EUR_per_kWh":0.02424,"EXR":11.143857,"time_start":"2025-07-30T12:00:00+02:00","time_end":"2025-07-30T13:00:00+02:00"},{"SEK_per_kWh":0.19524,"EUR_per_kWh":0.01752,"EXR":11.143857,"time_start":"2025-07-30T13:00:00+02:00","time_end":"2025-07-30T14:00:00+02:00"},{"SEK_per_kWh":0.12136,"EUR_per_kWh":0.01089,"EXR":11.143857,"time_start":"2025-07-30T14:00:00+02:00","time_end":"2025-07-30T15:00:00+02:00"},{"SEK_per_kWh":0.30467,"EUR_per_kWh":0.02734,"EXR":11.143857,"time_start":"2025-07-30T15:00:00+02:00","time_end":"2025-07-30T16:00:00+02:00"},{"SEK_per_kWh":0.47651,"EUR_per_kWh":0.04276,"EXR":11.143857,"time_start":"2025-07-30T16:00:00+02:00","time_end":"2025-07-30T17:00:00+02:00"},{"SEK_per_kWh":0.55463,"EUR_per_kWh":0.04977,"EXR":11.143857,"time_start":"2025-07-30T17:00:00+02:00","time_end":"2025-07-30T18:00:00+02:00"},{"SEK_per_kWh":0.59765,"EUR_per_kWh":0.05363,"EXR":11.143857,"time_start":"2025-07-30T18:00:00+02:00","time_end":"2025-07-30T19:00:00+02:00"},{"SEK_per_kWh":0.61213,"EUR_per_kWh":0.05493,"EXR":11.143857,"time_start":"2025-07-30T19:00:00+02:00","time_end":"2025-07-30T20:00:00+02:00"},{"SEK_per_kWh":0.62316,"EUR_per_kWh":0.05592,"EXR":11.143857,"time_start":"2025-07-30T20:00:00+02:00","time_end":"2025-07-30T21:00:00+02:00"},{"SEK_per_kWh":0.59519,"EUR_per_kWh":0.05341,"EXR":11.143857,"time_start":"2025-07-30T21:00:00+02:00","time_end":"2025-07-30T22:00:00+02:00"},{"SEK_per_kWh":0.47506,"EUR_per_kWh":0.04263,"EXR":11.143857,"time_start":"2025-07-30T22:00:00+02:00","time_end":"2025-07-30T23:00:00+02:00"},{"SEK_per_kWh":0.33576,"EUR_per_kWh":0.03013,"EXR":11.143857,"time_start":"2025-07-30T23:00:00+02:00","time_end":"2025-07-31T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+- request:
+    method: get
+    uri: https://www.elprisetjustnu.se/api/v1/prices/2025/07-31_SE3.json
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Thu, 20 Nov 2025 17:06:37 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Server:
+      - cloudflare
+      Last-Modified:
+      - Sat, 09 Aug 2025 09:46:59 GMT
+      Vary:
+      - Accept-Encoding
+      Etag:
+      - W/"68971913-d45"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Expose-Headers:
+      - "*"
+      Cache-Control:
+      - public, max-age=604800
+      Cross-Origin-Resource-Policy:
+      - cross-origin
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Age:
+      - '272598'
+      Cf-Cache-Status:
+      - HIT
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=Ais34lT6del4aHmCJHrYs4I3fIt2DZBLKsMGqDs%2F04CYrODb8NEqUQ33v6S%2BR7glkPITSMctR%2BgCqbPdLcm2AfyXaYHiRwu2Lkcl0sy1PQM0VPQxhw%3D%3D"}]}'
+      Cf-Ray:
+      - 9a1989f96bc807e7-ARN
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"SEK_per_kWh":0.16353,"EUR_per_kWh":0.01468,"EXR":11.139424,"time_start":"2025-07-31T00:00:00+02:00","time_end":"2025-07-31T01:00:00+02:00"},{"SEK_per_kWh":0.12487,"EUR_per_kWh":0.01121,"EXR":11.139424,"time_start":"2025-07-31T01:00:00+02:00","time_end":"2025-07-31T02:00:00+02:00"},{"SEK_per_kWh":0.12543,"EUR_per_kWh":0.01126,"EXR":11.139424,"time_start":"2025-07-31T02:00:00+02:00","time_end":"2025-07-31T03:00:00+02:00"},{"SEK_per_kWh":0.12498,"EUR_per_kWh":0.01122,"EXR":11.139424,"time_start":"2025-07-31T03:00:00+02:00","time_end":"2025-07-31T04:00:00+02:00"},{"SEK_per_kWh":0.13657,"EUR_per_kWh":0.01226,"EXR":11.139424,"time_start":"2025-07-31T04:00:00+02:00","time_end":"2025-07-31T05:00:00+02:00"},{"SEK_per_kWh":0.15473,"EUR_per_kWh":0.01389,"EXR":11.139424,"time_start":"2025-07-31T05:00:00+02:00","time_end":"2025-07-31T06:00:00+02:00"},{"SEK_per_kWh":0.18636,"EUR_per_kWh":0.01673,"EXR":11.139424,"time_start":"2025-07-31T06:00:00+02:00","time_end":"2025-07-31T07:00:00+02:00"},{"SEK_per_kWh":0.51698,"EUR_per_kWh":0.04641,"EXR":11.139424,"time_start":"2025-07-31T07:00:00+02:00","time_end":"2025-07-31T08:00:00+02:00"},{"SEK_per_kWh":0.6198,"EUR_per_kWh":0.05564,"EXR":11.139424,"time_start":"2025-07-31T08:00:00+02:00","time_end":"2025-07-31T09:00:00+02:00"},{"SEK_per_kWh":0.52979,"EUR_per_kWh":0.04756,"EXR":11.139424,"time_start":"2025-07-31T09:00:00+02:00","time_end":"2025-07-31T10:00:00+02:00"},{"SEK_per_kWh":0.4761,"EUR_per_kWh":0.04274,"EXR":11.139424,"time_start":"2025-07-31T10:00:00+02:00","time_end":"2025-07-31T11:00:00+02:00"},{"SEK_per_kWh":0.43266,"EUR_per_kWh":0.03884,"EXR":11.139424,"time_start":"2025-07-31T11:00:00+02:00","time_end":"2025-07-31T12:00:00+02:00"},{"SEK_per_kWh":0.3412,"EUR_per_kWh":0.03063,"EXR":11.139424,"time_start":"2025-07-31T12:00:00+02:00","time_end":"2025-07-31T13:00:00+02:00"},{"SEK_per_kWh":0.32962,"EUR_per_kWh":0.02959,"EXR":11.139424,"time_start":"2025-07-31T13:00:00+02:00","time_end":"2025-07-31T14:00:00+02:00"},{"SEK_per_kWh":0.3275,"EUR_per_kWh":0.0294,"EXR":11.139424,"time_start":"2025-07-31T14:00:00+02:00","time_end":"2025-07-31T15:00:00+02:00"},{"SEK_per_kWh":0.39434,"EUR_per_kWh":0.0354,"EXR":11.139424,"time_start":"2025-07-31T15:00:00+02:00","time_end":"2025-07-31T16:00:00+02:00"},{"SEK_per_kWh":0.47799,"EUR_per_kWh":0.04291,"EXR":11.139424,"time_start":"2025-07-31T16:00:00+02:00","time_end":"2025-07-31T17:00:00+02:00"},{"SEK_per_kWh":0.53737,"EUR_per_kWh":0.04824,"EXR":11.139424,"time_start":"2025-07-31T17:00:00+02:00","time_end":"2025-07-31T18:00:00+02:00"},{"SEK_per_kWh":0.55174,"EUR_per_kWh":0.04953,"EXR":11.139424,"time_start":"2025-07-31T18:00:00+02:00","time_end":"2025-07-31T19:00:00+02:00"},{"SEK_per_kWh":0.89917,"EUR_per_kWh":0.08072,"EXR":11.139424,"time_start":"2025-07-31T19:00:00+02:00","time_end":"2025-07-31T20:00:00+02:00"},{"SEK_per_kWh":0.99586,"EUR_per_kWh":0.0894,"EXR":11.139424,"time_start":"2025-07-31T20:00:00+02:00","time_end":"2025-07-31T21:00:00+02:00"},{"SEK_per_kWh":0.72406,"EUR_per_kWh":0.065,"EXR":11.139424,"time_start":"2025-07-31T21:00:00+02:00","time_end":"2025-07-31T22:00:00+02:00"},{"SEK_per_kWh":0.53202,"EUR_per_kWh":0.04776,"EXR":11.139424,"time_start":"2025-07-31T22:00:00+02:00","time_end":"2025-07-31T23:00:00+02:00"},{"SEK_per_kWh":0.4233,"EUR_per_kWh":0.038,"EXR":11.139424,"time_start":"2025-07-31T23:00:00+02:00","time_end":"2025-08-01T00:00:00+02:00"}]'
+  recorded_at: Thu, 20 Nov 2025 17:06:37 GMT
+recorded_with: VCR 6.3.1
