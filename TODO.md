@@ -28,11 +28,16 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 ### ❌ Still TODO (documentation accurate):
 1. ~~**Deposit Formula Mismatch**~~ - ✅ **FIXED** (Nov 16, 2025)
 2. ~~**Tenant Signup Form**~~ - ✅ **COMPLETE** (Nov 17, 2025) - See `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md`
-3. **Tenant Signup Deployment** - Complete pending setup actions: Cloudflare Turnstile account, database migration, SMS service (see `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md` for full checklist)
+3. **Tenant Signup Deployment** - Complete pending setup actions:
+   - Cloudflare Turnstile account
+   - Database migration
+   - SMS service
+   - **Add nginx location block for `/fonts/` directory** in `nginx-kimonokittens-https-split.conf` (public server block) to serve Horsemen fonts on signup page
+   - (See `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md` for full checklist)
 4. **Log Rotation** - Needs verification if actually needed in production
 5. **Contract Replacement Workflow** - Delete+Re-sign not yet implemented
 6. **Heatpump Peak Avoidance** - Requires Pi Node-RED config (separate infrastructure)
-7. **Horsemen Font** - Extract from PopOS system fonts (`find /usr/share/fonts -iname "*horsemen*"`), add @font-face to signup.html
+7. ~~**Horsemen Font**~~ - ✅ **EXTRACTED** (Nov 20, 2025) - Font files added to `/fonts/`, @font-face declarations in signup.html (nginx config needed for public access)
 
 **Impact:** Documentation was significantly outdated. 6 major features marked "planned" were actually shipped months ago.
 
