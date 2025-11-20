@@ -97,6 +97,17 @@ class ZignedWebhookHandler
     event_type = payload['event_type'] || payload['event']
     agreement_data = payload['data']
 
+    # VERBOSE LOGGING: Capture actual payload structure for debugging field names
+    # TODO: Remove after confirming email_event and sign_event field structures
+    ZIGNED_LOGGER.info "📦 WEBHOOK PAYLOAD DEBUG:"
+    ZIGNED_LOGGER.info "   Event type: #{event_type}"
+    ZIGNED_LOGGER.info "   Data keys: #{agreement_data&.keys&.inspect || 'nil'}"
+    if event_type&.start_with?('email_event', 'sign_event')
+      # Full payload dump for email/sign events (the ones we're debugging)
+      ZIGNED_LOGGER.info "   🔍 FULL PAYLOAD (#{event_type}):"
+      ZIGNED_LOGGER.info "      #{JSON.pretty_generate(agreement_data)}"
+    end
+
     # Process event (v3 terminology)
     case event_type
     when 'agreement.lifecycle.pending'
@@ -495,34 +506,31 @@ class ZignedWebhookHandler
   # Handle email_event.agreement_invitation.delivered event
   def handle_email_invitation_delivered(data)
     agreement_id = data['agreement']
-    description = data['description']  # "Invitation to sign successfully delivered to branstrom@gmail.com"
+    participant_id = data['participant']  # Direct participant reference
+    participant_email = data['email']  # Direct email field
     created_at = data['created_at']
 
-    # Extract email from description
-    email = description[/delivered to ([^\s]+)/, 1]
-
     ZIGNED_LOGGER.info "📧 Email invitation delivered: #{agreement_id}"
-    ZIGNED_LOGGER.info "   To: #{email}"
+    ZIGNED_LOGGER.info "   To: #{participant_email}"
+    ZIGNED_LOGGER.info "   Participant ID: #{participant_id}"
     ZIGNED_LOGGER.info "   At: #{created_at}"
 
-    # Mark email as delivered for specific participant (by email lookup)
-    if email
-      participant_repo = Persistence.contract_participants
-      contract = @repository.find_by_case_id(agreement_id)
+    # Mark email as delivered for specific participant
+    participant_repo = Persistence.contract_participants
+    contract = @repository.find_by_case_id(agreement_id)
 
-      if contract
-        # Find participant by email
-        participants = participant_repo.find_by_contract_id(contract.id)
-        participant = participants.find { |p| p.email == email }
+    if contract
+      # Find participant by ID (most reliable) or email fallback
+      participant = participant_repo.find_by_participant_id(participant_id) if participant_id
+      participant ||= participant_repo.find_by_contract_id(contract.id).find { |p| p.email == participant_email } if participant_email
 
-        if participant
-          participant.email_delivered = true
-          participant.email_delivered_at = Time.parse(created_at) if created_at
-          participant_repo.update(participant)
-          ZIGNED_LOGGER.info "   ✅ Participant email delivery recorded"
-        else
-          ZIGNED_LOGGER.warn "   ⚠️  Participant not found for email #{email}"
-        end
+      if participant
+        participant.email_delivered = true
+        participant.email_delivered_at = Time.parse(created_at) if created_at
+        participant_repo.update(participant)
+        ZIGNED_LOGGER.info "   ✅ Participant email delivery recorded"
+      else
+        ZIGNED_LOGGER.warn "   ⚠️  Participant not found for email #{participant_email} (ID: #{participant_id})"
       end
     end
   end
@@ -546,12 +554,12 @@ class ZignedWebhookHandler
   # Handle email_event.agreement_finalized.delivered event
   def handle_finalized_email_delivered(data)
     agreement_id = data['agreement']
-    description = data['description']  # "Signed document successfully delivered to branstrom@gmail.com"
-
-    email = description[/delivered to ([^\s]+)/, 1]
+    participant_id = data['participant']  # Direct participant reference
+    participant_email = data['email']  # Direct email field
 
     ZIGNED_LOGGER.info "📨 Signed document email delivered: #{agreement_id}"
-    ZIGNED_LOGGER.info "   To: #{email}"
+    ZIGNED_LOGGER.info "   To: #{participant_email}"
+    ZIGNED_LOGGER.info "   Participant ID: #{participant_id}"
     ZIGNED_LOGGER.info "   ✅ Final document delivered"
   end
 
@@ -611,44 +619,41 @@ class ZignedWebhookHandler
   # Handle email_event.agreement_invitation.delivery_failed event
   def handle_email_delivery_failed(data)
     agreement_id = data['agreement']
-    description = data['description']
+    participant_id = data['participant']  # Direct participant reference
+    participant_email = data['email']  # Direct email field
     error_message = data['error'] || data['bounce_reason']
     created_at = data['created_at']
 
-    # Extract email from description
-    email = description[/delivered to ([^\s]+)/, 1] if description
-
     ZIGNED_LOGGER.error "❌ Email delivery failed: #{agreement_id}"
-    ZIGNED_LOGGER.info "   To: #{email}" if email
+    ZIGNED_LOGGER.info "   To: #{participant_email}"
+    ZIGNED_LOGGER.info "   Participant ID: #{participant_id}"
     ZIGNED_LOGGER.info "   Error: #{error_message}" if error_message
     ZIGNED_LOGGER.info "   Failed at: #{created_at}"
 
     # Update participant email delivery failure
-    if email
-      participant_repo = Persistence.contract_participants
-      contract = @repository.find_by_case_id(agreement_id)
+    participant_repo = Persistence.contract_participants
+    contract = @repository.find_by_case_id(agreement_id)
 
-      if contract
-        # Find participant by email
-        participants = participant_repo.find_by_contract_id(contract.id)
-        participant = participants.find { |p| p.email == email }
+    if contract
+      # Find participant by ID (most reliable) or email fallback
+      participant = participant_repo.find_by_participant_id(participant_id) if participant_id
+      participant ||= participant_repo.find_by_contract_id(contract.id).find { |p| p.email == participant_email } if participant_email
 
-        if participant
-          participant.email_delivered = false
-          participant.email_delivery_failed = true
-          participant.email_delivery_error = error_message if error_message
-          participant_repo.update(participant)
-          ZIGNED_LOGGER.warn "   ⚠️  Participant email failure recorded"
-        else
-          ZIGNED_LOGGER.warn "   ⚠️  Participant not found for email #{email}"
-        end
-
-        # Also update contract-level email status
-        contract.email_delivery_status = 'failed'
-        contract.email_delivery_failed_at = Time.parse(created_at) if created_at
-        contract.email_delivery_error = error_message if error_message
-        @repository.update(contract)
+      if participant
+        participant.email_delivered = false
+        participant.email_delivery_failed = true
+        participant.email_delivery_error = error_message if error_message
+        participant_repo.update(participant)
+        ZIGNED_LOGGER.warn "   ⚠️  Participant email failure recorded"
+      else
+        ZIGNED_LOGGER.warn "   ⚠️  Participant not found for email #{participant_email} (ID: #{participant_id})"
       end
+
+      # Also update contract-level email status
+      contract.email_delivery_status = 'failed'
+      contract.email_delivery_failed_at = Time.parse(created_at) if created_at
+      contract.email_delivery_error = error_message if error_message
+      @repository.update(contract)
     end
   end
 
@@ -739,9 +744,10 @@ class ZignedWebhookHandler
 
   # Generic helper to update participant status from sign events
   def update_participant_status_from_sign_event(data, new_status, log_emoji, log_message)
-    agreement_id = data['agreement_id']
-    participant_email = data['participant_email']
-    occurred_at = data['occurred_at']
+    agreement_id = data['agreement']  # Fixed: was 'agreement_id'
+    participant_id = data['participant']  # New: direct participant reference
+    participant_email = data['email']  # Fixed: was 'participant_email'
+    created_at = data['created_at']  # Fixed: was 'occurred_at'
 
     contract = @repository.find_by_case_id(agreement_id)
     unless contract
@@ -749,9 +755,10 @@ class ZignedWebhookHandler
       return
     end
 
-    # Find participant by email
+    # Find participant by ID (most reliable) or email fallback
     participant_repo = Persistence.contract_participants
-    participant = participant_repo.find_by_contract_and_email(contract.id, participant_email)
+    participant = participant_repo.find_by_participant_id(participant_id) if participant_id
+    participant ||= participant_repo.find_by_contract_and_email(contract.id, participant_email) if participant_email
 
     unless participant
       ZIGNED_LOGGER.warn "⚠️  Warning: Participant not found for email #{participant_email} (contract #{contract.id})"
@@ -765,7 +772,7 @@ class ZignedWebhookHandler
     ZIGNED_LOGGER.info "#{log_emoji} #{log_message}: #{participant.name} (#{participant_email})"
     ZIGNED_LOGGER.info "   Agreement: #{agreement_id}"
     ZIGNED_LOGGER.info "   Status: #{participant.status}"
-    ZIGNED_LOGGER.info "   Time: #{occurred_at}"
+    ZIGNED_LOGGER.info "   Time: #{created_at}"
 
     # Broadcast real-time update
     @broadcaster&.broadcast_contract_update(agreement_id, 'participant_status_updated', {
@@ -789,7 +796,7 @@ class ZignedWebhookHandler
   # Handle document loaded (PDF rendered in viewer)
   def handle_sign_event_document_loaded(data)
     # Don't change status - this is just a technical event
-    ZIGNED_LOGGER.info "📄 Document loaded by #{data['participant_email']}"
+    ZIGNED_LOGGER.info "📄 Document loaded by #{data['email']}"  # Fixed: was 'participant_email'
   end
 
   # Handle document scroll started (participant is reading)
@@ -824,9 +831,10 @@ class ZignedWebhookHandler
 
   # Handle BankID signature completed
   def handle_sign_event_signed(data)
-    agreement_id = data['agreement_id']
-    participant_email = data['participant_email']
-    occurred_at = data['occurred_at']
+    agreement_id = data['agreement']  # Fixed: was 'agreement_id'
+    participant_id = data['participant']  # New: direct participant reference
+    participant_email = data['email']  # Fixed: was 'participant_email'
+    created_at = data['created_at']  # Fixed: was 'occurred_at'
 
     contract = @repository.find_by_case_id(agreement_id)
     unless contract
@@ -834,9 +842,10 @@ class ZignedWebhookHandler
       return
     end
 
-    # Find participant by email
+    # Find participant by ID (most reliable) or email fallback
     participant_repo = Persistence.contract_participants
-    participant = participant_repo.find_by_contract_and_email(contract.id, participant_email)
+    participant = participant_repo.find_by_participant_id(participant_id) if participant_id
+    participant ||= participant_repo.find_by_contract_and_email(contract.id, participant_email) if participant_email
 
     unless participant
       ZIGNED_LOGGER.warn "⚠️  Warning: Participant not found for email #{participant_email} (contract #{contract.id})"
@@ -845,7 +854,7 @@ class ZignedWebhookHandler
 
     # Update status AND set signed_at timestamp
     participant.status = 'signed'
-    participant.signed_at = Time.parse(occurred_at) if occurred_at
+    participant.signed_at = Time.parse(created_at) if created_at
     participant_repo.update(participant)
 
     ZIGNED_LOGGER.info "🎉 Participant completed BankID signature: #{participant.name}"
