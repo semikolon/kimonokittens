@@ -15,15 +15,13 @@ require_relative '../lib/sms/gateway'
 # Algorithm (from https://github.com/ottopaulsen/node-red-contrib-power-saver):
 #   1. Sort all hours by price (cheapest first)
 #   2. Select N cheapest hours
-#   3. Apply max_price filter (reject if average > threshold)
-#   4. Return schedule with EVU values (0=ON, 1=OFF)
+#   3. Return schedule with EVU values (0=ON, 1=OFF)
 #
 # Created: November 19, 2025
 # Related: docs/HEATPUMP_SCHEDULE_API_PLAN.md
 
 class HeatpumpScheduleHandler
   DEFAULT_HOURS_ON = 12
-  DEFAULT_MAX_PRICE = 2.2
 
   def initialize(heatpump_price_handler)
     @price_handler = heatpump_price_handler
@@ -65,7 +63,6 @@ class HeatpumpScheduleHandler
       'source' => 'Dell API (peak/off-peak aware)',
       'config' => {
         'hoursOn' => hours_on,
-        'maxPrice' => config.max_price,  # From database (informational only, not used in algorithm)
         'doNotSplit' => false,
         'outputValueForOn' => '0',    # EVU=0 (heatpump ON)
         'outputValueForOff' => '1'    # EVU=1 (heatpump OFF)
@@ -98,9 +95,9 @@ class HeatpumpScheduleHandler
   # Select N cheapest hours from a single 24-hour period
   # Returns schedule array with onOff flags set for cheapest hours
   #
-  # NOTE: maxPrice parameter removed (Nov 20, 2025) - heatpump is essential infrastructure,
-  # can't defer like washing machines. With peak/off-peak pricing (2-4 kr/kWh), maxPrice
-  # threshold became obsolete. Always select cheapest hours regardless of absolute price.
+  # NOTE: Always selects cheapest hours regardless of absolute price.
+  # Heatpump is essential infrastructure - can't defer like washing machines.
+  # With peak/off-peak pricing (2-4 kr/kWh), any price-based filtering is meaningless.
   def select_cheapest_hours(prices, hours_on)
     return [] if prices.empty?
 

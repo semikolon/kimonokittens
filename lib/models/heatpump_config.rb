@@ -5,20 +5,18 @@
 #
 # @attr id [String] Unique identifier
 # @attr hours_on [Integer] Hours per day to run (5-22)
-# @attr max_price [Float] Maximum electricity price threshold (kr/kWh, 1.5-3.0)
 # @attr emergency_temp_offset [Float] Temperature offset below target (°C, 0.5-5.0) - emergency override
 # @attr min_hotwater [Float] Minimum hot water temperature (°C, 35-50) - emergency override
 # @attr created_at [Time] Creation timestamp
 # @attr updated_at [Time] Last update timestamp
 #
 class HeatpumpConfig
-  attr_reader :id, :hours_on, :max_price, :emergency_temp_offset, :min_hotwater,
+  attr_reader :id, :hours_on, :emergency_temp_offset, :min_hotwater,
               :created_at, :updated_at
 
   def initialize(
     id:,
     hours_on:,
-    max_price:,
     emergency_temp_offset:,
     min_hotwater:,
     created_at:,
@@ -26,7 +24,6 @@ class HeatpumpConfig
   )
     @id = id
     @hours_on = hours_on
-    @max_price = max_price
     @emergency_temp_offset = emergency_temp_offset
     @min_hotwater = min_hotwater
     @created_at = created_at
@@ -39,7 +36,6 @@ class HeatpumpConfig
     {
       id: @id,
       hours_on: @hours_on,
-      max_price: @max_price,
       emergency_temp_offset: @emergency_temp_offset,
       min_hotwater: @min_hotwater,
       created_at: @created_at,
@@ -55,10 +51,6 @@ class HeatpumpConfig
 
     if params[:hours_on]
       errors << "hours_on must be between 5 and 22" unless (5..22).cover?(params[:hours_on])
-    end
-
-    if params[:max_price]
-      errors << "max_price must be between 1.5 and 3.0" unless (1.5..3.0).cover?(params[:max_price])
     end
 
     if params[:emergency_temp_offset]
