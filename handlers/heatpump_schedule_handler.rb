@@ -185,9 +185,8 @@ class HeatpumpScheduleHandler
   end
 
   # Calculate current state with priority-based override logic
-  # Priority 1: Temperature emergency (safety)
-  # Priority 2: Price opportunity (opportunistic)
-  # Priority 3: Schedule (default)
+  # Priority 1: Temperature emergency (safety) - force ON if too cold
+  # Priority 2: Schedule (default) - use ps-strategy calculated schedule
   def calculate_current_state(schedule, config, temps)
     # Find current hour in schedule
     now = Time.now
@@ -205,12 +204,7 @@ class HeatpumpScheduleHandler
       final_state = true
       override_reason = 'temperature_emergency'
 
-    # Priority 2: Price opportunity (force ON if extremely cheap)
-    elsif current_hour['price'] < config.emergency_price
-      final_state = true
-      override_reason = 'price_opportunity'
-
-    # Priority 3: Schedule (use calculated schedule)
+    # Priority 2: Schedule (use calculated schedule)
     else
       override_reason = base_state ? 'schedule' : 'schedule_off'
     end
