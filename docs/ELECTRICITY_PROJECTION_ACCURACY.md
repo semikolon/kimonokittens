@@ -1,25 +1,29 @@
 # Electricity Projection Accuracy & Testing Strategy
 
 **Created**: November 20, 2025
-**Status**: 🚧 **In Progress** - VCR ✅ done, accuracy validation & expanded testing pending
-**Completed**: VCR realistic test fixtures (Nov 20, 2025)
-**Next**: Accuracy validation, expanded test coverage, Tibber investigation
+**Status**: 🚧 **In Progress** - VCR ✅ done, Tibber investigation ✅ done, accuracy validation pending
+**Completed**: VCR realistic test fixtures + Tibber data source clarification (Nov 20, 2025)
+**Next**: Historical validation testing, expanded edge case coverage, continuous monitoring
 
 ---
 
-## 🚨 CRITICAL: Tibber Confusion Investigation Required
+## ✅ Tibber Confusion Investigation - COMPLETE (Nov 20, 2025)
 
-**IMPORTANT FINDING**: The codebase contains references to "Tibber" as a consumption data source, but **we are NOT Tibber customers**.
+**CONFIRMED**: The codebase contains references to "Tibber" BUT consumption data comes from Vattenfall scraper, NOT Tibber.
 
-**Actual consumption data source**: Vattenfall scraper (`bin/vattenfall.rb`)
-**File location**: `electricity_usage.json` (scraped hourly consumption from Vattenfall)
-**Investigation needed**:
-- Search codebase for "Tibber" references
-- Verify all consumption data truly comes from Vattenfall scraper
-- Update any misleading comments/documentation
-- Ensure no code depends on non-existent Tibber integration
+**Investigation findings**:
+- ✅ Verified consumption data source: `vattenfall.rb` → `electricity_usage.json`
+- ✅ Verified spot price source: `lib/electricity_projector.rb` → elprisetjustnu.se API
+- ✅ Searched all "Tibber" references (24 files found)
+- ✅ Clarified "Tibber" means Node-RED heatpump scheduling compatibility, not data source
 
-**Action**: Investigate after VCR implementation (see "Next Steps" section below)
+**Tibber references explained**:
+- `tibber.rb` - Legacy price fetcher (UNUSED, no active cron job)
+- `tibber_price_data.json` - Stale data file (commented out in handlers)
+- Handler comments - "Replacing Tibber Query" refers to Node-RED's invalid Tibber demo API key
+- "Tibber-compatible" - API response format matching for Node-RED, not actual data source
+
+**Conclusion**: ElectricityProjector uses Vattenfall for consumption + elprisetjustnu.se for pricing. No Tibber integration exists.
 
 ---
 
