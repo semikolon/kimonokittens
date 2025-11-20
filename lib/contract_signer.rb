@@ -157,7 +157,10 @@ class ContractSigner
     Persistence.signed_contracts.save(signed_contract)
     puts "✅ Contract record saved to database"
 
-    # Step 4: Print signing links
+    # Step 4: Send SMS notifications with signing links
+    send_contract_invitation_sms(tenant, tenant_link, landlord, landlord_link)
+
+    # Step 5: Print signing links
     puts "\n🔗 Signing Links:"
     puts "\nLandlord (#{landlord[:name]}):"
     puts landlord_link
@@ -418,6 +421,50 @@ class ContractSigner
   def ensure_directories_exist
     [GENERATED_DIR, SIGNED_DIR, METADATA_DIR].each do |dir|
       FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
+    end
+  end
+
+  # Send SMS invitations to both signers with signing links
+  #
+  # @param tenant [Tenant] Tenant object with name, phone
+  # @param tenant_link [String] Tenant's signing URL
+  # @param landlord [Hash] Landlord info with :name, :phone
+  # @param landlord_link [String] Landlord's signing URL
+  def self.send_contract_invitation_sms(tenant, tenant_link, landlord, landlord_link)
+    require_relative 'sms/gateway'
+
+    # Clean phone numbers (remove spaces, dashes)
+    tenant_phone = tenant.phone&.gsub(/[\s\-]/, '')
+    landlord_phone = landlord[:phone]&.gsub(/[\s\-]/, '')
+
+    # Ensure E.164 format (add +46 if missing)
+    tenant_phone = "+46#{tenant_phone.sub(/^0/, '')}" unless tenant_phone&.start_with?('+')
+    landlord_phone = "+46#{landlord_phone.sub(/^0/, '')}" unless landlord_phone&.start_with?('+')
+
+    message = "Du har blivit inbjuden att skriva på ett hyresavtal med Kimono Kittens! Signera med BankID här: "
+
+    # Send to tenant
+    begin
+      SmsGateway.send(
+        to: tenant_phone,
+        body: "#{message}#{tenant_link}",
+        meta: { type: 'contract_invitation', tenant_id: tenant.id }
+      )
+      puts "📱 SMS invitation sent to tenant: #{tenant.name}"
+    rescue => e
+      puts "⚠️  Failed to send SMS to tenant: #{e.message}"
+    end
+
+    # Send to landlord
+    begin
+      SmsGateway.send(
+        to: landlord_phone,
+        body: "#{message}#{landlord_link}",
+        meta: { type: 'contract_invitation', role: 'landlord' }
+      )
+      puts "📱 SMS invitation sent to landlord: #{landlord[:name]}"
+    rescue => e
+      puts "⚠️  Failed to send SMS to landlord: #{e.message}"
     end
   end
 end
