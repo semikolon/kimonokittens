@@ -444,6 +444,25 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 **Features**: Peak/off-peak pricing, smart adaptive projection, automatic bill deduplication, timezone-normalized storage
 **Cron**: `/home/kimonokittens/Projects/kimonokittens/bin/fetch_vattenfall_data.sh` + `fetch_fortum_data.sh`
 
+### Data Source Clarification (Nov 20, 2025)
+
+**CRITICAL: Consumption data comes from Vattenfall scraper, NOT Tibber!**
+
+**Actual Data Sources:**
+- **Consumption data**: `vattenfall.rb` → `electricity_usage.json` (Vattenfall Eldistribution API, hourly kWh)
+- **Spot price data**: `lib/electricity_projector.rb` → elprisetjustnu.se API (SE3 Stockholm, live API calls)
+- **Invoice data**:
+  - Vattenfall: Grid connection fees (590 kr/month)
+  - Fortum: Electricity trading fees (88 kr/month)
+
+**"Tibber" References in Codebase:**
+- **`tibber.rb`**: Legacy price fetcher (UNUSED, no active cron job)
+- **`tibber_price_data.json`**: Stale data file (commented out in handlers)
+- **Node-RED integration**: Heatpump scheduling uses "Tibber-compatible" API format for backwards compatibility
+- **Handler comments**: References to "replacing Tibber Query" mean replacing Node-RED's invalid Tibber demo API key
+
+**Key Insight**: "Tibber-compatible" means API response format matching, NOT actual Tibber data source. All references to Tibber are about Node-RED heatpump scheduling system (separate from consumption tracking). The ElectricityProjector never uses Tibber API - it uses elprisetjustnu.se for spot prices and Vattenfall scraper for consumption.
+
 ---
 
 
