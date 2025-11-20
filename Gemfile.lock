@@ -283,6 +283,8 @@ GEM
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     uri (1.0.3)
+    vcr (6.3.1)
+      base64
     webmock (3.25.1)
       addressable (>= 2.8.0)
       crack (>= 0.3.2)
@@ -335,6 +337,7 @@ DEPENDENCIES
   sass-embedded (~> 1.74)
   sequel (~> 5.84)
   sqlite3 (~> 1.7)
+  vcr (~> 6.3)
   webmock (~> 3.24)
   webrick
 
