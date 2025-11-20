@@ -865,6 +865,16 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Priority 3**: Target 22:00-06:00 + weekends for heating during winter
   - **Blocker**: Requires Node-RED configuration changes (not code changes in this repo)
   - **Location**: Heatpump control runs on Raspberry Pi via MQTT (separate infrastructure)
+- [ ] **⚡ FUTURE: Self-learning hours_on adjustment** ⏳ **PLANNED**
+  - **Goal**: Replace fixed hours_on value with adaptive algorithm
+  - **Approach**: Monitor performance metrics to automatically optimize baseline
+    - Temperature override frequency (too many overrides = increase hours_on)
+    - Energy cost vs target (overspending → reduce hours_on, underspending → can increase)
+    - Weather pattern correlation (colder winters need higher baseline)
+    - Indoor temperature stability (fluctuations indicate poor scheduling)
+  - **Benefit**: Intelligent baseline optimization vs removed emergency_price reactive approach
+  - **Context**: Replaces removed price opportunity logic (emergency_price threshold) with proactive learning
+  - **Added**: Nov 20, 2025 during emergencyPrice field removal
 
 ### API Integration
 - [x] Expose rent calculator as API for voice/LLM assistants:

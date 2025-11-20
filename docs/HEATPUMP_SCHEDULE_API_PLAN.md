@@ -960,22 +960,43 @@ ThermIQ MQTT
 
 ---
 
-## 🔍 TODO: Review Prices Endpoint Necessity
+## 🔍 Prices Endpoint Format Review (Nov 20, 2025)
 
-**Question:** Do we still need `/api/heatpump/prices` as a public endpoint?
+**Question:** Do we need the Tibber-compatible nested structure, or can we simplify?
 
 **Current Architecture:**
-- `/api/heatpump/schedule` internally calls `HeatpumpPriceHandler` to get prices
-- Schedule handler runs ps-strategy algorithm in Ruby
-- Returns final schedule with EVU values
-- **Node-RED never directly calls the prices endpoint**
+- `/api/heatpump/schedule` internally calls `HeatpumpPriceHandler` (not HTTP - Ruby object call)
+- Schedule handler extracts: `price_data['viewer']['homes'][0]['currentSubscription']['priceInfo']`
+- **Node-RED never directly calls the prices endpoint** - only uses `/api/heatpump/schedule`
 
-**Options:**
-1. **Keep as public** - Useful for debugging, future dashboard widgets
-2. **Make internal only** - Schedule handler uses it, but not exposed via puma routes
-3. **Remove completely** - Inline price logic into schedule handler
+**Tibber-compatible format:**
+```json
+{
+  "viewer": {
+    "homes": [{
+      "currentSubscription": {
+        "priceInfo": {
+          "today": [...],
+          "tomorrow": [...]
+        }
+      }
+    }]
+  }
+}
+```
 
-**Recommendation:** Keep as public for now (debugging value), revisit after config UI complete.
+**Analysis:**
+- **Nested structure value**: Designed for drop-in Tibber API replacement (migration complete)
+- **Separation value**: Today/tomorrow split is actually useful (ps-strategy needs per-day processing)
+- **Public endpoint value**: Debugging, potential future dashboard price chart widget
+- **Simplification opportunity**: Could flatten to `{today: [...], tomorrow: [...]}` (no viewer.homes nesting)
+
+**Recommendation:** **Keep both endpoint AND format** for now:
+1. **Public endpoint** - Debugging value + future dashboard widgets
+2. **Keep format** - Clean today/tomorrow separation useful, worth the nesting cost
+3. **Future**: Consider simplified format after config UI complete (may want price display there)
+
+**Decision:** Deferred until config UI implementation reveals actual usage patterns.
 
 ---
 
