@@ -44,8 +44,8 @@ class HeatpumpScheduleHandler
     price_data = Oj.load(body.first)
 
     # Extract today + tomorrow prices (keep separate for per-day processing!)
-    today = price_data['viewer']['homes'][0]['currentSubscription']['priceInfo']['today'] || []
-    tomorrow = price_data['viewer']['homes'][0]['currentSubscription']['priceInfo']['tomorrow'] || []
+    today = price_data['today'] || []
+    tomorrow = price_data['tomorrow'] || []
 
     return error_response('No price data available') if today.empty? && tomorrow.empty?
 

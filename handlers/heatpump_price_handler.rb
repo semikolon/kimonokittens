@@ -3,10 +3,11 @@ require 'date'
 require_relative '../lib/electricity_projector'
 
 # Heatpump Schedule Price API
-# Provides Tibber-compatible electricity prices with peak/off-peak grid rates
-# Designed for Node-RED ps-strategy-lowest-price consumption
+# Provides electricity prices with peak/off-peak grid rates
+# Returns simplified {today: [...], tomorrow: [...]} format
 #
 # Created: November 17, 2025
+# Simplified: November 20, 2025 (removed Tibber nesting)
 # Purpose: Replace invalid Tibber API with elprisetjustnu.se + peak/off-peak logic
 # Related: docs/HEATPUMP_SCHEDULE_API_PLAN.md, docs/NODE_RED_TIBBER_TO_ELPRISET_MIGRATION.md
 #
@@ -74,18 +75,10 @@ class HeatpumpPriceHandler
       t >= tomorrow_start && t < day_after_start
     end
 
-    # Tibber-compatible nested structure
+    # Simplified format - just today/tomorrow split
     response = {
-      'viewer' => {
-        'homes' => [{
-          'currentSubscription' => {
-            'priceInfo' => {
-              'today' => today_prices,
-              'tomorrow' => tomorrow_prices
-            }
-          }
-        }]
-      }
+      'today' => today_prices,
+      'tomorrow' => tomorrow_prices
     }
 
     [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(response) ]]
