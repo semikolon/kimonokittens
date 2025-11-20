@@ -475,18 +475,19 @@ Summary Statistics:
 
 ### Phase 1: Historical Validation (EXHAUSTIVE IMPLEMENTATION GUIDE)
 
-**Objective**: Validate projector accuracy by comparing predictions to actual bills from `electricity_bills_history.txt`.
+**Objective**: Validate projector accuracy by comparing predictions to actual bills from ElectricityBill database.
 
-**Status**: ✅ VCR cassettes ready, ⏳ Historical validation pending
+**Status**: ✅ VCR cassettes ready, ✅ Database populated (64 bills), ⏳ Historical validation pending
 
 ---
 
 #### 1.1 Data Preparation Strategy
 
-**Historical bills source**: `/electricity_bills_history.txt`
-- Tab-separated format: `due_date<TAB>amount`
+**Historical bills source**: `ElectricityBill` database table
+- Populated via `deployment/electricity_bill_migration.rb` (Oct 4, 2025)
+- Continuously updated by automated scrapers (`vattenfall.rb`, `fortum.rb`)
 - Two providers: Vattenfall (grid), Fortum (consumption)
-- Coverage: 2023-08 through 2025-10
+- Coverage: 2023-03 through 2025-11 (64 bills total)
 
 **Period calculation logic** (from `lib/models/electricity_bill.rb:72-86`):
 ```ruby
@@ -524,86 +525,64 @@ Config 2025-09 → Consumption 2025-08 (August)
 
 #### 1.2 Test Data Extraction Script
 
-**Purpose**: Parse `electricity_bills_history.txt` into structured test data.
+**Purpose**: Query ElectricityBill database and aggregate by config period.
 
 **Implementation** (`bin/extract_historical_test_data.rb`):
 ```ruby
 #!/usr/bin/env ruby
+require 'dotenv/load'
 require 'date'
 require 'json'
-require_relative '../lib/models/electricity_bill'
+require_relative '../lib/persistence'
 
-# Parse electricity_bills_history.txt
-def parse_historical_bills(file_path)
-  bills = { vattenfall: [], fortum: [] }
-  current_provider = nil
-
-  File.readlines(file_path).each do |line|
-    line = line.strip
-
-    # Skip comments and empty lines
-    next if line.start_with?('#') || line.empty?
-
-    # Detect provider section
-    if line =~ /Vattenfall/i
-      current_provider = :vattenfall
-      next
-    elsif line =~ /Fortum/i
-      current_provider = :fortum
-      next
-    end
-
-    # Parse bill line: "2025-09-01\t1330 kr"
-    if current_provider && line =~ /^(\d{4}-\d{2}-\d{2})\s+(\d+)\s*kr/
-      due_date = Date.parse($1)
-      amount = $1.to_f
-
-      # Calculate config period using ACTUAL algorithm
-      bill_period = ElectricityBill.calculate_bill_period(due_date)
-
-      bills[current_provider] << {
-        due_date: due_date,
-        amount: amount,
-        bill_period: bill_period,
-        consumption_month: bill_period << 1  # Config - 1 month
-      }
-    end
+# Fetch all bills from database
+def fetch_bills_from_database
+  Persistence.electricity_bills.all.map do |bill|
+    {
+      provider: bill.provider,
+      bill_date: bill.bill_date,
+      amount: bill.amount,
+      bill_period: bill.bill_period,
+      consumption_month: Date.new(
+        bill.bill_period.year,
+        bill.bill_period.month == 1 ? 12 : bill.bill_period.month - 1,
+        1
+      )
+    }
   end
-
-  bills
 end
 
 # Aggregate bills by config period
 def aggregate_by_period(bills)
   periods = {}
 
-  [:vattenfall, :fortum].each do |provider|
-    bills[provider].each do |bill|
-      period_key = bill[:bill_period].strftime('%Y-%m')
-      periods[period_key] ||= {
-        bill_period: bill[:bill_period],
-        consumption_month: bill[:consumption_month],
-        vattenfall: 0,
-        fortum: 0,
-        total: 0
-      }
+  bills.each do |bill|
+    period_key = bill[:bill_period].strftime('%Y-%m')
 
-      periods[period_key][provider] += bill[:amount]
-      periods[period_key][:total] += bill[:amount]
-    end
+    periods[period_key] ||= {
+      bill_period: bill[:bill_period].strftime('%Y-%m-%d'),
+      consumption_month: bill[:consumption_month].strftime('%Y-%m-%d'),
+      vattenfall: 0,
+      fortum: 0,
+      total: 0,
+      config_year: bill[:bill_period].year,
+      config_month: bill[:bill_period].month
+    }
+
+    provider_key = bill[:provider].to_sym
+    periods[period_key][provider_key] += bill[:amount].to_i
+    periods[period_key][:total] += bill[:amount].to_i
   end
 
-  periods
+  periods.values.sort_by { |p| p[:bill_period] }
 end
 
 # Generate test data structure
-bills = parse_historical_bills('electricity_bills_history.txt')
+bills = fetch_bills_from_database
 aggregated = aggregate_by_period(bills)
 
 # Output as JSON for use in specs
-puts JSON.pretty_generate(
-  aggregated.values.sort_by { |p| p[:bill_period] }
-)
+puts JSON.pretty_generate(aggregated)
 ```
 
 **Output format**:
