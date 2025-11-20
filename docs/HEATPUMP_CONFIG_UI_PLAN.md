@@ -1,8 +1,15 @@
 # Heatpump Schedule Configuration UI Plan
 
 **Created:** November 20, 2025
-**Status:** Planning
+**Status:** IN PROGRESS - Backend API Complete ✅
 **Goal:** Make heatpump schedule parameters configurable via dashboard + move temperature override logic to backend
+
+**Progress (Nov 20, 2025 18:45):**
+- ✅ Database schema complete (HeatpumpConfig table with emergencyTempOffset)
+- ✅ Backend API complete (GET/PUT /api/heatpump/config)
+- ✅ Field rename complete (minTemp → emergencyTempOffset, dynamic offset design)
+- ✅ Temperature override logic (priority-based system implemented)
+- ⏳ Frontend UI (next step)
 
 ---
 
