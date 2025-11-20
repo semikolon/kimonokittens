@@ -236,3 +236,14 @@ model SmsEvent {
   @@index([direction, createdAt(sort: Desc)])
   @@index([providerId])
 }
+
+model HeatpumpConfig {
+  id                  String   @id @default(cuid())
+  hoursOn             Int      @default(12)
+  maxPrice            Float    @default(2.2)
+  emergencyTempOffset Float    @default(1.0)
+  minHotwater         Float    @default(40.0)
+  emergencyPrice      Float    @default(0.3)
+  updatedAt           DateTime @updatedAt
+  createdAt           DateTime @default(now())
+}
