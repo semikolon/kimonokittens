@@ -7,6 +7,7 @@ require_relative 'repositories/contract_participant_repository'
 require_relative 'repositories/bank_transaction_repository'
 require_relative 'repositories/rent_receipt_repository'
 require_relative 'repositories/sms_event_repository'
+require_relative 'repositories/heatpump_config_repository'
 
 # Persistence provides memoized access to repository instances. This keeps RentDb
 # focused on connection management while giving the rest of the application a
@@ -49,6 +50,10 @@ module Persistence
       @sms_events ||= SmsEventRepository.new
     end
 
+    def heatpump_config
+      @heatpump_config ||= HeatpumpConfigRepository.new
+    end
+
     # Reset memoized repositories (useful for tests swapping connection context).
     def reset!
       @tenants = nil
@@ -60,6 +65,7 @@ module Persistence
       @bank_transactions = nil
       @rent_receipts = nil
       @sms_events = nil
+      @heatpump_config = nil
     end
   end
 end
