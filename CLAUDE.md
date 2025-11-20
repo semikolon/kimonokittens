@@ -274,6 +274,8 @@ npx prisma migrate status     # Check which migrations need to run
 
 **Never run `migrate dev` in production.** It tries to create migrations, which should only happen in development with developer oversight.
 
+**Claude Code limitation**: `npx prisma migrate dev` requires interactive environment - Claude Code will error. User must run the command manually in their terminal after schema changes are committed.
+
 ### 💡 Key Insight: Shortcuts Compound
 
 Taking shortcuts in development doesn't save time - it creates time bombs:
