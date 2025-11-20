@@ -33,6 +33,7 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 5. **Contract Replacement Workflow** - Delete+Re-sign not yet implemented
 6. **Heatpump Peak Avoidance** - Requires Pi Node-RED config (separate infrastructure)
 7. **Horsemen Font** - Extract from PopOS system fonts (`find /usr/share/fonts -iname "*horsemen*"`), add @font-face to signup.html
+8. **Whenever Gem vs Manual Cron** - Consider pros/cons of using Whenever gem (already installed) for cron job management instead of manual crontab entries (rent reminders, bank sync, electricity scrapers)
 
 **Impact:** Documentation was significantly outdated. 6 major features marked "planned" were actually shipped months ago.
 
