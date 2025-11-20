@@ -97,6 +97,17 @@ class ZignedWebhookHandler
     event_type = payload['event_type'] || payload['event']
     agreement_data = payload['data']
 
+    # VERBOSE LOGGING: Capture actual payload structure for debugging field names
+    # TODO: Remove after confirming email_event and sign_event field structures
+    ZIGNED_LOGGER.info "📦 WEBHOOK PAYLOAD DEBUG:"
+    ZIGNED_LOGGER.info "   Event type: #{event_type}"
+    ZIGNED_LOGGER.info "   Data keys: #{agreement_data&.keys&.inspect || 'nil'}"
+    if event_type&.start_with?('email_event', 'sign_event')
+      # Full payload dump for email/sign events (the ones we're debugging)
+      ZIGNED_LOGGER.info "   🔍 FULL PAYLOAD (#{event_type}):"
+      ZIGNED_LOGGER.info "      #{JSON.pretty_generate(agreement_data)}"
+    end
+
     # Process event (v3 terminology)
     case event_type
     when 'agreement.lifecycle.pending'
