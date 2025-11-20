@@ -451,17 +451,17 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 **Actual Data Sources:**
 - **Consumption data**: `vattenfall.rb` → `electricity_usage.json` (Vattenfall Eldistribution API, hourly kWh)
 - **Spot price data**: `lib/electricity_projector.rb` → elprisetjustnu.se API (SE3 Stockholm, live API calls)
-- **Invoice data**:
-  - Vattenfall: Grid connection fees (590 kr/month)
-  - Fortum: Electricity trading fees (88 kr/month)
+- **Fixed service fees** (constants in ElectricityProjector):
+  - Vattenfall: 590 kr/month (grid connection base fee)
+  - Fortum: 88 kr/month (trading service 39 kr + Priskollen 49 kr)
+  - Total: 678 kr/month (added to consumption costs in projections)
 
-**"Tibber" References in Codebase:**
-- **`tibber.rb`**: Legacy price fetcher (UNUSED, no active cron job)
-- **`tibber_price_data.json`**: Stale data file (commented out in handlers)
-- **Node-RED integration**: Heatpump scheduling uses "Tibber-compatible" API format for backwards compatibility
-- **Handler comments**: References to "replacing Tibber Query" mean replacing Node-RED's invalid Tibber demo API key
+**"Tibber" References in Codebase (Historical Context):**
+- **Legacy files DELETED Nov 20, 2025**: `tibber.rb`, `tibber_price_data.json` - Used 1+ years ago for Dakboard dashboard
+- **Node-RED heatpump integration**: Uses "Tibber-compatible" API format (`heatpump_price_handler.rb`) for backwards compatibility
+- **Migration completed Nov 19, 2025**: Node-RED switched from Tibber demo API key to Dell API endpoint
 
-**Key Insight**: "Tibber-compatible" means API response format matching, NOT actual Tibber data source. All references to Tibber are about Node-RED heatpump scheduling system (separate from consumption tracking). The ElectricityProjector never uses Tibber API - it uses elprisetjustnu.se for spot prices and Vattenfall scraper for consumption.
+**Key Insight**: "Tibber-compatible" means API response format matching for Node-RED MQTT heatpump commands, NOT actual Tibber data usage. The dashboard electricity projection system (ElectricityProjector) has NEVER used Tibber - it always used elprisetjustnu.se for spot prices and Vattenfall scraper for consumption data.
 
 ---
 
