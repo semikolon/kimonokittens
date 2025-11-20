@@ -391,15 +391,15 @@ class ZignedWebhookHandler
 
     @repository.update(contract)
 
+    # Send congratulatory SMS to both signers
+    send_contract_completion_sms(contract)
+
     # Broadcast completion event
     @broadcaster&.broadcast_contract_update(agreement_id, 'completed', {
       title: title,
       signed_pdf_path: contract.pdf_url,
       finalized_at: finalized_at
     })
-
-    # Future: Send notification emails/SMS
-    # send_completion_notification(contract)
   end
 
   # Handle agreement.lifecycle.expired event
@@ -888,5 +888,58 @@ class ZignedWebhookHandler
       participant_name: participant.name,
       signed_at: participant.signed_at&.iso8601
     })
+  end
+
+  # Send congratulatory SMS to both signers when contract is completed
+  #
+  # @param contract [SignedContract] The completed contract
+  def send_contract_completion_sms(contract)
+    require_relative '../lib/sms/gateway'
+
+    tenant_repo = Persistence.tenants
+    tenant = tenant_repo.find_by_id(contract.tenant_id)
+
+    unless tenant
+      ZIGNED_LOGGER.warn "⚠️  Cannot send completion SMS - tenant not found: #{contract.tenant_id}"
+      return
+    end
+
+    landlord_info = LandlordProfile.info
+
+    # Clean phone numbers (remove spaces, dashes)
+    tenant_phone = tenant.phone&.gsub(/[\s\-]/, '')
+    landlord_phone = landlord_info[:phone]&.gsub(/[\s\-]/, '')
+
+    return unless tenant_phone && landlord_phone
+
+    # Ensure E.164 format (add +46 if missing)
+    tenant_phone = "+46#{tenant_phone.sub(/^0/, '')}" unless tenant_phone.start_with?('+')
+    landlord_phone = "+46#{landlord_phone.sub(/^0/, '')}" unless landlord_phone.start_with?('+')
+
+    message = "Grattis! Hyresavtalet är nu signerat av båda parter. Välkommen till Kimono Kittens!"
+
+    # Send to tenant
+    begin
+      SmsGateway.send(
+        to: tenant_phone,
+        body: message,
+        meta: { type: 'contract_completed', tenant_id: tenant.id, contract_id: contract.id }
+      )
+      ZIGNED_LOGGER.info "📱 Completion SMS sent to tenant: #{tenant.name}"
+    rescue => e
+      ZIGNED_LOGGER.warn "⚠️  Failed to send completion SMS to tenant: #{e.message}"
+    end
+
+    # Send to landlord
+    begin
+      SmsGateway.send(
+        to: landlord_phone,
+        body: message,
+        meta: { type: 'contract_completed', role: 'landlord', contract_id: contract.id }
+      )
+      ZIGNED_LOGGER.info "📱 Completion SMS sent to landlord: #{landlord_info[:name]}"
+    rescue => e
+      ZIGNED_LOGGER.warn "⚠️  Failed to send completion SMS to landlord: #{e.message}"
+    end
   end
 end
