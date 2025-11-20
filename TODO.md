@@ -28,11 +28,17 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 ### ❌ Still TODO (documentation accurate):
 1. ~~**Deposit Formula Mismatch**~~ - ✅ **FIXED** (Nov 16, 2025)
 2. ~~**Tenant Signup Form**~~ - ✅ **COMPLETE** (Nov 17, 2025) - See `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md`
-3. **Tenant Signup Deployment** - Complete pending setup actions: Cloudflare Turnstile account, database migration, SMS service (see `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md` for full checklist)
+3. **Tenant Signup Deployment** - Complete pending setup actions:
+   - Cloudflare Turnstile account
+   - Database migration
+   - SMS service
+   - **Add nginx location block for `/fonts/` directory** in `nginx-kimonokittens-https-split.conf` (public server block) to serve Horsemen fonts on signup page
+   - (See `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md` for full checklist)
 4. **Log Rotation** - Needs verification if actually needed in production
 5. **Contract Replacement Workflow** - Delete+Re-sign not yet implemented
 6. **Heatpump Peak Avoidance** - Requires Pi Node-RED config (separate infrastructure)
-7. **Horsemen Font** - Extract from PopOS system fonts (`find /usr/share/fonts -iname "*horsemen*"`), add @font-face to signup.html
+7. ~~**Horsemen Font**~~ - ✅ **EXTRACTED** (Nov 20, 2025) - Font files added to `/fonts/`, @font-face declarations in signup.html (nginx config needed for public access)
+8. **Whenever Gem vs Manual Cron** - Consider pros/cons of using Whenever gem (already installed) for cron job management instead of manual crontab entries (rent reminders, bank sync, electricity scrapers)
 
 **Impact:** Documentation was significantly outdated. 6 major features marked "planned" were actually shipped months ago.
 
@@ -845,10 +851,6 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Projection tracking**: Database `isProjection` flag + API transparency
   - **Manual override**: PUT endpoint auto-clears projection flag
   - **API indicator**: `quarterly_invoice_projection` boolean + Swedish disclaimer
-- [ ] Fill in missing electricity bills history (Nov 2024) in `electricity_bills_history.txt` ⏳ **MINOR GAP**
-  - **Status**: 98% complete - only November 2024 missing (0 entries)
-  - **Current coverage**: Dec 2024 - Sept 2025 all have 1-3 entries (18 out of 22 expected bills)
-  - **Impact**: Minor - historical data gap doesn't affect current calculations
 - [x] **⚡ Implement Time-of-Use Grid Pricing** ✅ **FULLY IMPLEMENTED** (Oct 24, 2025)
   - **Discovery**: Vattenfall charges 2.5× higher grid transfer during winter peak hours
   - **Peak pricing (53.60 öre/kWh)**: Mon-Fri 06:00-22:00 during Jan/Feb/Mar/Nov/Dec ✅
@@ -875,6 +877,8 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Benefit**: Intelligent baseline optimization vs removed emergency_price reactive approach
   - **Context**: Replaces removed price opportunity logic (emergency_price threshold) with proactive learning
   - **Added**: Nov 20, 2025 during emergencyPrice field removal
+- [ ] **⚡ FUTURE: Enhance Electricity Projection Accuracy** ⏳ **PLANNED**
+  - Use Vattenfall/Fortum PDF scrapers to extract actual bill line-item breakdowns and model specific cost components (trading margins, certificates, administrative fees) instead of empirical 4.5% adjustment. See `bin/analyze_projection_accuracy.rb` for current accuracy baseline.
 
 ### API Integration
 - [x] Expose rent calculator as API for voice/LLM assistants:

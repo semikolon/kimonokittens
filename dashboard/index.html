@@ -7,6 +7,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + React + TS</title>
     <style>
+      /* Font loading for web use (not relying on system fonts) */
+      @font-face {
+        font-family: 'Horsemen';
+        src: url('/fonts/Horsemen.woff2') format('woff2'),
+             url('/fonts/Horsemen.otf') format('opentype');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: 'Horsemen';
+        src: url('/fonts/Horsemen%20(Slant).otf') format('opentype');
+        font-weight: normal;
+        font-style: italic;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: 'Galvji';
+        src: url('/fonts/Galvji.ttc') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+      }
+
       /* Prevent white flash before React loads - matches dashboard dark gradient */
       html, body {
         margin: 0;
