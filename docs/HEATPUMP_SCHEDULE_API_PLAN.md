@@ -681,26 +681,151 @@ function selectCheapestHours(prices, hoursOn, maxPrice) {
    - ✅ Identified simple algorithm: sort by price, select N cheapest hours
    - ✅ Decision: Reimplement in Ruby for better integration
 
-### 🚀 IN PROGRESS (Nov 19, 2025)
-
 3. **Schedule generation endpoint** - `/api/heatpump/schedule`
-   - Implements ps-strategy-lowest-price algorithm in Ruby
-   - Accepts parameters: hours_on, max_price
-   - Returns ready-to-use schedule (no Node-RED processing needed)
-   - Benefits: Dashboard integration, simpler Node-RED, single source of truth
+   - ✅ Created `handlers/heatpump_schedule_handler.rb`
+   - ✅ Implements ps-strategy-lowest-price getBestX algorithm in Ruby
+   - ✅ Accepts parameters: `hours_on` (default 12), `max_price` (default 2.2)
+   - ✅ Returns ps-strategy compatible format with `schedule` + `hours` arrays
+   - ✅ Deployed to production (Nov 20, 2025 00:07:48 CET)
+   - ✅ Tested working: returns correct schedule, rejects when avg > max_price
 
-### Next Steps
+### Next Steps (Resume from Mac)
 
-4. **Node-RED integration** (simpler than originally planned)
-   - Replace Tibber Query + ps-strategy nodes with single HTTP request
-   - Point to: `http://192.168.4.84:3001/api/heatpump/schedule?hours_on=12&max_price=2.2`
-   - Shadow mode testing (3 days)
-   - Production cutover
+4. **Node-RED integration** - **READY TO DEPLOY**
+   - Both endpoints deployed and tested on Dell (192.168.4.84:3001)
+   - Mac Claude Code agent can continue from here (has SSH access to Pi)
+   - See "Node-RED Deployment Guide" section below for step-by-step instructions
 
 5. **Dashboard integration** (future enhancement)
    - Add widget to adjust hours_on slider (9-14 hours)
    - Show projected daily cost based on schedule
    - Real-time schedule visualization
+
+---
+
+## Node-RED Deployment Guide (For Mac Agent)
+
+**Status:** Ready to deploy (Nov 20, 2025)
+**Prerequisites:** Both Dell API endpoints deployed and tested working
+
+### API Endpoints Summary
+
+**Price endpoint:**
+```bash
+GET http://192.168.4.84:3001/api/heatpump/prices
+
+# Returns Tibber-compatible format:
+{
+  "viewer": {
+    "homes": [{
+      "currentSubscription": {
+        "priceInfo": {
+          "today": [
+            {"total": 2.0677, "energy": 1.0012, "tax": 0.653, "startsAt": "2025-11-20T00:00:00+01:00"},
+            ... 24 hours
+          ],
+          "tomorrow": [... 0-24 hours, published after 13:00]
+        }
+      }
+    }]
+  }
+}
+```
+
+**Schedule endpoint (RECOMMENDED):**
+```bash
+GET http://192.168.4.84:3001/api/heatpump/schedule?hours_on=12&max_price=2.2
+
+# Returns ps-strategy-compatible format:
+{
+  "schedule": [
+    {"time": "2025-11-20T00:00:00+01:00", "value": false, "countHours": 24}
+  ],
+  "hours": [
+    {"start": "2025-11-20T00:00:00+01:00", "price": 2.0677, "onOff": false, "saving": null},
+    ... 24 hours
+  ],
+  "config": {
+    "hoursOn": 12,
+    "maxPrice": 2.2,
+    "doNotSplit": false,
+    "outputValueForOn": "0",  // EVU=0 (heatpump ON)
+    "outputValueForOff": "1"  // EVU=1 (heatpump OFF)
+  },
+  "time": "2025-11-20T00:09:12+01:00",
+  "version": "1.0.0",
+  "strategyNodeId": "dell-ruby-scheduler",
+  "current": true
+}
+```
+
+### Deployment Steps
+
+**Step 1: Backup Current Flow**
+```bash
+# From Mac (has SSH access to Pi)
+ssh pi@192.168.4.66 'cat .node-red/flows.json' > ~/flows-backup-$(date +%Y%m%d-%H%M).json
+```
+
+**Step 2: Modify Node-RED Flow**
+
+Open Node-RED at http://192.168.4.66:1880 and modify the heatpump schedule flow:
+
+**Remove these nodes:**
+1. "Tibber Query" node (GraphQL API call)
+2. "ps-receive-price" node (price formatter)
+3. "ps-strategy-lowest-price" node (algorithm)
+
+**Replace with single HTTP Request node:**
+- **Method**: GET
+- **URL**: `http://192.168.4.84:3001/api/heatpump/schedule?hours_on=12&max_price=2.2`
+- **Return**: a parsed JSON object
+- **Name**: "Dell Schedule API"
+
+**Wire it up:**
+- Input: cronplus (existing schedule trigger)
+- Output: Connect directly to temperature-override node
+
+**Key insight:** The schedule endpoint returns the FULL schedule, so you skip all the ps-strategy processing. Just extract the schedule and apply temperature override, then send to MQTT.
+
+**Step 3: Extract Schedule in Function Node (if needed)**
+
+Add a function node after HTTP request to extract schedule for temperature override:
+```javascript
+// msg.payload already contains the full response from Dell API
+// Pass through to temperature override
+return msg;
+```
+
+**Step 4: Deploy**
+1. Click **Deploy** button (top right)
+2. Select "Modified Nodes"
+3. Monitor debug output
+
+**Step 5: Verify**
+- Check MQTT messages still being sent to ThermIQ
+- Verify EVU values in heatpump data (0=ON, 1=OFF)
+- Compare schedule to previous days
+- Monitor temperatures for 24 hours
+
+**Rollback (if needed):**
+```bash
+scp ~/flows-backup-YYYYMMDD-HHMM.json pi@192.168.4.66:.node-red/flows.json
+ssh pi@192.168.4.66 'sudo systemctl restart nodered'
+```
+
+### Testing Notes (Nov 20, 2025 00:09)
+
+- **Price endpoint**: Returns 24 hours for today, 0 for tomorrow (expected at 00:09, tomorrow not published yet)
+- **Schedule endpoint**: Correctly rejects schedule when average price > max_price (turned all hours OFF)
+- **Algorithm**: ps-strategy getBestX correctly implemented - sorts by price, selects N cheapest, applies max_price filter
+- **Format compatibility**: Returns ps-strategy compatible output (schedule + hours + config)
+
+### Known Behaviors
+
+- **Max price rejection**: When average of N cheapest hours exceeds max_price, algorithm turns ALL hours OFF (safety feature)
+- **Tomorrow unavailable**: Before ~13:00, only today's 24 hours available (normal behavior)
+- **Peak/off-peak pricing**: Dell API already includes grid rates (0.536 peak, 0.214 off-peak) in total price
 
 ---
 
