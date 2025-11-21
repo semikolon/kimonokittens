@@ -589,10 +589,24 @@ Handlers → Services → Domain Models + Repositories → Database
         └── webhook_puma_server.rb             # Smart webhook receiver
 
 /var/www/kimonokittens/dashboard/              # Nginx serves from here
+
+/etc/nginx/
+├── sites-available/
+│   └── kimonokittens.conf                     # Main nginx config (source of truth)
+└── sites-enabled/
+    └── default → ../sites-available/kimonokittens.conf  # Active config (symlink)
+
 /home/kimonokittens/.config/systemd/user/      # User services
 ├── kimonokittens-kiosk.service                # Chrome kiosk (port localhost)
 └── (dashboard managed by root systemd)
 ```
+
+**Nginx Configuration:**
+- **Config file**: `/etc/nginx/sites-available/kimonokittens.conf`
+- **Active symlink**: `/etc/nginx/sites-enabled/default` → `kimonokittens.conf`
+- **Non-standard naming**: Symlink is called "default" instead of matching filename
+- **Structure**: Two server blocks (public HTTPS for kimonokittens.com + localhost for kiosk/LAN)
+- **Reload after changes**: `sudo nginx -t && sudo systemctl reload nginx`
 
 ### System Services
 ```bash
