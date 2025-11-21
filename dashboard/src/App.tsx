@@ -1,5 +1,5 @@
 // Dashboard main application component (Oct 26, 2025 - triggering rebuild for daily costs bar)
-import React from 'react'
+import React, { useEffect } from 'react'
 import { DataProvider, useData } from './context/DataContext' // WebSocket data provider
 import { SleepScheduleProvider, useSleepSchedule } from './contexts/SleepScheduleContext'
 import { AdminAuthProvider } from './contexts/AdminAuthContext'
@@ -153,6 +153,13 @@ function BackendDataWidgets() {
 function DashboardContent() {
   const { state: sleepState } = useSleepSchedule();
   const { viewMode } = useKeyboardNav();
+
+  // Update page title based on current view mode
+  useEffect(() => {
+    document.title = viewMode === 'admin'
+      ? 'Kimono Kittens: Admin'
+      : 'Kimono Kittens: Dashboard'
+  }, [viewMode])
 
   // Pause CSS animations ONLY when fully asleep
   const shouldPauseAnimations = sleepState.currentState === 'sleeping';
