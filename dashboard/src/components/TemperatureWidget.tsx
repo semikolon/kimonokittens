@@ -299,7 +299,7 @@ export function TemperatureWidget() {
 
     return (
       <div
-        className="mt-10 mb-6 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-purple-400/60 rounded-lg"
+        className="mt-10 mb-6 cursor-pointer group rounded-lg outline-none focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-purple-400/60 focus-visible:outline-none"
         tabIndex={0}
         role="button"
         aria-label="Öppna värmepumpsinställningar"
