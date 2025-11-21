@@ -65,7 +65,6 @@
   [role="button"],
   a[role="button"] {
     outline: none !important;
-    box-shadow: none !important;
     -webkit-tap-highlight-color: transparent;
     transition: filter 120ms ease;
   }
