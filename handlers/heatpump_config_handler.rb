@@ -2,6 +2,7 @@ require 'rack/request'
 require 'oj'
 require_relative '../lib/persistence'
 require_relative '../lib/models/heatpump_config'
+require_relative '../lib/admin_auth'
 
 # Handles GET/PUT requests for heatpump configuration
 class HeatpumpConfigHandler
@@ -41,6 +42,10 @@ class HeatpumpConfigHandler
   end
 
   def handle_put(request)
+    if (auth_error = require_admin_token(request))
+      return auth_error
+    end
+
     body = request.body.read
     params = Oj.load(body, symbol_keys: true)
 
@@ -73,5 +78,16 @@ class HeatpumpConfigHandler
     }
 
     [200, { 'Content-Type' => 'application/json' }, [Oj.dump(response)]]
+  end
+
+  def require_admin_token(request)
+    token = request.get_header('HTTP_X_ADMIN_TOKEN')
+    return nil if AdminAuth.authorized?(token)
+
+    [
+      401,
+      { 'Content-Type' => 'application/json' },
+      [Oj.dump({ error: 'Admin PIN krävs för denna åtgärd' })]
+    ]
   end
 end

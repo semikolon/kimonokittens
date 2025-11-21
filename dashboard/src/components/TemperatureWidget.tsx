@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react'
 import { useData } from '../context/DataContext'
+import { useAdminAuth } from '../contexts/AdminAuthContext'
 import { Thermometer, Target, Droplets, Zap } from 'lucide-react'
 import { HeatpumpConfigModal } from './HeatpumpConfigModal'
 
@@ -82,11 +83,13 @@ const ElectricityPriceSparkline: React.FC<ElectricityPriceSparklineProps> = ({ h
 
 export function TemperatureWidget() {
   const { state } = useData()
+  const { ensureAuth } = useAdminAuth()
   const { temperatureData, heatpumpScheduleData, connectionStatus } = state
   const [isStatusChanging, setIsStatusChanging] = useState(false)
   const [prevSmartStatus, setPrevSmartStatus] = useState('')
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false)
   const [currentConfig, setCurrentConfig] = useState(null)
+  const [adminToken, setAdminToken] = useState<string | null>(null)
 
   // Fetch current config on mount
   useEffect(() => {
@@ -287,7 +290,13 @@ export function TemperatureWidget() {
   const getHumidityIcon = () => <Droplets className="w-6 h-6 text-purple-200" />
   const getHotWaterIcon = () => <Zap className="w-6 h-6 text-purple-200" />
 
-  const openConfig = useCallback(() => setIsConfigModalOpen(true), [])
+  const openConfig = useCallback(async () => {
+    const token = await ensureAuth()
+    if (token) {
+      setAdminToken(token)
+      setIsConfigModalOpen(true)
+    }
+  }, [ensureAuth])
 
   const HeatpumpScheduleBar = () => {
     if (!heatpumpSchedule) return null
@@ -489,6 +498,7 @@ export function TemperatureWidget() {
         onClose={() => setIsConfigModalOpen(false)}
         currentConfig={currentConfig}
         onSave={refetchConfig}
+        adminToken={adminToken}
       />
     </>
   )

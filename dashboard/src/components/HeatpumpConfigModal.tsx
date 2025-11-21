@@ -13,9 +13,10 @@ interface HeatpumpConfigModalProps {
   onClose: () => void
   currentConfig: HeatpumpConfig | null
   onSave?: () => void
+  adminToken: string | null
 }
 
-export function HeatpumpConfigModal({ isOpen, onClose, currentConfig, onSave }: HeatpumpConfigModalProps) {
+export function HeatpumpConfigModal({ isOpen, onClose, currentConfig, onSave, adminToken }: HeatpumpConfigModalProps) {
   const [config, setConfig] = useState<HeatpumpConfig>({
     hoursOn: 12,
     emergencyTempOffset: 2.0,
@@ -51,7 +52,8 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig, onSave }: 
       const response = await fetch('/api/heatpump/config', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(adminToken && { 'X-Admin-Token': adminToken })
         },
         body: JSON.stringify(apiPayload)
       })
