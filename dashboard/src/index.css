@@ -60,23 +60,29 @@
     display: none; /* Chrome/Safari/Opera */
   }
 
-  /* Global button interaction: no focus ring, slight darken on press */
-  button, [role="button"] {
-    outline: none;
-    box-shadow: none;
+  /* Global button interaction: no focus ring/outline, slight darken on press */
+  button,
+  [role="button"],
+  a[role="button"] {
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent;
     transition: filter 120ms ease;
   }
 
   button:focus,
   button:focus-visible,
   [role="button"]:focus,
-  [role="button"]:focus-visible {
-    outline: none;
-    box-shadow: none;
+  [role="button"]:focus-visible,
+  a[role="button"]:focus,
+  a[role="button"]:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
   }
 
   button:active,
-  [role="button"]:active {
+  [role="button"]:active,
+  a[role="button"]:active {
     filter: brightness(0.8);
   }
 }
