@@ -55,7 +55,16 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
       const data = await response.json()
 
       if (response.ok) {
-        showToast('Påminnelse skickad!', 'success')
+        // Build detailed success message showing which methods were used
+        const methods = []
+        if (data.email_sent) methods.push('E-post')
+        if (data.sms_sent) methods.push('SMS')
+
+        const message = methods.length > 0
+          ? `Påminnelse skickad via ${methods.join(' och ')}!`
+          : 'Påminnelse skickad!'
+
+        showToast(message, 'success')
       } else {
         showToast(data.error || 'Kunde inte skicka påminnelse', 'error')
       }

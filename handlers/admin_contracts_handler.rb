@@ -354,7 +354,7 @@ class AdminContractsHandler
       return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Cannot send reminder for expired contract' })]]
     end
 
-    # Send reminder via Zigned API
+    # Send reminder via Zigned API (email)
     require_relative '../lib/zigned_client_v3'
     client = ZignedClientV3.new(
       client_id: ENV['ZIGNED_CLIENT_ID'],
@@ -362,24 +362,70 @@ class AdminContractsHandler
       test_mode: contract.test_mode
     )
 
+    email_sent = false
+    sms_sent = false
+    errors = []
+
+    # Step 1: Send email reminder via Zigned
     begin
       result = client.send_reminder(contract.case_id)
+      email_sent = true
+      puts "📧 Email reminder sent via Zigned for contract #{contract.id}"
+    rescue => e
+      puts "❌ Error sending email reminder: #{e.message}"
+      errors << "Email: #{e.message}"
+    end
 
+    # Step 2: Send SMS reminder if tenant has phone number
+    tenant_repo = Persistence.tenants
+    tenant = tenant_repo.find_by_id(contract.tenant_id)
+
+    if tenant&.phone
+      begin
+        require_relative '../lib/sms/gateway'
+
+        # Clean and format phone number
+        phone = tenant.phone.gsub(/[\s\-]/, '')
+        phone = "+46#{phone.sub(/^0/, '')}" unless phone.start_with?('+')
+
+        # Get signing URL from contract
+        signing_url = contract.signing_url || contract.signing_room_url
+
+        if signing_url
+          SmsGateway.send(
+            to: phone,
+            body: "Påminnelse: Signera ditt hyresavtal med BankID här: #{signing_url}",
+            meta: { type: 'contract_reminder', contract_id: contract.id, tenant_id: tenant.id }
+          )
+          sms_sent = true
+          puts "📱 SMS reminder sent to #{tenant.name} (#{phone})"
+        else
+          errors << "SMS: No signing URL available"
+        end
+      rescue => e
+        puts "⚠️  Failed to send SMS reminder: #{e.message}"
+        errors << "SMS: #{e.message}"
+      end
+    end
+
+    # Return success if at least one method succeeded
+    if email_sent || sms_sent
       [
         200,
         { 'Content-Type' => 'application/json' },
         [Oj.dump({
           success: true,
           message: 'Reminder sent successfully',
-          reminders: result
+          email_sent: email_sent,
+          sms_sent: sms_sent,
+          errors: errors.empty? ? nil : errors
         }, mode: :compat)]
       ]
-    rescue => e
-      puts "❌ Error sending reminder: #{e.message}"
+    else
       [
         500,
         { 'Content-Type' => 'application/json' },
-        [Oj.dump({ error: "Failed to send reminder: #{e.message}" })]
+        [Oj.dump({ error: "Failed to send reminder: #{errors.join(', ')}" })]
       ]
     end
   end
