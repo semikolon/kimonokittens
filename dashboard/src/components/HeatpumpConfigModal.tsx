@@ -70,19 +70,18 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
   }
 
   const handleCancel = () => {
-    // Reset to current config
-    if (currentConfig) {
-      setConfig(currentConfig)
-    }
     setError(null)
     onClose()
+    // Config will be reloaded from useEffect when modal reopens
   }
 
   if (!isOpen) return null
 
   const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-      <div className="bg-slate-900/60 border border-purple-500/30 rounded-2xl w-full max-w-md mx-4 overflow-hidden">
+      <div className="border border-purple-500/30 rounded-2xl w-full max-w-md mx-4 overflow-hidden" style={{
+        backgroundImage: 'linear-gradient(180deg, rgba(82, 43, 127, 0.95) 0%, rgba(66, 30, 105, 0.95) 100%)'
+      }}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-purple-500/20">
           <h2 className="text-xl font-semibold text-slate-100">Värmepumpsinställningar</h2>
@@ -176,20 +175,26 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
           )}
         </div>
 
-        {/* Footer - Match PIN modal button style */}
+        {/* Footer - Match tenant form button style */}
         <div className="p-6 border-t border-purple-500/20">
           <div className="flex gap-3">
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 rounded-xl bg-slate-800/70 text-slate-200 font-medium hover:bg-slate-700/70 transition-all disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-lg font-medium text-white/70 rounded-xl transition-all button-cursor-glow button-glow-default button-hover-brighten disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+              style={{
+                backgroundImage: 'linear-gradient(180deg, rgba(82, 43, 127, 0.92) 0%, rgba(66, 30, 105, 0.92) 100%)'
+              }}
             >
               Avbryt
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 rounded-xl bg-cyan-600 text-white font-medium hover:bg-cyan-500 transition-all disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-lg font-medium text-white rounded-xl transition-all button-cursor-glow button-glow-orange button-hover-brighten disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+              style={{
+                backgroundImage: 'linear-gradient(180deg, #cb6f38 0%, #903f14 100%)'
+              }}
             >
               {isSaving ? 'Sparar…' : 'Spara'}
             </button>
