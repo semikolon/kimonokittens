@@ -82,7 +82,7 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig, onSave }: 
   const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
       <div className="border border-purple-500/30 rounded-2xl w-full max-w-md mx-4 overflow-hidden" style={{
-        backgroundImage: 'linear-gradient(180deg, rgba(41, 22, 64, 0.95) 0%, rgba(33, 15, 53, 0.95) 100%)'
+        backgroundImage: 'linear-gradient(180deg, rgba(41, 22, 64, 0.95) 0%, rgba(30, 14, 50, 0.99) 100%)'
       }}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-purple-500/20">

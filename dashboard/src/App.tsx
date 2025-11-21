@@ -170,7 +170,7 @@ function DashboardContent() {
         {/* Animated gradient blobs (production only) */}
         {showGradients && (
           <div
-            className="gradients-container fixed inset-0 h-full w-full opacity-35 blur-[50px]"
+            className="gradients-container fixed inset-0 h-full w-full opacity-35 blur-[50px] pointer-events-none"
             style={{
               zIndex: 2,
               animationPlayState: shouldPauseAnimations ? 'paused' : 'running'
@@ -220,7 +220,7 @@ function DashboardContent() {
       {/* Animated gradient blobs (production only) */}
       {showGradients && (
         <div
-          className="gradients-container fixed inset-0 h-full w-full opacity-35 blur-[50px]"
+          className="gradients-container fixed inset-0 h-full w-full opacity-35 blur-[50px] pointer-events-none"
           style={{
             zIndex: 2,
             animationPlayState: shouldPauseAnimations ? 'paused' : 'running'

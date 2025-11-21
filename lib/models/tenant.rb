@@ -35,7 +35,7 @@ class Tenant
               :sms_opt_out, :payday_start_day
 
   # Writer methods for mutable contract fields
-  attr_writer :personnummer, :phone, :deposit, :furnishing_deposit, :room, :departure_date
+  attr_writer :personnummer, :phone, :deposit, :furnishing_deposit, :room, :departure_date, :facebook_id
 
   def initialize(id: nil, name:, email:, facebook_id: nil, avatar_url: nil,
                  room_adjustment: nil, room: nil, start_date: nil, departure_date: nil,

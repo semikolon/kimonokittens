@@ -141,7 +141,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
           <div className="border border-purple-500/30 rounded-2xl p-6 w-full max-w-sm" style={{
-            backgroundImage: 'linear-gradient(180deg, rgba(41, 22, 64, 0.95) 0%, rgba(33, 15, 53, 0.95) 100%)'
+            backgroundImage: 'linear-gradient(180deg, rgba(41, 22, 64, 0.95) 0%, rgba(30, 14, 50, 0.99) 100%)'
           }}>
             <h2 className="text-xl font-semibold text-purple-100 mb-4">Ange admin-PIN</h2>
             <form onSubmit={submitPin} className="space-y-4">
