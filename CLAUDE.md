@@ -276,6 +276,8 @@ npx prisma migrate status     # Check which migrations need to run
 
 **Claude Code limitation**: `npx prisma migrate dev` requires interactive environment - Claude Code will error. User must run the command manually in their terminal after schema changes are committed.
 
+**Community vs Prisma team (Nov 2025):** GitHub issues #7113, #4669 requested `--allow-non-interactive` flag for CI/CD workflows. Prisma team **intentionally rejected** this to prevent misuse of `migrate dev` in production. The team's stance: development migrations should always be interactive, production should use `migrate deploy`. This means AI coding tools will never be able to run `migrate dev` - by design.
+
 ### 💡 Key Insight: Shortcuts Compound
 
 Taking shortcuts in development doesn't save time - it creates time bombs:
