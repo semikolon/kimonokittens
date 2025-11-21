@@ -80,24 +80,24 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-4 border border-slate-700">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+      <div className="bg-slate-900 border border-purple-500/30 rounded-2xl w-full max-w-md mx-4 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-700">
-          <h2 className="text-xl font-bold text-purple-100">Värmepumpsinställningar</h2>
+        <div className="flex items-center justify-between p-6 border-b border-purple-500/20">
+          <h2 className="text-xl font-semibold text-purple-100">Värmepumpsinställningar</h2>
           <button
             onClick={handleCancel}
-            className="text-purple-200 hover:text-purple-100 transition-colors"
+            className="text-purple-300 hover:text-purple-100 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
+        {/* Content - scrollable if needed */}
+        <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
           {/* Hours On Slider */}
           <div>
-            <label className="block text-purple-200 text-sm uppercase mb-2">
+            <label className="block text-purple-200 text-sm uppercase mb-3 font-medium">
               Antal timmar per dag
             </label>
             <div className="flex items-center space-x-4">
@@ -108,20 +108,20 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
                 step="1"
                 value={config.hoursOn}
                 onChange={(e) => setConfig({ ...config, hoursOn: parseInt(e.target.value) })}
-                className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                className="flex-1 h-2 bg-slate-950/60 border border-purple-900/40 rounded-xl appearance-none cursor-pointer accent-purple-500"
               />
               <span className="text-2xl font-bold text-purple-100 w-16 text-right">
                 {config.hoursOn}h
               </span>
             </div>
-            <p className="text-sm text-purple-300 mt-2">
+            <p className="text-sm text-purple-400/70 mt-2">
               Väljer de {config.hoursOn} billigaste timmarna per dag
             </p>
           </div>
 
           {/* Emergency Temperature Offset Slider */}
           <div>
-            <label className="block text-purple-200 text-sm uppercase mb-2">
+            <label className="block text-purple-200 text-sm uppercase mb-3 font-medium">
               Nödtemperaturskydd
             </label>
             <div className="flex items-center space-x-4">
@@ -132,20 +132,20 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
                 step="0.5"
                 value={config.emergencyTempOffset}
                 onChange={(e) => setConfig({ ...config, emergencyTempOffset: parseFloat(e.target.value) })}
-                className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                className="flex-1 h-2 bg-slate-950/60 border border-purple-900/40 rounded-xl appearance-none cursor-pointer accent-purple-500"
               />
               <span className="text-2xl font-bold text-purple-100 w-16 text-right">
                 {config.emergencyTempOffset.toFixed(1)}°
               </span>
             </div>
-            <p className="text-sm text-purple-300 mt-2">
+            <p className="text-sm text-purple-400/70 mt-2">
               Startar värmepump om inomhustemp ≤ måltemp − {config.emergencyTempOffset.toFixed(1)}°C
             </p>
           </div>
 
           {/* Minimum Hot Water Slider */}
           <div>
-            <label className="block text-purple-200 text-sm uppercase mb-2">
+            <label className="block text-purple-200 text-sm uppercase mb-3 font-medium">
               Minsta varmvatten
             </label>
             <div className="flex items-center space-x-4">
@@ -156,41 +156,43 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
                 step="1"
                 value={config.minHotwater}
                 onChange={(e) => setConfig({ ...config, minHotwater: parseInt(e.target.value) })}
-                className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                className="flex-1 h-2 bg-slate-950/60 border border-purple-900/40 rounded-xl appearance-none cursor-pointer accent-purple-500"
               />
               <span className="text-2xl font-bold text-purple-100 w-16 text-right">
                 {config.minHotwater}°
               </span>
             </div>
-            <p className="text-sm text-purple-300 mt-2">
+            <p className="text-sm text-purple-400/70 mt-2">
               Startar värmepump om varmvatten &lt; {config.minHotwater}°C
             </p>
           </div>
 
           {/* Error Display */}
           {error && (
-            <div className="bg-red-900/20 border border-red-400/30 rounded-lg p-4">
+            <div className="bg-red-900/20 border border-red-400/30 rounded-xl p-4">
               <p className="text-red-400 text-sm">{error}</p>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-slate-700">
-          <button
-            onClick={handleCancel}
-            disabled={isSaving}
-            className="px-4 py-2 text-purple-200 hover:text-purple-100 transition-colors disabled:opacity-50"
-          >
-            Avbryt
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="px-6 py-2 bg-cyan-600/80 hover:bg-cyan-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSaving ? 'Sparar...' : 'Spara'}
-          </button>
+        {/* Footer - Match PIN modal button style */}
+        <div className="p-6 border-t border-purple-500/20">
+          <div className="flex gap-3">
+            <button
+              onClick={handleCancel}
+              disabled={isSaving}
+              className="flex-1 px-4 py-2 rounded-xl bg-slate-800/70 text-purple-200 font-medium hover:bg-slate-700/70 transition-all disabled:opacity-50"
+            >
+              Avbryt
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="flex-1 px-4 py-2 rounded-xl bg-cyan-600 text-white font-medium hover:bg-cyan-500 transition-all disabled:opacity-50"
+            >
+              {isSaving ? 'Sparar…' : 'Spara'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
