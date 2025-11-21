@@ -980,5 +980,6 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 
 ## 🧾 Logging & Monitoring
 
+- [ ] Remove verbose console logging from widgets (RentWidget clusters, DataContext WebSocket messages, etc.) - historically useful but now cluttering browser console
 - [ ] Investigate prod log volume (journald + dashboard logs): measure disk space consumed per hour/day and trim noisy broadcast entries.
 - Check electricity scrapers - dashboard shows projection despite bills being due, verify logs and RentConfig aggregation
