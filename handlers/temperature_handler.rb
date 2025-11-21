@@ -26,7 +26,6 @@ class TemperatureHandler
           if response.success?
             body = response.body.to_s
             puts "TEMPERATURE_HANDLER: Success, body length: #{body.length}"
-
             return [200, { 'Content-Type' => 'application/json' }, [body]]
           else
             puts "TEMPERATURE_HANDLER: Response not successful: #{response.code}"
