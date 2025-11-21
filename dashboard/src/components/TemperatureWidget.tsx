@@ -92,7 +92,10 @@ export function TemperatureWidget() {
   useEffect(() => {
     fetch('/api/heatpump/config')
       .then(res => res.json())
-      .then(data => setCurrentConfig(data))
+      .then(data => {
+        // API returns snake_case, store as-is (modal will convert)
+        setCurrentConfig(data)
+      })
       .catch(err => console.error('Failed to load heatpump config:', err))
   }, [])
 

@@ -25,11 +25,11 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
   // Load current config when modal opens
   useEffect(() => {
     if (isOpen && currentConfig) {
-      // Merge with defaults to handle missing fields
+      // Convert from snake_case (API) to camelCase (frontend) and merge with defaults
       setConfig(prev => ({
-        hoursOn: currentConfig.hoursOn ?? prev.hoursOn,
-        emergencyTempOffset: currentConfig.emergencyTempOffset ?? prev.emergencyTempOffset,
-        minHotwater: currentConfig.minHotwater ?? prev.minHotwater
+        hoursOn: currentConfig.hours_on ?? prev.hoursOn,
+        emergencyTempOffset: currentConfig.emergency_temp_offset ?? prev.emergencyTempOffset,
+        minHotwater: currentConfig.min_hotwater ?? prev.minHotwater
       }))
     }
   }, [isOpen, currentConfig])
@@ -41,12 +41,19 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
     setError(null)
 
     try {
+      // Convert from camelCase (frontend) to snake_case (API)
+      const apiPayload = {
+        hours_on: config.hoursOn,
+        emergency_temp_offset: config.emergencyTempOffset,
+        min_hotwater: config.minHotwater
+      }
+
       const response = await fetch('/api/heatpump/config', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(config)
+        body: JSON.stringify(apiPayload)
       })
 
       if (!response.ok) {
