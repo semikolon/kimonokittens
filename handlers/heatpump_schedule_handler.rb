@@ -32,9 +32,10 @@ class HeatpumpScheduleHandler
     # Wrap env in Rack::Request for convenient access
     req = Rack::Request.new(env)
 
-    # Parse query parameters
+    # Parse query parameters and load persisted config
     params = req.params
-    hours_on = (params['hours_on'] || DEFAULT_HOURS_ON).to_i
+    config = Persistence.heatpump_config.get_current
+    hours_on = params['hours_on'] ? params['hours_on'].to_i : (config&.hours_on || DEFAULT_HOURS_ON)
 
     # Get prices from heatpump_price_handler
     status, headers, body = @price_handler.call(env)
@@ -51,8 +52,7 @@ class HeatpumpScheduleHandler
     # Generate schedule using ps-strategy algorithm (process each day independently)
     schedule = generate_schedule_per_day(today, tomorrow, hours_on)
 
-    # Fetch heatpump config and apply temperature override logic
-    config = Persistence.heatpump_config.get_current
+    # Apply temperature override logic
     temps = get_current_temperatures
     current_state = calculate_current_state(schedule, config, temps)
 
