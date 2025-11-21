@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useData } from '../context/DataContext'
-import { Thermometer, Target, Droplets, Zap } from 'lucide-react'
+import { Thermometer, Target, Droplets, Zap, Settings } from 'lucide-react'
+import { HeatpumpConfigModal } from './HeatpumpConfigModal'
 
 interface ElectricityPriceSparklineProps {
   hours: Array<{ hour: number }>
@@ -84,6 +85,16 @@ export function TemperatureWidget() {
   const { temperatureData, heatpumpScheduleData, connectionStatus } = state
   const [isStatusChanging, setIsStatusChanging] = useState(false)
   const [prevSmartStatus, setPrevSmartStatus] = useState('')
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false)
+  const [currentConfig, setCurrentConfig] = useState(null)
+
+  // Fetch current config on mount
+  useEffect(() => {
+    fetch('/api/heatpump/config')
+      .then(res => res.json())
+      .then(data => setCurrentConfig(data))
+      .catch(err => console.error('Failed to load heatpump config:', err))
+  }, [])
 
   // TESTING: Show comparison cursors (active + residual glows side by side)
   const showTestCursors = false
@@ -275,16 +286,25 @@ export function TemperatureWidget() {
 
     return (
       <div className="mt-10 mb-6">
-        <div
-          className={`text-purple-200 mb-2 heatpump-status ${isStatusChanging ? 'changing' : ''}`}
-          style={{ textTransform: 'uppercase', fontSize: '0.8em' }}
-        >
-          {currentSmartStatus}{(isActivelyHeating || hasHotSupplyLine) && (
-            <>
-              <span style={{ opacity: 0.25, margin: '0 0.3em' }}>•</span>
-              {temperatureData.supplyline_temperature} i elementen
-            </>
-          )}
+        <div className="flex items-center justify-between mb-2">
+          <div
+            className={`text-purple-200 heatpump-status ${isStatusChanging ? 'changing' : ''}`}
+            style={{ textTransform: 'uppercase', fontSize: '0.8em' }}
+          >
+            {currentSmartStatus}{(isActivelyHeating || hasHotSupplyLine) && (
+              <>
+                <span style={{ opacity: 0.25, margin: '0 0.3em' }}>•</span>
+                {temperatureData.supplyline_temperature} i elementen
+              </>
+            )}
+          </div>
+          <button
+            onClick={() => setIsConfigModalOpen(true)}
+            className="text-purple-200 hover:text-purple-100 transition-colors"
+            title="Inställningar"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
         </div>
         <div
           className="relative h-5 rounded-lg overflow-visible"
@@ -400,49 +420,57 @@ export function TemperatureWidget() {
   }
 
   return (
-    <div>
-      <HeatpumpScheduleBar />
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="flex items-center">
-          <div className="mr-2">
-            {getTemperatureIcon()}
+    <>
+      <div>
+        <HeatpumpScheduleBar />
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="flex items-center">
+            <div className="mr-2">
+              {getTemperatureIcon()}
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-purple-100">{temperatureData.indoor_temperature}</div>
+              <div className="text-purple-200" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>temperatur</div>
+            </div>
           </div>
-          <div>
-            <div className="text-3xl font-bold text-purple-100">{temperatureData.indoor_temperature}</div>
-            <div className="text-purple-200" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>temperatur</div>
-          </div>
-        </div>
 
-        <div className="flex items-center">
-          <div className="mr-2">
-            {getTargetIcon()}
+          <div className="flex items-center">
+            <div className="mr-2">
+              {getTargetIcon()}
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-purple-100">{temperatureData.target_temperature}</div>
+              <div className="text-purple-200" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>mål</div>
+            </div>
           </div>
-          <div>
-            <div className="text-3xl font-bold text-purple-100">{temperatureData.target_temperature}</div>
-            <div className="text-purple-200" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>mål</div>
-          </div>
-        </div>
 
-        <div className="flex items-center">
-          <div className="mr-2">
-            {getHumidityIcon()}
+          <div className="flex items-center">
+            <div className="mr-2">
+              {getHumidityIcon()}
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-purple-100">{temperatureData.indoor_humidity}</div>
+              <div className="text-purple-200" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>luftfuktighet</div>
+            </div>
           </div>
-          <div>
-            <div className="text-3xl font-bold text-purple-100">{temperatureData.indoor_humidity}</div>
-            <div className="text-purple-200" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>luftfuktighet</div>
-          </div>
-        </div>
 
-        <div className="flex items-center">
-          <div className="mr-2">
-            {getHotWaterIcon()}
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-purple-100">{temperatureData.hotwater_temperature}</div>
-            <div className="text-purple-200" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>varmvatten</div>
+          <div className="flex items-center">
+            <div className="mr-2">
+              {getHotWaterIcon()}
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-purple-100">{temperatureData.hotwater_temperature}</div>
+              <div className="text-purple-200" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>varmvatten</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <HeatpumpConfigModal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        currentConfig={currentConfig}
+      />
+    </>
   )
 }
