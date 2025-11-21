@@ -639,7 +639,21 @@ class RentCalculatorHandler
       }
     end
 
-    # Check if using historical data (would come from get_historical_electricity_cost method)
+    # FIRST: Check if actual ElectricityBill records exist for this period
+    # This prevents misclassifying actual bills as "historical projection"
+    # when ElectricityProjector returns them (Bug fix: Nov 21, 2025)
+    target_period = Date.new(year, month, 1)
+    actual_bills = Persistence.electricity_bills.find_by_period(target_period)
+
+    if actual_bills.any?
+      return {
+        type: 'actual',
+        electricity_source: 'current_bills',
+        description_sv: 'Baserad på aktuella elräkningar'
+      }
+    end
+
+    # No actual bills exist - check if using historical projection
     historical_cost = get_historical_electricity_cost(year: year, month: month)
     if historical_cost > 0 && el_cost.to_i == historical_cost.to_i
       return {
