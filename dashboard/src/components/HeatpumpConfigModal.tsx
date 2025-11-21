@@ -82,7 +82,7 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
 
   const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-purple-500/30 rounded-2xl w-full max-w-md mx-4 overflow-hidden">
+      <div className="bg-slate-900/60 border border-purple-500/30 rounded-2xl w-full max-w-md mx-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-purple-500/20">
           <h2 className="text-xl font-semibold text-slate-100">Värmepumpsinställningar</h2>

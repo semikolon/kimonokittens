@@ -548,7 +548,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
       {/* Payment Status Section (Phase 6: Rent Reminders) */}
       <div className="grid gap-6 md:grid-cols-3 pt-6 border-t border-purple-500/10">
         <div>
-          <div className="text-xs text-purple-400/70 mb-1">BETALNINGSSTATUS</div>
+          <div className="text-xs text-purple-300/60 uppercase tracking-wide mb-1">Betalningsstatus</div>
           <div className="flex items-center gap-2">
             {tenant.rent_paid ? (
               <>
@@ -572,7 +572,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
         </div>
 
         <div>
-          <div className="text-xs text-purple-400/70 mb-1">SENASTE BETALNING</div>
+          <div className="text-xs text-purple-300/60 uppercase tracking-wide mb-1">Senaste betalning</div>
           <div className="text-purple-100">
             {tenant.last_payment_date
               ? new Date(tenant.last_payment_date).toLocaleDateString('sv-SE')
@@ -581,9 +581,9 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
         </div>
 
         <div>
-          <div className="text-xs text-purple-400/70 mb-1 flex items-center gap-2">
+          <div className="text-xs text-purple-300/60 uppercase tracking-wide mb-1 flex items-center gap-2">
             <MessageSquare className="w-3 h-3" />
-            <span>SMS PÅMINNELSER</span>
+            <span>SMS påminnelser</span>
           </div>
           <div className="text-purple-100">
             {tenant.sms_reminder_count || 0} skickade
