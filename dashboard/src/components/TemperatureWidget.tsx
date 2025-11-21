@@ -81,7 +81,7 @@ const ElectricityPriceSparkline: React.FC<ElectricityPriceSparklineProps> = ({ h
 
 export function TemperatureWidget() {
   const { state } = useData()
-  const { temperatureData, connectionStatus } = state
+  const { temperatureData, heatpumpScheduleData, connectionStatus } = state
   const [isStatusChanging, setIsStatusChanging] = useState(false)
   const [prevSmartStatus, setPrevSmartStatus] = useState('')
 
@@ -121,9 +121,9 @@ export function TemperatureWidget() {
     }
   }, [currentSmartStatus])
 
-  // Heatpump schedule progress bar logic using schedule_data
+  // Heatpump schedule progress bar logic using WebSocket schedule_data
   const heatpumpSchedule = useMemo(() => {
-    if (!temperatureData || !temperatureData.schedule_data) {
+    if (!heatpumpScheduleData?.schedule) {
       return null
     }
 
@@ -156,10 +156,10 @@ export function TemperatureWidget() {
     }
     const currentHour = now.getHours()
 
-    // Build hour-by-hour schedule from schedule_data
+    // Build hour-by-hour schedule from WebSocket schedule_data
     const scheduleMap = new Map()
 
-    const scheduleEntries = temperatureData.schedule_data
+    const scheduleEntries = heatpumpScheduleData.schedule
 
     scheduleEntries.forEach((period) => {
       const startTime = new Date(period.time)
@@ -237,7 +237,7 @@ export function TemperatureWidget() {
       isActivelyHeating,
       hasHotSupplyLine
     }
-  }, [temperatureData])
+  }, [temperatureData, heatpumpScheduleData])
 
   // Early returns after all hooks are called
   const loading = connectionStatus === 'connecting' && !temperatureData

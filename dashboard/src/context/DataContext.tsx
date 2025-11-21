@@ -140,6 +140,40 @@ interface ElectricityDailyCost {
   anomalous_usage_pct?: number  // Percentage excess (e.g., 25.3 for +25.3%)
 }
 
+interface HeatpumpScheduleData {
+  schedule: Array<{
+    time: string
+    value: boolean
+    countHours: number
+  }>
+  hours: Array<{
+    start: string
+    price: number
+    onOff: boolean
+  }>
+  current: {
+    state: boolean
+    evu: number
+    reason: string
+    temperatures: {
+      indoor: number
+      hotwater: number
+      target: number
+    }
+    price: number
+  }
+  config: {
+    hoursOn: number
+    doNotSplit: boolean
+    outputValueForOn: string
+    outputValueForOff: string
+  }
+  source: string
+  time: string
+  version: string
+  strategyNodeId: string
+}
+
 interface ElectricityDailyCostsData {
   summary: {
     price_so_far: number
@@ -286,6 +320,7 @@ interface DashboardState {
   todoData: TodoData[] | null
   electricityPriceData: ElectricityPriceData | null
   electricityDailyCostsData: ElectricityDailyCostsData | null
+  heatpumpScheduleData: HeatpumpScheduleData | null
   adminContractsData: AdminContractsData | null
   adminLeadsData: AdminLeadsData | null
   deploymentStatus: DeploymentStatus | null
@@ -299,6 +334,7 @@ interface DashboardState {
     todo: number | null
     electricity: number | null
     electricityDailyCosts: number | null
+    heatpumpSchedule: number | null
     adminContracts: number | null
     adminLeads: number | null
   }
@@ -314,6 +350,7 @@ type DashboardAction =
   | { type: 'SET_TODO_DATA'; payload: TodoData[] }
   | { type: 'SET_ELECTRICITY_PRICE_DATA'; payload: ElectricityPriceData }
   | { type: 'SET_ELECTRICITY_DAILY_COSTS_DATA'; payload: ElectricityDailyCostsData }
+  | { type: 'SET_HEATPUMP_SCHEDULE_DATA'; payload: HeatpumpScheduleData }
   | { type: 'SET_ADMIN_CONTRACTS_DATA'; payload: AdminContractsData }
   | { type: 'SET_ADMIN_LEADS_DATA'; payload: AdminLeadsData }
   | { type: 'SET_DEPLOYMENT_STATUS'; payload: DeploymentStatus }
@@ -329,6 +366,7 @@ const initialState: DashboardState = {
   todoData: null,
   electricityPriceData: null,
   electricityDailyCostsData: null,
+  heatpumpScheduleData: null,
   adminContractsData: null,
   adminLeadsData: null,
   deploymentStatus: null,
@@ -342,6 +380,7 @@ const initialState: DashboardState = {
     todo: null,
     electricity: null,
     electricityDailyCosts: null,
+    heatpumpSchedule: null,
     adminContracts: null,
     adminLeads: null
   }
@@ -397,6 +436,12 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         ...state,
         electricityDailyCostsData: action.payload,
         lastUpdated: { ...state.lastUpdated, electricityDailyCosts: Date.now() }
+      }
+    case 'SET_HEATPUMP_SCHEDULE_DATA':
+      return {
+        ...state,
+        heatpumpScheduleData: action.payload,
+        lastUpdated: { ...state.lastUpdated, heatpumpSchedule: Date.now() }
       }
     case 'SET_ADMIN_CONTRACTS_DATA':
       return {
@@ -584,6 +629,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             break
           case 'deployment_status':
             dispatch({ type: 'SET_DEPLOYMENT_STATUS', payload: message.payload })
+            break
+          case 'schedule_data':
+            dispatch({ type: 'SET_HEATPUMP_SCHEDULE_DATA', payload: message.payload })
             break
           default:
             console.log('Unknown message type:', message.type)
