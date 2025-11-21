@@ -485,7 +485,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const { lastMessage } = useWebSocket(socketUrl, {
     onOpen: () => {
-      console.log('Dashboard WebSocket connection established.')
+      // console.log('Dashboard WebSocket connection established.')
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'open' })
       setDisconnectStartTime(null) // Clear disconnect timer
     },
@@ -539,8 +539,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     if (lastMessage !== null) {
       try {
         const message = JSON.parse(lastMessage.data)
-        console.log('Received WebSocket message:', message)
-        
+        // console.log('Received WebSocket message:', message)
+
         switch (message.type) {
           case 'train_data':
             dispatch({ type: 'SET_TRAIN_DATA', payload: message.payload })

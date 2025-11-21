@@ -103,7 +103,7 @@ const getEffectiveSleepTime = (state: SleepScheduleState): string => {
 // Remote logging helper (outside component to avoid stale closures)
 const log = (message: string) => {
   const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}]`, message);
+  // console.log(`[${timestamp}]`, message); // Disabled for production - logs still sent to API
   fetch('/api/log', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

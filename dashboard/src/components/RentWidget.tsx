@@ -304,14 +304,14 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
     const clusterType = cluster[0].excess_pct > 0 ? 'high' : 'low'
 
     // Debug: Log individual days in cluster
-    console.log(`Cluster ${clusterIndex + 1} (${clusterType}):`, cluster.map(d => ({
-      date: d.date,
-      consumption: d.consumption,
-      expected: d.expected,
-      excess_pct: d.excess_pct,
-      price_per_kwh: d.price_per_kwh,
-      cost_impact: d.cost_impact
-    })))
+    // console.log(`Cluster ${clusterIndex + 1} (${clusterType}):`, cluster.map(d => ({
+    //   date: d.date,
+    //   consumption: d.consumption,
+    //   expected: d.expected,
+    //   excess_pct: d.excess_pct,
+    //   price_per_kwh: d.price_per_kwh,
+    //   cost_impact: d.cost_impact
+    // })))
 
     // Format date range
     let dateRange
@@ -446,18 +446,18 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
 
   // No sequential repositioning - chunks stay at their natural calendar positions
   // px-2 padding provides text separation, backgrounds can overlap naturally
-  console.log(`Midpoint alignment: ${chunksWithPositions.length} chunks at natural positions`)
+  // console.log(`Midpoint alignment: ${chunksWithPositions.length} chunks at natural positions`)
 
   // Debug logging for cost verification and positioning
-  console.log('Anomaly chunks with absolute positions:', chunksWithPositions.map(c => ({
-    dateRange: c.dateRange,
-    midpointDate: c.midpointDate, // Date range midpoint (alignment target)
-    type: c.type,
-    leftPercent: c.leftPercent.toFixed(2),
-    widthPercent: c.widthPercent.toFixed(2),
-    avgExcessPct: c.avgExcessPct,
-    totalCostImpact: c.totalCostImpact
-  })))
+  // console.log('Anomaly chunks with absolute positions:', chunksWithPositions.map(c => ({
+  //   dateRange: c.dateRange,
+  //   midpointDate: c.midpointDate, // Date range midpoint (alignment target)
+  //   type: c.type,
+  //   leftPercent: c.leftPercent.toFixed(2),
+  //   widthPercent: c.widthPercent.toFixed(2),
+  //   avgExcessPct: c.avgExcessPct,
+  //   totalCostImpact: c.totalCostImpact
+  // })))
 
   // Generate continuous sparkline from full regression data (all days + padding)
   const generateSparkline = () => {
@@ -466,12 +466,12 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
       return ''
     }
 
-    console.log('Padded regression data:', {
-      length: paddedRegressionData.length,
-      first: paddedRegressionData[0],
-      last: paddedRegressionData[paddedRegressionData.length - 1],
-      sample: paddedRegressionData.slice(0, 5)
-    })
+    // console.log('Padded regression data:', {
+    //   length: paddedRegressionData.length,
+    //   first: paddedRegressionData[0],
+    //   last: paddedRegressionData[paddedRegressionData.length - 1],
+    //   sample: paddedRegressionData.slice(0, 5)
+    // })
 
     const width = 100
     const totalDays = paddedRegressionData.length
@@ -482,7 +482,7 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
     const maxExcess = Math.max(...excessValues)
     const range = maxExcess - minExcess
 
-    console.log('Excess range:', { min: minExcess, max: maxExcess, range })
+    // console.log('Excess range:', { min: minExcess, max: maxExcess, range })
 
     // Map each day to SVG coordinates
     const points = paddedRegressionData.map((day, index) => {
@@ -501,7 +501,7 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
       return { x, y }
     })
 
-    console.log('Sparkline points sample:', points.slice(0, 5))
+    // console.log('Sparkline points sample:', points.slice(0, 5))
 
     // Generate smooth curve using cubic Bezier curves
     if (points.length < 2) return ''
