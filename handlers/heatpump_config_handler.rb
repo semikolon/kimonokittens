@@ -77,6 +77,14 @@ class HeatpumpConfigHandler
       'updated_at' => updated_config.updated_at.iso8601
     }
 
+    # Immediately broadcast new schedule data so UI updates without waiting for poll
+    begin
+      require_relative '../lib/data_broadcaster'
+      $data_broadcaster&.send_immediate_data_to_new_client
+    rescue => e
+      puts "HeatpumpConfigHandler: failed to broadcast new schedule after config update: #{e.message}"
+    end
+
     [200, { 'Content-Type' => 'application/json' }, [Oj.dump(response)]]
   end
 

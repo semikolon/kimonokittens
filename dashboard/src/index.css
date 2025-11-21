@@ -59,6 +59,26 @@
   *::-webkit-scrollbar {
     display: none; /* Chrome/Safari/Opera */
   }
+
+  /* Global button interaction: no focus ring, slight darken on press */
+  button, [role="button"] {
+    outline: none;
+    box-shadow: none;
+    transition: filter 120ms ease;
+  }
+
+  button:focus,
+  button:focus-visible,
+  [role="button"]:focus,
+  [role="button"]:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  button:active,
+  [role="button"]:active {
+    filter: brightness(0.8);
+  }
 }
 
 @layer utilities {
