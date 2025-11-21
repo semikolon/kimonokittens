@@ -115,8 +115,7 @@ class HeatpumpScheduleHandler
       {
         'start' => price['startsAt'],
         'price' => price['total'].round(4),
-        'onOff' => is_on,
-        'saving' => nil  # Could calculate savings vs always-on
+        'onOff' => is_on
       }
     end
   end
