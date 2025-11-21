@@ -25,7 +25,12 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
   // Load current config when modal opens
   useEffect(() => {
     if (isOpen && currentConfig) {
-      setConfig(currentConfig)
+      // Merge with defaults to handle missing fields
+      setConfig(prev => ({
+        hoursOn: currentConfig.hoursOn ?? prev.hoursOn,
+        emergencyTempOffset: currentConfig.emergencyTempOffset ?? prev.emergencyTempOffset,
+        minHotwater: currentConfig.minHotwater ?? prev.minHotwater
+      }))
     }
   }, [isOpen, currentConfig])
 
