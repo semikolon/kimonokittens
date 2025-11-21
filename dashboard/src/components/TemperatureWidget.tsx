@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState, useEffect, useCallback } from 'react'
 import { useData } from '../context/DataContext'
 import { Thermometer, Target, Droplets, Zap, Settings } from 'lucide-react'
 import { HeatpumpConfigModal } from './HeatpumpConfigModal'
@@ -97,6 +97,14 @@ export function TemperatureWidget() {
         setCurrentConfig(data)
       })
       .catch(err => console.error('Failed to load heatpump config:', err))
+  }, [])
+
+  // Refetch config (called after successful save)
+  const refetchConfig = useCallback(() => {
+    fetch('/api/heatpump/config')
+      .then(res => res.json())
+      .then(data => setCurrentConfig(data))
+      .catch(err => console.error('Failed to reload heatpump config:', err))
   }, [])
 
   // TESTING: Show comparison cursors (active + residual glows side by side)
@@ -473,6 +481,7 @@ export function TemperatureWidget() {
         isOpen={isConfigModalOpen}
         onClose={() => setIsConfigModalOpen(false)}
         currentConfig={currentConfig}
+        onSave={refetchConfig}
       />
     </>
   )
