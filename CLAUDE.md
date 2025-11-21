@@ -2,27 +2,11 @@
 
 ## 📖 DOCUMENTATION PHILOSOPHY
 
-**What belongs in CLAUDE.md**:
-- ✅ **Operationally important features** - How to use the system, critical workflows, commands
-- ✅ **Critical gotchas & lessons learned** - Hard-won knowledge about bugs, non-obvious behavior, architectural constraints that cost time to discover - document these to never repeat the same costly mistakes
-- ✅ **Current production state** - What's deployed, how it works, where things are
+**See global `~/.claude/CLAUDE.md` for universal documentation principles.**
 
-**What does NOT belong in CLAUDE.md**:
-- ❌ **Every small fix** - Bug fixes and polish work should live in git history and session dumps
-- ❌ **Detailed historical narrative** - No need for play-by-play of how we got here
-- ❌ **Redundant information** - If it's in other docs (like session brain dumps), reference them instead
-
-**Core principle**: Never risk repeating the same costly mistakes. Document hard-won lessons concisely so future developers avoid the same pitfalls.
-
-**Documentation editing principle**: Focus on **filler reduction** and **structural consolidation** while preserving **100% of operational/troubleshooting value**. Condense verbose examples, eliminate redundant sections, merge scattered content - but never delete hard-won technical lessons or critical debugging knowledge.
-
-**Completed work verbosity filter**: Production features don't need feature lists or testing victory laps. Ask: "Does a developer debugging this feature NEED to know X?" If details exist in referenced docs, link them - don't duplicate. Keep: status, key files, critical gotchas. Cut: feature bragging, test summaries, historical archaeology.
-
-**Cross-machine development**: Machine-specific specs (hardware, OS versions, GPU flags) should be documented in **BOTH** the global `~/.claude/CLAUDE.md` (for other projects on that machine) **AND** the project `CLAUDE.md` (so Claude Code agents on other development machines know the production environment details). This enables effective debugging and deployment decisions from any development workstation.
-
-**Purpose**: Keep CLAUDE.md focused, actionable, and maintainable. Future developers should find critical operational knowledge quickly without wading through historical minutiae.
-
-**Subdirectory organization (large projects):** Split CLAUDE.md by domain (`/dashboard` for frontend, `/lib` for backend). Root keeps cross-cutting concerns + overviews; subdirectories contain implementation details with reference links (minimal redundancy). Decision criteria: Does it affect BOTH frontend and backend developers (deployment, git, database)? → Root. Only one domain (UI colors, Ruby gems, React patterns)? → Subdirectory.
+**This project's application**:
+- **Subdirectory organization**: `/dashboard/CLAUDE.md` (frontend), `/lib/CLAUDE.md` (backend), root CLAUDE.md (cross-cutting)
+- **Cross-machine context**: Dell Optiplex 7010 (production), Mac Mini M2 (development), Raspberry Pi 3B+ (infrastructure)
 
 ---
 
