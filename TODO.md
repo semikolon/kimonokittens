@@ -32,12 +32,12 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
    - Cloudflare Turnstile account
    - Database migration
    - SMS service
-   - **Add nginx location block for `/fonts/` directory** in `nginx-kimonokittens-https-split.conf` (public server block) to serve Horsemen fonts on signup page
+   - ~~**Add nginx location block for `/fonts/` directory**~~ - ✅ **COMPLETE** (Nov 21, 2025)
    - (See `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md` for full checklist)
 4. **Log Rotation** - Needs verification if actually needed in production
 5. **Contract Replacement Workflow** - Delete+Re-sign not yet implemented
 6. **Heatpump Peak Avoidance** - Requires Pi Node-RED config (separate infrastructure)
-7. ~~**Horsemen Font**~~ - ✅ **EXTRACTED** (Nov 20, 2025) - Font files added to `/fonts/`, @font-face declarations in signup.html (nginx config needed for public access)
+7. ~~**Horsemen Font**~~ - ✅ **COMPLETE** (Nov 20-21, 2025) - Font files added to `/fonts/`, @font-face declarations in signup.html, nginx config deployed
 8. **Whenever Gem vs Manual Cron** - Consider pros/cons of using Whenever gem (already installed) for cron job management instead of manual crontab entries (rent reminders, bank sync, electricity scrapers)
 9. **Electricity Price Awareness System** - Smart warnings for high-cost periods to optimize household appliance usage (washing machine, tumble dryer, dishwasher). System auto-detects abnormally high prices via statistical analysis (rolling baseline, no manual threshold). Features: (a) Predictive SMS/notifications day(s) before expensive periods, (b) Enhanced dashboard sparkline with visual price peak warnings overlaid on heatpump schedule bar. Context-aware: accounts for seasonal patterns while alerting on objectively high prices regardless of outdoor temperature. **Architecture:** See `docs/PRICE_AWARENESS_ARCHITECTURE_ANALYSIS.md` for design rationale (on-demand calculation, separate from heatpump config).
 10. **Process Management Overhaul** - Current bin/dev + Overmind system unreliable (stale sockets, orphaned processes, state tracking failures requiring manual intervention). Research and implement simpler alternative: systemd user services (if viable on Mac), pure Foreman, custom lightweight manager, or automated socket cleanup integrated into bin/dev startup sequence.

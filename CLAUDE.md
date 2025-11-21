@@ -16,6 +16,8 @@
 
 **Documentation editing principle**: Focus on **filler reduction** and **structural consolidation** while preserving **100% of operational/troubleshooting value**. Condense verbose examples, eliminate redundant sections, merge scattered content - but never delete hard-won technical lessons or critical debugging knowledge.
 
+**Completed work verbosity filter**: Production features don't need feature lists or testing victory laps. Ask: "Does a developer debugging this feature NEED to know X?" If details exist in referenced docs, link them - don't duplicate. Keep: status, key files, critical gotchas. Cut: feature bragging, test summaries, historical archaeology.
+
 **Cross-machine development**: Machine-specific specs (hardware, OS versions, GPU flags) should be documented in **BOTH** the global `~/.claude/CLAUDE.md` (for other projects on that machine) **AND** the project `CLAUDE.md` (so Claude Code agents on other development machines know the production environment details). This enables effective debugging and deployment decisions from any development workstation.
 
 **Purpose**: Keep CLAUDE.md focused, actionable, and maintainable. Future developers should find critical operational knowledge quickly without wading through historical minutiae.
@@ -442,13 +444,10 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 ## ⚡ Electricity Invoice Automation
 
-**Status**: ✅ **PRODUCTION** (Oct 24, 2025) - Dual-scraper system with daily cron
-**Documentation**: `docs/ELECTRICITY_AUTOMATION_COMPLETION_SUMMARY.md`, `docs/PRODUCTION_CRON_DEPLOYMENT.md`
-**Testing Verified**: Oct 26, 2025 - End-to-end deletion test confirmed 2,581 kr aggregation (see docs)
-
-**Architecture**: Vattenfall (3am) + Fortum (4am) scrapers → `ApplyElectricityBill` service → auto-update RentConfig
-**Features**: Peak/off-peak pricing, smart adaptive projection, automatic bill deduplication, timezone-normalized storage
-**Cron**: `/home/kimonokittens/Projects/kimonokittens/bin/fetch_vattenfall_data.sh` + `fetch_fortum_data.sh`
+**Status**: ✅ **PRODUCTION** (Oct 24, 2025) - Fully automated, zero manual intervention
+**Cron**: `bin/fetch_vattenfall_data.sh` (3am) + `bin/fetch_fortum_data.sh` (4am)
+**Flow**: Scrapers → `ApplyElectricityBill` → RentConfig update → WebSocket broadcast
+**Docs**: `docs/ELECTRICITY_AUTOMATION_COMPLETION_SUMMARY.md`
 
 ### Data Source Clarification (Nov 20, 2025)
 
@@ -1139,72 +1138,19 @@ Repository `.all()` method was using `.select()` but **missing fields**:
 
 ## 💸 SWISH PAYMENT INTEGRATION
 
-**Status**: ❌ **Swish Handel/Commerce REJECTED** (Nov 15, 2025) - Exploitative pricing model
+**Status**: ❌ **Swish Handel REJECTED** (Nov 15, 2025) - Exploitative pricing (~1,660 SEK/year)
 
-### Pricing Reality (Swedbank, Nov 2025)
+**Decision**: Use manual SMS instructions with payment reference codes (zero cost, P2P Swish)
 
-**Swish Handel/Commerce API costs:**
-- Setup fee: 1,000 SEK per phone number
-- Annual fee: 480 SEK minimum
-- Transaction fee: 3 SEK per Swish payment
-- **Total first year (60 transactions)**: 1,000 + 480 + 180 = **1,660 SEK**
+**Payment matching** (via Lunchflow bank sync):
+- Tier 1: Reference code (most exact, requires manual entry)
+- Tier 2: Phone number (reliable via amount + timing)
+- Tier 3: Amount + fuzzy name (fallback)
 
-**Analysis**: ~80% profit margin, ruthless pricing for what should be basic digital infrastructure. This is greed, not innovation. Honest house-share flows get punished while Swish profits from fraud prevention theater.
+**Key limitations of P2P Swish**: No deep links, no API access, no pre-filled payment requests
+**Lunchflow sync**: Once per 24 hours (not real-time)
 
-**Decision**: Reject Swish Handel integration. Use manual SMS instructions instead.
-
-### What Swish Limits for Non-Merchants
-
-**P2P Swish (free, what we use):**
-- ✅ Phone number matching (Tier 2 payment reconciliation)
-- ✅ Manual payment entry via app
-- ❌ No deep links with pre-filled amount/number/message
-- ❌ No API access
-- ❌ No payment request tokens
-- ❌ No QR code generation via official API
-
-**Only merchants get:**
-- `swish://paymentrequest?token=...` deep links (requires Commerce API)
-- Payment request token generation
-- Delivery receipts / payment tracking
-- One-tap payment UX
-
-### Implemented Solution: Manual SMS Instructions
-
-**SMS format** (≤140 chars, no premium fees):
-```
-Hyra nov: 7,045 kr
-Till: 0736536035
-Medd: KK202511Sannacmhqe9enc
-
-(Öppna Swish-appen manuellt)
-```
-
-**Why this works:**
-- ✅ **Reference most exact** - Tier 1 when present (manual entry required)
-- ✅ **Phone highly reliable** - Tier 2, rent = exact amount + payday timing (distinguishable from non-rent)
-- ✅ **Long-tap to copy** - no dashes in reference for iPhone compatibility
-- ✅ **Zero cost** - no Swish Handel fees
-- ✅ **Fully automated matching** - Lunchflow extracts phone from description
-
-**Payment matching tiers:**
-1. **Tier 1**: Reference code (most exact, but requires manual entry in Swish)
-2. **Tier 2**: Phone number (reliable - rent payments distinguishable via amount+timing)
-3. **Tier 3**: Amount + fuzzy name (fallback for bank transfers)
-
-**Lunchflow daily sync** (research confirmed Nov 15, 2025):
-- Transactions sync **once per 24 hours** (not real-time)
-- Max delay: 24 hours from bank posting → Lunchflow API
-- Strategic pivot: 1 reminder/day with daily escalation (not hourly)
-
-### Failed Deep Link Research (Nov 15, 2025)
-
-**Tested and rejected:**
-- ❌ `swish://` - Does NOT render as clickable link in SMS (tested on iPhone)
-- ❌ `swish://payment?number=...&amount=...` - Invalid format (merchant-only)
-- ❌ Rich text links in SMS - Not supported (iOS/Android limitation)
-- ✅ QR codes via public API (`https://mpc.getswish.net/qrg-swish/api/v1/prefilled`) - DO work for P2P without merchant account, but deemed overkill for this use case
-
-**Why Swish limits deep links**: Anti-fraud design + profit extraction. Legitimate use cases (house-shares, clubs, small businesses) are collateral damage.
+**Why merchants get deep links**: Requires Swish Handel subscription (anti-fraud + profit extraction)
+**Docs**: `docs/RENT_REMINDERS_IMPLEMENTATION_PLAN.md`, `docs/CODE_REVIEW_RENT_REMINDERS_REWORK.md`
 
 ---
