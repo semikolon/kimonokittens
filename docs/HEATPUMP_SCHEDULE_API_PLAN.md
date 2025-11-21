@@ -1000,6 +1000,194 @@ ThermIQ MQTT
 
 ---
 
-**Document Version:** 1.1
-**Last Updated:** November 20, 2025
-**Next Review:** After heatpump config UI implementation
+---
+
+## Nov 21, 2025 - Field Cleanup & Architectural Refinement
+
+### ✅ COMPLETED: Backend API Cleanup
+
+**1. Removed `emergencyPrice` field (Nov 20, 2025)**
+- **Location:** HeatpumpConfig model, database schema, API responses
+- **Original purpose:** Force heatpump ON when price < 0.3 kr/kWh (price opportunity logic)
+- **Why removed:** Semantic confusion - "emergency" implies safety, but this was about economics
+- **Decision:** Emergency conditions should be temperature-based only (safety), not price-based (optimization)
+- **Files affected:**
+  - `lib/models/heatpump_config.rb` - Removed emergency_price attribute
+  - `handlers/heatpump_config_handler.rb` - Removed from GET/PUT responses
+  - Database schema (migration NOT yet applied - emergency_price column still exists)
+
+**2. Removed `maxPrice` field (Nov 21, 2025)**
+- **Location:** HeatpumpConfig model, database schema, handler responses, schedule algorithm
+- **Original purpose:** Absolute cutoff at 2.2 kr/kWh - clear all selected hours if average exceeded threshold
+- **Why removed:** Catastrophic bug with peak/off-peak pricing (2-4 kr/kWh composite prices)
+  - Algorithm selected 12 cheapest hours correctly
+  - Calculated average (~2.5 kr/kWh) exceeded maxPrice threshold
+  - Cleared entire selection → 0 hours ON → house would freeze
+- **Heatpump is essential infrastructure:** Cannot defer heating like washing machines
+- **Algorithm now:** ALWAYS selects N cheapest hours regardless of absolute price
+- **Files cleaned:**
+  - ✅ `handlers/heatpump_schedule_handler.rb` - Removed maxPrice parameter from methods (lines 84-121)
+  - ✅ `lib/models/heatpump_config.rb` - Removed max_price attribute and validation
+  - ✅ `lib/repositories/heatpump_config_repository.rb` - Removed from default config
+  - ✅ `handlers/heatpump_config_handler.rb` - Removed from GET/PUT responses
+  - ✅ `prisma/schema.prisma` - Removed maxPrice field from HeatpumpConfig model
+  - ✅ Migration generated: `prisma/migrations/20251121XXXXXX_remove_max_price_from_heatpump_config/migration.sql`
+  - ✅ Migration applied to development database
+  - ⏳ **Production migration:** NOT yet applied (run `npx prisma migrate deploy` manually)
+
+**3. Removed useless `'saving'` field (Nov 21, 2025)**
+- **Location:** Schedule API response (`handlers/heatpump_schedule_handler.rb` lines 113-120)
+- **Original code:** `'saving' => nil # Could calculate savings vs always-on`
+- **Why removed:** Meaningless comparison - we're choosing WHICH 12 hours, not 12 vs 24
+- **Artificial metric:** Savings calculation would compare strategic 12 hours vs hypothetical 24 always-on
+- **No business value:** We're not making that choice, so the metric is useless
+
+### 🔄 IN PROGRESS: Frontend Migration to WebSocket Architecture
+
+**Background - Initial Approach (REST Polling):**
+
+When implementing dashboard schedule visualization, initial plan was:
+```typescript
+// DataContext.tsx - fetch /api/heatpump/schedule every 5 minutes
+useEffect(() => {
+  const fetchHeatpumpSchedule = async () => {
+    const response = await fetch('/api/heatpump/schedule')
+    const data = await response.json()
+    dispatch({ type: 'SET_HEATPUMP_SCHEDULE_DATA', payload: data })
+  }
+
+  fetchHeatpumpSchedule()  // Initial fetch
+  const interval = setInterval(fetchHeatpumpSchedule, 300000)  // 5 min
+  return () => clearInterval(interval)
+}, [])
+```
+
+**Architectural Challenge - User's Insight (Nov 21, 2025):**
+
+User questioned: *"Does it really make sense for this to make the roundtrip via REST if it could be accessed more directly?"*
+
+**Critical Realization:**
+- Dashboard already uses **WebSocket broadcast** for ALL data (temperature, rent, weather, electricity)
+- Schedule data ALREADY flows via WebSocket in `temperatureData.schedule_data` (old format from Node-RED)
+- Creating separate REST polling violates dashboard's unified architecture
+- Frontend would have TWO data flows: WebSocket for everything else, polling for schedule
+
+**Better Architecture - Separate WebSocket Broadcast:**
+
+Instead of polling a separate REST endpoint, add schedule as an independent WebSocket broadcast (matching existing pattern):
+
+```ruby
+# In lib/data_broadcaster.rb, add schedule alongside existing broadcasts
+def start
+  @threads = []
+
+  # Existing broadcasts (unchanged)
+  @threads << periodic(60) { fetch_and_publish('temperature_data', "#{@base_url}/data/temperature") }
+  @threads << periodic(300) { fetch_and_publish('train_data', "#{@base_url}/data/train_departures") }
+  # ... etc
+
+  # NEW: Add schedule as separate broadcast (same pattern as everything else)
+  @threads << periodic(60) { fetch_and_publish('schedule_data', "#{@base_url}/api/heatpump/schedule") }
+
+  @threads.each { |t| t.join }
+end
+```
+
+**Why This Is Better Than Nested Calls:**
+- ✅ **No blocking:** Schedule fetch happens independently, doesn't block temperature
+- ✅ **No nested HTTP calls:** Each endpoint fetches its own data cleanly
+- ✅ **Consistent pattern:** Exactly how train_data, weather_data, etc. work
+- ✅ **Simple architecture:** Separate concerns, no coupling between handlers
+- ✅ **Easy debugging:** Can test each endpoint independently
+
+**Benefits of WebSocket Approach (vs REST polling):**
+- ✅ Consistent with existing dashboard architecture (all data via WebSocket)
+- ✅ No frontend polling timer needed (one less thing to manage)
+- ✅ Backend controls refresh frequency (centralized decision)
+- ✅ Temperature override logic automatically included (backend calculates `current.evu`)
+- ✅ Reduced network overhead (no separate HTTP requests)
+
+**Current State (Nov 21, 2025 - Work Paused):**
+
+**Files modified but NOT committed (TO BE REVERTED):**
+
+1. **`dashboard/src/context/DataContext.tsx`** (lines 143-175, 642-665)
+   - ✅ Added HeatpumpScheduleData interface (KEEP - good TypeScript types)
+   - ✅ Added DashboardState.heatpumpScheduleData field (KEEP)
+   - ⏸️ Added polling useEffect (REVERT - not needed with WebSocket)
+   - ⏸️ Added SET_HEATPUMP_SCHEDULE_DATA action/reducer (REVERT - will use different approach)
+
+2. **`dashboard/src/components/TemperatureWidget.tsx`** (line 84)
+   - ✅ Added `heatpumpScheduleData` to destructured state (KEEP - will use enhanced WebSocket data)
+   - ⏸️ Schedule visualization logic (lines 125-240) currently reads `temperatureData.schedule_data`
+   - ⏸️ Needs update to read `temperatureData.schedule_enhanced` after backend changes
+
+**Implementation Plan - WebSocket Approach:**
+
+**Phase 1: Backend Enhancement**
+1. Modify `puma_server.rb` temperature broadcast handler
+2. Call `HeatpumpScheduleHandler` internally (Ruby object call, not HTTP)
+3. Merge schedule data into temperature_data hash under `schedule_enhanced` key
+4. Test WebSocket broadcast includes new fields
+
+**Phase 2: Frontend Update**
+1. Revert polling useEffect from DataContext.tsx
+2. Update TemperatureWidget to read `temperatureData.schedule_enhanced` instead of `temperatureData.schedule_data`
+3. Use `schedule_enhanced.current.evu` for current heatpump state
+4. Use `schedule_enhanced.hours` for 48-hour schedule visualization
+5. Test with live WebSocket data
+
+**Phase 3: Cleanup**
+1. Remove old Node-RED `schedule_data` after verifying new flow works
+2. Simplify Node-RED flow (no longer needs to store schedule in global variables)
+3. Update documentation with final architecture
+
+**Technical Context Preserved:**
+- `temperatureData.schedule_data` = Old format from Node-RED (stale, Node-RED globals)
+- `temperatureData.schedule_enhanced` = New format from schedule handler (authoritative, with temperature override)
+- TemperatureWidget currently at lines 125-240 has schedule visualization logic ready to adapt
+- Schedule handler already returns complete current state with override logic
+
+**Why This Matters - Lessons Learned:**
+
+When initially implementing, focused on "make it work" (REST polling) without considering:
+- Existing dashboard data flow patterns (WebSocket broadcast for everything)
+- Code consistency across widgets (all consume via WebSocket)
+- Maintenance burden (one more polling timer to manage, debug, optimize)
+
+**User's question forced architectural re-evaluation** - sometimes the "quick way" violates system design principles. Taking time to align with existing patterns prevents technical debt accumulation.
+
+### 📋 Remaining Frontend Tasks (After Backend WebSocket Enhancement)
+
+**Priority 1: Revert DataContext Polling Changes**
+- Remove useEffect polling logic (lines 642-665)
+- Keep HeatpumpScheduleData interface (good types)
+- Update reducer to handle WebSocket schedule_enhanced messages
+
+**Priority 2: Update TemperatureWidget Schedule Visualization**
+- Change data source from `temperatureData.schedule_data` to `temperatureData.schedule_enhanced`
+- Extract current state from `schedule_enhanced.current.evu`
+- Extract schedule from `schedule_enhanced.hours` array
+- Test visualization with new data format
+
+**Priority 3: Investigate Font Rendering Issue**
+- User reported: "Spacing/kerning feels more compressed horizontally after recent @font-face PR merge"
+- Possible causes: Font weight mismatches, missing font files (404s), antialiasing changes
+- **Planned approach:** Use Playwright to inspect browser:
+  - Check Network tab for font loading (are custom fonts 404ing?)
+  - Verify font-face declarations in CSS
+  - Check computed styles (font-family, font-weight, -webkit-font-smoothing)
+  - Look for FOUT (Flash of Unstyled Text) if font-display misconfigured
+- **Status:** Deferred - user said "for later"
+
+**Priority 4: Build HeatpumpConfigModal UI**
+- After backend WebSocket enhancement complete
+- 3-5 configuration sliders (hours_on, emergency_temp_offset, min_hotwater)
+- Real-time schedule preview
+- See `docs/HEATPUMP_CONFIG_UI_PLAN.md` for complete design
+
+---
+
+**Document Version:** 1.2
+**Last Updated:** November 21, 2025
+**Next Review:** After WebSocket backend enhancement and frontend migration complete

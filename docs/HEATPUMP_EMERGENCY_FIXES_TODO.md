@@ -40,7 +40,7 @@
 
 **Implementation:** `send_emergency_sms_if_needed()` in `handlers/heatpump_schedule_handler.rb`
 
-### 🔧 DECISION - maxPrice Field Removal
+### ✅ COMPLETED - maxPrice Field Removal (Nov 21, 2025)
 
 **User decision:** Remove maxPrice from HeatpumpConfig entirely
 
@@ -51,11 +51,27 @@
 - **Manual override not needed:** If 100% auto-calculated, no reason for user configuration
 - **Follows existing pattern:** Electricity anomaly detection uses in-memory caching (works great)
 
-**Implementation plan:**
-1. ~~Remove from schedule generation algorithm~~ ✅ **DONE** (Nov 20, 2025)
-2. Remove from database schema (future migration)
-3. Remove from model, repository, handler (cleanup)
-4. Build proper price awareness service when implementing TODO.md #9
+**Implementation completed (Nov 21, 2025):**
+1. ✅ Remove from schedule generation algorithm (Nov 20, 2025)
+   - `handlers/heatpump_schedule_handler.rb` - Removed maxPrice parameter from methods
+2. ✅ Remove from database schema (Nov 21, 2025)
+   - `prisma/schema.prisma` - Removed maxPrice field from HeatpumpConfig model
+   - Migration generated: `20251121XXXXXX_remove_max_price_from_heatpump_config`
+   - Migration applied to development database
+   - ⏳ **Production migration pending:** Run `npx prisma migrate deploy` manually
+3. ✅ Remove from model, repository, handler (Nov 21, 2025)
+   - `lib/models/heatpump_config.rb` - Removed max_price attribute and validation
+   - `lib/repositories/heatpump_config_repository.rb` - Removed from default config
+   - `handlers/heatpump_config_handler.rb` - Removed from GET/PUT responses
+4. 📋 Future work: Build proper price awareness service when implementing TODO.md #9
+
+**Files cleaned (6 total):**
+- ✅ `handlers/heatpump_schedule_handler.rb`
+- ✅ `lib/models/heatpump_config.rb`
+- ✅ `lib/repositories/heatpump_config_repository.rb`
+- ✅ `handlers/heatpump_config_handler.rb`
+- ✅ `prisma/schema.prisma`
+- ✅ Migration file generated and applied (development only)
 
 **Architecture analysis:** See `docs/PRICE_AWARENESS_ARCHITECTURE_ANALYSIS.md` for complete pros/cons, decision matrix, and recommended implementation approach (on-demand calculation via PriceAwarenessService, cached in DataBroadcaster like electricity anomaly data)
 
@@ -71,10 +87,13 @@
 - Remove "Remember current schedule" node (no longer needed)
 - Simplify flow: cronplus → Dell API → Extract → MQTT
 
-**Priority 5:** Update dashboard schedule widget
-- Change fetch from `/data/temperature` to `/api/heatpump/schedule`
-- Extract schedule from new response format
-- Test and deploy when convenient
+**Priority 5:** Update dashboard schedule widget - **ARCHITECTURAL PIVOT** (Nov 21, 2025)
+- ~~Change fetch from `/data/temperature` to `/api/heatpump/schedule`~~ ❌ WRONG APPROACH
+- **NEW APPROACH:** Enhance `/data/temperature` WebSocket broadcast with schedule data
+  - Backend: Add `schedule_enhanced` field to temperature WebSocket broadcast
+  - Frontend: Read `temperatureData.schedule_enhanced` instead of polling separate endpoint
+  - Benefits: Consistent architecture (all data via WebSocket), no polling timer needed
+- See "Frontend Migration Status" section below for complete context
 
 ---
 
@@ -660,3 +679,122 @@ return msg;
 - "This can never happen again."
 
 **Commitment:** Systematic, thorough fixes with deep understanding. No more half-migrations that break in production.
+
+---
+
+## 🏗️ Frontend Migration Status (Nov 21, 2025)
+
+### Architectural Pivot: REST Polling → WebSocket Broadcast
+
+**Original Plan (Initial Implementation):**
+```typescript
+// DataContext.tsx - Poll /api/heatpump/schedule every 5 minutes
+useEffect(() => {
+  const fetchSchedule = async () => {
+    const response = await fetch('/api/heatpump/schedule')
+    const data = await response.json()
+    dispatch({ type: 'SET_HEATPUMP_SCHEDULE_DATA', payload: data })
+  }
+
+  fetchSchedule()  // Initial
+  const interval = setInterval(fetchSchedule, 300000)  // 5 min polling
+  return () => clearInterval(interval)
+}, [])
+```
+
+**User's Challenge (Nov 21, 2025):**
+> "Does it really make sense for this to make the roundtrip via REST if it could be accessed more directly?"
+
+**Critical Insight:**
+- Dashboard architecture uses **WebSocket broadcast for ALL data** (temperature, rent, weather, electricity)
+- Schedule data already flows via WebSocket in `temperatureData.schedule_data` (old Node-RED format)
+- Creating separate REST polling violates unified architecture
+- Frontend would have **two data flows:** WebSocket for everything else, polling for schedule only
+
+**Better Architecture - WebSocket Enhancement:**
+
+Instead of polling separate endpoint, enhance existing `/data/temperature` WebSocket broadcast:
+
+```ruby
+# In puma_server.rb, enhance temperature broadcast handler
+def broadcast_temperature_data
+  # Existing: Fetch current temperature readings from Node-RED
+  temperature_data = fetch_node_red_temperature()
+
+  # NEW: Add authoritative schedule data from schedule handler
+  env = build_rack_env_for_schedule_request()
+  schedule_response = heatpump_schedule_handler.call(env)
+
+  if schedule_response[0] == 200
+    schedule_data = Oj.load(schedule_response[2].first)
+
+    # Enhance temperature data with richer schedule
+    temperature_data['schedule_enhanced'] = {
+      'current' => schedule_data['current'],  # EVU + reason + temps
+      'hours' => schedule_data['hours'],      # 48-hour breakdown
+      'config' => schedule_data['config']     # hoursOn, outputValues
+    }
+  end
+
+  # Single WebSocket broadcast with everything
+  broadcast(temperature_data)
+end
+```
+
+**Benefits:**
+- ✅ Architectural consistency (all data via WebSocket)
+- ✅ No frontend polling timer (one less thing to manage/debug)
+- ✅ Backend-controlled refresh frequency (centralized decision)
+- ✅ Single broadcast with all widget data
+- ✅ Temperature override logic included (backend calculates `current.evu`)
+- ✅ Reduced network overhead (no separate HTTP requests)
+
+**Current State (Work Paused Nov 21, 2025):**
+
+**Files Modified (NOT Committed - TO BE REVERTED):**
+
+1. **`dashboard/src/context/DataContext.tsx`**
+   - ✅ Lines 143-175: HeatpumpScheduleData interface (KEEP - good TypeScript)
+   - ✅ DashboardState.heatpumpScheduleData field (KEEP for now)
+   - ⏸️ Lines 642-665: Polling useEffect (REVERT - not needed)
+   - ⏸️ SET_HEATPUMP_SCHEDULE_DATA action/reducer (REVERT - different approach)
+
+2. **`dashboard/src/components/TemperatureWidget.tsx`**
+   - ✅ Line 84: Added `heatpumpScheduleData` to state destructuring (KEEP)
+   - ⏸️ Lines 125-240: Schedule visualization logic reads `temperatureData.schedule_data`
+   - ⏸️ Needs update to read `temperatureData.schedule_enhanced` after backend changes
+
+**Implementation Plan:**
+
+**Phase 1: Backend WebSocket Enhancement**
+1. Modify `puma_server.rb` temperature broadcast handler
+2. Call `HeatpumpScheduleHandler` internally (Ruby object call, not HTTP)
+3. Merge schedule data into temperature_data hash under `schedule_enhanced` key
+4. Test WebSocket broadcast includes new fields
+
+**Phase 2: Frontend Migration**
+1. Revert polling useEffect from DataContext.tsx
+2. Update TemperatureWidget to read `temperatureData.schedule_enhanced`
+3. Extract current state from `schedule_enhanced.current.evu`
+4. Extract schedule from `schedule_enhanced.hours` array
+5. Test with live WebSocket data
+
+**Phase 3: Cleanup**
+1. Remove old `temperatureData.schedule_data` (Node-RED format)
+2. Simplify Node-RED flow (no schedule storage in globals)
+3. Update documentation with final architecture
+
+**Technical Context:**
+- `temperatureData.schedule_data` = Old format from Node-RED (stale, stored in globals)
+- `temperatureData.schedule_enhanced` = New format from schedule handler (authoritative, with overrides)
+- TemperatureWidget lines 125-240 ready to adapt to new data source
+- Schedule handler already returns complete current state with temperature override logic
+
+**Why This Matters - Lessons Learned:**
+
+Initial implementation focused on "make it work quickly" (REST polling) without considering:
+- Existing dashboard data flow patterns (WebSocket for everything)
+- Code consistency across widgets (all consume via WebSocket)
+- Maintenance burden (additional polling timer to manage)
+
+**User's question forced architectural re-evaluation.** Sometimes the "quick solution" violates core design principles. Taking time to align with existing patterns prevents technical debt accumulation and creates more maintainable systems.
