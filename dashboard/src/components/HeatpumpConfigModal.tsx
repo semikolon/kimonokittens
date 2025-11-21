@@ -99,7 +99,7 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig, onSave }: 
         <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
           {/* Hours On Slider */}
           <div>
-            <label className="block text-slate-200 text-sm uppercase mb-3 font-medium">
+            <label className="block text-sm font-semibold text-purple-200 uppercase tracking-wide mb-3">
               Antal timmar per dag
             </label>
             <div className="flex items-center space-x-4">
@@ -116,14 +116,14 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig, onSave }: 
                 {config.hoursOn}h
               </span>
             </div>
-            <p className="text-sm text-slate-400/70 mt-2">
+            <p className="text-sm text-purple-100/90 mt-2">
               Väljer de {config.hoursOn} billigaste timmarna per dag
             </p>
           </div>
 
           {/* Emergency Temperature Offset Slider */}
-          <div>
-            <label className="block text-slate-200 text-sm uppercase mb-3 font-medium">
+          <div className="pt-4 border-t border-purple-500/15">
+            <label className="block text-sm font-semibold text-purple-200 uppercase tracking-wide mb-3">
               Nödtemperaturskydd
             </label>
             <div className="flex items-center space-x-4">
@@ -140,14 +140,14 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig, onSave }: 
                 {config.emergencyTempOffset.toFixed(1)}°
               </span>
             </div>
-            <p className="text-sm text-slate-400/70 mt-2">
+            <p className="text-sm text-purple-100/90 mt-2">
               Startar värmepump om inomhustemp ≤ måltemp − {config.emergencyTempOffset.toFixed(1)}°C
             </p>
           </div>
 
           {/* Minimum Hot Water Slider */}
-          <div>
-            <label className="block text-slate-200 text-sm uppercase mb-3 font-medium">
+          <div className="pt-4 border-t border-purple-500/15">
+            <label className="block text-sm font-semibold text-purple-200 uppercase tracking-wide mb-3">
               Minsta varmvattentemperatur
             </label>
             <div className="flex items-center space-x-4">
@@ -164,7 +164,7 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig, onSave }: 
                 {config.minHotwater}°
               </span>
             </div>
-            <p className="text-sm text-slate-400/70 mt-2">
+            <p className="text-sm text-purple-100/90 mt-2">
               Startar värmepump om varmvatten &lt; {config.minHotwater}°C
             </p>
           </div>

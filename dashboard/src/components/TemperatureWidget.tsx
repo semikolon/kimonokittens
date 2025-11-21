@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react'
 import { useData } from '../context/DataContext'
-import { Thermometer, Target, Droplets, Zap, Settings } from 'lucide-react'
+import { Thermometer, Target, Droplets, Zap } from 'lucide-react'
 import { HeatpumpConfigModal } from './HeatpumpConfigModal'
 
 interface ElectricityPriceSparklineProps {
@@ -287,6 +287,8 @@ export function TemperatureWidget() {
   const getHumidityIcon = () => <Droplets className="w-6 h-6 text-purple-200" />
   const getHotWaterIcon = () => <Zap className="w-6 h-6 text-purple-200" />
 
+  const openConfig = useCallback(() => setIsConfigModalOpen(true), [])
+
   const HeatpumpScheduleBar = () => {
     if (!heatpumpSchedule) return null
 
@@ -296,7 +298,19 @@ export function TemperatureWidget() {
     // Use the smart status from parent component
 
     return (
-      <div className="mt-10 mb-6">
+      <div
+        className="mt-10 mb-6 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-purple-400/60 rounded-lg"
+        tabIndex={0}
+        role="button"
+        aria-label="Öppna värmepumpsinställningar"
+        onClick={openConfig}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            openConfig()
+          }
+        }}
+      >
         <div className="flex items-center justify-between mb-2">
           <div
             className={`text-purple-200 heatpump-status ${isStatusChanging ? 'changing' : ''}`}
@@ -309,16 +323,9 @@ export function TemperatureWidget() {
               </>
             )}
           </div>
-          <button
-            onClick={() => setIsConfigModalOpen(true)}
-            className="text-purple-200 hover:text-purple-100 transition-colors"
-            title="Inställningar"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
         </div>
         <div
-          className="relative h-5 rounded-lg overflow-visible"
+          className="relative h-5 rounded-lg overflow-visible transition-all group-hover:brightness-110"
           style={{
             opacity: barOpacity,
             background: 'rgba(170, 90, 255, 0.06)'
