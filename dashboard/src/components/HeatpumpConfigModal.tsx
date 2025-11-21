@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 interface HeatpumpConfig {
@@ -33,8 +34,6 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
       }))
     }
   }, [isOpen, currentConfig])
-
-  if (!isOpen) return null
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -79,15 +78,17 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
     onClose()
   }
 
-  return (
+  if (!isOpen) return null
+
+  const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
       <div className="bg-slate-900 border border-purple-500/30 rounded-2xl w-full max-w-md mx-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-purple-500/20">
-          <h2 className="text-xl font-semibold text-purple-100">Värmepumpsinställningar</h2>
+          <h2 className="text-xl font-semibold text-slate-100">Värmepumpsinställningar</h2>
           <button
             onClick={handleCancel}
-            className="text-purple-300 hover:text-purple-100 transition-colors"
+            className="text-slate-300 hover:text-slate-100 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -97,7 +98,7 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
         <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
           {/* Hours On Slider */}
           <div>
-            <label className="block text-purple-200 text-sm uppercase mb-3 font-medium">
+            <label className="block text-slate-200 text-sm uppercase mb-3 font-medium">
               Antal timmar per dag
             </label>
             <div className="flex items-center space-x-4">
@@ -110,18 +111,18 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
                 onChange={(e) => setConfig({ ...config, hoursOn: parseInt(e.target.value) })}
                 className="flex-1 h-2 bg-slate-950/60 border border-purple-900/40 rounded-xl appearance-none cursor-pointer accent-purple-500"
               />
-              <span className="text-2xl font-bold text-purple-100 w-16 text-right">
+              <span className="text-2xl font-bold text-slate-100 w-16 text-right">
                 {config.hoursOn}h
               </span>
             </div>
-            <p className="text-sm text-purple-400/70 mt-2">
+            <p className="text-sm text-slate-400/70 mt-2">
               Väljer de {config.hoursOn} billigaste timmarna per dag
             </p>
           </div>
 
           {/* Emergency Temperature Offset Slider */}
           <div>
-            <label className="block text-purple-200 text-sm uppercase mb-3 font-medium">
+            <label className="block text-slate-200 text-sm uppercase mb-3 font-medium">
               Nödtemperaturskydd
             </label>
             <div className="flex items-center space-x-4">
@@ -134,18 +135,18 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
                 onChange={(e) => setConfig({ ...config, emergencyTempOffset: parseFloat(e.target.value) })}
                 className="flex-1 h-2 bg-slate-950/60 border border-purple-900/40 rounded-xl appearance-none cursor-pointer accent-purple-500"
               />
-              <span className="text-2xl font-bold text-purple-100 w-16 text-right">
+              <span className="text-2xl font-bold text-slate-100 w-16 text-right">
                 {config.emergencyTempOffset.toFixed(1)}°
               </span>
             </div>
-            <p className="text-sm text-purple-400/70 mt-2">
+            <p className="text-sm text-slate-400/70 mt-2">
               Startar värmepump om inomhustemp ≤ måltemp − {config.emergencyTempOffset.toFixed(1)}°C
             </p>
           </div>
 
           {/* Minimum Hot Water Slider */}
           <div>
-            <label className="block text-purple-200 text-sm uppercase mb-3 font-medium">
+            <label className="block text-slate-200 text-sm uppercase mb-3 font-medium">
               Minsta varmvatten
             </label>
             <div className="flex items-center space-x-4">
@@ -158,11 +159,11 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
                 onChange={(e) => setConfig({ ...config, minHotwater: parseInt(e.target.value) })}
                 className="flex-1 h-2 bg-slate-950/60 border border-purple-900/40 rounded-xl appearance-none cursor-pointer accent-purple-500"
               />
-              <span className="text-2xl font-bold text-purple-100 w-16 text-right">
+              <span className="text-2xl font-bold text-slate-100 w-16 text-right">
                 {config.minHotwater}°
               </span>
             </div>
-            <p className="text-sm text-purple-400/70 mt-2">
+            <p className="text-sm text-slate-400/70 mt-2">
               Startar värmepump om varmvatten &lt; {config.minHotwater}°C
             </p>
           </div>
@@ -181,7 +182,7 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 rounded-xl bg-slate-800/70 text-purple-200 font-medium hover:bg-slate-700/70 transition-all disabled:opacity-50"
+              className="flex-1 px-4 py-2 rounded-xl bg-slate-800/70 text-slate-200 font-medium hover:bg-slate-700/70 transition-all disabled:opacity-50"
             >
               Avbryt
             </button>
@@ -197,4 +198,6 @@ export function HeatpumpConfigModal({ isOpen, onClose, currentConfig }: Heatpump
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }
