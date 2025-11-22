@@ -47,13 +47,21 @@ class HeatpumpScheduleHandler
     today = price_data['today'] || []
     tomorrow = price_data['tomorrow'] || []
 
-    return error_response('No price data available') if today.empty? && tomorrow.empty?
+    # Get current temperatures (needed for emergency fallback and override logic)
+    temps = get_current_temperatures
+
+    # CRITICAL: Never return error! Tomorrow's prices don't exist until ~13:00 each day.
+    # After midnight until 13:00, we work with today's data only - this is NORMAL.
+    if today.empty? && tomorrow.empty?
+      # Emergency fallback: return safe default (heatpump ON)
+      puts "⚠️  WARNING: No price data available! Using emergency fallback (EVU=0, heatpump ON)"
+      return emergency_fallback_response(config, temps)
+    end
 
     # Generate schedule using ps-strategy algorithm (process each day independently)
     schedule = generate_schedule_per_day(today, tomorrow, hours_on)
 
     # Apply temperature override logic
-    temps = get_current_temperatures
     current_state = calculate_current_state(schedule, config, temps)
 
     # Return ps-strategy compatible format with current state
@@ -250,5 +258,39 @@ class HeatpumpScheduleHandler
 
   def error_response(message)
     [500, { 'Content-Type' => 'application/json' }, [ Oj.dump({ 'error' => message }) ]]
+  end
+
+  # Emergency fallback when NO price data available
+  # Returns safe default: EVU=0 (heatpump ON) to prevent freezing
+  def emergency_fallback_response(config, temps)
+    current_state = {
+      'state' => true,
+      'evu' => 0,  # Heatpump ON
+      'reason' => 'emergency_no_price_data',
+      'temperatures' => {
+        'indoor' => temps[:indoor],
+        'hotwater' => temps[:hotwater],
+        'target' => temps[:target]
+      },
+      'price' => 0.0
+    }
+
+    response = {
+      'schedule' => [],
+      'hours' => [],
+      'source' => 'Emergency fallback (no price data)',
+      'config' => {
+        'hoursOn' => config&.hours_on || DEFAULT_HOURS_ON,
+        'doNotSplit' => false,
+        'outputValueForOn' => '0',
+        'outputValueForOff' => '1'
+      },
+      'time' => Time.now.iso8601,
+      'version' => '1.0.0',
+      'strategyNodeId' => 'dell-emergency-fallback',
+      'current' => current_state
+    }
+
+    [200, { 'Content-Type' => 'application/json' }, [ Oj.dump(response) ]]
   end
 end

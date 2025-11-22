@@ -53,10 +53,11 @@ class ElectricityPriceHandler
     now = Time.now
 
     # API returns 15-minute intervals, aggregate to hourly averages
-    # Group by hour and calculate average price
+    # Group by FULL TIMESTAMP (date + hour) to preserve multi-day data
     hourly_prices = raw_data.group_by do |entry|
-      Time.parse(entry['time_start']).hour
-    end.map do |hour, entries|
+      time = Time.parse(entry['time_start'])
+      Time.new(time.year, time.month, time.day, time.hour, 0, 0, time.utc_offset)
+    end.map do |hour_timestamp, entries|
       avg_sek = entries.sum { |e| e['SEK_per_kWh'] } / entries.size
       avg_eur = entries.sum { |e| e['EUR_per_kWh'] } / entries.size
 
