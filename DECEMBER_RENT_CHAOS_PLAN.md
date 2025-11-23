@@ -97,8 +97,14 @@
 **USER (Nov 23, 00:58):**
 > "It's too late (1am) to figure this out fully rn. I need to disable the rent reminder from sending out the wrong amount tomorrow morning, however. There's a cron job set for the 23rd, iirc. Help me identify it and temporarily disable it."
 
-**STATUS:** ⏳ Need to find and disable rent reminder cron (runs as kimonokittens user)
-**ACTION NEEDED:** Check `crontab -l` as kimonokittens user, comment out reminder job
+**STATUS:** ✅ DISABLED (Nov 23, 01:02)
+
+**Cron job commented out:**
+```bash
+# 45 9 * * * /bin/bash -l -c 'eval "$(rbenv init -)"; cd /home/kimonokittens/Projects/kimonokittens && timeout 2m bundle exec ruby bin/rent_reminders >> logs/reminders.log 2>&1'
+```
+
+**Impact:** No SMS rent reminders will be sent until December rent figured out and cron re-enabled.
 
 ---
 
