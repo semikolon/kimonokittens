@@ -70,22 +70,35 @@
 
 ### Working Directory Protocol
 
+**🔒 PRODUCTION CHECKOUT IS READ-ONLY (Filesystem Protection Active)**
+
+As of Nov 24, 2025, production checkout has filesystem permissions that **prevent fredrik user from writing**:
+```bash
+# Permissions: chmod g-w (group write removed)
+# Files owned by: kimonokittens:kimonokittens
+# fredrik user: read-only access (group member, no write permission)
+```
+
 **Development workflow (ALWAYS follow):**
 ```bash
 # ✅ CORRECT: Work in dev checkout
 cd /home/fredrik/Projects/kimonokittens/
 # Edit files, commit, push to trigger webhook deployment
 
-# ❌ WRONG: Never edit production directly
-cd /home/kimonokittens/Projects/kimonokittens/  # Read-only verification only!
+# ✅ SAFE: Production checkout is READ-ONLY
+cd /home/kimonokittens/Projects/kimonokittens/  # Can read, CANNOT write
+# Any Edit/Write attempts will fail with "Permission denied"
 ```
 
 **Why this matters:**
 - Webhook deployments ensure consistent deployment process
-- Easy to accidentally edit prod files when cd'd to prod directory
+- Filesystem protection prevents accidental production edits
 - All changes MUST go through git → webhook flow
+- Direct production edits contaminate ownership and block deployments
 
 **Deployment flow:** Edit in dev → commit → push → webhook auto-deploys to prod
+
+**If you need to verify production state:** Read files only, never edit. Use dev checkout for all modifications.
 
 ---
 

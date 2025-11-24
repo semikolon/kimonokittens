@@ -23,7 +23,7 @@
 - ✅ Contract SMS types validated (invitation + completion)
 - ✅ WebSocket handlers working (no console errors)
 - ✅ Toast shows firstname + sent methods
-- ✅ UI condensed: 2 lines with labeled columns
+- ✅ UI condensed: 2 lines without label columns
 - ✅ Database tracks SMS delivery (schema updated)
 - ✅ Personal number format audit complete (31 occurrences checked)
 
@@ -197,48 +197,38 @@
 
 ### 6. Status Display Too Verbose
 **Priority:** 🟡 MEDIUM
-**Status:** ⏳ IN PROGRESS
+**Status:** ✅ COMPLETE (Nov 24, 2025 - 20:40)
 
-**Current UI (4 lines):**
+**Problem:**
+- UI showed 4 separate lines (2 for notifications, 2 for signing)
+- Redundant information
+- Grid layout with label columns took excessive space
+
+**Solution Implemented:**
+- ✅ Removed "Notifieringar:" and "Signeringar:" label columns entirely
+- ✅ Condensed to 2 simple status lines with icons + text
+- ✅ Changed from grid layout to flex containers
+- ✅ Applied to both pending and completed contract states
+
+**Final UI (2 lines without labels):**
 ```
-Fredrik Bränström väntar på email
-Adam McCarthy väntar på email
-Fredrik Bränström har inte signerat (30 dagar kvar)
-Adam McCarthy har inte signerat (30 dagar kvar)
-```
-
-**Problems:**
-- Redundant information (notification + signing status separate)
-- Takes up too much space
-- Doesn't show notification method (email, SMS, or both)
-- Doesn't handle partial signing ("Adam har signerat, Fredrik inte")
-
-**Desired UI (2 lines, 2 columns):**
-
-**Option A - Condensed:**
-```
-Notifieringar: Adam och Fredrik har båda fått email och SMS
-Signeringar:   Adam har signerat, Fredrik inte (29 dagar kvar)
+[Icon] Adam och Fredrik har båda fått email
+[Icon] Ingen har signerat än (30 dagar kvar)
 ```
 
-**Option B - Table:**
-```
-│ Notifieringar │ Adam och Fredrik har fått email och SMS           │
-│ Signeringar   │ Adam har signerat, Fredrik inte (29 dagar kvar)   │
-```
-
-**Swedish Text Patterns:**
-- **Both notified same way:** "Adam och Fredrik har båda fått email och SMS"
+**Swedish Text Patterns Implemented:**
+- **Both notified same way:** "Adam och Fredrik har båda fått email"
 - **Both notified different:** "Adam har fått email och SMS, Fredrik har fått email"
-- **One notified:** "Adam har fått email och SMS, Fredrik väntar"
+- **One notified:** "Adam har fått email, Fredrik väntar"
 - **None notified:** "Väntar på notifieringar"
 
 - **Both signed:** "Båda har signerat ✓"
 - **One signed:** "Adam har signerat, Fredrik inte (29 dagar kvar)"
 - **None signed:** "Ingen har signerat än (30 dagar kvar)"
 
-**Files:**
-- `dashboard/src/components/admin/ContractDetails.tsx` - Complete redesign of status section
+**Files Modified:**
+- `dashboard/src/components/admin/ContractDetails.tsx:124-269` - Removed labels, simplified layout
+- Commit: `839332f` (Nov 24, 2025 - 20:40)
 
 ---
 
