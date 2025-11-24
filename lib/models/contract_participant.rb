@@ -109,7 +109,7 @@ class ContractParticipant
     raise ArgumentError, "email is required" if email.nil? || email.empty?
     raise ArgumentError, "personal_number is required" if personal_number.nil? || personal_number.empty?
 
-    valid_roles = ['signer', 'observer', 'approver']
+    valid_roles = ['signer', 'observer', 'approver', 'landlord', 'tenant']
     unless valid_roles.include?(role)
       raise ArgumentError, "role must be one of: #{valid_roles.join(', ')}"
     end

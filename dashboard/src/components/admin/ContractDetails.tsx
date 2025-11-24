@@ -313,33 +313,34 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
 
       {/* Confirmation Dialog for Cancel */}
       {showCancelConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-purple-500/30 rounded-lg p-6 max-w-md mx-4 shadow-xl">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertCircle className="w-6 h-6 text-orange-400" />
-              <h3 className="text-lg font-semibold text-purple-100">Är du säker?</h3>
-            </div>
-            <p className="text-purple-200 mb-6">
-              Detta kommer att avbryta kontraktet och kan inte ångras. Signeringslänkar kommer inte längre att fungera.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setShowCancelConfirm(false)}
-                disabled={cancelling}
-                className="px-4 py-2 text-purple-100 rounded-lg text-sm font-medium transition-colors shadow-sm hover:opacity-90"
-                style={{
-                  background: 'linear-gradient(135deg, #4a2b87 0%, #3d1f70 100%)'
-                }}
-              >
-                Nej, behåll
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
-              >
-                {cancelling ? 'Avbryter...' : 'Ja, avbryt kontrakt'}
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+          <div className="border border-purple-500/30 rounded-2xl w-full max-w-md mx-4 overflow-hidden" style={{
+            backgroundImage: 'linear-gradient(180deg, rgba(41, 22, 64, 0.95) 0%, rgba(30, 14, 50, 0.99) 100%)'
+          }}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle className="w-6 h-6 text-orange-400" />
+                <h3 className="text-xl font-semibold text-slate-100">Är du säker?</h3>
+              </div>
+              <p className="text-slate-300 mb-6">
+                Detta kommer att avbryta kontraktet och kan inte ångras. Signeringslänkar kommer inte längre att fungera.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowCancelConfirm(false)}
+                  disabled={cancelling}
+                  className="px-4 py-2 text-slate-300 hover:text-slate-100 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Nej, behåll
+                </button>
+                <button
+                  onClick={handleCancel}
+                  disabled={cancelling}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  {cancelling ? 'Avbryter...' : 'Ja, avbryt kontrakt'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
