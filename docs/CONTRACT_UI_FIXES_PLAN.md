@@ -1,13 +1,14 @@
 # Contract UI & Webhook Fixes Plan
 
 **Created:** Nov 24, 2025, 14:35
-**Last Updated:** Nov 24, 2025, 21:15
-**Status:** 🔴 IN PROGRESS - Hash key lookup failing despite expand parameter working
-**Priority:** CRITICAL - Contract creation blocked by signing URL extraction bug
+**Last Updated:** Nov 24, 2025, 22:55
+**Status:** 🟡 TESTING - Repository persistence + validation bugs fixed, needs verification
+**Priority:** HIGH - SMS delivery tracking now functional, testing new contract creation
 
 ## 🚀 DEPLOYMENT STATUS
 
 **Final Commits:**
+- `225cfe7` - **CRITICAL FIX:** SMS field persistence + validation (Nov 24, 22:50) ⚡
 - `db5cf82` - Signing URL extraction + email delivery tracking (Nov 24, 20:25)
 - `651dd22` - UI redesign: 2-column condensed status (Nov 24, 20:10)
 - `eafdd5d` - WebSocket flow documentation (Nov 24, 20:05)
@@ -33,8 +34,8 @@
 ## 🚨 CRITICAL ISSUES (Blocking)
 
 ### 1. SMS Missing Signing URL
-**Priority:** 🔴 CRITICAL
-**Status:** 🔴 IN PROGRESS - Hash lookup bug discovered (Nov 24, 2025 - 21:15)
+**Priority:** 🟡 MEDIUM (Repository bugs fixed, hash lookup bug remains)
+**Status:** ✅ PARTIALLY FIXED - Two NEW bugs discovered and fixed (Nov 24, 2025 - 22:50)
 
 **Problem:**
 - SMS only shows: "Du har blivit inbjuden att skriva på ett hyresavtal med Kimono Kittens! Signera med BankID här:"
@@ -118,12 +119,39 @@ def extract_signing_links(participants, signers)
 end
 ```
 
+**🆕 NEW BUGS DISCOVERED (Nov 24, 22:30-22:50):**
+
+**Bug A: Repository Missing SMS Fields (SILENT DATA LOSS)**
+- **Severity:** 🔴 CRITICAL
+- **Root Cause:** `ContractParticipantRepository` hydrate/dehydrate missing `sms_delivered` and `sms_delivered_at`
+- **Impact:** Model had fields, database had columns, but repository silently dropped values on save/load
+- **Pattern:** Exact repeat of Nov 14 `personnummer` bug - missing repository fields = silent data loss
+- **Fix:** Added 4 lines to repository (commit `225cfe7`)
+  - hydrate: `sms_delivered: row[:smsDelivered]`, `sms_delivered_at: row[:smsDeliveredAt]`
+  - dehydrate: `smsDelivered: participant.sms_delivered`, `smsDeliveredAt: participant.sms_delivered_at`
+
+**Bug B: Validation Too Strict (CONTRACT CREATION FAILED)**
+- **Severity:** 🔴 CRITICAL - Blocked ALL contract creation
+- **Root Cause:** `ContractParticipant` model validation required `participant_id` to be non-nil
+- **Impact:** Contract creation failed with "participant_id is required" error
+- **Why Wrong:** `participant_id` is nil initially, gets set by Zigned webhook AFTER agreement creation
+- **Evidence:** Production log: `❌ Error creating contract: participant_id is required`
+- **Fix:** Removed validation line (commented out with explanation)
+- **Result:** SMS at 21:27 was from earlier attempt; 21:49 contract failed validation
+
+**Documentation Added:**
+- Updated `lib/CLAUDE.md` with comprehensive "Repository Pattern - Model/Persistence Checklist"
+- Three-layer consistency verification (Model → Repository → Database)
+- Common bug patterns with examples
+- Verification commands for detecting field drift
+- Historical incidents log (Nov 14 personnummer, Nov 24 SMS fields)
+
 **Next Investigation:**
-1. Check OpenAPI spec for correct field name in expanded participant response
-2. Add debug logging to see what fields are actually present in participant hash
-3. Verify if Zigned uses `personnummer` (Swedish) vs `personal_number` (English)
-4. Update `extract_signing_links` to use correct field name
-5. Test contract creation again
+1. ✅ Repository SMS fields fixed
+2. ✅ Validation bug fixed
+3. ⏳ Delete broken contract (d5e7e5dc-88d1-406f-9208-ab61719190d2)
+4. ⏳ Create new contract for Adam - verify SMS sends with URLs
+5. ⏳ Check if hash lookup bug still exists (original Issue #1)
 
 **Files modified (commit db5cf82):**
   - `lib/zigned_client_v3.rb:308-372,512` - Expand parameter + key stripping
@@ -377,12 +405,12 @@ model ContractParticipant {
 
 ## 📊 PROGRESS TRACKING
 
-**Completed:** 6/9 (67%)
-**In Progress:** 1/9 (11%)
-**Future Work:** 2/9 (22%)
+**Completed:** 8/11 (73%)
+**In Progress:** 1/11 (9%)
+**Future Work:** 2/11 (18%)
 
 **🔴 In Progress:**
-1. 🔴 **Issue #1** - SMS missing signing URL (expand works, hash lookup fails)
+1. 🟡 **Issue #1** - SMS missing signing URL (repository/validation fixed, hash lookup remains)
 
 **✅ Completed Issues (Nov 24, 2025 - Session):**
 2. ✅ **Issue #2** - Toast notification (enhanced: firstname + sent methods)
@@ -391,6 +419,8 @@ model ContractParticipant {
 5. ✅ **Issue #5** - participant.lifecycle.received_invitation handler
 6. ✅ **Issue #6** - Status display redesign (2 columns: Notifieringar + Signeringar)
 7. ✅ **Issue #7** - Database schema (smsDelivered + smsDeliveredAt added)
+10. ✅ **Issue #10** - **NEW BUG A** - Repository SMS field persistence (silent data loss fixed)
+11. ✅ **Issue #11** - **NEW BUG B** - Validation blocking contract creation (participant_id nil allowed)
 
 **🔮 Future Enhancements:**
 8. 📋 **Issue #8** - SmsEvent table schema migration (low priority)
@@ -576,5 +606,5 @@ Frontend relies on `admin_contracts_data` for actual state updates. The `contrac
 
 ---
 
-**Last Updated:** Nov 24, 2025, 21:15
-**Next Review:** After fixing hash lookup bug in extract_signing_links
+**Last Updated:** Nov 24, 2025, 22:55
+**Next Review:** After testing new contract creation with fixed repository/validation
