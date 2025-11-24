@@ -127,7 +127,12 @@ module RentCalculator
 
     def days_in_month
       return 30 unless @year && @month
-      Date.new(@year, @month, -1).day
+
+      # Rent is ALWAYS paid in advance for the NEXT month
+      # Config month (year/month) → Rent month (next month)
+      # Example: Nov config (11) → Dec rent (31 days)
+      rent_month = Date.new(@year, @month, 1).next_month
+      Date.new(rent_month.year, rent_month.month, -1).day
     end
 
     # Calculate total operational costs (drift)
@@ -395,9 +400,9 @@ module RentCalculator
         tenant_repo = Persistence.tenants
         ledger_repo = Persistence.rent_ledger
 
-        # RentLedger period semantics: Use config month (not rent month)
-        # Example: Oct config → period 2025-10-01 (not 2025-11-01)
-        # The RentLedger model's period_swedish() method converts config→rent for display
+        # RentLedger period semantics: Use CONFIG month (year/month)
+        # Config.days_in_month auto-calculates from next month (rent month)
+        # Example: config year=2025, month=11 → period 2025-11-01, days_in_month=31 (Dec)
         config_period = Time.utc(config.year, config.month, 1)
 
         config.to_h.each do |key, value|
