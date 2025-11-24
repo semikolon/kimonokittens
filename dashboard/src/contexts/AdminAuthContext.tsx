@@ -153,6 +153,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 placeholder="••••"
                 autoFocus
                 disabled={submitting}
+                autoComplete="off"
+                name="admin-pin"
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-form-type="other"
               />
               {error && <p className="text-sm text-red-400">{error}</p>}
               <div className="flex gap-3">
