@@ -374,15 +374,22 @@ class ZignedWebhookHandler
         create_or_update_participant(contract.id, data)
       end
 
-      # Update legacy landlord/tenant fields (for backward compatibility)
-      if personal_number && is_landlord?(personal_number)
+      # Update landlord/tenant signed fields by matching email to our participants
+      # Zigned sends role='signer' for actual signers, so we match by email instead
+      local_participants = participant_repo.find_by_contract_id(contract.id)
+      landlord_participant = local_participants.find { |p| p.role == 'landlord' }
+      tenant_participant = local_participants.find { |p| p.role == 'tenant' }
+
+      if landlord_participant && email&.downcase == landlord_participant.email&.downcase
         contract.landlord_signed = true
         contract.landlord_signed_at = Time.parse(signed_at) if signed_at
-        ZIGNED_LOGGER.info "   ✅ Landlord signature recorded"
-      elsif personal_number
+        ZIGNED_LOGGER.info "   ✅ Landlord signature recorded (matched by email: #{email})"
+      elsif tenant_participant && email&.downcase == tenant_participant.email&.downcase
         contract.tenant_signed = true
         contract.tenant_signed_at = Time.parse(signed_at) if signed_at
-        ZIGNED_LOGGER.info "   ✅ Tenant signature recorded"
+        ZIGNED_LOGGER.info "   ✅ Tenant signature recorded (matched by email: #{email})"
+      else
+        ZIGNED_LOGGER.warn "   ⚠️  Signed participant email '#{email}' doesn't match landlord or tenant"
       end
 
       @repository.update(contract)
