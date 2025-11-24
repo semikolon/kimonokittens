@@ -407,7 +407,94 @@ puts participants.inspect
 
 ---
 
+## 🔄 WEBSOCKET REAL-TIME UPDATES
+
+**Architecture:** Backend broadcasts events → Frontend receives → State updates → UI rerenders
+
+### Two Types of Broadcasts
+
+**1. Specific Contract Events** (`contract_update`)
+- **Source:** Zigned webhook handlers (`handlers/zigned_webhook_handler.rb`)
+- **Events:** 'pending', 'invitation_delivered', 'participant_signed', 'fulfilled', 'completed', 'expired', 'cancelled', 'email_delivered', 'all_emails_delivered', 'email_delivery_failed'
+- **Payload:** `{ contract_id, event, details, timestamp }`
+- **Frontend action:** Logs to console only (actual data update via admin_contracts_data)
+
+**2. Full Data Refresh** (`contract_list_changed` + `admin_contracts_data`)
+- **Source:** Admin actions (create, update, delete, cancel), tenant updates
+- **Broadcast sequence:**
+  1. Backend calls `DataBroadcaster.broadcast_contract_list_changed`
+  2. Fetches fresh `/api/admin/contracts` data
+  3. Sends `contract_list_changed` notification (frontend logs it)
+  4. Sends `admin_contracts_data` with full payload
+- **Frontend action:** Dispatches `SET_ADMIN_CONTRACTS_DATA` → state updates → UI rerenders
+
+### What Triggers Broadcasts
+
+**Admin contract actions** (`handlers/admin_contracts_handler.rb`):
+- ✅ Create contract → `broadcast_contract_list_changed` (line 543)
+- ✅ Cancel/delete contract → `broadcast_contract_list_changed` (line 486)
+- ✅ Resend invitation → `broadcast_contract_list_changed` (line 597)
+- ✅ Resend participant invitation → `broadcast_contract_list_changed` (line 645)
+- ✅ Resend completion SMS → `broadcast_contract_list_changed` (line 687)
+- ✅ Mark participant signed → `broadcast_contract_list_changed` (line 742)
+- ✅ Update participant email → `broadcast_contract_list_changed` (line 798)
+
+**Zigned webhook events** (`handlers/zigned_webhook_handler.rb`):
+- ✅ Agreement pending (activated) → `broadcast_contract_update('pending')` (line 262)
+- ✅ Participant received invitation → `broadcast_contract_update('invitation_delivered')` (line 312)
+- ✅ Participant signed → `broadcast_contract_update('participant_signed')` (lines 372, 947)
+- ✅ Agreement fulfilled (all signed) → `broadcast_contract_update('fulfilled')` (line 406)
+- ✅ Agreement finalized (completion SMS sent) → `broadcast_contract_update('completed')` (line 459)
+- ✅ Agreement expired → `broadcast_contract_update('expired')` (line 484)
+- ✅ Agreement cancelled → `broadcast_contract_update('cancelled')` (line 513)
+- ✅ Email delivered → `broadcast_contract_update('email_delivered')` (line 595)
+- ✅ All emails delivered → `broadcast_contract_update('all_emails_delivered')` (line 622)
+- ✅ Email failed → `broadcast_contract_update('email_delivery_failed')` (line 724)
+- ✅ Participant status updated → `broadcast_contract_update('participant_status_updated')` (line 860)
+
+**Tenant updates** (`handlers/tenant_handler.rb`):
+- ✅ Update tenant details → `broadcast_contract_list_changed` (line 70)
+- ✅ Set departure date → `broadcast_contract_list_changed` (line 127)
+
+### Frontend Implementation
+
+**DataContext** (`dashboard/src/context/DataContext.tsx:596-608`):
+```typescript
+case 'admin_contracts_data':
+  // Updates state with fresh contract list
+  dispatch({ type: 'SET_ADMIN_CONTRACTS_DATA', payload: message.payload })
+  break
+
+case 'contract_update':
+  // Just logs event details (data refreshed via admin_contracts_data)
+  console.log(`Contract ${payload.contract_id}: ${payload.event}`, payload.details)
+  break
+
+case 'contract_list_changed':
+  // Just logs notification (backend already sent admin_contracts_data)
+  console.log('Contract list changed - fresh data incoming')
+  break
+```
+
+**Result:** Admin UI updates in real-time without manual refresh when:
+- User creates/cancels contracts
+- Zigned sends webhook (tenant signed, emails delivered, etc.)
+- Tenant details updated (affects contract display)
+
+### Key Insight
+
+Frontend relies on `admin_contracts_data` for actual state updates. The `contract_update` and `contract_list_changed` events are notifications only - they log to console but don't modify state themselves. This pattern ensures data consistency (always uses fresh API data, never stale event payloads).
+
+---
+
 ## 📝 NOTES & CONSIDERATIONS
+
+**Cancel Endpoint Temporary Fix (Nov 24, 2025):**
+- Cancel now deletes contract + participants from our DB only
+- Does NOT call Zigned API (was failing with 500 errors)
+- Allows testing signing URL fixes with fresh contracts
+- Zigned agreement still exists (manual cleanup needed)
+- TODO: Restore proper Zigned cancellation after Issue #9 (draft/open flow)
 
 **SMS Length Limit:**
 - 46elks limit: 160 characters per SMS (standard GSM-7)
