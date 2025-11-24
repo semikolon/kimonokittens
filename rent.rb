@@ -126,12 +126,14 @@ module RentCalculator
     end
 
     def days_in_month
-      return 30 unless @year && @month
+      # Default to current time if year/month not specified (never hardcode!)
+      year = @year || Time.now.year
+      month = @month || Time.now.month
 
       # Rent is ALWAYS paid in advance for the NEXT month
       # Config month (year/month) → Rent month (next month)
       # Example: Nov config (11) → Dec rent (31 days)
-      rent_month = Date.new(@year, @month, 1).next_month
+      rent_month = Date.new(year, month, 1).next_month
       Date.new(rent_month.year, rent_month.month, -1).day
     end
 

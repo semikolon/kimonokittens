@@ -106,8 +106,8 @@ active_tenants.each do |tenant|
 
   # Timing logic (4 tones, all once daily)
   # TESTING: Hour restrictions removed for immediate testing
-  if current_day == 23
-    # Heads up reminder (day 23)
+  if current_day == 24
+    # Heads up reminder (day 24)
     should_send = true
     tone = :heads_up
   elsif current_day == tenant.payday_start_day
