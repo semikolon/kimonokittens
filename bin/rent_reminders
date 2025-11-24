@@ -175,12 +175,15 @@ active_tenants.each do |tenant|
   else
     # Send SMS
     begin
-      SmsGateway.send_reminder(
+      SmsGateway.send(
         to: tenant.phone_e164,
         body: message,
-        tenant_id: tenant.id,
-        month: current_month,
-        tone: tone.to_s
+        meta: {
+          type: 'reminder',
+          tenant_id: tenant.id,
+          month: current_month,
+          tone: tone.to_s
+        }
       )
 
       puts "  📤 Sent #{tone} reminder to #{tenant.name} at #{tenant.phone_e164} (#{remaining.round} kr remaining)"

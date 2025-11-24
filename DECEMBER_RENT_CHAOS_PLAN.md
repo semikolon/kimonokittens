@@ -447,18 +447,37 @@ While implementing December rent, discovered this **incomplete migration** affec
 
 ---
 
-## 🐛 ISSUE 8: Rent Reminders - Need to Find Existing SMS Method (Nov 24, 2025)
+## 🐛 ISSUE 8: Rent Reminders - SMS Method Call Fixed (Nov 24, 2025)
 
 **Discovery:** During comprehensive rent reminder code review, found `bin/rent_reminders` calls `SmsGateway.send_reminder()` which doesn't exist in `lib/sms/gateway.rb`.
 
 **User Note:** "The functionality exists already somewhere, I'm CONVINCED of it. I have tested this code before."
 
-**Current Status:** Need to find the actual SMS sending method that was tested before. Possibilities:
-- Different method name in SmsGateway?
-- Different class/module entirely?
-- Method exists in a different branch or was refactored?
+**Root Cause:** Script was calling non-existent wrapper method `send_reminder()` instead of generic `send()` method.
 
-**Status:** ⏳ NEED TO INVESTIGATE - Must find existing implementation before enabling cron
+**Solution Found:** The generic `SmsGateway.send()` method exists and works perfectly! (lib/sms/gateway.rb:24-26)
+- Example in gateway.rb (lines 9-13) even shows rent reminder usage
+- Just needed to restructure call: move metadata to `meta:` hash
+
+**Fix Applied:**
+```ruby
+# Before (WRONG - method doesn't exist):
+SmsGateway.send_reminder(
+  to: phone, body: message,
+  tenant_id: id, month: month, tone: tone
+)
+
+# After (CORRECT - uses existing generic method):
+SmsGateway.send(
+  to: phone, body: message,
+  meta: { type: 'reminder', tenant_id: id, month: month, tone: tone }
+)
+```
+
+**Files Changed:**
+- bin/rent_reminders (line 178)
+
+**Status:** ✅ RESOLVED - Ready for testing
 
 ---
 
@@ -492,6 +511,7 @@ While implementing December rent, discovered this **incomplete migration** affec
 ### ⏳ Remaining Work
 
 **1. Rent Reminders Testing (HIGH PRIORITY):**
+- ✅ Found existing SmsGateway.send() method and fixed call
 - Run dry-run test: `bundle exec ruby bin/rent_reminders --dry-run`
 - Verify message format looks correct
 - Check MessageComposer works with December data
@@ -508,12 +528,10 @@ While implementing December rent, discovered this **incomplete migration** affec
 - Check all remaining CONFIG→RENT conversions
 - Save findings to report
 
-**4. Commit Everything:**
-- Comprehensive commit message covering:
-  - Period storage bug fix (permanent solution)
-  - December rent ledger creation
-  - Rent reminders method addition
-  - Documentation updates
+**4. Commit Rent Reminders Fix:**
+- ✅ Already committed: Period fix (4 commits - core, callers, CLI, docs)
+- ✅ Already committed: Webhook static_root support
+- Pending: Rent reminders SMS method fix (bin/rent_reminders + DECEMBER_RENT_CHAOS_PLAN.md)
 
 ### 🔑 Key Insights for Next Session
 
