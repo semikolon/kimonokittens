@@ -649,7 +649,10 @@ export function RentWidget() {
   const firstAmount = amounts[0]
   const remainingAmounts = amounts.slice(1)
 
-  // Parse first amount for header display
+  // Check if first amount contains bullets (multiple people in one line)
+  const firstAmountHasBullets = firstAmount && firstAmount.includes(' • ')
+
+  // Parse first amount for header display (only if NOT multi-person line)
   const parseFirstAmount = (line: string) => {
     const cleanLine = line.replace(/\*/g, '')
     const parts = cleanLine.split(' kr')
@@ -664,10 +667,12 @@ export function RentWidget() {
     return null
   }
 
-  const firstAmountParsed = firstAmount ? parseFirstAmount(firstAmount) : null
+  // Only parse for inline display if it's a single-person amount (no bullets)
+  const firstAmountParsed = (firstAmount && !firstAmountHasBullets) ? parseFirstAmount(firstAmount) : null
 
   return (
     <div>
+      {/* Header - just the header text, no inline amounts */}
       {header && (
         <div className="text-purple-200 mb-3 leading-relaxed">
           {parseMarkdown(header)}
@@ -683,6 +688,13 @@ export function RentWidget() {
               </span>
             </>
           )}
+        </div>
+      )}
+
+      {/* Rent details - all in purple when multiple people */}
+      {firstAmountHasBullets && firstAmount && (
+        <div className="text-purple-300 mb-3">
+          {firstAmount.replace(/\*/g, '')}
         </div>
       )}
 
