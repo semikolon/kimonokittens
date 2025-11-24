@@ -1130,11 +1130,11 @@ Repository `.all()` method was using `.select()` but **missing fields**:
 - Syncs once per 24 hours (not real-time)
 - Automatically updates RentLedger payment status
 
-**Rent Reminders** (SMS via 46elks):
-- Monthly rent ledger population (automated)
-- SMS reminders with payment reference codes
-- Template-based message generation
-- Contract signing reminders (email + SMS)
+**Rent Reminders** (SMS via 46elks - ✅ Production Ready, Nov 24 2025):
+- Automated SMS reminders (4 tones: heads_up day 24, first_reminder payday, urgent day 27, overdue 28+)
+- Idempotency checking prevents duplicate sends
+- Separate WEBHOOK_BASE_URL for external 46elks callbacks (public URL required)
+- Tested successfully: 5 SMS sent with correct amounts
 
 **Architecture**:
 - Backend: `lib/sms/gateway.rb` (46elks integration)

@@ -481,9 +481,9 @@ SmsGateway.send(
 
 ---
 
-## 📊 CURRENT STATUS SUMMARY (Nov 24, 2025 - End of Session)
+## 📊 CURRENT STATUS SUMMARY (Nov 24, 2025 - 13:19)
 
-### ✅ Completed Work
+### ✅ Completed Work (ALL DEPLOYED)
 
 **1. December 2025 Rent Ledger:**
 - Created with correct amounts and period (2025-11-01)
@@ -492,45 +492,61 @@ SmsGateway.send(
 - Frida: 5,896 kr (29 days, starts Dec 3)
 - **Total: 29,707 kr** ✓
 
-**2. Architectural Fix - Baked-in Semantics:**
+**2. Architectural Fix - Baked-in Semantics (Nov 24 morning):**
 - Config.days_in_month now auto-calculates from config + 1 month
 - Callers just pass CONFIG month (no conversion needed)
 - Removed period parameter (business rule in one place)
 - Code simplified: -11 lines, massive cognitive load reduction
 
-**3. Rent Reminders Fix:**
+**3. Period Semantic Bugs Found & Fixed (Nov 24 afternoon):**
+- ✅ Audit found 2 critical bugs in tenant filtering
+- ✅ rent.rb extract_roommates_for_period: Fixed CONFIG→RENT conversion (commit b6316d8)
+- ✅ admin_contracts_handler.rb: Fixed roommates check to use RENT month
+- Impact: Wrong period boundaries for rent_breakdown_for_period callers
+
+**4. Code Deduplication (Nov 24 afternoon):**
+- ✅ Handler extract_roommates() now delegates to rent.rb (commit 238cb13)
+- Removed 20+ lines of duplicate CONFIG→RENT logic
+- Single source of truth for tenant filtering
+
+**5. Message Formatting Improvements (Nov 24 afternoon):**
+- ✅ First names only: "Adam, Fredrik, Sanna" (not full names)
+- ✅ Cluster similar rents: 6295/6296 shown as "6296 kr" (2 kr tolerance)
+- ✅ Simplified days: "29 dagar" (not "29 dagars boende")
+- ✅ Bullet separator: " • " between entries, no trailing bullet
+
+**6. Rent Reminders (TESTED & WORKING):**
 - ✅ Found existing SmsGateway.send() method
-- ✅ Fixed bin/rent_reminders to use correct method signature
-- ✅ Committed fix (38da20d)
+- ✅ Fixed bin/rent_reminders to use correct method signature (commit 38da20d)
+- ✅ Added SmsEventRepository.all() method for idempotency checks (commit de8f038)
+- ✅ Separated WEBHOOK_BASE_URL from API_BASE_URL (commit abae061)
+- ✅ Changed heads_up day from 23 to 24 (commit f05d290)
+- ✅ **TESTED 14:07**: 5 SMS sent successfully to all active tenants
+- ✅ **AMOUNTS VERIFIED**: Match ledger exactly (Adam 6302, Fredrik 6303, Frida 5896, Rasmus 4903, Sanna 6303)
 
-**4. Documentation:**
-- DECEMBER_RENT_CHAOS_PLAN.md updated (this file)
-- docs/RENT_LEDGER_PERIOD_MIGRATION_PLAN.md updated (2 post-mortems)
-- Both congruent with permanent fix
+**7. Documentation:**
+- All MD files updated with complete progress
 
-### ⏳ Remaining Work
+### ✅ COMPLETE (14:07)
 
-**1. Enable Rent Reminders Cron (HIGH PRIORITY - PRODUCTION TESTING):**
-- ✅ SMS method fix committed (38da20d)
-- ⏳ User to enable cron job in production
-- ⏳ Monitor first run via journalctl
-- ⏳ Verify SMS messages sent correctly
-- Note: Production testing via cron is the correct approach (not dry-run in dev)
+**All December 2025 issues resolved:**
+- December ledger populated with correct amounts
+- Dashboard shows proper formatting
+- Rent reminders tested and working (5 SMS sent successfully)
+- System ready for production use
 
-**2. Dashboard Verification:**
-- Check dashboard displays December amounts correctly
-- Verify WebSocket broadcasts work
-- Confirm friendly_message API shows right data
+### 📝 All Commits (10 total)
 
-**3. Codebase Audit (MEDIUM PRIORITY):**
-- Spawn subagent to search for other period semantic bugs
-- Check all remaining CONFIG→RENT conversions
-- Save findings to report
-
-**4. All Code Changes Committed:**
-- ✅ Period fix (4 commits: 907cc24, 50ee4ae, 692ae18, 3a672db)
-- ✅ Webhook static_root support (2bbd22e)
-- ✅ Rent reminders SMS fix (38da20d)
+1. 907cc24 - fix(rent): bake 'rent = config + 1' into Config.days_in_month
+2. 50ee4ae - refactor(rent): simplify callers after Config.days_in_month fix
+3. 692ae18 - refactor(cli): simplify populate_monthly_ledger to use RentLedger API
+4. 3a672db - docs: update period migration docs with Issue #7 resolution
+5. 2bbd22e - feat(webhook): add static_root deployment support
+6. 38da20d - fix(rent): use existing SmsGateway.send() instead of non-existent send_reminder()
+7. 436f942 - docs: update chaos doc with completed work status
+8. b6316d8 - fix(rent): correct CONFIG→RENT conversion in tenant filtering
+9. 238cb13 - refactor(rent): deduplicate extract_roommates + improve message formatting
+10. [docs update] - Final doc congruence before cron test
 
 ### 🔑 Key Insights for Next Session
 

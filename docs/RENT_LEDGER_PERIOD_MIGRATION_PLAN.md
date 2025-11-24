@@ -1,8 +1,8 @@
 # RentLedger Period Semantics Migration Plan
 
 **Created:** November 19, 2025
-**Status:** ⚠️ PARTIALLY COMPLETED - Critical business logic updates missed
-**Estimated time:** 11-16 hours (1.5-2 days)
+**Status:** ✅ COMPLETE (Nov 24, 2025) - All bugs fixed, deployed to production
+**Actual time:** ~16 hours across 3 sessions (with 3 post-mortems)
 
 ---
 
@@ -77,6 +77,53 @@ end
 - `handlers/rent_calculator_handler.rb`: extract_config passes CONFIG month
 
 **Root Lesson:** Business rules should be encoded in the domain layer, not repeated in callers. Fundamental assumptions (like "rent is always for next month") belong in the core model.
+
+---
+
+## ⚠️ POST-MORTEM #3: Duplicate Methods & Missed Conversions (Nov 24, 2025 afternoon)
+
+**What Happened:**
+Comprehensive audit (after permanent fix) found TWO MORE bugs with same pattern.
+
+**Bugs Found:**
+
+1. **rent.rb:589-605 `extract_roommates_for_period`**
+   - Private method used by `rent_breakdown_for_period`
+   - Filtered tenants using CONFIG month instead of RENT month
+   - Impact: Wrong tenant list for admin contracts handler + any code calling rent_breakdown_for_period
+
+2. **handlers/rent_calculator_handler.rb:476-480 `extract_roommates`**
+   - Duplicate of rent.rb method (20+ lines of identical CONFIG→RENT logic)
+   - Already fixed on Nov 24 morning, but duplication meant bugs could diverge
+
+3. **handlers/admin_contracts_handler.rb:111-118**
+   - Manual roommates building (used only for .any? check)
+   - Used CONFIG month for tenant filtering
+   - Minor impact (just determines whether to call rent_breakdown_for_period)
+
+**Root Cause:**
+Method duplication + incomplete migration audit = bugs hiding in duplicate code paths.
+
+**Fixes Applied (Nov 24 afternoon):**
+
+1. **Fixed period semantics** (commit b6316d8):
+   - rent.rb extract_roommates_for_period: Added CONFIG→RENT conversion
+   - admin_contracts_handler.rb: Added CONFIG→RENT conversion
+
+2. **Eliminated duplication** (commit 238cb13):
+   - handlers/rent_calculator_handler.rb extract_roommates() now delegates to rent.rb
+   - Removed 20+ lines of duplicate logic
+   - Single source of truth for tenant filtering
+
+**Additional Improvements (commit 238cb13):**
+- First names only in friendly_message
+- Cluster similar rents (2 kr tolerance)
+- Simplified days notation ("29 dagar")
+- Bullet separator formatting
+
+**Root Lesson:** Code duplication is a liability during migrations. When semantics change, duplicated logic creates multiple update sites where bugs can hide. DRY principle prevents this.
+
+**Status:** ✅ COMPLETE - All period semantic bugs fixed, duplication eliminated, deployed to production.
 
 ---
 
