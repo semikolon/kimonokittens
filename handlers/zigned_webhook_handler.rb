@@ -238,9 +238,20 @@ class ZignedWebhookHandler
 
       @repository.update(contract)
 
-      # Note: Participants array contains only IDs, not full objects
-      # Participant records will be created when participant.lifecycle.fulfilled events arrive
-      ZIGNED_LOGGER.info "   📋 Participants (IDs only): #{participants.join(', ')}"
+      # Create/update participant records with signing URLs from Zigned
+      # Participants array may contain full objects (with signing_url) or just IDs
+      participants.each do |participant_data|
+        if participant_data.is_a?(Hash)
+          # Full participant object - extract signing URL
+          signing_url = participant_data['signing_url'] || participant_data['signing_room_url']
+          ZIGNED_LOGGER.info "   📋 Creating participant: #{participant_data['name']} (#{participant_data['email']})"
+          ZIGNED_LOGGER.info "      Signing URL: #{signing_url ? 'provided' : 'missing'}"
+          create_or_update_participant(contract.id, participant_data)
+        else
+          # Just an ID - will wait for participant.lifecycle.fulfilled event
+          ZIGNED_LOGGER.info "   📋 Participant ID only: #{participant_data} (will populate on fulfillment)"
+        end
+      end
     else
       ZIGNED_LOGGER.warn "⚠️  Warning: SignedContract record not found for agreement_id #{agreement_id}"
     end
@@ -706,8 +717,8 @@ class ZignedWebhookHandler
     }
 
     if existing
-      # Update existing participant
-      participant_attrs.each { |k, v| existing.send("#{k}=", v) if existing.respond_to?("#{k}=") && v }
+      # Update existing participant (merge strategy: only update non-nil values)
+      participant_attrs.each { |k, v| existing.send("#{k}=", v) if existing.respond_to?("#{k}=") && !v.nil? }
       participant_repo.update(existing)
     else
       # Create new participant
