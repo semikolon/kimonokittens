@@ -45,7 +45,9 @@ class ElksClient
 
     # Only add delivery receipt webhook in production (requires publicly accessible URL)
     unless ENV['RACK_ENV'] == 'development'
-      webhook_url = "#{@api_base_url}/webhooks/elks/dlr"
+      # Use WEBHOOK_BASE_URL for external services (not API_BASE_URL which is for internal use)
+      webhook_base = ENV['WEBHOOK_BASE_URL'] || @api_base_url
+      webhook_url = "#{webhook_base}/webhooks/elks/dlr"
       params[:whendelivered] = webhook_url
     end
 
