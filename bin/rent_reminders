@@ -105,7 +105,7 @@ active_tenants.each do |tenant|
   tone = nil
 
   # Timing logic (4 tones, all once daily)
-  # TESTING: Hour restrictions removed for immediate testing
+  # No hour restrictions - cron schedule determines when reminders run
   if current_day == 24
     # Heads up reminder (day 24)
     should_send = true
