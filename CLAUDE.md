@@ -1120,21 +1120,27 @@ Repository `.all()` method was using `.select()` but **missing fields**:
 ---
 
 
-## 💸 SWISH PAYMENT INTEGRATION
+## 💸 PAYMENT DETECTION & RENT REMINDERS
 
-**Status**: ❌ **Swish Handel REJECTED** (Nov 15, 2025) - Exploitative pricing (~1,660 SEK/year)
+**Status**: ✅ **PRODUCTION** (Nov 2025) - All 5 phases complete
 
-**Decision**: Use manual SMS instructions with payment reference codes (zero cost, P2P Swish)
+**Payment Detection** (Lunchflow bank sync):
+- Monitors house bank account (tied to Swish) for incoming transactions
+- 4-tier matching: reference code → phone number → amount+timing → fuzzy name
+- Syncs once per 24 hours (not real-time)
+- Automatically updates RentLedger payment status
 
-**Payment matching** (via Lunchflow bank sync):
-- Tier 1: Reference code (most exact, requires manual entry)
-- Tier 2: Phone number (reliable via amount + timing)
-- Tier 3: Amount + fuzzy name (fallback)
+**Rent Reminders** (SMS via 46elks):
+- Monthly rent ledger population (automated)
+- SMS reminders with payment reference codes
+- Template-based message generation
+- Contract signing reminders (email + SMS)
 
-**Key limitations of P2P Swish**: No deep links, no API access, no pre-filled payment requests
-**Lunchflow sync**: Once per 24 hours (not real-time)
+**Architecture**:
+- Backend: `lib/sms/gateway.rb` (46elks integration)
+- Ledger: `lib/models/rent_ledger.rb`, `bin/populate_monthly_ledger`
+- Matching: 4-tier payment detection in Lunchflow webhook handler
 
-**Why merchants get deep links**: Requires Swish Handel subscription (anti-fraud + profit extraction)
 **Docs**: `docs/RENT_REMINDERS_IMPLEMENTATION_PLAN.md`, `docs/CODE_REVIEW_RENT_REMINDERS_REWORK.md`
 
 ---
