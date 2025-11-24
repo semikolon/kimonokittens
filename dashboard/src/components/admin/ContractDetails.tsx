@@ -122,13 +122,11 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
 
   return (
     <div className="p-6">
-      {/* Two-column layout: Status left, Timeline right */}
+      {/* Condensed Status */}
       {contract.status !== 'completed' && (
-        <div className="grid grid-cols-2 gap-6 mb-6">
-          {/* Left Column: Condensed Status */}
-          <div className="space-y-2 text-sm">
-            {/* Notifieringar (combined email/SMS status) */}
-            <div className="flex items-center gap-2">
+        <div className="space-y-2 text-sm mb-6">
+          {/* Notifieringar (combined email/SMS status) */}
+          <div className="flex items-center gap-2">
             {(() => {
               // Find participants or use fallback logic
               const landlordParticipant = contract.participants?.find(p =>
@@ -245,17 +243,10 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
             })()}
           </div>
         </div>
-
-        {/* Right Column: Timeline */}
-        <div>
-          <h4 className="text-sm font-semibold text-purple-200 mb-3">Tidslinje:</h4>
-          <ContractTimeline contract={contract} />
-        </div>
-      </div>
       )}
 
       {/* Action Buttons + Signing Status for Completed */}
-      <div className={contract.status === 'completed' ? 'flex gap-8 pt-2 items-start' : 'flex gap-3 pt-2'}>
+      <div className={contract.status === 'completed' ? 'flex gap-8 pt-2 items-center' : 'flex gap-3 pt-2'}>
         {contract.pdf_url && (
           <button
             onClick={() => window.open(`/api/contracts/${contract.id}/pdf`, '_blank')}

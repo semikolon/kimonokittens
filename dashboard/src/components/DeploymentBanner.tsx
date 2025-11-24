@@ -11,7 +11,7 @@ export function DeploymentBanner({ compact }: DeploymentBannerProps) {
   if (!deploymentStatus?.pending) return null
 
   const timeRemaining = deploymentStatus.time_remaining || 0
-  const totalTime = 120 // 2 minutes debounce
+  const totalTime = deploymentStatus.debounce_seconds || 120 // Read from backend (fallback to 120)
   const progress = Math.max(0, Math.min(1, timeRemaining / totalTime))
   const circumference = 2 * Math.PI * 17 // radius = 17
   const strokeDashoffset = circumference * progress

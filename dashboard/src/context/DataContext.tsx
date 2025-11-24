@@ -308,6 +308,7 @@ interface AdminContractsData {
 interface DeploymentStatus {
   pending: boolean
   time_remaining?: number
+  debounce_seconds?: number
   commit_sha?: string
 }
 
@@ -614,7 +615,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
             // Check if we just reloaded recently (deduplication)
             const LAST_RELOAD_KEY = 'kiosk_last_reload_time'
-            const MIN_RELOAD_INTERVAL = 120000 // 2 minutes (matches webhook debounce)
+            // Read debounce duration from localStorage (set by deployment_status messages)
+            const debounceSeconds = parseInt(localStorage.getItem('webhook_debounce_seconds') || '120')
+            const MIN_RELOAD_INTERVAL = debounceSeconds * 1000 // Convert to milliseconds
 
             const lastReload = localStorage.getItem(LAST_RELOAD_KEY)
             const now = Date.now()
@@ -639,6 +642,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             break
           case 'deployment_status':
             dispatch({ type: 'SET_DEPLOYMENT_STATUS', payload: message.payload })
+            // Store debounce_seconds in localStorage for reload deduplication
+            if (message.payload.debounce_seconds) {
+              localStorage.setItem('webhook_debounce_seconds', message.payload.debounce_seconds.toString())
+            }
             break
           case 'schedule_data':
             dispatch({ type: 'SET_HEATPUMP_SCHEDULE_DATA', payload: message.payload })

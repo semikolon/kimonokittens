@@ -272,6 +272,7 @@ class DeploymentHandler
         {
           pending: true,
           time_remaining: remaining,
+          debounce_seconds: @debounce_seconds,
           commit_sha: @pending_event[:event_data].dig('head_commit', 'id')&.slice(0, 7)
         }
       else
