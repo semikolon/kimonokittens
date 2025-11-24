@@ -576,30 +576,5 @@ Frontend relies on `admin_contracts_data` for actual state updates. The `contrac
 
 ---
 
-## 🛡️ PRODUCTION CHECKOUT PROTECTION (Nov 24, 2025)
-
-**Incident:** During debugging, production checkout `/home/kimonokittens/Projects/kimonokittens/` was contaminated with 205 files owned by `fredrik` user instead of `kimonokittens` user. This blocked webhook deployments and caused git operations to fail.
-
-**Root Cause:** Accidental direct editing of production files during debugging session (should have edited dev checkout at `/home/fredrik/Projects/kimonokittens/` instead).
-
-**Fix Applied:**
-```bash
-# Restore correct ownership
-sudo chown -R kimonokittens:kimonokittens /home/kimonokittens/Projects/kimonokittens/
-
-# Remove group write permission (filesystem protection)
-sudo chmod -R g-w /home/kimonokittens/Projects/kimonokittens/
-```
-
-**Result:** Production checkout is now READ-ONLY for fredrik user (group member), writable only for kimonokittens user (owner).
-
-**Documentation Updated:**
-- `/home/fredrik/Projects/kimonokittens/CLAUDE.md` - Added "Working Directory Protocol" section with clear workflow rules
-- Filesystem protection prevents future accidental production edits
-
-**Lesson Learned:** All changes MUST go through: dev checkout → git push → webhook → production. Never edit production files directly.
-
----
-
 **Last Updated:** Nov 24, 2025, 21:15
 **Next Review:** After fixing hash lookup bug in extract_signing_links

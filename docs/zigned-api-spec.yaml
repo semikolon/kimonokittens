@@ -5685,11 +5685,16 @@ paths:
                         "signer" is supported. Default role is "signer".
                     personal_number:
                       type: string
-                      description: The personal number of the participant. If provided, the signer
-                        will have to use an advanced signing method that
-                        supports a swedish personal number to sign the agreement
-                        and only be allowed to sign if the personal number
+                      description: |
+                        The personal number of the participant (INPUT ONLY). If provided, the signer
+                        will have to use an advanced signing method that supports a swedish personal
+                        number to sign the agreement and only be allowed to sign if the personal number
                         matches what is provided. Only available for signers.
+
+                        IMPORTANT: This field is NOT returned in participant responses or webhooks
+                        (for privacy/security reasons). Use EMAIL as the unique identifier for matching
+                        participants to signers, not personal_number. The personal number is used
+                        internally by Zigned for BankID verification only.
                     locale:
                       type: string
                       enum:
