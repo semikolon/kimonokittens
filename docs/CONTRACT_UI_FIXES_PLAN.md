@@ -1,21 +1,21 @@
 # Contract UI & Webhook Fixes Plan
 
 **Created:** Nov 24, 2025, 14:35
-**Last Updated:** Nov 24, 2025, 22:48
-**Status:** ✅ FIXED - All four critical bugs resolved, ready for testing
-**Priority:** HIGH - Contract creation now fully functional
+**Last Updated:** Nov 24, 2025, 23:10
+**Status:** ✅ PRODUCTION - Six bugs fixed, webhook signing working, layout redesign pending
+**Priority:** HIGH - Core functionality complete, UI improvements in progress
 
 ## 🚀 DEPLOYMENT STATUS
 
-**Tonight's Fixes (Nov 24, 22:00-22:48):**
-- `d05a03d` - **DATABASE FIX:** Make participantId nullable (schema + migration) ⚡⚡⚡
-- `cbc6f79` - **VALIDATION FIX:** Add landlord/tenant to valid participant roles ⚡⚡
-- `225cfe7` - **PERSISTENCE FIX:** SMS field persistence + participant_id validation ⚡
-- `db5cf82` - Signing URL extraction + email delivery tracking (Nov 24, 20:25)
-- `651dd22` - UI redesign: 2-column condensed status (Nov 24, 20:10)
-- `eafdd5d` - WebSocket flow documentation (Nov 24, 20:05)
-- `b55e3d7` - Cancel endpoint temporary fix (Nov 24, 20:00)
-- `2c9191d` - Core fixes: SMS URLs, webhooks, toast (Nov 24, 19:45)
+**Tonight's Fixes (Nov 24, 22:00-23:10):**
+- `759dd36` - **DOCS:** Condense repository checklist 114→38 lines (67% reduction)
+- `e718cd5` - **WEBHOOK FIX:** Match signer by email (landlord/tenant status updates)
+- `dbc0e69` - **API/TS FIX:** Include SMS fields in API response + TypeScript types
+- `e31e965` - **DOCS:** Expand checklist to 5 layers (add API + TypeScript)
+- `e94231f` - **UI FIX:** Cancel modal positioning (createPortal)
+- `d05a03d` - **DATABASE FIX:** Make participantId nullable (migration)
+- `cbc6f79` - **VALIDATION FIX:** Add landlord/tenant to valid roles
+- `225cfe7` - **PERSISTENCE FIX:** SMS field persistence + participant_id validation
 
 **Migrations:**
 - `20251124184554_add_sms_delivery_tracking` - Applied in production
@@ -23,11 +23,13 @@
 
 **Backend:** No restart needed (model/schema changes only)
 
-**Four-Bug Fix Sequence (Nov 24, 22:00-22:48):**
-- ✅ **Bug A:** Repository missing SMS fields → Added to hydrate/dehydrate
-- ✅ **Bug B:** participant_id validation too strict → Commented out (nil allowed)
-- ✅ **Bug C:** Role validation incomplete → Added 'landlord', 'tenant' to valid_roles
-- ✅ **Bug D:** Database NOT NULL constraint → Migration to DROP NOT NULL
+**Six-Bug Fix Sequence (Nov 24, 22:00-23:10):**
+- ✅ **Bug A:** Repository missing SMS fields → Added to hydrate/dehydrate (225cfe7)
+- ✅ **Bug B:** participant_id validation too strict → Commented out (225cfe7)
+- ✅ **Bug C:** Role validation incomplete → Added 'landlord', 'tenant' (cbc6f79)
+- ✅ **Bug D:** Database NOT NULL constraint → Migration DROP NOT NULL (d05a03d)
+- ✅ **Bug E:** API handler filtered out SMS fields → Include in response (dbc0e69)
+- ✅ **Bug F:** Webhook role matching failed → Match by email instead (e718cd5)
 
 **Fixes deployed (all successful):**
 - ✅ Expand parameter working (retrieves 2 participants with signing URLs)
