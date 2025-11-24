@@ -26,15 +26,15 @@ class AdminContractsHandler
         method_not_allowed
       end
     else
-      # Handle contract-specific actions: /contracts/:id/action
-      if req.path_info =~ %r{^/contracts/([a-z0-9\-]+)/resend-email$}
+      # Handle contract-specific actions: /:id/action (mounted at /api/admin/contracts)
+      if req.path_info =~ %r{^/([a-z0-9\-]+)/resend-email$}
         contract_id = $1
         if req.post?
           resend_email(req, contract_id)
         else
           method_not_allowed
         end
-      elsif req.path_info =~ %r{^/contracts/([a-z0-9\-]+)/cancel$}
+      elsif req.path_info =~ %r{^/([a-z0-9\-]+)/cancel$}
         contract_id = $1
         if req.post?
           cancel_contract(req, contract_id)
