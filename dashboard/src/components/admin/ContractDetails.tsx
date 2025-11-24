@@ -121,91 +121,124 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
 
   return (
     <div className="p-6 space-y-6">
-      {/* Email & Signing Status - Simplified format without headers */}
+      {/* Condensed Status - 2 lines with notification + signing combined */}
       {contract.status !== 'completed' && (
-        <div className="space-y-2 text-sm">
-          {/* Email status */}
-          <div className="flex items-center gap-2">
-            {contract.email_status === 'sent' ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-green-400" />
-                <span className="text-purple-100">
-                  {landlordName} fick kontraktet via email {new Date(contract.created_at).toLocaleString('sv-SE', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </span>
-              </>
-            ) : (
-              <>
-                <Clock className="w-4 h-4 text-yellow-400" />
-                <span className="text-purple-200">{landlordName} väntar på email</span>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {contract.email_status === 'sent' ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-green-400" />
-                <span className="text-purple-100">
-                  {contract.tenant_name} fick kontraktet via email {new Date(contract.created_at).toLocaleString('sv-SE', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </span>
-              </>
-            ) : (
-              <>
-                <Clock className="w-4 h-4 text-yellow-400" />
-                <span className="text-purple-200">{contract.tenant_name} väntar på email</span>
-              </>
-            )}
+        <div className="space-y-3 text-sm">
+          {/* Notifieringar (combined email/SMS status) */}
+          <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+            <span className="text-purple-300 font-medium">Notifieringar:</span>
+            <div className="flex items-center gap-2">
+              {(() => {
+                // Find participants or use fallback logic
+                const landlordParticipant = contract.participants?.find(p =>
+                  p.email === contract.landlord_email
+                )
+                const tenantParticipant = contract.participants?.find(p =>
+                  p.email === contract.tenant_email
+                )
+
+                // Determine notification methods for each
+                const landlordEmail = landlordParticipant?.email_delivered || contract.email_status === 'sent'
+                const landlordSMS = false // SMS only sent to tenant
+                const tenantEmail = tenantParticipant?.email_delivered || contract.email_status === 'sent'
+                const tenantSMS = false // Would need to check participant.sms_delivered when implemented
+
+                // Get first names
+                const landlordFirstName = landlordName.split(' ')[0]
+                const tenantFirstName = contract.tenant_name.split(' ')[0]
+
+                // Build notification text
+                const landlordNotif = landlordEmail ? 'email' : null
+                const tenantNotif = tenantEmail ? 'email' : null
+
+                if (!landlordNotif && !tenantNotif) {
+                  return (
+                    <>
+                      <Clock className="w-4 h-4 text-yellow-400" />
+                      <span className="text-purple-200">Väntar på notifieringar</span>
+                    </>
+                  )
+                }
+
+                // Both notified with same method
+                if (landlordNotif && tenantNotif && landlordNotif === tenantNotif) {
+                  return (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+                      <span className="text-purple-100">
+                        {landlordFirstName} och {tenantFirstName} har båda fått {tenantNotif}
+                      </span>
+                    </>
+                  )
+                }
+
+                // One or both notified, show individual statuses
+                const parts = []
+                if (landlordNotif) parts.push(`${landlordFirstName} har fått ${landlordNotif}`)
+                else parts.push(`${landlordFirstName} väntar`)
+                if (tenantNotif) parts.push(`${tenantFirstName} har fått ${tenantNotif}`)
+                else parts.push(`${tenantFirstName} väntar`)
+
+                const allNotified = landlordNotif && tenantNotif
+                return (
+                  <>
+                    {allNotified ? (
+                      <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-yellow-400" />
+                    )}
+                    <span className={allNotified ? "text-purple-100" : "text-purple-200"}>
+                      {parts.join(', ')}
+                    </span>
+                  </>
+                )
+              })()}
+            </div>
           </div>
 
-          {/* Signing status */}
-          <div className="flex items-center gap-2">
-            {landlordSigned ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-cyan-400" />
-                <span className="text-purple-100">
-                  {landlordName} signerade {isLandlord ? '(automatisk)' : new Date(contract.updated_at).toLocaleString('sv-SE', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </span>
-              </>
-            ) : (
-              <>
-                <Clock className="w-4 h-4 text-yellow-400" />
-                <span className="text-purple-200">{landlordName} har inte signerat ({daysLeft} dagar kvar)</span>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {contract.tenant_signed ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-cyan-400" />
-                <span className="text-purple-100">
-                  {contract.tenant_name} signerade {new Date(contract.updated_at).toLocaleString('sv-SE', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </span>
-              </>
-            ) : (
-              <>
-                <Clock className="w-4 h-4 text-yellow-400" />
-                <span className="text-purple-200">{contract.tenant_name} har inte signerat ({daysLeft} dagar kvar)</span>
-              </>
-            )}
+          {/* Signeringar (combined signing status) */}
+          <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+            <span className="text-purple-300 font-medium">Signeringar:</span>
+            <div className="flex items-center gap-2">
+              {(() => {
+                const landlordFirstName = landlordName.split(' ')[0]
+                const tenantFirstName = contract.tenant_name.split(' ')[0]
+
+                // Both signed
+                if (landlordSigned && contract.tenant_signed) {
+                  return (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+                      <span className="text-purple-100">Båda har signerat ✓</span>
+                    </>
+                  )
+                }
+
+                // None signed
+                if (!landlordSigned && !contract.tenant_signed) {
+                  return (
+                    <>
+                      <Clock className="w-4 h-4 text-yellow-400" />
+                      <span className="text-purple-200">
+                        Ingen har signerat än ({daysLeft} dagar kvar)
+                      </span>
+                    </>
+                  )
+                }
+
+                // One signed (partial)
+                const signedName = landlordSigned ? landlordFirstName : tenantFirstName
+                const unsignedName = landlordSigned ? tenantFirstName : landlordFirstName
+                return (
+                  <>
+                    <Clock className="w-4 h-4 text-yellow-400" />
+                    <span className="text-purple-200">
+                      {signedName} har signerat, {unsignedName} inte ({daysLeft} dagar kvar)
+                    </span>
+                  </>
+                )
+              })()}
+            </div>
           </div>
         </div>
       )}
@@ -235,28 +268,13 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
 
         {/* Signing status for completed contracts */}
         {contract.status === 'completed' && (
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-cyan-400" />
-              <span className="text-purple-100">
-                {landlordName} signerade {isLandlord ? '(automatisk)' : new Date(contract.updated_at).toLocaleString('sv-SE', {
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-cyan-400" />
-              <span className="text-purple-100">
-                {contract.tenant_name} signerade {new Date(contract.updated_at).toLocaleString('sv-SE', {
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </span>
+          <div className="text-sm">
+            <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+              <span className="text-purple-300 font-medium">Signeringar:</span>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+                <span className="text-purple-100">Båda har signerat ✓</span>
+              </div>
             </div>
           </div>
         )}
@@ -338,7 +356,7 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
             className={`
               px-4 py-3 rounded-lg shadow-lg flex items-center gap-2
               ${toast.type === 'success'
-                ? 'bg-green-600 text-white'
+                ? 'bg-cyan-600 text-white'
                 : 'bg-red-600 text-white'
               }
             `}
