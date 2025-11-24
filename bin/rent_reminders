@@ -104,24 +104,22 @@ active_tenants.each do |tenant|
   should_send = false
   tone = nil
 
-  # Testing mode: Allow any hour on valid days (set RENT_REMINDERS_TESTING=1)
-  testing_mode = ENV['RENT_REMINDERS_TESTING'] == '1'
-
   # Timing logic (4 tones, all once daily)
-  if current_day == 23 && (current_hour == 9 || testing_mode)
-    # Heads up reminder (day 23, 09:45)
+  # TESTING: Hour restrictions removed for immediate testing
+  if current_day == 23
+    # Heads up reminder (day 23)
     should_send = true
     tone = :heads_up
-  elsif current_day == tenant.payday_start_day && (current_hour == 9 || testing_mode)
-    # First payment reminder (payday, 09:45)
+  elsif current_day == tenant.payday_start_day
+    # First payment reminder (payday)
     should_send = true
     tone = :first_reminder
-  elsif current_day == 27 && (current_hour == 9 || testing_mode)
-    # Urgent reminder (deadline day 27, 09:45)
+  elsif current_day == 27
+    # Urgent reminder (deadline day 27)
     should_send = true
     tone = :urgent
-  elsif current_day >= 28 && (current_hour == 9 || testing_mode)
-    # Overdue reminder (day 28+, 09:45 once daily)
+  elsif current_day >= 28
+    # Overdue reminder (day 28+, once daily)
     # Rationale: Lunchflow syncs once per 24h, second reminder has no new payment data
     should_send = true
     tone = :overdue
@@ -199,12 +197,9 @@ end
 
 puts "\n📊 Summary: #{reminders_sent} reminder(s) sent"
 
-# Admin deadline alerts (10:00 on 27th, 17:00 on 27th, daily after)
-# Testing mode: Allow any hour on valid days
-testing_mode = ENV['RENT_REMINDERS_TESTING'] == '1'
-
-if (current_day == 27 && ([10, 17].include?(current_hour) || testing_mode)) ||
-   (current_day >= 28 && (current_hour == 10 || testing_mode))
+# Admin deadline alerts
+# TESTING: Hour restrictions removed for immediate testing
+if current_day >= 27
 
   puts "\n🚨 Checking for admin alerts..."
 
