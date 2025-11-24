@@ -498,10 +498,10 @@ SmsGateway.send(
 - Removed period parameter (business rule in one place)
 - Code simplified: -11 lines, massive cognitive load reduction
 
-**3. Rent Reminders Investigation:**
-- Found send_reminder() doesn't exist in lib/sms/gateway.rb
-- User confirmed functionality was tested before
-- Need to locate existing implementation
+**3. Rent Reminders Fix:**
+- ✅ Found existing SmsGateway.send() method
+- ✅ Fixed bin/rent_reminders to use correct method signature
+- ✅ Committed fix (38da20d)
 
 **4. Documentation:**
 - DECEMBER_RENT_CHAOS_PLAN.md updated (this file)
@@ -510,13 +510,12 @@ SmsGateway.send(
 
 ### ⏳ Remaining Work
 
-**1. Rent Reminders Testing (HIGH PRIORITY):**
-- ✅ Found existing SmsGateway.send() method and fixed call
-- Run dry-run test: `bundle exec ruby bin/rent_reminders --dry-run`
-- Verify message format looks correct
-- Check MessageComposer works with December data
-- Test find_by_tenant_and_period query
-- Then enable cron job
+**1. Enable Rent Reminders Cron (HIGH PRIORITY - PRODUCTION TESTING):**
+- ✅ SMS method fix committed (38da20d)
+- ⏳ User to enable cron job in production
+- ⏳ Monitor first run via journalctl
+- ⏳ Verify SMS messages sent correctly
+- Note: Production testing via cron is the correct approach (not dry-run in dev)
 
 **2. Dashboard Verification:**
 - Check dashboard displays December amounts correctly
@@ -528,10 +527,10 @@ SmsGateway.send(
 - Check all remaining CONFIG→RENT conversions
 - Save findings to report
 
-**4. Commit Rent Reminders Fix:**
-- ✅ Already committed: Period fix (4 commits - core, callers, CLI, docs)
-- ✅ Already committed: Webhook static_root support
-- Pending: Rent reminders SMS method fix (bin/rent_reminders + DECEMBER_RENT_CHAOS_PLAN.md)
+**4. All Code Changes Committed:**
+- ✅ Period fix (4 commits: 907cc24, 50ee4ae, 692ae18, 3a672db)
+- ✅ Webhook static_root support (2bbd22e)
+- ✅ Rent reminders SMS fix (38da20d)
 
 ### 🔑 Key Insights for Next Session
 
