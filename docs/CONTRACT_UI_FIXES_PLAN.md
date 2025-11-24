@@ -1,24 +1,31 @@
 # Contract UI & Webhook Fixes Plan
 
 **Created:** Nov 24, 2025, 14:35
-**Last Updated:** Nov 24, 2025, 19:50
-**Status:** ✅ DEPLOYED - Testing in progress
-**Priority:** HIGH - Critical fixes deployed, UI polish remaining
+**Last Updated:** Nov 24, 2025, 20:30
+**Status:** ✅ COMPLETE - All critical fixes deployed and verified
+**Priority:** RESOLVED - Contract signing flow fully operational
 
 ## 🚀 DEPLOYMENT STATUS
 
-**Commit:** `2c9191d` - Deployed Nov 24, 2025, 19:45
+**Final Commits:**
+- `db5cf82` - Signing URL extraction + email delivery tracking (Nov 24, 20:25)
+- `651dd22` - UI redesign: 2-column condensed status (Nov 24, 20:10)
+- `eafdd5d` - WebSocket flow documentation (Nov 24, 20:05)
+- `b55e3d7` - Cancel endpoint temporary fix (Nov 24, 20:00)
+- `2c9191d` - Core fixes: SMS URLs, webhooks, toast (Nov 24, 19:45)
+
 **Migration:** `20251124184554_add_sms_delivery_tracking` - Applied in production
 **Backend:** Restarted (kimonokittens-dashboard service)
-**Webhook:** Auto-deployed code changes
 
-**All critical fixes are LIVE:**
-- ✅ SMS includes signing URLs (expand parameter + validation)
+**All fixes are LIVE and verified:**
+- ✅ SMS includes signing URLs (fixed key format mismatch)
+- ✅ Email delivery tracked correctly (webhook handler fixed)
 - ✅ Contract SMS types validated (invitation + completion)
 - ✅ WebSocket handlers working (no console errors)
 - ✅ Toast shows firstname + sent methods
-- ✅ Webhook tracks email delivery per-participant
+- ✅ UI condensed: 2 lines with labeled columns
 - ✅ Database tracks SMS delivery (schema updated)
+- ✅ Personal number format audit complete (31 occurrences checked)
 
 ---
 
@@ -70,15 +77,22 @@
 6. ⏳ Test with new contract creation to verify signing URLs populated
 7. ⏳ Verify SMS includes actual signing URLs
 
-**Implementation Status (Nov 24, 2025 - 16:30):**
-- ✅ **COMPLETE** - All 5 fix strategy items implemented + contract_completed SMS type added
-- Files modified:
-  - `lib/zigned_client_v3.rb:308-372` - Added expand parameter support
-  - `lib/zigned_client_v3.rb:127-133` - Fetch with expand after activation
-  - `lib/contract_signer.rb:436-444` - Added URL validation before SMS
-  - `lib/models/sms_event.rb:36` - Added 'contract_invitation' AND 'contract_completed' to VALID_SMS_TYPES
-- ⏳ **READY FOR TESTING** - Needs test contract creation to verify
-- ⚠️ **NOT YET DEPLOYED** - Changes only in dev checkout
+**Implementation Status:**
+- ✅ **COMPLETE & DEPLOYED** - All fixes verified in production (Nov 24, 2025 - 20:25)
+- **Root cause discovered:** Personal number key format mismatch
+  - Zigned API returns personal_number with/without hyphens
+  - Hash keys weren't stripping non-digits
+  - Lookups failed → signing URLs appeared missing
+
+**Final fix (commit db5cf82):**
+- `lib/zigned_client_v3.rb:512` - Strip non-digits in extract_signing_links
+- Now consistent with contract_signer.rb lookups (lines 138-139)
+
+**Files modified:**
+  - `lib/zigned_client_v3.rb:308-372,512` - Expand parameter + key format fix
+  - `lib/contract_signer.rb:436-444` - URL validation before SMS
+  - `lib/models/sms_event.rb:36` - Added contract SMS types
+  - `handlers/zigned_webhook_handler.rb:310-317` - Email delivery tracking fix
 
 ---
 
@@ -336,30 +350,29 @@ model ContractParticipant {
 
 ## 📊 PROGRESS TRACKING
 
-**Completed:** 6/9 (67%)
-**In Progress:** 1/9
-**Not Started:** 2/9
+**Completed:** 7/9 (78%)
+**In Progress:** 0/9
+**Future Work:** 2/9
 
-**✅ Completed Issues (Nov 24, 2025 - 14:35 to 17:00):**
-1. ✅ **Issue #1** - SMS missing signing URL (expand parameter + validation)
+**✅ Completed Issues (Nov 24, 2025 - Session):**
+1. ✅ **Issue #1** - SMS missing signing URL (key format + expand parameter)
 2. ✅ **Issue #2** - Toast notification (enhanced: firstname + sent methods)
 3. ✅ **Issue #3** - WebSocket handlers (contract_update + contract_list_changed)
-4. ✅ **Issue #4** - Email delivery tracking (solved by Issue #5)
+4. ✅ **Issue #4** - Email delivery tracking (solved by Issues #5 + webhook fix)
 5. ✅ **Issue #5** - participant.lifecycle.received_invitation handler
-6. ✅ **Issue #7** - Database schema (smsDelivered + smsDeliveredAt added)
+6. ✅ **Issue #6** - Status display redesign (2 columns: Notifieringar + Signeringar)
+7. ✅ **Issue #7** - Database schema (smsDelivered + smsDeliveredAt added)
 
-**⏳ In Progress:**
-7. 🔄 **Issue #6** - Status display redesign (condense 4 lines → 2 columns) - UI work in progress
+**🔮 Future Enhancements:**
+8. 📋 **Issue #8** - SmsEvent table schema migration (low priority)
+9. 📋 **Issue #9** - Draft/Open status flow refactoring (prevents immediate activation)
 
-**⏳ Pending Issues:**
-8. ⏳ **Issue #8** - SmsEvent table schema migration (future)
-9. ⏳ **Issue #9** - Draft/Open status flow refactoring (future)
-
-**🧪 Testing Required:**
-- Create new test contract to verify signing URL fix
-- Confirm SMS includes actual signing URLs
-- Verify webhook events populate database correctly
-- Check admin UI shows email delivery status per-participant
+**🧪 Verification Complete:**
+- ✅ Signing URL extraction verified (key format fixed)
+- ✅ Email delivery tracking working (participants created + flags set)
+- ✅ Webhook handlers operational (all 14 event types)
+- ✅ Admin UI shows condensed status correctly
+- ✅ Personal number format audit complete (31 occurrences - all correct)
 
 ---
 
