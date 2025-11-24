@@ -158,8 +158,63 @@ class ContractSigner
     Persistence.signed_contracts.save(signed_contract)
     puts "✅ Contract record saved to database"
 
+    # Step 3.5: Create participant records (will be enriched by Zigned webhooks)
+    require_relative 'models/contract_participant'
+    participant_repo = Persistence.contract_participants
+
+    landlord_participant = ContractParticipant.new(
+      id: SecureRandom.uuid,
+      contract_id: signed_contract.id,
+      participant_id: nil, # Will be set by webhook
+      name: landlord[:name],
+      email: landlord[:email],
+      role: 'landlord',
+      signing_url: landlord_link,
+      signed: false,
+      sms_delivered: false, # Will be set to true after SMS sends
+      email_delivered: false, # Will be set to true by webhook
+      created_at: Time.now,
+      updated_at: Time.now
+    )
+
+    tenant_participant = ContractParticipant.new(
+      id: SecureRandom.uuid,
+      contract_id: signed_contract.id,
+      participant_id: nil, # Will be set by webhook
+      name: tenant.name,
+      email: tenant.email,
+      role: 'tenant',
+      signing_url: tenant_link,
+      signed: false,
+      sms_delivered: false, # Will be set to true after SMS sends
+      email_delivered: false, # Will be set to true by webhook
+      created_at: Time.now,
+      updated_at: Time.now
+    )
+
+    participant_repo.save(landlord_participant)
+    participant_repo.save(tenant_participant)
+    puts "✅ Participant records created"
+
     # Step 4: Send SMS notifications with signing links
-    send_contract_invitation_sms(tenant, tenant_link, landlord, landlord_link)
+    sms_sent = send_contract_invitation_sms(tenant, tenant_link, landlord, landlord_link)
+
+    # Step 4.5: Mark SMS as delivered if sent successfully
+    if sms_sent[:tenant_success]
+      tenant_participant.sms_delivered = true
+      tenant_participant.sms_delivered_at = Time.now
+      participant_repo.update(tenant_participant)
+    end
+
+    if sms_sent[:landlord_success]
+      landlord_participant.sms_delivered = true
+      landlord_participant.sms_delivered_at = Time.now
+      participant_repo.update(landlord_participant)
+    end
+
+    if sms_sent[:tenant_success] || sms_sent[:landlord_success]
+      puts "✅ SMS delivery tracked in database"
+    end
 
     # Step 5: Print signing links
     puts "\n🔗 Signing Links:"
@@ -455,6 +510,7 @@ class ContractSigner
     message = "Du har blivit inbjuden att skriva på ett hyresavtal med Kimono Kittens! Signera med BankID här: "
 
     # Send to tenant
+    tenant_success = false
     begin
       SmsGateway.send(
         to: tenant_phone,
@@ -462,11 +518,13 @@ class ContractSigner
         meta: { type: 'contract_invitation', tenant_id: tenant.id }
       )
       puts "📱 SMS invitation sent to tenant: #{tenant.name}"
+      tenant_success = true
     rescue => e
       puts "⚠️  Failed to send SMS to tenant: #{e.message}"
     end
 
     # Send to landlord
+    landlord_success = false
     begin
       SmsGateway.send(
         to: landlord_phone,
@@ -474,8 +532,11 @@ class ContractSigner
         meta: { type: 'contract_invitation', role: 'landlord' }
       )
       puts "📱 SMS invitation sent to landlord: #{landlord[:name]}"
+      landlord_success = true
     rescue => e
       puts "⚠️  Failed to send SMS to landlord: #{e.message}"
     end
+
+    { tenant_success: tenant_success, landlord_success: landlord_success }
   end
 end

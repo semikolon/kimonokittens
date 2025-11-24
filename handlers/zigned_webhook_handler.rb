@@ -294,6 +294,19 @@ class ZignedWebhookHandler
     participant_repo = Persistence.contract_participants
     participant = participant_repo.find_by_participant_id(participant_id)
 
+    # Fallback: if not found by participant_id, try finding by email + contract
+    # (happens when participant was pre-created in contract_signer.rb before webhook arrived)
+    if !participant && email
+      all_participants = participant_repo.find_by_contract_id(contract.id)
+      participant = all_participants.find { |p| p.email&.downcase == email.downcase }
+
+      if participant
+        ZIGNED_LOGGER.info "   Found participant by email fallback (pre-created)"
+        # Update participant_id now that we have it from webhook
+        participant.participant_id = participant_id
+      end
+    end
+
     if participant
       # Update existing participant with email delivery status
       participant.email_delivered = true
