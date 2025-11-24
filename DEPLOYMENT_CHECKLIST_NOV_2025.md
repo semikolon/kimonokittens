@@ -19,16 +19,17 @@ This document compiles all outstanding deployment tasks from the last 2-3 weeks 
 - **Migration**: `20251117200951_add_tenant_lead_model`
 - **Pending**: Cloudflare Turnstile setup, SMS notifications (optional)
 
-### 2. **Rent Reminders System** ✅ Code Complete
-- **Status**: Fully implemented with LLM integration
+### 2. **Rent Reminders System** ✅ **PRODUCTION** (Nov 24, 2025)
+- **Status**: Deployed, tested, and operational (cron: daily 9:45am)
 - **Components**:
   - Lunchflow API integration (`lib/lunchflow_client.rb`)
   - Bank transaction tracking (`lib/models/bank_transaction.rb`)
   - SMS event logging (`lib/models/sms_event.rb`)
   - Rent receipt tracking (`lib/models/rent_receipt.rb`)
   - Message composer with GPT-5-mini (`lib/message_composer.rb`)
+  - 46elks SMS integration (`lib/sms/elks_client.rb`)
 - **Migrations**: 5 migrations (20251115005500-20251115010000)
-- **Pending**: Lunchflow API credentials, 46elks SMS API setup
+- **Test**: Nov 24 14:07 - 5 SMS sent successfully with correct amounts
 
 ### 3. **Deposit Formula Fix** ✅ Complete
 - **Status**: Fixed and tested (commit 681ff6a)
