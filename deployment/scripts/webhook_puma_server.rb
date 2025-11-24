@@ -205,7 +205,7 @@ class DeploymentHandler
     changes = analyze_changes(event_data['commits'] || [])
 
     # If only data files changed (no code), git pull is enough
-    unless changes[:frontend] || changes[:backend] || changes[:deployment] || changes[:config]
+    unless changes[:frontend] || changes[:backend] || changes[:deployment] || changes[:config] || changes[:static_root]
       $logger.info("✅ Data files updated via git pull, no deployment needed")
       return {
         success: true,
@@ -213,7 +213,7 @@ class DeploymentHandler
       }
     end
 
-    $logger.info("📝 Change summary: Frontend=#{changes[:frontend]}, Backend=#{changes[:backend]}, Deployment=#{changes[:deployment]}, Config=#{changes[:config]}")
+    $logger.info("📝 Change summary: Frontend=#{changes[:frontend]}, Backend=#{changes[:backend]}, Deployment=#{changes[:deployment]}, Config=#{changes[:config]}, StaticRoot=#{changes[:static_root]}")
 
     # Store the latest event data and changes for debounced deployment
     @deployment_mutex.synchronize do
@@ -224,9 +224,10 @@ class DeploymentHandler
           frontend: changes[:frontend] || @pending_event[:changes][:frontend],
           backend: changes[:backend] || @pending_event[:changes][:backend],
           deployment: changes[:deployment] || @pending_event[:changes][:deployment],
-          config: changes[:config] || @pending_event[:changes][:config]
+          config: changes[:config] || @pending_event[:changes][:config],
+          static_root: changes[:static_root] || @pending_event[:changes][:static_root]
         }
-        $logger.info("🔄 Accumulated changes from cancelled deployment: Frontend=#{changes[:frontend]}, Backend=#{changes[:backend]}, Deployment=#{changes[:deployment]}, Config=#{changes[:config]}")
+        $logger.info("🔄 Accumulated changes from cancelled deployment: Frontend=#{changes[:frontend]}, Backend=#{changes[:backend]}, Deployment=#{changes[:deployment]}, Config=#{changes[:config]}, StaticRoot=#{changes[:static_root]}")
       end
 
       @pending_event = { event_data: event_data, changes: changes }
@@ -313,6 +314,16 @@ class DeploymentHandler
       end
     end
 
+    # Deploy static root if needed
+    if changes[:static_root]
+      if deploy_static_root
+        deployed_components << 'static_root'
+      else
+        $logger.error("Static root deployment failed")
+        return false
+      end
+    end
+
     # Restart kiosk if frontend or config changed (to reload the page and fetch new config)
     if (changes[:frontend] || changes[:config]) && deployment_success
       restart_kiosk
@@ -350,6 +361,7 @@ class DeploymentHandler
     backend_changed = false
     deployment_changed = false
     config_changed = false
+    static_root_changed = false
 
     commits.each do |commit|
       # Check modified files
@@ -358,6 +370,9 @@ class DeploymentHandler
         when /^dashboard\//
           frontend_changed = true
           $logger.info("Frontend change detected: #{file}")
+        when /^www\//
+          static_root_changed = true
+          $logger.info("Static root change detected: #{file}")
         when /\.(rb|ru|gemspec)$|^Gemfile$/
           backend_changed = true
           $logger.info("Backend change detected: #{file}")
@@ -376,6 +391,9 @@ class DeploymentHandler
         when /^dashboard\//
           frontend_changed = true
           $logger.info("Frontend addition detected: #{file}")
+        when /^www\//
+          static_root_changed = true
+          $logger.info("Static root addition detected: #{file}")
         when /\.(rb|ru|gemspec)$|^Gemfile$/
           backend_changed = true
           $logger.info("Backend addition detected: #{file}")
@@ -391,7 +409,8 @@ class DeploymentHandler
       backend: backend_changed,
       deployment: deployment_changed,
       config: config_changed,
-      any_changes: frontend_changed || backend_changed || deployment_changed || config_changed
+      static_root: static_root_changed,
+      any_changes: frontend_changed || backend_changed || deployment_changed || config_changed || static_root_changed
     }
   end
 
@@ -477,6 +496,26 @@ class DeploymentHandler
       return false
     end
     $logger.info("✅ Frontend files deployed")
+
+    true
+  end
+
+  def deploy_static_root
+    $logger.info("🔄 Starting static root deployment...")
+
+    # Change to project directory
+    Dir.chdir(@project_dir)
+
+    # Note: Git pull already done in pull_latest_code() before deployment
+
+    # Copy www/ files to nginx static root (no sudo needed, kimonokittens owns the directory)
+    # Trailing slash on source means "copy contents of www/" not "copy www/ itself"
+    # --exclude dashboard to avoid overwriting the dashboard directory
+    unless system('rsync -av --exclude dashboard www/ /var/www/kimonokittens/')
+      $logger.error("❌ Static root file deployment failed")
+      return false
+    end
+    $logger.info("✅ Static root files deployed (favicon.ico, index.html, etc.)")
 
     true
   end
