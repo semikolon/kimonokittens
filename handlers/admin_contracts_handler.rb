@@ -458,46 +458,47 @@ class AdminContractsHandler
       return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Contract already cancelled' })]]
     end
 
-    # Cancel via Zigned API
-    require_relative '../lib/zigned_client_v3'
-    client = ZignedClientV3.new(
-      client_id: ENV['ZIGNED_CLIENT_ID'],
-      client_secret: ENV['ZIGNED_API_KEY'],
-      test_mode: contract.test_mode
-    )
+    # TEMPORARY FIX (Nov 24, 2025): Just delete from our DB
+    # TODO: Implement draft/open status flow (Issue #9) to prevent activation before review
+    # Once that's implemented, we can properly cancel via Zigned API
+
+    # For now: Comment out Zigned API call and just delete from DB
+    # Original code preserved below for future restoration:
+    #
+    # require_relative '../lib/zigned_client_v3'
+    # client = ZignedClientV3.new(
+    #   client_id: ENV['ZIGNED_CLIENT_ID'],
+    #   client_secret: ENV['ZIGNED_API_KEY'],
+    #   test_mode: contract.test_mode
+    # )
+    # success = client.cancel_agreement(contract.case_id)
 
     begin
-      success = client.cancel_agreement(contract.case_id)
+      # Delete contract and all participants from database
+      participant_repo = Persistence.contract_participants
+      participants = participant_repo.find_by_contract_id(contract_id)
+      participants.each { |p| participant_repo.delete(p.id) }
 
-      if success
-        # Update contract status in database
-        contract_repo.update(contract_id, { status: 'cancelled' })
+      contract_repo.delete(contract_id)
 
-        # Broadcast update to WebSocket clients (triggers admin dashboard refresh)
-        require_relative '../lib/data_broadcaster'
-        DataBroadcaster.broadcast_contract_list_changed
+      # Broadcast update to WebSocket clients (triggers admin dashboard refresh)
+      require_relative '../lib/data_broadcaster'
+      DataBroadcaster.broadcast_contract_list_changed
 
-        [
-          200,
-          { 'Content-Type' => 'application/json' },
-          [Oj.dump({
-            success: true,
-            message: 'Contract cancelled successfully'
-          }, mode: :compat)]
-        ]
-      else
-        [
-          500,
-          { 'Content-Type' => 'application/json' },
-          [Oj.dump({ error: 'Failed to cancel contract' })]
-        ]
-      end
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        [Oj.dump({
+          success: true,
+          message: 'Contract deleted from database (Zigned agreement still exists - manual cleanup needed)'
+        }, mode: :compat)]
+      ]
     rescue => e
-      puts "❌ Error cancelling contract: #{e.message}"
+      puts "❌ Error deleting contract: #{e.message}"
       [
         500,
         { 'Content-Type' => 'application/json' },
-        [Oj.dump({ error: "Failed to cancel contract: #{e.message}" })]
+        [Oj.dump({ error: "Failed to delete contract: #{e.message}" })]
       ]
     end
   end

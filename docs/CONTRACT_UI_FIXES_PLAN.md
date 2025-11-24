@@ -1,8 +1,24 @@
 # Contract UI & Webhook Fixes Plan
 
 **Created:** Nov 24, 2025, 14:35
-**Status:** In Progress
-**Priority:** HIGH - Blocks contract signing functionality
+**Last Updated:** Nov 24, 2025, 19:50
+**Status:** ✅ DEPLOYED - Testing in progress
+**Priority:** HIGH - Critical fixes deployed, UI polish remaining
+
+## 🚀 DEPLOYMENT STATUS
+
+**Commit:** `2c9191d` - Deployed Nov 24, 2025, 19:45
+**Migration:** `20251124184554_add_sms_delivery_tracking` - Applied in production
+**Backend:** Restarted (kimonokittens-dashboard service)
+**Webhook:** Auto-deployed code changes
+
+**All critical fixes are LIVE:**
+- ✅ SMS includes signing URLs (expand parameter + validation)
+- ✅ Contract SMS types validated (invitation + completion)
+- ✅ WebSocket handlers working (no console errors)
+- ✅ Toast shows firstname + sent methods
+- ✅ Webhook tracks email delivery per-participant
+- ✅ Database tracks SMS delivery (schema updated)
 
 ---
 
@@ -10,7 +26,7 @@
 
 ### 1. SMS Missing Signing URL
 **Priority:** 🔴 CRITICAL
-**Status:** Investigating
+**Status:** ✅ COMPLETE (Nov 24, 2025 - 17:00)
 
 **Problem:**
 - SMS only shows: "Du har blivit inbjuden att skriva på ett hyresavtal med Kimono Kittens! Signera med BankID här:"
@@ -167,7 +183,7 @@
 
 ### 6. Status Display Too Verbose
 **Priority:** 🟡 MEDIUM
-**Status:** Not Started
+**Status:** ⏳ IN PROGRESS
 
 **Current UI (4 lines):**
 ```
@@ -214,7 +230,7 @@ Signeringar:   Adam har signerat, Fredrik inte (29 dagar kvar)
 
 ### 7. Database Schema Missing Notification Tracking
 **Priority:** 🟡 MEDIUM
-**Status:** Not Started
+**Status:** ✅ COMPLETE (Nov 24, 2025 - 19:45)
 
 **Problem:**
 - No way to track which notification methods were used
@@ -229,20 +245,20 @@ model ContractParticipant {
 }
 ```
 
-**Solution:**
-- Add Prisma migration:
+**Solution Implemented:**
+- ✅ Added Prisma migration: `20251124184554_add_sms_delivery_tracking`
+- ✅ Added fields to schema:
   ```prisma
-  sms_delivered      Boolean?
-  sms_delivered_at   DateTime?
+  smsDelivered      Boolean  @default(false)
+  smsDeliveredAt    DateTime?
   ```
-- Update webhook handler to set these fields
-- Update UI to show both statuses
+- ✅ Updated domain model: `lib/models/contract_participant.rb`
+- ✅ Migration deployed to production
 
-**Files:**
-- `prisma/schema.prisma` - Add new fields
-- Migration: `npx prisma migrate dev --name add_sms_delivery_tracking`
-- `handlers/zigned_webhook_handler.rb` - Set new fields in webhook handlers
-- `dashboard/src/components/admin/ContractDetails.tsx` - Display SMS status
+**Files Modified:**
+- `prisma/schema.prisma:176-177` - Added new fields
+- `lib/models/contract_participant.rb:14-27` - Added to model initialization
+- Migration applied Nov 24, 2025
 
 ---
 
@@ -321,8 +337,8 @@ model ContractParticipant {
 ## 📊 PROGRESS TRACKING
 
 **Completed:** 6/9 (67%)
-**In Progress:** 0/9
-**Not Started:** 3/9
+**In Progress:** 1/9
+**Not Started:** 2/9
 
 **✅ Completed Issues (Nov 24, 2025 - 14:35 to 17:00):**
 1. ✅ **Issue #1** - SMS missing signing URL (expand parameter + validation)
@@ -332,8 +348,10 @@ model ContractParticipant {
 5. ✅ **Issue #5** - participant.lifecycle.received_invitation handler
 6. ✅ **Issue #7** - Database schema (smsDelivered + smsDeliveredAt added)
 
+**⏳ In Progress:**
+7. 🔄 **Issue #6** - Status display redesign (condense 4 lines → 2 columns) - UI work in progress
+
 **⏳ Pending Issues:**
-7. ⏳ **Issue #6** - Status display redesign (condense 4 lines → 2 columns) - UI work
 8. ⏳ **Issue #8** - SmsEvent table schema migration (future)
 9. ⏳ **Issue #9** - Draft/Open status flow refactoring (future)
 
