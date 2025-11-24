@@ -103,7 +103,8 @@ class ContractParticipant
 
   def validate!
     raise ArgumentError, "contract_id is required" if contract_id.nil? || contract_id.empty?
-    raise ArgumentError, "participant_id is required" if participant_id.nil? || participant_id.empty?
+    # participant_id is nil initially, set by Zigned webhook after agreement creation
+    # raise ArgumentError, "participant_id is required" if participant_id.nil? || participant_id.empty?
     raise ArgumentError, "name is required" if name.nil? || name.empty?
     raise ArgumentError, "email is required" if email.nil? || email.empty?
     raise ArgumentError, "personal_number is required" if personal_number.nil? || personal_number.empty?

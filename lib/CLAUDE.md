@@ -51,29 +51,93 @@ For LLM assistants and future developers:
 - **Business logic preservation**: Verified in test suite (spec/models/, spec/repositories/, spec/services/)
 - **Test coverage**: 37 tests for domain layer (all passing)
 
-### Repository Pattern Gotcha
+### ⚠️ CRITICAL: Repository Pattern - Model/Persistence Checklist
 
-**Critical bug discovered Nov 14, 2025** - `lib/repositories/tenant_repository.rb`
+**🔥 MANDATORY: When working with domain models, ALWAYS check the repository! 🔥**
 
-**The Problem:**
+**The repository is the ONLY gateway between models and database. Missing fields = silent data loss.**
 
-Repository `.all()` method was using `.select()` but **missing fields**:
+### Three-Layer Consistency Checklist
+
+When adding/modifying model fields, verify ALL THREE layers match:
+
+1. **✅ Domain Model** (`lib/models/*.rb`)
+   - `attr_reader` declarations
+   - `initialize()` parameters
+   - `attr_writer` for mutable fields
+
+2. **✅ Repository** (`lib/repositories/*_repository.rb`)
+   - `hydrate()` - reads from database → model
+   - `dehydrate()` - writes from model → database
+   - **EVERY model field MUST appear in BOTH methods**
+
+3. **✅ Database Schema** (`prisma/schema.prisma`)
+   - Column exists with correct type
+   - Migrations applied to production
+
+### Common Bugs from Missing Repository Fields
+
+**Bug #1: Silent data loss** (Nov 24, 2025 - ContractParticipant SMS fields)
 ```ruby
-# WRONG - fields not in SELECT returned as nil!
-.select(:id, :name, :email, :startDate, :departureDate, :roomAdjustment, :room, :status)
+# Model has fields:
+attr_reader :sms_delivered, :sms_delivered_at
+
+# Code sets values:
+participant.sms_delivered = true
+participant_repo.save(participant)
+
+# But repository dehydrate() is missing them:
+def dehydrate(participant)
+  {
+    emailDelivered: participant.email_delivered,
+    # smsDelivered: participant.sms_delivered,  # ← MISSING!
+  }
+end
+
+# Result: Data silently dropped on save! Database stays false forever.
 ```
 
-**Impact**: Admin UI showed "—" for personnummer even though database had data!
-
-**The Lesson:**
-
-**Always include all model fields in SELECT statements** or use `select_all`:
+**Bug #2: Missing data in queries** (Nov 14, 2025 - Tenant personnummer)
 ```ruby
-# CORRECT - include all fields model needs
-.select(:id, :name, :email, :personnummer, :phone, :facebookId, ...)
+# Repository SELECT missing fields:
+.select(:id, :name, :email)  # personnummer missing!
+
+# Admin UI shows "—" even though database has data
 ```
 
-**When debugging "missing data"**: Verify database state FIRST before concluding data doesn't exist.
+### Verification Commands
+
+**Before deploying model changes:**
+```bash
+# 1. Check model fields
+grep "attr_reader" lib/models/contract_participant.rb
+
+# 2. Check repository includes ALL fields
+grep -A 20 "def hydrate" lib/repositories/contract_participant_repository.rb
+grep -A 20 "def dehydrate" lib/repositories/contract_participant_repository.rb
+
+# 3. Check database schema
+grep -A 30 "model ContractParticipant" prisma/schema.prisma
+
+# 4. Verify no field drift
+diff <(grep attr_reader lib/models/contract_participant.rb | grep -oP ':\w+' | sort) \
+     <(grep -A 20 "def hydrate" lib/repositories/contract_participant_repository.rb | grep -oP '\w+:' | sed 's/://g' | sort)
+```
+
+### When Debugging "Missing Data"
+
+1. **Check database FIRST**: `psql -d kimonokittens_production -c "SELECT * FROM \"ContractParticipant\" LIMIT 1"`
+2. **Check repository hydrate()**: Does it read the field from `row[:fieldName]`?
+3. **Check repository dehydrate()**: Does it write the field to `fieldName: model.field`?
+4. **Check model**: Does `attr_reader` include the field?
+
+**Pattern**: Data in database but not in API → repository hydrate() missing field
+**Pattern**: Code sets value but doesn't persist → repository dehydrate() missing field
+
+### Historical Incidents
+
+- **Nov 24, 2025**: ContractParticipant `sms_delivered`/`sms_delivered_at` - model had fields, repository didn't persist them
+- **Nov 14, 2025**: Tenant `personnummer` - repository SELECT excluded field, caused UI to show "—"
 
 ---
 
