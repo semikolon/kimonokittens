@@ -114,6 +114,108 @@ class RentLedger
     "#{months[rent_month.month]} #{rent_month.year}"
   end
 
+  # Populate rent ledger for a given month
+  # Extracts tenant/config data and calls RentCalculator to create ledger entries
+  #
+  # @param year [Integer] Config year
+  # @param month [Integer] Config month (NOT rent month!)
+  # @param title [String, nil] Optional custom calculation title
+  # @return [Hash] RentCalculator result with 'Rent per Roommate' breakdown
+  #
+  # @example Create December 2025 rent ledger
+  #   RentLedger.populate_for_month(year: 2025, month: 11)
+  #   # Uses November config, creates December rent entries
+  def self.populate_for_month(year:, month:, title: nil)
+    require_relative '../persistence'
+    require_relative 'rent_config'
+    require_relative '../../rent'
+
+    config_period = Time.utc(year, month, 1)
+    rent_month_display = title || swedish_rent_month(config_period)
+
+    roommates = extract_roommates_for_month(year: year, month: month)
+    config = extract_config_for_month(year: year, month: month)
+
+    # Config hash contains CONFIG year/month
+    # Config.days_in_month auto-calculates from next month (rent month)
+    # Example: config year=2025, month=11 → period 2025-11-01, days=31 (Dec)
+    RentCalculator.calculate_and_save(
+      roommates: roommates,
+      config: config,
+      history_options: {
+        title: rent_month_display,
+        test_mode: false
+      }
+    )
+  end
+
+  # Extract roommates hash for RentCalculator
+  # Filters tenants active in RENT month and builds roommates hash
+  #
+  # @param year [Integer] Config year
+  # @param month [Integer] Config month
+  # @return [Hash] Roommates hash: { 'Name' => { days: 31, room_adjustment: -1400 } }
+  #
+  # @private
+  def self.extract_roommates_for_month(year:, month:)
+    require_relative '../persistence'
+
+    tenants = Persistence.tenants.all
+    raise "Cannot populate ledger - no tenants found" if tenants.empty?
+
+    # Convert CONFIG to RENT period
+    config_period = Time.utc(year, month, 1)
+    rent_month_time = config_to_rent_month(config_period)
+    rent_year = rent_month_time.year
+    rent_month = rent_month_time.month
+
+    # Use RENT month dates for filtering and calculation
+    period_start = Date.new(rent_year, rent_month, 1)
+    period_end = Date.new(rent_year, rent_month, -1)  # Last day of RENT month
+
+    tenants.each_with_object({}) do |tenant, hash|
+      days_stayed = tenant.days_stayed_in_period(period_start, period_end)
+      next if days_stayed <= 0
+
+      roommate_data = { days: days_stayed }
+      if tenant.room_adjustment && tenant.room_adjustment != 0
+        roommate_data[:room_adjustment] = tenant.room_adjustment.to_i
+      end
+
+      hash[tenant.name] = roommate_data
+    end
+  end
+
+  # Extract config hash for RentCalculator
+  # Fetches RentConfig and converts to RentCalculator format
+  #
+  # @param year [Integer] Config year
+  # @param month [Integer] Config month
+  # @return [Hash] Config hash with year, month, kallhyra, el, utilities, etc.
+  #
+  # @private
+  def self.extract_config_for_month(year:, month:)
+    require_relative '../persistence'
+    require_relative 'rent_config'
+
+    config = RentConfig.for_period(year: year, month: month, repository: Persistence.rent_configs)
+
+    # Build config hash with CONFIG year/month
+    # Config.days_in_month will auto-calculate from next month (rent month)
+    # Example: year=2025, month=11 → days_in_month returns 31 (December)
+    {
+      year: year,
+      month: month,
+      kallhyra: config['kallhyra'].to_f,
+      el: config['el'].to_f,
+      bredband: config['bredband'].to_f,
+      vattenavgift: config['vattenavgift'].to_f,
+      va: config['va'].to_f,
+      larm: config['larm'].to_f,
+      gas: config['gas']&.to_f || 83.0
+    }
+  end
+
   # Get period as Swedish rent month name
   # Note: After migration, period = config month, so we convert to rent month
   # @return [String] e.g., "December 2025" (for November config period)
