@@ -53,121 +53,40 @@ For LLM assistants and future developers:
 
 ### ⚠️ CRITICAL: Repository Pattern - Model/Persistence Checklist
 
-**🔥 MANDATORY: When working with domain models, ALWAYS check the repository! 🔥**
+**🔥 When adding/modifying model fields, verify ALL FIVE layers match! 🔥**
 
-**The repository is the ONLY gateway between models and database. Missing fields = silent data loss.**
+**Five-Layer Consistency (all must sync or data is lost/invisible):**
 
-### Five-Layer Consistency Checklist
+1. **Domain Model** (`lib/models/*.rb`) - `attr_reader`, `initialize()`, `attr_writer`
+2. **Repository** (`lib/repositories/*.rb`) - `hydrate()` + `dehydrate()` MUST include EVERY field
+3. **Database Schema** (`prisma/schema.prisma`) - Column exists, migrations applied
+4. **API Response** (`handlers/*.rb`) - JSON serialization `.map { |p| { field: p.field } }`
+5. **TypeScript Interface** (`dashboard/src/views/*.tsx`) - Frontend types match API
 
-When adding/modifying model fields, verify ALL FIVE layers match:
+**Three field drift patterns (Nov 2025 bugs):**
 
-1. **✅ Domain Model** (`lib/models/*.rb`)
-   - `attr_reader` declarations
-   - `initialize()` parameters
-   - `attr_writer` for mutable fields
+1. **Silent data loss** - Model has field, repository dehydrate() missing → data dropped on save
+2. **Missing in API** - Database/repository have data, API handler filters out → UI shows stale/empty
+3. **Hard reload doesn't fix** - API issue (not WebSocket) if refresh doesn't update UI
 
-2. **✅ Repository** (`lib/repositories/*_repository.rb`)
-   - `hydrate()` - reads from database → model
-   - `dehydrate()` - writes from model → database
-   - **EVERY model field MUST appear in BOTH methods**
-
-3. **✅ Database Schema** (`prisma/schema.prisma`)
-   - Column exists with correct type
-   - Migrations applied to production
-
-4. **✅ API Response** (`handlers/*_handler.rb`)
-   - JSON serialization includes field
-   - Check `.map` blocks that build API responses
-   - Example: `participants.map { |p| { id: p.id, ... } }`
-
-5. **✅ TypeScript Interface** (`dashboard/src/views/*.tsx`)
-   - Frontend type definitions match API response
-   - Check interfaces imported by components
-   - Example: `SignedContract.participants` type
-
-### Common Bugs from Missing Repository Fields
-
-**Bug #1: Silent data loss** (Nov 24, 2025 - ContractParticipant SMS fields)
-```ruby
-# Model has fields:
-attr_reader :sms_delivered, :sms_delivered_at
-
-# Code sets values:
-participant.sms_delivered = true
-participant_repo.save(participant)
-
-# But repository dehydrate() is missing them:
-def dehydrate(participant)
-  {
-    emailDelivered: participant.email_delivered,
-    # smsDelivered: participant.sms_delivered,  # ← MISSING!
-  }
-end
-
-# Result: Data silently dropped on save! Database stays false forever.
-```
-
-**Bug #2: Missing data in queries** (Nov 14, 2025 - Tenant personnummer)
-```ruby
-# Repository SELECT missing fields:
-.select(:id, :name, :email)  # personnummer missing!
-
-# Admin UI shows "—" even though database has data
-```
-
-**Bug #3: API handler filters out fields** (Nov 24, 2025 - ContractParticipant SMS fields)
-```ruby
-# Model + repository + database all have fields, but API handler excludes them:
-participants: participants.map do |p|
-  {
-    id: p.id,
-    email_delivered: p.email_delivered,
-    # sms_delivered: p.sms_delivered,  # ← MISSING!
-  }
-end
-
-# Result: Frontend always sees undefined, UI shows "Väntar på notifieringar"
-# even after SMS successfully delivered. Hard reload doesn't fix (API issue).
-```
-
-### Verification Commands
-
-**Before deploying model changes:**
+**Debugging checklist:**
 ```bash
-# 1. Check model fields
-grep "attr_reader" lib/models/contract_participant.rb
+# 1. Verify database has data
+psql -d kimonokittens_production -c "SELECT * FROM \"ContractParticipant\" LIMIT 1"
 
-# 2. Check repository includes ALL fields
-grep -A 20 "def hydrate" lib/repositories/contract_participant_repository.rb
-grep -A 20 "def dehydrate" lib/repositories/contract_participant_repository.rb
+# 2. Check repository hydrate/dehydrate include field
+grep -A 20 "def hydrate\|def dehydrate" lib/repositories/contract_participant_repository.rb
 
-# 3. Check database schema
-grep -A 30 "model ContractParticipant" prisma/schema.prisma
+# 3. Check API handler serialization
+grep -A 10 "participants.map" handlers/admin_contracts_handler.rb
 
-# 4. Verify no field drift
-diff <(grep attr_reader lib/models/contract_participant.rb | grep -oP ':\w+' | sort) \
-     <(grep -A 20 "def hydrate" lib/repositories/contract_participant_repository.rb | grep -oP '\w+:' | sed 's/://g' | sort)
+# 4. Check TypeScript interface
+grep -A 10 "participants\?" dashboard/src/views/AdminDashboard.tsx
 ```
 
-### When Debugging "Missing Data"
-
-1. **Check database FIRST**: `psql -d kimonokittens_production -c "SELECT * FROM \"ContractParticipant\" LIMIT 1"`
-2. **Check repository hydrate()**: Does it read the field from `row[:fieldName]`?
-3. **Check repository dehydrate()**: Does it write the field to `fieldName: model.field`?
-4. **Check API handler**: Does JSON serialization include the field?
-5. **Check TypeScript interface**: Does frontend type definition include the field?
-6. **Check model**: Does `attr_reader` include the field?
-
-**Debugging patterns:**
-- Data in database but not in API → repository hydrate() OR API handler missing field
-- Code sets value but doesn't persist → repository dehydrate() missing field
-- Hard reload doesn't fix UI → API handler filtering out field (not WebSocket issue)
-
-### Historical Incidents
-
-- **Nov 24, 2025 (22:52)**: ContractParticipant `sms_delivered`/`sms_delivered_at` - API handler filtered out fields
-- **Nov 24, 2025 (22:00)**: ContractParticipant `sms_delivered`/`sms_delivered_at` - repository hydrate/dehydrate missing
-- **Nov 14, 2025**: Tenant `personnummer` - repository SELECT excluded field, caused UI to show "—"
+**Historical incidents (avoid repeating):**
+- Nov 24: SMS fields - repository → API → TypeScript (3 separate bugs, 2 hours debugging)
+- Nov 14: Tenant personnummer - repository SELECT missing → UI showed "—"
 
 ---
 
