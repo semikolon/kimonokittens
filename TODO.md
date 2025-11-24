@@ -910,12 +910,12 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 
 ## 💰 Rent Reminders & Payment Automation
 
-**Status:** ✅ **PRODUCTION** (Nov 24, 2025) - Tested and deployed
+**Status:** ✅ **PRODUCTION** (Nov 24, 2025) - SMS active, payment detection re-enabling Nov 27
 **Documentation:** `docs/RENT_REMINDERS_IMPLEMENTATION_PLAN.md`
 
 ### MVP Implementation (6-Week Plan)
 - [x] **Phase 1:** Database schema (3 new tables: BankTransaction, RentReceipt, SmsEvent)
-- [x] **Phase 2:** Lunch Flow API integration (hourly bank sync cron)
+- [x] **Phase 2:** Lunch Flow API integration (3x daily sync cron - temporarily disabled)
 - [x] **Phase 3:** Payment matching service (3-tier: reference, amount+name, partial)
 - [x] **Phase 4:** SMS infrastructure (46elks integration + webhooks)
 - [x] **Phase 5:** Rent reminder scheduling (daily 09:45, tone-based escalation)

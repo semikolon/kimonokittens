@@ -1124,17 +1124,19 @@ Repository `.all()` method was using `.select()` but **missing fields**:
 
 **Status**: ✅ **PRODUCTION** (Nov 2025) - All 5 phases complete
 
-**Payment Detection** (Lunchflow bank sync):
+**Payment Detection** (Lunchflow bank sync - ⏸️ Temporarily disabled, re-enabling Nov 27):
 - Monitors house bank account (tied to Swish) for incoming transactions
 - 4-tier matching: reference code → phone number → amount+timing → fuzzy name
-- Syncs once per 24 hours (not real-time)
+- Syncs 3x daily (8:05, 14:05, 20:05) when active
 - Automatically updates RentLedger payment status
+- Cron disabled until subscription renewed
 
-**Rent Reminders** (SMS via 46elks - ✅ Production Ready, Nov 24 2025):
+**Rent Reminders** (SMS via 46elks - ✅ Production, Nov 24 2025):
 - Automated SMS reminders (4 tones: heads_up day 24, first_reminder payday, urgent day 27, overdue 28+)
 - Idempotency checking prevents duplicate sends
 - Separate WEBHOOK_BASE_URL for external 46elks callbacks (public URL required)
 - Tested successfully: 5 SMS sent with correct amounts
+- Cron: daily 9:45am
 
 **Architecture**:
 - Backend: `lib/sms/gateway.rb` (46elks integration)

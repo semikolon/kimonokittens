@@ -20,9 +20,9 @@ This document compiles all outstanding deployment tasks from the last 2-3 weeks 
 - **Pending**: Cloudflare Turnstile setup, SMS notifications (optional)
 
 ### 2. **Rent Reminders System** ✅ **PRODUCTION** (Nov 24, 2025)
-- **Status**: Deployed, tested, and operational (cron: daily 9:45am)
+- **Status**: SMS reminders active (cron: daily 9:45am), payment detection re-enabling Nov 27
 - **Components**:
-  - Lunchflow API integration (`lib/lunchflow_client.rb`)
+  - Lunchflow API integration (`lib/lunchflow_client.rb`) - subscription inactive until Nov 27
   - Bank transaction tracking (`lib/models/bank_transaction.rb`)
   - SMS event logging (`lib/models/sms_event.rb`)
   - Rent receipt tracking (`lib/models/rent_receipt.rb`)

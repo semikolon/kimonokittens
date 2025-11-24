@@ -10,7 +10,7 @@ This repo is a **production monorepo** for managing a shared rental property (ko
 |-----------|---------|--------|
 | **Rent Management** | Automated rent calculation with electricity bill scraping (Vattenfall + Fortum), time-of-use pricing, quarterly projections | ✅ **Production** |
 | **Contract System** | Tenant signup (`/meow`), BankID e-signing (Zigned), admin dashboard with real-time contract tracking | ✅ **Production** |
-| **Rent Reminders** | Bank sync (Lunchflow API), SMS automation (46elks), GPT-5-mini message composition, payment matching | ✅ **Production** |
+| **Rent Reminders** | SMS automation (46elks) active, payment detection (Lunchflow) re-enabling Nov 27 | ✅ **Production** (SMS) |
 | **Dashboard** | Real-time kiosk display: weather, transit (SL), Strava, temperature, rent, todo, heatpump schedule | ✅ **Production** |
 | `handbook/` | Live wiki & handbook with planned git-backed proposal workflow (branch-per-proposal, approval merges to master) | 🟡 **Partial** |
 | `bankbuster/` | Automated Bankgirot camt.054 parser (Ruby + Vue) | ⏸️ **Legacy** |
