@@ -433,6 +433,16 @@ class ContractSigner
   def self.send_contract_invitation_sms(tenant, tenant_link, landlord, landlord_link)
     require_relative 'sms/gateway'
 
+    # CRITICAL: Validate signing URLs are present before sending SMS
+    # (Research: docs/ZIGNED_SIGNING_URL_RESEARCH.md - URLs only available after activation)
+    if tenant_link.nil? || tenant_link.empty?
+      raise ArgumentError, "Tenant signing URL is missing - cannot send SMS invitation"
+    end
+
+    if landlord_link.nil? || landlord_link.empty?
+      raise ArgumentError, "Landlord signing URL is missing - cannot send SMS invitation"
+    end
+
     # Clean phone numbers (remove spaces, dashes)
     tenant_phone = tenant.phone&.gsub(/[\s\-]/, '')
     landlord_phone = landlord[:phone]&.gsub(/[\s\-]/, '')

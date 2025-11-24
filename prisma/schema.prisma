@@ -173,6 +173,8 @@ model ContractParticipant {
   emailDeliveredAt            DateTime?
   emailDeliveryFailed         Boolean        @default(false)
   emailDeliveryError          String?
+  smsDelivered                Boolean        @default(false)
+  smsDeliveredAt              DateTime?
   identityEnforcementPassed   Boolean?
   identityEnforcementFailedAt DateTime?
   createdAt                   DateTime       @default(now())

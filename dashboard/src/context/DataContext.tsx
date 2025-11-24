@@ -596,6 +596,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           case 'admin_contracts_data':
             dispatch({ type: 'SET_ADMIN_CONTRACTS_DATA', payload: message.payload })
             break
+          case 'contract_update':
+            // Backend broadcasts specific contract events (pending, fulfilled, completed, etc.)
+            // Full data refresh via admin_contracts_data happens automatically
+            console.log(`Contract ${message.payload.contract_id}: ${message.payload.event}`, message.payload.details)
+            break
+          case 'contract_list_changed':
+            // Backend already sends fresh admin_contracts_data with this event
+            // No action needed - data will be updated via SET_ADMIN_CONTRACTS_DATA
+            console.log('Contract list changed - fresh data incoming')
+            break
           case 'admin_leads_data':
             dispatch({ type: 'SET_ADMIN_LEADS_DATA', payload: message.payload })
             break

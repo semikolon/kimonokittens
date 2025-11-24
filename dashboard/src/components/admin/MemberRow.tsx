@@ -206,7 +206,14 @@ export const MemberRow: React.FC<MemberRowProps> = ({
       const data = await response.json()
 
       if (response.ok) {
-        showToast('Kontrakt skapat!', 'success')
+        // Show success toast with what was sent
+        const firstName = member.name.split(' ')[0]
+        const hasPhone = member.phone && member.phone.trim().length > 0
+        const sentMethod = hasPhone ? 'Email och SMS skickat' : 'Email skickat'
+        showToast(
+          `Kontrakt skapat för ${firstName}! ${sentMethod}.`,
+          'success'
+        )
         // WebSocket broadcast will update UI automatically
       } else {
         showToast(data.error || 'Kunde inte skapa kontrakt', 'error')

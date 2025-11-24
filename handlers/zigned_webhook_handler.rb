@@ -112,6 +112,8 @@ class ZignedWebhookHandler
     case event_type
     when 'agreement.lifecycle.pending'
       handle_agreement_pending(agreement_data)
+    when 'participant.lifecycle.received_invitation'
+      handle_participant_received_invitation(agreement_data)
     when 'participant.lifecycle.fulfilled'
       handle_participant_fulfilled(agreement_data)
     when 'agreement.lifecycle.fulfilled'
@@ -262,6 +264,54 @@ class ZignedWebhookHandler
       test_mode: test_mode,
       expires_at: expires_at,
       participant_count: participants.length
+    })
+  end
+
+  # Handle participant.lifecycle.received_invitation event (invitation delivered)
+  def handle_participant_received_invitation(data)
+    # Participant data structure from webhook
+    participant_id = data['id']
+    name = data['name']
+    email = data['email']
+    agreement_id = data['agreement']
+    signing_url = data['signing_room_url'] || data['signing_url']
+    role = data['role']
+    status = data['status']
+
+    ZIGNED_LOGGER.info "📧 Invitation received: #{name} (#{email})"
+    ZIGNED_LOGGER.info "   Participant ID: #{participant_id}"
+    ZIGNED_LOGGER.info "   Agreement ID: #{agreement_id}"
+    ZIGNED_LOGGER.info "   Signing URL: #{signing_url ? 'present' : 'missing'}"
+    ZIGNED_LOGGER.info "   Role: #{role}, Status: #{status}"
+
+    # Find contract and update participant record
+    contract = @repository.find_by_case_id(agreement_id)
+    unless contract
+      ZIGNED_LOGGER.warn "⚠️  Contract not found for agreement_id #{agreement_id}"
+      return
+    end
+
+    participant_repo = Persistence.contract_participants
+    participant = participant_repo.find_by_participant_id(participant_id)
+
+    if participant
+      # Update existing participant with email delivery status
+      participant.email_delivered = true
+      participant.email_delivered_at = Time.now
+      participant.signing_url = signing_url if signing_url
+      participant.status = status if status
+      participant_repo.update(participant)
+      ZIGNED_LOGGER.info "   ✅ Participant email delivery recorded"
+    else
+      # Create new participant record (shouldn't happen if pending handler worked)
+      ZIGNED_LOGGER.warn "   ⚠️  Participant record not found - creating from invitation event"
+      create_or_update_participant(contract.id, data)
+    end
+
+    # Broadcast update for real-time UI refresh
+    @broadcaster&.broadcast_contract_update(agreement_id, 'invitation_delivered', {
+      participant_name: name,
+      participant_email: email
     })
   end
 

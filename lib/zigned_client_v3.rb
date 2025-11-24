@@ -124,10 +124,18 @@ class ZignedClientV3
     puts "DEBUG: Attempting to activate agreement #{agreement[:agreement_id]}"
     activated = activate_agreement(agreement[:agreement_id])
 
+    # Step 6: Fetch agreement with participants to get signing URLs
+    # CRITICAL: URLs only available AFTER activation, and MUST use expand parameter
+    # (Research: docs/ZIGNED_SIGNING_URL_RESEARCH.md - signing URLs are NULL in draft status)
+    puts "DEBUG: Fetching agreement details with expanded participants to get signing URLs"
+    agreement_details = get_agreement(agreement[:agreement_id], expand: ['participants'])
+    participants_with_urls = agreement_details[:participants] || []
+    puts "DEBUG: Retrieved #{participants_with_urls.length} participants with signing URLs"
+
     # Return format compatible with v1
     {
       case_id: agreement[:agreement_id],  # Keep 'case_id' for compatibility
-      signing_links: extract_signing_links(participants, signers),
+      signing_links: extract_signing_links(participants_with_urls, signers),
       expires_at: activated[:expires_at],
       status: activated[:status]
     }
@@ -293,6 +301,77 @@ class ZignedClientV3
   # @param agreement_id [String] The agreement ID
   #
   # @return [Hash] { status:, signers:, signed_at:, signed_pdf_url: }
+  # Get full agreement details including participants with signing URLs
+  #
+  # @param agreement_id [String] The agreement ID
+  # @param expand [Array<String>] Optional resources to expand (e.g., ['participants'])
+  # @return [Hash] Agreement details with full participant objects
+  def get_agreement(agreement_id, expand: [])
+    # Build query string with expand parameter if provided
+    query_params = expand.any? ? "?expand=#{expand.join(',')}" : ""
+
+    response = self.class.get(
+      "/agreements/#{agreement_id}#{query_params}",
+      headers: default_headers
+    )
+
+    handle_response(response) do |data|
+      agreement_data = data['data']
+
+      # Parse participants - structure depends on whether expanded
+      participants_raw = agreement_data['participants']
+
+      participants = if participants_raw.is_a?(Hash) && participants_raw['data']
+        # Expanded format: { version:, result_type:, resource_type:, data: [...] }
+        (participants_raw['data'] || []).map do |p|
+          {
+            participant_id: p['id'],
+            name: p['name'],
+            email: p['email'],
+            personal_number: p['personal_number'],
+            signing_url: p['signing_url'] || p['signing_room_url'],
+            signing_room_url: p['signing_room_url'] || p['signing_url'],
+            role: p['role'],
+            status: p['status']
+          }
+        end
+      elsif participants_raw.is_a?(Array)
+        # May be array of full objects OR just IDs
+        participants_raw.map do |p|
+          if p.is_a?(Hash)
+            # Full participant object
+            {
+              participant_id: p['id'],
+              name: p['name'],
+              email: p['email'],
+              personal_number: p['personal_number'],
+              signing_url: p['signing_url'] || p['signing_room_url'],
+              signing_room_url: p['signing_room_url'] || p['signing_url'],
+              role: p['role'],
+              status: p['status']
+            }
+          else
+            # Just an ID string - can't use without fetching separately
+            nil
+          end
+        end.compact
+      else
+        []
+      end
+
+      {
+        agreement_id: agreement_data['id'],
+        status: agreement_data['status'],
+        title: agreement_data['title'],
+        created_at: agreement_data['created_at'],
+        expires_at: agreement_data['expires_at'],
+        fulfilled_at: agreement_data['fulfilled_at'],
+        signed_pdf_url: agreement_data['signed_document_url'],
+        participants: participants  # Array of full participant objects
+      }
+    end
+  end
+
   def get_agreement_status(agreement_id)
     response = self.class.get(
       "/agreements/#{agreement_id}",

@@ -15,6 +15,7 @@ class ContractParticipant
               :role, :status, :signing_url, :signed_at,
               :email_delivered, :email_delivered_at,
               :email_delivery_failed, :email_delivery_error,
+              :sms_delivered, :sms_delivered_at,
               :identity_enforcement_passed, :identity_enforcement_failed_at,
               :created_at, :updated_at
 
@@ -22,6 +23,7 @@ class ContractParticipant
                  role: 'signer', status: 'pending', signing_url: nil, signed_at: nil,
                  email_delivered: false, email_delivered_at: nil,
                  email_delivery_failed: false, email_delivery_error: nil,
+                 sms_delivered: false, sms_delivered_at: nil,
                  identity_enforcement_passed: nil, identity_enforcement_failed_at: nil,
                  created_at: nil, updated_at: nil)
     @id = id || generate_id
@@ -38,6 +40,8 @@ class ContractParticipant
     @email_delivered_at = email_delivered_at
     @email_delivery_failed = email_delivery_failed
     @email_delivery_error = email_delivery_error
+    @sms_delivered = sms_delivered
+    @sms_delivered_at = sms_delivered_at
     @identity_enforcement_passed = identity_enforcement_passed
     @identity_enforcement_failed_at = identity_enforcement_failed_at
     @created_at = created_at || Time.now
@@ -50,6 +54,7 @@ class ContractParticipant
   attr_writer :status, :signing_url, :signed_at,
               :email_delivered, :email_delivered_at,
               :email_delivery_failed, :email_delivery_error,
+              :sms_delivered, :sms_delivered_at,
               :identity_enforcement_passed, :identity_enforcement_failed_at
 
   # Query methods
