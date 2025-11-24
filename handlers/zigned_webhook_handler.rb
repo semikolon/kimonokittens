@@ -303,9 +303,18 @@ class ZignedWebhookHandler
       participant_repo.update(participant)
       ZIGNED_LOGGER.info "   ✅ Participant email delivery recorded"
     else
-      # Create new participant record (shouldn't happen if pending handler worked)
-      ZIGNED_LOGGER.warn "   ⚠️  Participant record not found - creating from invitation event"
+      # Create new participant record (happens when pending event only had IDs)
+      ZIGNED_LOGGER.info "   📋 Creating participant from invitation event"
       create_or_update_participant(contract.id, data)
+
+      # Mark email as delivered since this event means invitation was sent
+      participant = participant_repo.find_by_participant_id(participant_id)
+      if participant
+        participant.email_delivered = true
+        participant.email_delivered_at = Time.now
+        participant_repo.update(participant)
+        ZIGNED_LOGGER.info "   ✅ Participant email delivery recorded (new record)"
+      end
     end
 
     # Broadcast update for real-time UI refresh
