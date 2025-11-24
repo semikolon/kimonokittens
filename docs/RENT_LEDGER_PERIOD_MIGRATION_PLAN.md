@@ -1,8 +1,84 @@
 # RentLedger Period Semantics Migration Plan
 
 **Created:** November 19, 2025
-**Status:** Ready for execution
+**Status:** ⚠️ PARTIALLY COMPLETED - Critical business logic updates missed
 **Estimated time:** 11-16 hours (1.5-2 days)
+
+---
+
+## ⚠️ POST-MORTEM #1: Business Logic Not Updated (Nov 23, 2025)
+
+**What Was Completed:**
+- ✅ Database migration (all periods shifted -1 month)
+- ✅ rent.rb updated to store config_period
+- ✅ Tests updated to expect config_period
+- ✅ RentLedger model helper methods added
+
+**What Was MISSED:**
+- ❌ **CRITICAL:** Tenant filtering logic NOT updated to use RENT month
+- ❌ **CRITICAL:** Days calculation NOT updated to use RENT month day count
+- ❌ Section 4.1 said "Rest of script unchanged..." - This was WRONG!
+
+**Impact:**
+Code was storing CONFIG month but CALCULATING with CONFIG month dates. This is semantically incorrect:
+- **Correct:** Accept CONFIG month → Transform to RENT month for logic → Store CONFIG month
+- **Actual:** Accept CONFIG month → Use CONFIG month for logic → Store CONFIG month ❌
+
+**Bugs Caused:**
+1. `bin/populate_monthly_ledger` filtered tenants by wrong month (excluded Frida for Dec rent)
+2. `handlers/rent_calculator_handler.rb` extract_roommates/extract_config used wrong dates
+3. December 2025 rent ledger created with 4 people instead of 5
+
+**Fixed:** Nov 23, 2025 (commits fixing populate_monthly_ledger and handler)
+
+**Root Lesson:** When migrating database field semantics, EVERY consumer of that field must be audited. Storage layer changes require business logic changes.
+
+---
+
+## ⚠️ POST-MORTEM #2: Period Storage Bug (Nov 24, 2025)
+
+**What Happened:**
+While creating December 2025 ledger, discovered entries saved with wrong period:
+- Expected: 2025-11-01 (CONFIG month per migration semantics)
+- Actual: 2025-12-01 (RENT month)
+
+**Root Cause:**
+`calculate_and_save` used `config.year`/`config.month` for TWO conflicting purposes:
+1. days_in_month calculation (needs RENT month: Dec = 31 days)
+2. period storage (needs CONFIG month: Nov for database)
+
+Both handlers and populate script passed RENT month to get correct days → broke period storage.
+
+**Temporary Fix (Nov 24):**
+- Added explicit `period` param to `calculate_and_save`
+- Callers pass both: CONFIG period + RENT year/month
+- Worked but required callers to do conversion
+
+**Permanent Fix (Nov 24 - In Progress):**
+Bake "rent = config + 1" business rule directly into Config class:
+
+```ruby
+# Config.days_in_month now auto-calculates from next month
+def days_in_month
+  rent_month = Date.new(@year, @month, 1).next_month
+  Date.new(rent_month.year, rent_month.month, -1).day
+end
+```
+
+**Benefits:**
+- year/month ALWAYS mean CONFIG month (semantic clarity)
+- Callers don't need to know conversion logic (DRY)
+- Business rule in one place (single source of truth)
+- Impossible to make period storage mistake (correctness by design)
+
+**Files Changed:**
+- `rent.rb`: Config.days_in_month auto-calculates
+- `lib/models/rent_ledger.rb`: extract_config passes CONFIG month
+- `handlers/rent_calculator_handler.rb`: extract_config passes CONFIG month
+
+**Root Lesson:** Business rules should be encoded in the domain layer, not repeated in callers. Fundamental assumptions (like "rent is always for next month") belong in the core model.
+
+---
 
 ## Executive Summary
 
@@ -295,6 +371,8 @@ git commit -m "docs: update RentLedgerRepository comments for config month seman
 - Lines 9-22: Update documentation
 - Line 16: Keep as-is (fetches config for config month)
 - Line 19: **FIX** - now period = config month (not rent month)
+- **⚠️ CRITICAL FIX MISSED:** Lines 28-37: Must filter tenants by RENT month, not CONFIG month!
+- **⚠️ CRITICAL FIX MISSED:** Lines 55-59: Must use RENT month days, not CONFIG month days!
 
 ```ruby
 #!/usr/bin/env ruby
@@ -304,26 +382,39 @@ require 'dotenv/load'
 require 'date'
 require_relative '../lib/persistence'
 require_relative '../lib/models/rent_config'
-require_relative '../lib/models/rent_period_helper'
+require_relative '../lib/models/rent_ledger'
 
-# Parse command line arguments
-# IMPORTANT: month parameter = CONFIG MONTH (not rent month)
-# Example: month=11 creates ledger with period 2025-11-01 (Nov config → Dec rent)
+# Parse command line arguments (config month, not rent month)
 year = ARGV[0]&.to_i || Time.now.year
 month = ARGV[1]&.to_i || Time.now.month
 
-rent_month = RentPeriodHelper.config_to_rent_month(Date.new(year, month, 1))
-puts "🏠 Populating rent ledger for #{rent_month.strftime('%Y-%m')} rent (using #{year}-#{month.to_s.rjust(2, '0')} config)"
+# Calculate rent month (config month + 1)
+config_period = Time.utc(year, month, 1)
+rent_month_time = RentLedger.config_to_rent_month(config_period)
+rent_year = rent_month_time.year
+rent_month = rent_month_time.month
+rent_month_display = RentLedger.swedish_rent_month(config_period)
 
-# Get rent configuration for this period (config month)
+puts "🏠 Populating rent ledger for #{rent_month_display} (config: #{year}-#{month.to_s.rjust(2, '0')})"
+
+# Get rent configuration for CONFIG period
 config = RentConfig.for_period(year: year, month: month, repository: Persistence.rent_configs)
 
-# Calculate period dates - period = CONFIG MONTH
-period = Time.utc(year, month, 1)  # Config month (e.g., 2025-11-01)
-period_start = Date.new(year, month, 1)
-period_end = Date.new(year, month, -1)
+# CRITICAL: Use RENT month dates for tenant filtering and days calculation
+# Config month is stored in database, but we filter/calculate based on RENT month
+period = Time.utc(year, month, 1)  # Config month (stored in database)
+rent_period_start = Date.new(rent_year, rent_month, 1)  # RENT month start
+rent_period_end = Date.new(rent_year, rent_month, -1)   # RENT month end (last day)
 
-# Rest of script unchanged...
+# Get active tenants for RENT period (not config period!)
+tenants = Persistence.tenants.all.select do |tenant|
+  # Tenant is active if active during RENT month (e.g. December for Nov config)
+  # - start_date is on or before RENT period end
+  # - departure_date is nil OR on/after RENT period start
+  tenant.start_date <= rent_period_end && (!tenant.departure_date || tenant.departure_date >= rent_period_start)
+end
+
+# ... rest of script uses rent_period_start/rent_period_end for calculations ...
 ```
 
 **Commit:**
