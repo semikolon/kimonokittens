@@ -1,5 +1,6 @@
 // ContractDetails - Expanded content area (email, signing, timeline)
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { CheckCircle2, Clock, XCircle, AlertCircle, Signature } from 'lucide-react'
 import { ContractTimeline } from './ContractTimeline'
 import type { SignedContract } from '../../views/AdminDashboard'
@@ -312,7 +313,7 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
       </div>
 
       {/* Confirmation Dialog for Cancel */}
-      {showCancelConfirm && (
+      {showCancelConfirm && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
           <div className="border border-purple-500/30 rounded-2xl w-full max-w-md mx-4 overflow-hidden" style={{
             backgroundImage: 'linear-gradient(180deg, rgba(41, 22, 64, 0.95) 0%, rgba(30, 14, 50, 0.99) 100%)'
@@ -343,7 +344,8 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Toast Notification */}
