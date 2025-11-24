@@ -161,7 +161,7 @@ model SignedContract {
 model ContractParticipant {
   id                          String         @id
   contractId                  String
-  participantId               String         @unique
+  participantId               String?        @unique
   name                        String
   email                       String
   personalNumber              String
