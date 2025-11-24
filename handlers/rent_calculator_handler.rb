@@ -474,29 +474,9 @@ class RentCalculatorHandler
   #
   # @return [Hash] Roommate hash with days stayed (in RENT month) and room adjustments
   def extract_roommates(year:, month:)
-    tenants = Persistence.tenants.all
-
-    raise "Cannot calculate rent - no tenants found in database" if tenants.empty?
-
-    # Convert CONFIG period to RENT period (month + 1)
-    config_period = Time.utc(year, month, 1)
-    rent_month_time = RentLedger.config_to_rent_month(config_period)
-    rent_year = rent_month_time.year
-    rent_month = rent_month_time.month
-
-    # Use RENT month dates for filtering and calculation
-    period_start = Date.new(rent_year, rent_month, 1)
-    period_end = Date.new(rent_year, rent_month, -1)  # Last day of RENT month
-
-    tenants.each_with_object({}) do |tenant, hash|
-      days_stayed = tenant.days_stayed_in_period(period_start, period_end)
-      next if days_stayed <= 0
-
-      hash[tenant.name] = {
-        days: days_stayed,
-        room_adjustment: (tenant.room_adjustment || 0).to_i
-      }
-    end
+    # Delegate to RentCalculator's extract_roommates_for_period (DRY)
+    # Both methods do identical CONFIG→RENT conversion and tenant filtering
+    RentCalculator.send(:extract_roommates_for_period, year, month)
   end
 
   def extract_history_options(body)

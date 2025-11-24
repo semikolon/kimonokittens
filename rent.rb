@@ -511,16 +511,32 @@ module RentCalculator
         return "#{header}\n*#{amount} kr* för alla"
       end
 
-      # Build message with grouped amounts
+      # Cluster similar amounts (within 2 kr tolerance due to rounding)
+      # This groups people paying essentially the same rent (e.g., 6295 and 6296)
+      clustered = {}
+      grouped.keys.sort.reverse.each do |amount|
+        # Find existing cluster within 2 kr tolerance
+        cluster_key = clustered.keys.find { |k| (k - amount).abs <= 2 }
+
+        if cluster_key
+          # Add to existing cluster
+          clustered[cluster_key] += grouped[amount]
+        else
+          # Create new cluster
+          clustered[amount] = grouped[amount]
+        end
+      end
+
+      # Build message with clustered amounts (using first names only)
       message_lines = []
-      grouped.sort_by { |amt, _| -amt }.each do |amount, people|
+      clustered.sort_by { |amt, _| -amt }.each do |amount, people|
         if people.size == 1
           person = people.first
+          first_name = person[:name].split(' ').first
           if person[:days] != total_days
-            days_text = person[:days] == 1 ? "dags" : "dagars"
-            message_lines << "#{person[:name]}: #{amount} kr (#{person[:days]} #{days_text} boende)"
+            message_lines << "#{first_name}: #{amount} kr (#{person[:days]} dagar)"
           else
-            message_lines << "#{person[:name]}: #{amount} kr"
+            message_lines << "#{first_name}: #{amount} kr"
           end
         else
           # Group multiple people with same amount
@@ -528,23 +544,24 @@ module RentCalculator
           all_same_days = people.map { |p| p[:days] }.uniq.size == 1
           if all_same_days && people.first[:days] == total_days
             # All full month, no notation needed
-            names = people.map { |p| p[:name] }.join(', ')
-            message_lines << "#{names}: #{amount} kr"
+            first_names = people.map { |p| p[:name].split(' ').first }.join(', ')
+            message_lines << "#{first_names}: #{amount} kr"
           else
             # Mixed or all prorated - show individually
             people.each do |person|
+              first_name = person[:name].split(' ').first
               if person[:days] != total_days
-                days_text = person[:days] == 1 ? "dags" : "dagars"
-                message_lines << "#{person[:name]}: #{amount} kr (#{person[:days]} #{days_text} boende)"
+                message_lines << "#{first_name}: #{amount} kr (#{person[:days]} dagar)"
               else
-                message_lines << "#{person[:name]}: #{amount} kr"
+                message_lines << "#{first_name}: #{amount} kr"
               end
             end
           end
         end
       end
 
-      "#{header}\n\n#{message_lines.join("\n")}"
+      # Multiline format: line break after header, join with bullets, no trailing bullet
+      "#{header}\n#{message_lines.join(' • ')}"
     end
 
     # Convenience method for handlers - fetches everything automatically
