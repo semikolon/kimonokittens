@@ -29,6 +29,16 @@ class SmsEventRepository < BaseRepository
     :SmsEvent
   end
 
+  # Get all SMS events
+  # @param limit [Integer] Maximum number of results (default: 1000)
+  # @return [Array<SmsEvent>] All events ordered by created_at descending
+  def all(limit: 1000)
+    dataset
+      .order(Sequel.desc(:createdAt))
+      .limit(limit)
+      .map { |row| hydrate(row) }
+  end
+
   # Find event by ID
   # @param id [String] Event ID
   # @return [SmsEvent, nil]
