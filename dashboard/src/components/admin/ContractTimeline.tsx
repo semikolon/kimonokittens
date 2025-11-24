@@ -116,17 +116,17 @@ export const ContractTimeline: React.FC<ContractTimelineProps> = ({ contract }) 
   events.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {events.map((event, index) => (
         <div key={index} className="flex gap-3 text-sm">
           <div className="flex flex-col items-center">
-            <div className="w-2 h-2 rounded-full bg-purple-500 mt-1.5 shrink-0" />
+            <div className="w-2 h-2 rounded-full bg-purple-500 mt-1 shrink-0" />
             {index < events.length - 1 && (
-              <div className="w-px flex-1 bg-purple-500/30 mt-1" style={{ minHeight: '20px' }} />
+              <div className="w-px flex-1 bg-purple-500/30 mt-1" style={{ minHeight: '12px' }} />
             )}
           </div>
-          <div className="flex-1 pb-3">
-            <p className="text-purple-100">
+          <div className="flex-1 pb-2">
+            <p className="text-purple-100 leading-tight">
               {event.timestamp.toLocaleString('sv-SE', {
                 month: 'long',
                 day: 'numeric',
@@ -134,12 +134,12 @@ export const ContractTimeline: React.FC<ContractTimelineProps> = ({ contract }) 
                 minute: '2-digit',
                 timeZone: 'Europe/Stockholm'
               })}
-              {' '}
-              {event.label}
+              {event.actor && event.actor !== 'System' ? (
+                <> - {event.actor} {event.label}</>
+              ) : (
+                <> - {event.label}</>
+              )}
             </p>
-            {event.actor && (
-              <p className="text-purple-300/60 text-xs mt-0.5">{event.actor}</p>
-            )}
           </div>
         </div>
       ))}
