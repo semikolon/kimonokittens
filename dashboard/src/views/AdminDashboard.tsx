@@ -64,6 +64,8 @@ export interface SignedContract {
     signing_url?: string
     email_delivered: boolean
     email_delivered_at?: string
+    sms_delivered: boolean
+    sms_delivered_at?: string
   }>
 }
 

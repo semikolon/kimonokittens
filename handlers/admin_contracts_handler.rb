@@ -245,7 +245,9 @@ class AdminContractsHandler
             signed_at: p.signed_at,
             signing_url: p.signing_url,
             email_delivered: p.email_delivered,
-            email_delivered_at: p.email_delivered_at
+            email_delivered_at: p.email_delivered_at,
+            sms_delivered: p.sms_delivered,
+            sms_delivered_at: p.sms_delivered_at
           }
         end
       }
