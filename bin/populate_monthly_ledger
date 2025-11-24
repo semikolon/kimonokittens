@@ -2,123 +2,25 @@
 # frozen_string_literal: true
 
 require 'dotenv/load'
-require 'date'
-require_relative '../lib/persistence'
-require_relative '../lib/models/rent_config'
 require_relative '../lib/models/rent_ledger'
 
 # Parse command line arguments (config month, not rent month)
 year = ARGV[0]&.to_i || Time.now.year
 month = ARGV[1]&.to_i || Time.now.month
 
-# Calculate rent month for display (config month + 1)
-config_period = Time.utc(year, month, 1)
-rent_month_display = RentLedger.swedish_rent_month(config_period)
+puts "🏠 Populating rent ledger..."
+puts "   Config period: #{year}-#{month.to_s.rjust(2, '0')}"
+puts "   Rent month: #{RentLedger.swedish_rent_month(Time.utc(year, month, 1))}\n\n"
 
-puts "🏠 Populating rent ledger for #{rent_month_display} (config: #{year}-#{month.to_s.rjust(2, '0')})"
+# Use RentLedger class method (DRY - no duplication!)
+result = RentLedger.populate_for_month(year: year, month: month)
 
-# Get rent configuration for this period
-config = RentConfig.for_period(year: year, month: month, repository: Persistence.rent_configs)
-
-# Calculate period dates
-period = Time.utc(year, month, 1)
-period_start = Date.new(year, month, 1)
-period_end = Date.new(year, month, -1) # Last day of month
-
-# Get active tenants for this period
-tenants = Persistence.tenants.all.select do |tenant|
-  # Tenant is active if:
-  # - start_date is on or before period_end
-  # - departure_date is nil OR on/after period_start (inclusive)
-  tenant.start_date <= period_end && (!tenant.departure_date || tenant.departure_date >= period_start)
+puts "\n✅ Ledger populated via RentCalculator!"
+puts "\n📋 Final amounts:"
+result['Rent per Roommate'].each do |name, amount|
+  puts "  #{name.ljust(30)} | #{amount} kr"
 end
 
-if tenants.empty?
-  puts "❌ No active tenants found for #{year}-#{month}"
-  exit 1
-end
-
-puts "👥 Found #{tenants.length} active tenant(s)"
-
-# Extract configuration values (matching friendly_message format)
-base_rent = config['kallhyra'].to_f
-utilities = config['vattenavgift'].to_f + config['va'].to_f + config['bredband'].to_f + config['larm'].to_f
-electricity = config['el'].to_f
-
-# Note: drift_rakning is NOT included per virtual pot system (Nov 2025)
-# Monthly accruals (837 kr) are implicit in the base rent structure
-
-# Count full-month tenants to divide base rent
-full_month_count = tenants.count do |tenant|
-  days_stayed = tenant.days_stayed_in_period(period_start, period_end)
-  days_in_month = period_end.day
-  days_stayed == days_in_month
-end
-
-full_month_count = tenants.length if full_month_count == 0 # Fallback
-
-base_per_person = base_rent / full_month_count
-utilities_per_person = utilities / full_month_count
-electricity_per_person = electricity / full_month_count
-
-puts "\n📊 Rent breakdown for #{year}-#{month}:"
-puts "  Base rent (kallhyra): #{base_rent.round} kr"
-puts "  Utilities (vatten/bredband/larm): #{utilities.round} kr"
-puts "  Electricity: #{electricity.round} kr"
-puts "  Full-month tenants: #{full_month_count}"
-puts "  Per person (base): #{base_per_person.round} kr"
-puts "  Per person (utilities): #{utilities_per_person.round} kr"
-puts "  Per person (electricity): #{electricity_per_person.round} kr"
-puts ""
-
-# Create ledger entries
-created_count = 0
-updated_count = 0
-
-tenants.each do |tenant|
-  # Calculate days stayed in this period
-  days_stayed = tenant.days_stayed_in_period(period_start, period_end)
-  days_in_month = period_end.day
-
-  # Calculate prorated rent
-  is_full_month = (days_stayed == days_in_month)
-  proration_factor = days_stayed.to_f / days_in_month
-
-  # Calculate tenant's rent components
-  tenant_base = is_full_month ? base_per_person : (base_per_person * proration_factor)
-  tenant_utilities = is_full_month ? utilities_per_person : (utilities_per_person * proration_factor)
-  tenant_electricity = is_full_month ? electricity_per_person : (electricity_per_person * proration_factor)
-  tenant_room_adj = tenant.room_adjustment || 0
-
-  # Total amount due
-  amount_due = tenant_base + tenant_utilities + tenant_electricity + tenant_room_adj
-
-  # Check if entry already exists
-  existing = Persistence.rent_ledger.find_by_tenant_and_period(tenant.id, period)
-
-  # Upsert ledger entry
-  Persistence.rent_ledger.upsert_entry(
-    tenant_id: tenant.id,
-    period: period,
-    amount_due: amount_due.round(2),
-    days_stayed: days_stayed,
-    room_adjustment: tenant_room_adj,
-    base_monthly_rent: base_per_person,
-    calculation_title: RentLedger.swedish_rent_month(period),  # Rent month, not config month
-    calculation_date: Time.now.utc
-  )
-
-  if existing
-    updated_count += 1
-    puts "✏️  #{tenant.name.ljust(30)} | #{amount_due.round} kr (#{days_stayed}/#{days_in_month} days) [UPDATED]"
-  else
-    created_count += 1
-    puts "✅ #{tenant.name.ljust(30)} | #{amount_due.round} kr (#{days_stayed}/#{days_in_month} days)"
-  end
-end
-
-puts "\n📋 Summary:"
-puts "  Created: #{created_count} new ledger entries"
-puts "  Updated: #{updated_count} existing entries"
-puts "  Total: #{created_count + updated_count} entries processed"
-puts "\n✨ Ledger population complete!"
+total = result['Rent per Roommate'].values.sum
+puts "\n💰 Total: #{total} kr"
+puts "✨ Ledger population complete!"
