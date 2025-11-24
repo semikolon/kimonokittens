@@ -586,13 +586,23 @@ module RentCalculator
     # @param year [Integer] Config period year
     # @param month [Integer] Config period month
     # @return [Hash] Roommates hash for RentCalculator
+    #
+    # CRITICAL: Uses CONFIG month as INPUT, but filters/calculates using RENT month.
+    # This is correct because rent is paid IN ADVANCE for the following month.
     def extract_roommates_for_period(year, month)
       tenants = Persistence.tenants.all
 
       raise "Cannot calculate rent - no tenants found in database" if tenants.empty?
 
-      period_start = Date.new(year, month, 1)
-      period_end = Date.new(year, month, Helpers.days_in_month(year, month))
+      # Convert CONFIG period to RENT period (month + 1)
+      config_period = Time.utc(year, month, 1)
+      rent_month_time = RentLedger.config_to_rent_month(config_period)
+      rent_year = rent_month_time.year
+      rent_month = rent_month_time.month
+
+      # Use RENT month dates for filtering and calculation
+      period_start = Date.new(rent_year, rent_month, 1)
+      period_end = Date.new(rent_year, rent_month, -1)  # Last day of RENT month
 
       tenants.each_with_object({}) do |tenant, hash|
         days_stayed = tenant.days_stayed_in_period(period_start, period_end)

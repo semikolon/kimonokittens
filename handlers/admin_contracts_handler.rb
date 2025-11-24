@@ -107,9 +107,15 @@ class AdminContractsHandler
     year = now.year
     month = now.month
 
-    # Build roommates hash for current period
-    period_start = Date.new(year, month, 1)
-    period_end = Date.new(year, month, RentCalculator::Helpers.days_in_month(year, month))
+    # Build roommates hash for current period (checking RENT month, not CONFIG month)
+    # Rent is paid in advance, so we check tenants in RENT month (config + 1)
+    config_period = Time.utc(year, month, 1)
+    rent_month_time = RentLedger.config_to_rent_month(config_period)
+    rent_year = rent_month_time.year
+    rent_month = rent_month_time.month
+
+    period_start = Date.new(rent_year, rent_month, 1)
+    period_end = Date.new(rent_year, rent_month, -1)  # Last day of RENT month
 
     roommates = {}
     all_tenants.each do |tenant|
