@@ -673,7 +673,8 @@ class AdminContractsHandler
     end
 
     begin
-      tenant.facebook_id = facebook_id.strip
+      # Strip Unicode control characters (invisible formatting chars from copy/paste)
+      tenant.facebook_id = facebook_id.strip.gsub(/[[:cntrl:]]/, '')
       tenant_repo.update(tenant)
       require_relative '../lib/data_broadcaster'
       DataBroadcaster.broadcast_contract_list_changed
@@ -704,8 +705,14 @@ class AdminContractsHandler
         return [400, { 'Content-Type' => 'application/json' }, [Oj.dump({ error: 'Missing phone parameter' })]]
       end
 
-      # Basic validation: remove whitespace and common formatting characters
-      cleaned_phone = phone.strip.gsub(/[\s\-\(\)\.\/]/, '')
+      # Forgiving phone validation: strip ALL non-digit characters except leading +
+      # Handles Unicode control chars (LTR/RTL marks from iOS/Android), spaces, dashes, etc.
+      cleaned_phone = phone.strip
+      has_plus = cleaned_phone.include?('+')
+      # Remove everything except digits
+      cleaned_phone = cleaned_phone.gsub(/\D/, '')
+      # Re-add leading + if original had one
+      cleaned_phone = '+' + cleaned_phone if has_plus
 
       # Swedish phone numbers: should be 10+ digits (with country code) or 9-10 digits (without)
       unless cleaned_phone =~ /^\+?\d{9,15}$/
