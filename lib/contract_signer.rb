@@ -135,8 +135,9 @@ class ContractSigner
     puts "📅 Expires at: #{zigned_result[:expires_at]}"
 
     # Step 3: Save to database (replaces file-based metadata)
-    landlord_link = zigned_result[:signing_links][landlord[:personnummer].gsub(/\D/, '')]
-    tenant_link = zigned_result[:signing_links][tenant.personnummer.gsub(/\D/, '')]
+    # NOTE: Lookup by email (not personal number) - Zigned API uses email as unique identifier
+    landlord_link = zigned_result[:signing_links][landlord[:email]]
+    tenant_link = zigned_result[:signing_links][tenant.email]
 
     signed_contract = SignedContract.new(
       id: SecureRandom.uuid,

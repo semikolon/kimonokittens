@@ -502,13 +502,18 @@ class ZignedClientV3
     }
   end
 
-  # Extract signing links in v1-compatible format
-  # Returns hash: { 'personnummer' => 'signing_url' }
+  # Extract signing links indexed by email
+  # Returns hash: { 'email@example.com' => 'signing_url' }
+  #
+  # NOTE: Zigned API does NOT include personal_number in participant objects
+  # (webhooks and expanded API responses both omit it). Email is the reliable
+  # unique identifier for matching participants to signers.
   def extract_signing_links(participants, signers)
     participants.each_with_object({}) do |participant, hash|
       # Zigned API inconsistency: field can be 'signing_url' or 'signing_room_url'
       url = participant[:signing_url] || participant[:signing_room_url]
-      hash[participant[:personal_number]] = url if url
+      email = participant[:email]
+      hash[email] = url if email && url
     end
   end
 
