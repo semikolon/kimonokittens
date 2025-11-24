@@ -168,9 +168,10 @@ class ContractSigner
       participant_id: nil, # Will be set by webhook
       name: landlord[:name],
       email: landlord[:email],
+      personal_number: landlord[:personnummer],
       role: 'landlord',
       signing_url: landlord_link,
-      signed: false,
+      signed_at: nil, # Will be set by webhook when signed
       sms_delivered: false, # Will be set to true after SMS sends
       email_delivered: false, # Will be set to true by webhook
       created_at: Time.now,
@@ -183,9 +184,10 @@ class ContractSigner
       participant_id: nil, # Will be set by webhook
       name: tenant.name,
       email: tenant.email,
+      personal_number: tenant.personnummer,
       role: 'tenant',
       signing_url: tenant_link,
-      signed: false,
+      signed_at: nil, # Will be set by webhook when signed
       sms_delivered: false, # Will be set to true after SMS sends
       email_delivered: false, # Will be set to true by webhook
       created_at: Time.now,

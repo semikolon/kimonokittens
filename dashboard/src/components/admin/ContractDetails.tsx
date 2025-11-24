@@ -137,17 +137,24 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({ contract }) =>
 
               // Determine notification methods for each
               const landlordEmail = landlordParticipant?.email_delivered || contract.email_status === 'sent'
-              const landlordSMS = false // SMS only sent to tenant
+              const landlordSMS = landlordParticipant?.sms_delivered || false
               const tenantEmail = tenantParticipant?.email_delivered || contract.email_status === 'sent'
-              const tenantSMS = false // Would need to check participant.sms_delivered when implemented
+              const tenantSMS = tenantParticipant?.sms_delivered || false
 
               // Get first names
               const landlordFirstName = landlordName.split(' ')[0]
               const tenantFirstName = contract.tenant_name.split(' ')[0]
 
-              // Build notification text
-              const landlordNotif = landlordEmail ? 'email' : null
-              const tenantNotif = tenantEmail ? 'email' : null
+              // Build notification text combining email and SMS
+              const landlordMethods = []
+              if (landlordEmail) landlordMethods.push('email')
+              if (landlordSMS) landlordMethods.push('SMS')
+              const landlordNotif = landlordMethods.length > 0 ? landlordMethods.join(' och ') : null
+
+              const tenantMethods = []
+              if (tenantEmail) tenantMethods.push('email')
+              if (tenantSMS) tenantMethods.push('SMS')
+              const tenantNotif = tenantMethods.length > 0 ? tenantMethods.join(' och ') : null
 
               if (!landlordNotif && !tenantNotif) {
                 return (
