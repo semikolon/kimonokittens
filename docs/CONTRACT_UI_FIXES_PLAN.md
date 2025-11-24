@@ -1,9 +1,9 @@
 # Contract UI & Webhook Fixes Plan
 
 **Created:** Nov 24, 2025, 14:35
-**Last Updated:** Nov 24, 2025, 20:30
-**Status:** ✅ COMPLETE - All critical fixes deployed and verified
-**Priority:** RESOLVED - Contract signing flow fully operational
+**Last Updated:** Nov 24, 2025, 21:15
+**Status:** 🔴 IN PROGRESS - Hash key lookup failing despite expand parameter working
+**Priority:** CRITICAL - Contract creation blocked by signing URL extraction bug
 
 ## 🚀 DEPLOYMENT STATUS
 
@@ -17,15 +17,16 @@
 **Migration:** `20251124184554_add_sms_delivery_tracking` - Applied in production
 **Backend:** Restarted (kimonokittens-dashboard service)
 
-**All fixes are LIVE and verified:**
-- ✅ SMS includes signing URLs (fixed key format mismatch)
+**Fixes deployed (partial success):**
+- ✅ Expand parameter working (retrieves 2 participants with signing URLs)
+- ✅ Database has signing URLs in participants table
+- ❌ **CRITICAL BUG:** Hash key lookup fails - "Tenant signing URL is missing"
 - ✅ Email delivery tracked correctly (webhook handler fixed)
 - ✅ Contract SMS types validated (invitation + completion)
 - ✅ WebSocket handlers working (no console errors)
 - ✅ Toast shows firstname + sent methods
 - ✅ UI condensed: 2 lines without label columns
 - ✅ Database tracks SMS delivery (schema updated)
-- ✅ Personal number format audit complete (31 occurrences checked)
 
 ---
 
@@ -33,7 +34,7 @@
 
 ### 1. SMS Missing Signing URL
 **Priority:** 🔴 CRITICAL
-**Status:** ✅ COMPLETE (Nov 24, 2025 - 17:00)
+**Status:** 🔴 IN PROGRESS - Hash lookup bug discovered (Nov 24, 2025 - 21:15)
 
 **Problem:**
 - SMS only shows: "Du har blivit inbjuden att skriva på ett hyresavtal med Kimono Kittens! Signera med BankID här:"
@@ -78,18 +79,54 @@
 7. ⏳ Verify SMS includes actual signing URLs
 
 **Implementation Status:**
-- ✅ **COMPLETE & DEPLOYED** - All fixes verified in production (Nov 24, 2025 - 20:25)
-- **Root cause discovered:** Personal number key format mismatch
-  - Zigned API returns personal_number with/without hyphens
-  - Hash keys weren't stripping non-digits
-  - Lookups failed → signing URLs appeared missing
+- 🔴 **BLOCKED** - Hash lookup fails despite expand parameter working (Nov 24, 2025 - 21:15)
 
-**Final fix (commit db5cf82):**
-- `lib/zigned_client_v3.rb:512` - Strip non-digits in extract_signing_links
-- Now consistent with contract_signer.rb lookups (lines 138-139)
+**Current Evidence (Production Logs):**
+```
+DEBUG: Fetching agreement details with expanded participants to get signing URLs
+DEBUG: Retrieved 2 participants with signing URLs  ← FETCH SUCCEEDED!
+✅ Signing case created: cmidkpfw90ao841ekwb5d6ddi
+❌ Error creating contract: Tenant signing URL is missing - cannot send SMS invitation
+```
 
-**Files modified:**
-  - `lib/zigned_client_v3.rb:308-372,512` - Expand parameter + key format fix
+**Database Evidence:**
+```json
+"participants":[{
+  "id":"participant-862db577ed660dc1",
+  "name":"Adam McCarthy",
+  "signing_url":"https://www.zigned.se/sign/cmidkpfw90ao841ekwb5d6ddi/cmidkph830aob41ek1gyzhld5"
+}]
+```
+
+**Root Cause Analysis (Nov 24, 21:15):**
+- ✅ Expand parameter works: `GET /agreements/:id?expand=participants` succeeds
+- ✅ Signing URLs present in database (verified via admin UI)
+- ❌ **Hash key lookup fails** in `lib/zigned_client_v3.rb:507-515`
+- **Likely issue**: Field name `participant[:personal_number]` is incorrect
+  - Code strips non-digits: `participant[:personal_number]&.gsub(/\D/, '')`
+  - But if field name is wrong (e.g., `personnummer` in Swedish), lookup returns nil
+  - Hash key becomes nil → lookup fails → "Tenant signing URL is missing"
+
+**Code Location (lib/zigned_client_v3.rb:507-515):**
+```ruby
+def extract_signing_links(participants, signers)
+  participants.each_with_object({}) do |participant, hash|
+    url = participant[:signing_url] || participant[:signing_room_url]
+    clean_pnr = participant[:personal_number]&.gsub(/\D/, '')  # ← SUSPECT LINE
+    hash[clean_pnr] = url if clean_pnr && url
+  end
+end
+```
+
+**Next Investigation:**
+1. Check OpenAPI spec for correct field name in expanded participant response
+2. Add debug logging to see what fields are actually present in participant hash
+3. Verify if Zigned uses `personnummer` (Swedish) vs `personal_number` (English)
+4. Update `extract_signing_links` to use correct field name
+5. Test contract creation again
+
+**Files modified (commit db5cf82):**
+  - `lib/zigned_client_v3.rb:308-372,512` - Expand parameter + key stripping
   - `lib/contract_signer.rb:436-444` - URL validation before SMS
   - `lib/models/sms_event.rb:36` - Added contract SMS types
   - `handlers/zigned_webhook_handler.rb:310-317` - Email delivery tracking fix
@@ -340,12 +377,14 @@ model ContractParticipant {
 
 ## 📊 PROGRESS TRACKING
 
-**Completed:** 7/9 (78%)
-**In Progress:** 0/9
-**Future Work:** 2/9
+**Completed:** 6/9 (67%)
+**In Progress:** 1/9 (11%)
+**Future Work:** 2/9 (22%)
+
+**🔴 In Progress:**
+1. 🔴 **Issue #1** - SMS missing signing URL (expand works, hash lookup fails)
 
 **✅ Completed Issues (Nov 24, 2025 - Session):**
-1. ✅ **Issue #1** - SMS missing signing URL (key format + expand parameter)
 2. ✅ **Issue #2** - Toast notification (enhanced: firstname + sent methods)
 3. ✅ **Issue #3** - WebSocket handlers (contract_update + contract_list_changed)
 4. ✅ **Issue #4** - Email delivery tracking (solved by Issues #5 + webhook fix)
@@ -357,12 +396,13 @@ model ContractParticipant {
 8. 📋 **Issue #8** - SmsEvent table schema migration (low priority)
 9. 📋 **Issue #9** - Draft/Open status flow refactoring (prevents immediate activation)
 
-**🧪 Verification Complete:**
-- ✅ Signing URL extraction verified (key format fixed)
+**🧪 Verification Status:**
+- ✅ Expand parameter working (retrieves participants with URLs)
+- ✅ Database has signing URLs (verified via admin UI)
+- ❌ Hash key lookup failing (participant[:personal_number] returns nil)
 - ✅ Email delivery tracking working (participants created + flags set)
 - ✅ Webhook handlers operational (all 14 event types)
 - ✅ Admin UI shows condensed status correctly
-- ✅ Personal number format audit complete (31 occurrences - all correct)
 
 ---
 
@@ -536,5 +576,30 @@ Frontend relies on `admin_contracts_data` for actual state updates. The `contrac
 
 ---
 
-**Last Updated:** Nov 24, 2025, 14:35
-**Next Review:** After fixing Issue #1 (SMS missing URL)
+## 🛡️ PRODUCTION CHECKOUT PROTECTION (Nov 24, 2025)
+
+**Incident:** During debugging, production checkout `/home/kimonokittens/Projects/kimonokittens/` was contaminated with 205 files owned by `fredrik` user instead of `kimonokittens` user. This blocked webhook deployments and caused git operations to fail.
+
+**Root Cause:** Accidental direct editing of production files during debugging session (should have edited dev checkout at `/home/fredrik/Projects/kimonokittens/` instead).
+
+**Fix Applied:**
+```bash
+# Restore correct ownership
+sudo chown -R kimonokittens:kimonokittens /home/kimonokittens/Projects/kimonokittens/
+
+# Remove group write permission (filesystem protection)
+sudo chmod -R g-w /home/kimonokittens/Projects/kimonokittens/
+```
+
+**Result:** Production checkout is now READ-ONLY for fredrik user (group member), writable only for kimonokittens user (owner).
+
+**Documentation Updated:**
+- `/home/fredrik/Projects/kimonokittens/CLAUDE.md` - Added "Working Directory Protocol" section with clear workflow rules
+- Filesystem protection prevents future accidental production edits
+
+**Lesson Learned:** All changes MUST go through: dev checkout → git push → webhook → production. Never edit production files directly.
+
+---
+
+**Last Updated:** Nov 24, 2025, 21:15
+**Next Review:** After fixing hash lookup bug in extract_signing_links
