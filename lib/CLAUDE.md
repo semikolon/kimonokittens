@@ -57,9 +57,9 @@ For LLM assistants and future developers:
 
 **The repository is the ONLY gateway between models and database. Missing fields = silent data loss.**
 
-### Three-Layer Consistency Checklist
+### Five-Layer Consistency Checklist
 
-When adding/modifying model fields, verify ALL THREE layers match:
+When adding/modifying model fields, verify ALL FIVE layers match:
 
 1. **✅ Domain Model** (`lib/models/*.rb`)
    - `attr_reader` declarations
@@ -74,6 +74,16 @@ When adding/modifying model fields, verify ALL THREE layers match:
 3. **✅ Database Schema** (`prisma/schema.prisma`)
    - Column exists with correct type
    - Migrations applied to production
+
+4. **✅ API Response** (`handlers/*_handler.rb`)
+   - JSON serialization includes field
+   - Check `.map` blocks that build API responses
+   - Example: `participants.map { |p| { id: p.id, ... } }`
+
+5. **✅ TypeScript Interface** (`dashboard/src/views/*.tsx`)
+   - Frontend type definitions match API response
+   - Check interfaces imported by components
+   - Example: `SignedContract.participants` type
 
 ### Common Bugs from Missing Repository Fields
 
@@ -105,6 +115,21 @@ end
 # Admin UI shows "—" even though database has data
 ```
 
+**Bug #3: API handler filters out fields** (Nov 24, 2025 - ContractParticipant SMS fields)
+```ruby
+# Model + repository + database all have fields, but API handler excludes them:
+participants: participants.map do |p|
+  {
+    id: p.id,
+    email_delivered: p.email_delivered,
+    # sms_delivered: p.sms_delivered,  # ← MISSING!
+  }
+end
+
+# Result: Frontend always sees undefined, UI shows "Väntar på notifieringar"
+# even after SMS successfully delivered. Hard reload doesn't fix (API issue).
+```
+
 ### Verification Commands
 
 **Before deploying model changes:**
@@ -129,14 +154,19 @@ diff <(grep attr_reader lib/models/contract_participant.rb | grep -oP ':\w+' | s
 1. **Check database FIRST**: `psql -d kimonokittens_production -c "SELECT * FROM \"ContractParticipant\" LIMIT 1"`
 2. **Check repository hydrate()**: Does it read the field from `row[:fieldName]`?
 3. **Check repository dehydrate()**: Does it write the field to `fieldName: model.field`?
-4. **Check model**: Does `attr_reader` include the field?
+4. **Check API handler**: Does JSON serialization include the field?
+5. **Check TypeScript interface**: Does frontend type definition include the field?
+6. **Check model**: Does `attr_reader` include the field?
 
-**Pattern**: Data in database but not in API → repository hydrate() missing field
-**Pattern**: Code sets value but doesn't persist → repository dehydrate() missing field
+**Debugging patterns:**
+- Data in database but not in API → repository hydrate() OR API handler missing field
+- Code sets value but doesn't persist → repository dehydrate() missing field
+- Hard reload doesn't fix UI → API handler filtering out field (not WebSocket issue)
 
 ### Historical Incidents
 
-- **Nov 24, 2025**: ContractParticipant `sms_delivered`/`sms_delivered_at` - model had fields, repository didn't persist them
+- **Nov 24, 2025 (22:52)**: ContractParticipant `sms_delivered`/`sms_delivered_at` - API handler filtered out fields
+- **Nov 24, 2025 (22:00)**: ContractParticipant `sms_delivered`/`sms_delivered_at` - repository hydrate/dehydrate missing
 - **Nov 14, 2025**: Tenant `personnummer` - repository SELECT excluded field, caused UI to show "—"
 
 ---
