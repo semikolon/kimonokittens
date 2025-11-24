@@ -279,7 +279,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                 {tenant.tenant_personnummer ? 'Ändra personnummer' : 'Lägg till personnummer'}
               </button>
             ) : (
-              <div className="flex items-center gap-2">
+              <form onSubmit={(e) => { e.preventDefault(); handleSavePersonnummer(); }} className="flex items-center gap-2">
                 <input
                   type="text"
                   value={personnummerInput}
@@ -289,20 +289,21 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                   className="px-3 py-2 rounded-lg bg-slate-950/60 border border-purple-900/40 text-purple-100 text-sm placeholder-purple-400/40 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30"
                 />
                 <button
-                  onClick={handleSavePersonnummer}
+                  type="submit"
                   disabled={updatingPersonnummer}
                   className="px-4 py-2 rounded-lg text-sm font-medium bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {updatingPersonnummer ? 'Sparar…' : 'Spara'}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setEditingPersonnummer(false)}
                   disabled={updatingPersonnummer}
                   className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-800/50 hover:bg-slate-700/50 text-purple-200 transition-all"
                 >
                   Avbryt
                 </button>
-              </div>
+              </form>
             )
           )}
           {tenant.has_completed_contract && tenant.tenant_personnummer && (
@@ -338,7 +339,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
               {tenant.tenant_facebook_id ? 'Ändra Facebook ID' : 'Lägg till Facebook ID'}
             </button>
           ) : (
-            <div className="flex items-center gap-2">
+            <form onSubmit={(e) => { e.preventDefault(); handleSaveFacebookId(); }} className="flex items-center gap-2">
               <input
                 type="text"
                 value={facebookIdInput}
@@ -348,20 +349,21 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                 className="px-3 py-2 rounded-lg bg-slate-950/60 border border-purple-900/40 text-purple-100 text-sm placeholder-purple-400/40 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30"
               />
               <button
-                onClick={handleSaveFacebookId}
+                type="submit"
                 disabled={updatingFacebookId}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {updatingFacebookId ? 'Sparar…' : 'Spara'}
               </button>
               <button
+                type="button"
                 onClick={() => setEditingFacebookId(false)}
                 disabled={updatingFacebookId}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-800/50 hover:bg-slate-700/50 text-purple-200 transition-all"
               >
                 Avbryt
               </button>
-            </div>
+            </form>
           )}
         </div>
 
@@ -386,7 +388,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
               {tenant.tenant_phone ? 'Ändra telefonnummer' : 'Lägg till telefonnummer'}
             </button>
           ) : (
-            <div className="flex items-center gap-2">
+            <form onSubmit={(e) => { e.preventDefault(); handleSavePhone(); }} className="flex items-center gap-2">
               <input
                 type="tel"
                 value={phoneInput}
@@ -396,20 +398,21 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                 className="px-3 py-2 rounded-lg bg-slate-950/60 border border-purple-900/40 text-purple-100 text-sm placeholder-purple-400/40 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30"
               />
               <button
-                onClick={handleSavePhone}
+                type="submit"
                 disabled={updatingPhone}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {updatingPhone ? 'Sparar…' : 'Spara'}
               </button>
               <button
+                type="button"
                 onClick={() => setEditingPhone(false)}
                 disabled={updatingPhone}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-800/50 hover:bg-slate-700/50 text-purple-200 transition-all"
               >
                 Avbryt
               </button>
-            </div>
+            </form>
           )}
         </div>
       </div>
@@ -458,7 +461,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                   Ändra rum
                 </button>
               ) : (
-                <div className="flex items-center gap-2">
+                <form onSubmit={(e) => { e.preventDefault(); handleSaveRoom(); }} className="flex items-center gap-2">
                   <input
                     type="text"
                     value={roomInput}
@@ -468,20 +471,21 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                     className="px-3 py-2 rounded-lg bg-slate-950/60 border border-purple-900/40 text-purple-100 text-sm placeholder-purple-400/40 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30"
                   />
                   <button
-                    onClick={handleSaveRoom}
+                    type="submit"
                     disabled={updatingRoom}
                     className="px-4 py-2 rounded-lg text-sm font-medium bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {updatingRoom ? 'Sparar…' : 'Spara'}
                   </button>
                   <button
+                    type="button"
                     onClick={() => setEditingRoom(false)}
                     disabled={updatingRoom}
                     className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-800/50 hover:bg-slate-700/50 text-purple-200 transition-all"
                   >
                     Avbryt
                   </button>
-                </div>
+                </form>
               )}
             </div>
 
@@ -507,7 +511,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                       Sätt utflyttningsdatum
                     </button>
                   ) : (
-                    <div className="flex items-center gap-2">
+                    <form onSubmit={(e) => { e.preventDefault(); handleSetDepartureDate(); }} className="flex items-center gap-2">
                       <input
                         type="date"
                         value={departureDate}
@@ -516,7 +520,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                                  text-purple-100 text-sm focus:outline-none focus:border-purple-500"
                       />
                       <button
-                        onClick={handleSetDepartureDate}
+                        type="submit"
                         disabled={!departureDate}
                         className="px-4 py-2 rounded-lg text-sm font-medium
                                  bg-cyan-600 hover:bg-cyan-700 text-white
@@ -526,6 +530,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                         Spara
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setIsSettingDepartureDate(false)
                           setDepartureDate('')
@@ -536,7 +541,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
                       >
                         Avbryt
                       </button>
-                    </div>
+                    </form>
                   )}
                 </>
               )}
