@@ -132,23 +132,23 @@ This two-track approach: immediate admin edits + reviewed tenant proposals.
 
 - [x] Move `household_todos.md` to `handbook/docs/` (future handbook compatibility)
 - [x] Update `TodosHandler` to read from new path
-- [ ] Add `rugged` gem to Gemfile (if not present)
-- [ ] Create `AdminTodosHandler` with POST route under `/api/admin/todos`
-- [ ] Validate `items` array, sanitize whitespace, reject blank rows
-- [ ] Implement Rugged git commit (write blob → index → tree → commit)
-- [ ] Add async git push after commit
-- [ ] Call `DataBroadcaster.broadcast_todos` after successful commit
-- [ ] Wire up route in `puma_server.rb`
+- [x] Add `rugged` gem to Gemfile (already present from handbook_handler.rb)
+- [x] Create `AdminTodosHandler` with POST route under `/api/admin/todos`
+- [x] Validate `items` array, sanitize whitespace, reject blank rows
+- [x] Implement Rugged git commit (write blob → index → tree → commit)
+- [x] Add async git push after commit
+- [x] Call `DataBroadcaster.fetch_and_publish_todos` after successful commit
+- [x] Wire up route in `puma_server.rb`
 
 ### Phase 2: Frontend (TodoWidget)
 
-- [ ] Extend `TodoWidget` to detect admin mode
-- [ ] Render editable inputs with identical styling
-- [ ] Maintain local state array for edits
-- [ ] On save, call `/api/admin/todos` with `ensureAuth()`
-- [ ] Add/remove buttons (icon-only, subtle)
-- [ ] Toast notifications ("Sparat" on success)
-- [ ] 300ms debounce for rapid edits
+- [x] Extend `TodoWidget` to detect admin mode (`isAdmin` prop)
+- [x] Render editable inputs with identical styling
+- [x] Maintain local state array for edits
+- [x] On save, call `/api/admin/todos` with `ensureAuth()`
+- [x] Add/remove buttons (icon-only, subtle)
+- [x] Save status indicator ("Sparat!" on success)
+- [x] 300ms debounce for rapid edits
 
 ### Phase 3: Testing
 
@@ -166,4 +166,5 @@ This two-track approach: immediate admin edits + reviewed tenant proposals.
 ## Status
 
 - **Nov 25, 2025**: File moved to `handbook/docs/`, plan updated with Git persistence
-- **Pending**: Backend implementation, frontend implementation
+- **Nov 25, 2025**: Backend + Frontend implementation complete, deployed to production
+- **Pending**: End-to-end testing
