@@ -88,25 +88,50 @@ export function TodoWidget({ isAdmin = false }: TodoWidgetProps) {
     setEditingItems(newItems)
   }
 
-  // Track original value on focus to avoid PIN prompt if no actual edit
-  const originalValueRef = useRef<string>('')
+  // Track original items when editing session starts (for clustering edits)
+  const originalItemsRef = useRef<string[] | null>(null)
+  const listContainerRef = useRef<HTMLUListElement>(null)
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleItemFocus = (index: number) => {
-    originalValueRef.current = editingItems[index]
-  }
-
-  const handleItemBlur = (index: number) => {
-    // Only save if the value actually changed
-    if (editingItems[index] !== originalValueRef.current) {
-      debouncedSave(editingItems)
+  const handleItemFocus = () => {
+    // Snapshot items when starting to edit (first focus in the list)
+    if (originalItemsRef.current === null) {
+      originalItemsRef.current = [...editingItems]
+    }
+    // Cancel any pending blur-save since we're still in the list
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current)
+      blurTimeoutRef.current = null
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+  const handleItemBlur = () => {
+    // Short delay to let focus settle on next element
+    blurTimeoutRef.current = setTimeout(() => {
+      // Check if focus moved to another element within the todo list
+      const activeEl = document.activeElement
+      const stillInList = listContainerRef.current?.contains(activeEl) ||
+                          activeEl?.closest('button')?.textContent?.includes('Lägg till')
+
+      if (!stillInList && originalItemsRef.current !== null) {
+        // Focus left the todo list - check if anything changed and save
+        const hasChanges = JSON.stringify(editingItems) !== JSON.stringify(originalItemsRef.current)
+        if (hasChanges) {
+          debouncedSave(editingItems)
+        }
+        // Reset for next editing session
+        originalItemsRef.current = null
+      }
+    }, 100)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      // Save immediately on Enter
+      // Save immediately on Enter and reset tracking
       if (debounceRef.current) clearTimeout(debounceRef.current)
+      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current)
+      originalItemsRef.current = null
       saveTodos(editingItems)
     }
   }
@@ -138,7 +163,7 @@ export function TodoWidget({ isAdmin = false }: TodoWidgetProps) {
         </div>
       )}
 
-      <ul className="space-y-2">
+      <ul ref={listContainerRef} className="space-y-2">
         {items.map((text, index) => (
           <li key={`todo-${index}`} className="flex items-center group">
             {/* Glowing orange bullet point */}
@@ -166,9 +191,9 @@ export function TodoWidget({ isAdmin = false }: TodoWidgetProps) {
                   type="text"
                   value={text}
                   onChange={(e) => handleItemChange(index, e.target.value)}
-                  onFocus={() => handleItemFocus(index)}
-                  onBlur={() => handleItemBlur(index)}
-                  onKeyDown={(e) => handleKeyDown(e, index)}
+                  onFocus={handleItemFocus}
+                  onBlur={handleItemBlur}
+                  onKeyDown={handleKeyDown}
                   className="flex-1 bg-transparent border-none focus:outline-none text-white font-bold transition-shadow py-0 leading-normal shadow-[0_1px_0_transparent] hover:shadow-[0_1px_0_rgba(168,85,247,0.3)] focus:shadow-[0_1px_0_#c084fc]"
                   placeholder="Skriv något..."
                   disabled={isSaving}
