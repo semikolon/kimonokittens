@@ -590,7 +590,7 @@ class ContractSigner
       expires_at: Time.now + (30 * 24 * 60 * 60), # 30 days from now
       created_at: Time.now,
       updated_at: Time.now,
-      generation_status: 'generated',
+      generation_status: 'completed', # PDF already generated
       generation_completed_at: Time.now,
       validation_status: 'completed',
       validation_completed_at: Time.now,
