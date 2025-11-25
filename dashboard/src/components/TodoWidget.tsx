@@ -17,9 +17,15 @@ export function TodoWidget({ isAdmin = false }: TodoWidgetProps) {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastSaveTimeRef = useRef<number>(0)
 
   // Sync from WebSocket data when not in editing mode
+  // Grace period after save prevents stale WebSocket data from overwriting
   useEffect(() => {
+    const timeSinceLastSave = Date.now() - lastSaveTimeRef.current
+    if (timeSinceLastSave < 2000) {
+      return // Wait for WebSocket to catch up with our save
+    }
     if (todoData && !isSaving) {
       setEditingItems(todoData.map(t => t.text))
     }
@@ -60,6 +66,8 @@ export function TodoWidget({ isAdmin = false }: TodoWidgetProps) {
         setSaveStatus('saved')
         // Update local state to match what was saved
         setEditingItems(cleanItems)
+        // Mark save time so we ignore stale WebSocket data for 2s
+        lastSaveTimeRef.current = Date.now()
       } else {
         const data = await response.json()
         console.error('Failed to save todos:', data.error)
