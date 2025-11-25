@@ -121,6 +121,11 @@ class DataBroadcaster
     $data_broadcaster&.broadcast_contract_list_changed
   end
 
+  # Public method for external callers to trigger todo broadcast
+  def broadcast_todos
+    fetch_and_publish_todos
+  end
+
   private
 
   def periodic(interval_sec, &block)

@@ -69,7 +69,7 @@ class AdminTodosHandler
 
       # Broadcast updated todos via WebSocket
       if defined?($data_broadcaster) && $data_broadcaster
-        $data_broadcaster.fetch_and_publish_todos
+        $data_broadcaster.broadcast_todos
         puts "AdminTodosHandler: Broadcasted todo update"
       end
 

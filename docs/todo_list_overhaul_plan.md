@@ -137,7 +137,7 @@ This two-track approach: immediate admin edits + reviewed tenant proposals.
 - [x] Validate `items` array, sanitize whitespace, reject blank rows
 - [x] Implement Rugged git commit (write blob → index → tree → commit)
 - [x] Add async git push after commit
-- [x] Call `DataBroadcaster.fetch_and_publish_todos` after successful commit
+- [x] Call `DataBroadcaster.broadcast_todos` after successful commit
 - [x] Wire up route in `puma_server.rb`
 
 ### Phase 2: Frontend (TodoWidget)
