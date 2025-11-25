@@ -476,12 +476,18 @@ bundle exec rspec
 - **Signature verification**: Stripe-style timestamped HMAC-SHA256 prevents replay attacks
 
 ### Monitoring
+
+**Backend logs**: `journalctl -u kimonokittens-dashboard` (no sudo required - system service logs are readable by all users)
+
 ```bash
 # Real-time contract events
 journalctl -u kimonokittens-dashboard -f | grep -E "(📝|✍️|🎉|📥|❌)"
 
 # All Zigned webhooks
 journalctl -u kimonokittens-dashboard | grep -E "(agreement|participant|email_event)"
+
+# Errors and exceptions
+journalctl -u kimonokittens-dashboard --since "10 minutes ago" | grep -E "Error|Exception"
 ```
 
 ### Documentation

@@ -590,14 +590,11 @@ class ContractSigner
       expires_at: Time.now + (30 * 24 * 60 * 60), # 30 days from now
       created_at: Time.now,
       updated_at: Time.now,
-      landlord_name: landlord[:name],
-      landlord_email: landlord[:email],
-      landlord_personnummer: landlord[:personnummer],
-      tenant_name: tenant.name,
-      tenant_email: tenant.email,
-      tenant_personnummer: tenant.personnummer,
       generation_status: 'generated',
-      email_status: 'pending'
+      generation_completed_at: Time.now,
+      validation_status: 'completed',
+      validation_completed_at: Time.now,
+      email_delivery_status: 'not_applicable'
     )
 
     repo = SignedContractRepository.new

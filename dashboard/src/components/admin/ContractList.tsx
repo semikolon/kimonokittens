@@ -10,7 +10,28 @@ interface ContractListProps {
 
 export const ContractList: React.FC<ContractListProps> = ({ contracts }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  // Persist expansion state in localStorage to survive WebSocket data updates
+  const [expandedId, setExpandedId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('admin_expanded_member_id')
+    } catch {
+      return null
+    }
+  })
+
+  // Save expansion state to localStorage whenever it changes
+  React.useEffect(() => {
+    try {
+      if (expandedId) {
+        localStorage.setItem('admin_expanded_member_id', expandedId)
+      } else {
+        localStorage.removeItem('admin_expanded_member_id')
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, [expandedId])
 
   // Segment members into current vs historical (memoized to stabilize references)
   const { currentMembers, historicalMembers} = React.useMemo(() => {
