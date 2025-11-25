@@ -52,6 +52,21 @@ class AdminTodosHandler
     # Build markdown content
     content = "# Household Todos\n\n" + items.map { |t| "- #{t}" }.join("\n") + "\n"
 
+    # Check if content is unchanged (avoid empty commits)
+    begin
+      existing_content = File.read(TODO_PATH)
+      if existing_content == content
+        puts "AdminTodosHandler: No changes detected, skipping commit"
+        return json_response(200, {
+          success: true,
+          items: items,
+          unchanged: true
+        })
+      end
+    rescue Errno::ENOENT
+      # File doesn't exist yet, proceed with commit
+    end
+
     # Commit to Git
     begin
       commit_oid = git_commit(content)
