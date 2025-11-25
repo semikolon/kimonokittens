@@ -15,7 +15,10 @@
 **Production Status:**
 - ✅ Self-contract creation fully debugged (3 constraint violations fixed)
 - ✅ Reload window ensures both kiosk + browser reload after deployment (2-minute window)
-- ✅ Ready for landlord self-contract testing
+- ✅ **VERIFIED:** Landlord self-contract created successfully (SELF-cef6f59d, 2025-11-25 12:20:06)
+  - Status: completed, both signatures fulfilled
+  - Participants: landlord + tenant roles, both with SMS delivered
+  - All database constraints satisfied
 
 **Key Fixes:**
 - **Database constraints:** emailDeliveryStatus='delivered' (not 'not_applicable'), generation_status='completed' (not 'generated')
