@@ -7,25 +7,31 @@
 
 ## 🚀 DEPLOYMENT STATUS
 
-**Latest Session (Nov 24-25, 23:20-00:30):**
+**Latest Session (Nov 24-25, 23:20-01:37):**
 - `aee6922` - **UI FIX:** Timeline timezone display (Europe/Stockholm)
 - `a55301b` - **UI POLISH:** Timeline one-liner format (timestamp - actor + event)
 - `af1527d` - **SYSTEM FIX:** DRY debounce duration (backend → frontend via WebSocket)
 - `af1527d` - **UI SIMPLIFY:** Hide timeline completely, fix vertical alignment for completed contracts
 - `e54e311` - **FEATURE:** Self-contract detection (tenant = landlord)
 - `2eece73` - **FIX:** Self-contract auto-complete both signatures (not just landlord)
+- `962f2fb` - **DOCS:** Update fixes plan with session progress
+- `2a60f5a` - **FIX:** Self-contract creation bug (invalid SignedContract keywords) + expansion persistence + logs docs
 
 **Production Status:**
 - ✅ Adam McCarthy contract created & signed by landlord (pending tenant signature)
 - ✅ Rasmus Kasurinen contract created & signed by landlord (pending tenant signature)
-- ✅ Old unsigned self-contract deleted (next creation will auto-complete)
-- ✅ All deployments completed successfully
+- ✅ Old unsigned self-contract deleted (manual DB cleanup)
+- ✅ Self-contract creation bug fixed (invalid model keywords removed)
+- ✅ Row expansion state persists across WebSocket updates (localStorage)
+- ✅ Backend logs documented in lib/CLAUDE.md
 
 **Key Improvements:**
 - **Timezone accuracy:** All contract events now display in Swedish time (CET/CEST)
 - **Single source of truth:** Webhook debounce duration read from backend (no hardcoded 120s)
 - **Smart contracts:** Self-contracts (landlord = tenant) auto-complete both signatures immediately
 - **Cleaner UI:** Timeline hidden in expanded view, status lines condensed
+- **Expansion persistence:** Admin rows stay expanded during WebSocket data updates
+- **Logs discoverability:** Backend errors accessible via `journalctl -u kimonokittens-dashboard`
 
 ---
 
