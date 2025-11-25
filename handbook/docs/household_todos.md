@@ -1,5 +1,5 @@
 # Household Todos
 
-- Brottas & meditera
-- Hitta vår nya crew
-- Klipp gräsmattan
+- Betala hyran
+- Hitta ersättare till Adam
+- Fixa mögelknaset
