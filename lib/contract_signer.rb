@@ -611,9 +611,8 @@ class ContractSigner
       role: 'landlord',
       name: landlord[:name],
       email: landlord[:email],
-      phone: landlord[:phone],
-      personnummer: landlord[:personnummer],
-      signed: true,
+      personal_number: landlord[:personnummer],
+      status: 'fulfilled', # Already signed (implicit)
       signed_at: Time.now,
       sms_delivered: true, # Pretend SMS sent
       sms_delivered_at: Time.now,
@@ -628,9 +627,8 @@ class ContractSigner
       role: 'tenant',
       name: tenant.name,
       email: tenant.email,
-      phone: tenant.phone,
-      personnummer: tenant.personnummer,
-      signed: true,
+      personal_number: tenant.personnummer,
+      status: 'fulfilled', # Already signed (implicit)
       signed_at: Time.now,
       sms_delivered: true, # Pretend SMS sent
       sms_delivered_at: Time.now,
