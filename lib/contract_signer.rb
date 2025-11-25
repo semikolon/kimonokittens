@@ -579,10 +579,11 @@ class ContractSigner
       tenant_id: tenant_id,
       case_id: "SELF-#{contract_id[0..7]}", # No real Zigned case ID
       pdf_url: pdf_path,
-      status: 'landlord_signed', # Landlord is already signed (it's you!)
+      status: 'completed', # Both signatures automatic (you signed with yourself!)
       landlord_signed: true,  # Implicit signature
       landlord_signed_at: Time.now,
-      tenant_signed: false,
+      tenant_signed: true,    # Also implicit (same person!)
+      tenant_signed_at: Time.now,
       landlord_signing_url: '', # No Zigned URLs needed
       tenant_signing_url: '',
       test_mode: test_mode,
@@ -602,11 +603,11 @@ class ContractSigner
     repo = SignedContractRepository.new
     repo.save(signed_contract)
 
-    puts "✅ Self-contract created (landlord auto-signed)"
+    puts "✅ Self-contract created (auto-completed)"
     puts "   Contract ID: #{contract_id}"
-    puts "   Status: landlord_signed (waiting for tenant only)"
+    puts "   Status: completed (both signatures automatic)"
     puts ""
-    puts "💡 Note: No Zigned case created - landlord signature is implicit"
+    puts "💡 Note: No Zigned case created - you signed with yourself!"
 
     {
       pdf_path: pdf_path,
