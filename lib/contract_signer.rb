@@ -594,15 +594,57 @@ class ContractSigner
       generation_completed_at: Time.now,
       validation_status: 'completed',
       validation_completed_at: Time.now,
-      email_delivery_status: 'not_applicable'
+      email_delivery_status: 'delivered' # Pretend emails sent (maintains UI consistency)
     )
 
     repo = SignedContractRepository.new
     repo.save(signed_contract)
 
+    # Create participant records (pretend ceremony happened)
+    require_relative 'models/contract_participant'
+    participant_repo = Persistence.contract_participants
+
+    landlord_participant = ContractParticipant.new(
+      id: SecureRandom.uuid,
+      contract_id: signed_contract.id,
+      participant_id: nil, # No Zigned participant ID
+      role: 'landlord',
+      name: landlord[:name],
+      email: landlord[:email],
+      phone: landlord[:phone],
+      personnummer: landlord[:personnummer],
+      signed: true,
+      signed_at: Time.now,
+      sms_delivered: true, # Pretend SMS sent
+      sms_delivered_at: Time.now,
+      created_at: Time.now,
+      updated_at: Time.now
+    )
+
+    tenant_participant = ContractParticipant.new(
+      id: SecureRandom.uuid,
+      contract_id: signed_contract.id,
+      participant_id: nil, # No Zigned participant ID
+      role: 'tenant',
+      name: tenant.name,
+      email: tenant.email,
+      phone: tenant.phone,
+      personnummer: tenant.personnummer,
+      signed: true,
+      signed_at: Time.now,
+      sms_delivered: true, # Pretend SMS sent
+      sms_delivered_at: Time.now,
+      created_at: Time.now,
+      updated_at: Time.now
+    )
+
+    participant_repo.save(landlord_participant)
+    participant_repo.save(tenant_participant)
+
     puts "✅ Self-contract created (auto-completed)"
     puts "   Contract ID: #{contract_id}"
     puts "   Status: completed (both signatures automatic)"
+    puts "   Participants: 2 (landlord + tenant, SMS marked delivered)"
     puts ""
     puts "💡 Note: No Zigned case created - you signed with yourself!"
 

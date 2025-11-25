@@ -66,6 +66,13 @@ class DataBroadcaster
       fetch_and_publish('electricity_price_data', "#{@base_url}/data/electricity_prices")
       fetch_and_publish('electricity_daily_costs_data', "#{@base_url}/api/electricity/daily_costs")
       fetch_and_publish_todos
+
+      # Check if reload window is active (deployment just happened)
+      if $reload_handler&.in_reload_window?
+        puts "DataBroadcaster: Reload window active - sending reload to new client"
+        @pubsub.publish($reload_handler.reload_message)
+      end
+
       puts "DataBroadcaster: Immediate data sent to new client"
     end
   end

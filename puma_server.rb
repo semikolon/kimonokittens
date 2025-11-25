@@ -279,7 +279,7 @@ end
 # Initialize global PubSub instance and DataBroadcaster
 $pubsub = PubSub.new
 $data_broadcaster = DataBroadcaster.new($pubsub)
-reload_handler = ReloadHandler.new($pubsub)
+$reload_handler = ReloadHandler.new($pubsub)
 
 # Create Rack application
 app = Rack::Builder.new do
@@ -306,7 +306,7 @@ app = Rack::Builder.new do
   end
 
   map "/api/reload" do
-    run reload_handler
+    run $reload_handler
   end
 
   map "/api/heating/cost_per_degree" do
