@@ -79,10 +79,22 @@ class ContractSigner
     puts "👤 Loading tenant: #{tenant.name}"
     puts "   Email: #{tenant.email}"
     puts "   Phone: #{tenant.phone}"
-    puts "   Start date: #{tenant.start_date}"
+    puts "   Start_date: #{tenant.start_date}"
     puts "   Test mode: #{test_mode ? 'YES (free, invalid signatures)' : 'NO (production, real BankID)'}"
     puts "   Send emails: #{send_emails ? 'YES' : 'NO (manual link sharing)'}"
     puts ""
+
+    # Check if tenant IS the landlord (self-contract)
+    landlord = LandlordProfile.info
+    tenant_pnr = tenant.personnummer&.gsub(/\D/, '')
+    landlord_pnr = landlord[:personnummer]&.gsub(/\D/, '')
+    is_self_contract = tenant_pnr && landlord_pnr && tenant_pnr == landlord_pnr
+
+    if is_self_contract
+      puts "🏠 Self-contract detected (tenant = landlord)"
+      puts "   Skipping Zigned - landlord signature implicit"
+      return create_self_contract(tenant_id: tenant_id, tenant: tenant, test_mode: test_mode)
+    end
 
     # Step 1: Generate PDF from database
     # Sanitize Swedish characters for filesystem-safe filename
@@ -540,5 +552,68 @@ class ContractSigner
     end
 
     { tenant_success: tenant_success, landlord_success: landlord_success }
+  end
+
+  # Creates a self-contract for when tenant IS the landlord
+  # Skips Zigned entirely - landlord signature is implicit
+  def self.create_self_contract(tenant_id:, tenant:, test_mode:)
+    # Generate PDF (same as normal flow)
+    name_parts = tenant.name.split(' ')
+    first_name = name_parts.first
+    surname = name_parts.last
+    sanitized_first = first_name.tr('åäöÅÄÖ', 'aaoAAO')
+    sanitized_surname = surname.tr('åäöÅÄÖ', 'aaoAAO')
+    pdf_filename = "#{sanitized_first}_#{sanitized_surname}_Hyresavtal_#{tenant.start_date&.strftime('%Y-%m-%d') || 'DRAFT'}.pdf"
+    pdf_path = File.join(GENERATED_DIR, pdf_filename)
+
+    puts "📄 Generating contract PDF from database..."
+    ContractGeneratorHtml.generate_from_tenant_id(tenant_id, output_path: pdf_path)
+    puts "✅ PDF generated: #{pdf_path} (#{File.size(pdf_path)} bytes)"
+
+    # Create contract record with landlord already signed
+    contract_id = SecureRandom.uuid
+    landlord = LandlordProfile.info
+
+    signed_contract = SignedContract.new(
+      id: contract_id,
+      tenant_id: tenant_id,
+      case_id: "SELF-#{contract_id[0..7]}", # No real Zigned case ID
+      pdf_url: pdf_path,
+      status: 'landlord_signed', # Landlord is already signed (it's you!)
+      landlord_signed: true,  # Implicit signature
+      landlord_signed_at: Time.now,
+      tenant_signed: false,
+      landlord_signing_url: '', # No Zigned URLs needed
+      tenant_signing_url: '',
+      test_mode: test_mode,
+      expires_at: Time.now + (30 * 24 * 60 * 60), # 30 days from now
+      created_at: Time.now,
+      updated_at: Time.now,
+      landlord_name: landlord[:name],
+      landlord_email: landlord[:email],
+      landlord_personnummer: landlord[:personnummer],
+      tenant_name: tenant.name,
+      tenant_email: tenant.email,
+      tenant_personnummer: tenant.personnummer,
+      generation_status: 'generated',
+      email_status: 'pending'
+    )
+
+    repo = SignedContractRepository.new
+    repo.save(signed_contract)
+
+    puts "✅ Self-contract created (landlord auto-signed)"
+    puts "   Contract ID: #{contract_id}"
+    puts "   Status: landlord_signed (waiting for tenant only)"
+    puts ""
+    puts "💡 Note: No Zigned case created - landlord signature is implicit"
+
+    {
+      pdf_path: pdf_path,
+      case_id: signed_contract.case_id,
+      landlord_link: nil,
+      tenant_link: nil,
+      contract_id: contract_id
+    }
   end
 end
