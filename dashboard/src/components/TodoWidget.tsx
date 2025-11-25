@@ -88,8 +88,18 @@ export function TodoWidget({ isAdmin = false }: TodoWidgetProps) {
     setEditingItems(newItems)
   }
 
-  const handleItemBlur = () => {
-    debouncedSave(editingItems)
+  // Track original value on focus to avoid PIN prompt if no actual edit
+  const originalValueRef = useRef<string>('')
+
+  const handleItemFocus = (index: number) => {
+    originalValueRef.current = editingItems[index]
+  }
+
+  const handleItemBlur = (index: number) => {
+    // Only save if the value actually changed
+    if (editingItems[index] !== originalValueRef.current) {
+      debouncedSave(editingItems)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
@@ -156,9 +166,10 @@ export function TodoWidget({ isAdmin = false }: TodoWidgetProps) {
                   type="text"
                   value={text}
                   onChange={(e) => handleItemChange(index, e.target.value)}
-                  onBlur={handleItemBlur}
+                  onFocus={() => handleItemFocus(index)}
+                  onBlur={() => handleItemBlur(index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
-                  className="flex-1 bg-transparent border-b border-transparent hover:border-purple-500/30 focus:border-purple-400 focus:outline-none text-white font-bold transition-colors py-0 leading-normal"
+                  className="flex-1 bg-transparent border-none focus:outline-none text-white font-bold transition-shadow py-0 leading-normal shadow-[0_1px_0_transparent] hover:shadow-[0_1px_0_rgba(168,85,247,0.3)] focus:shadow-[0_1px_0_#c084fc]"
                   placeholder="Skriv något..."
                   disabled={isSaving}
                 />
