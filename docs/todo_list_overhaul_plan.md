@@ -1,36 +1,85 @@
-# Todo List Overhaul Plan – Admin Editing & Obsidian Compatibility
+# Todo List Overhaul Plan – Admin Editing & Git Persistence
 
 ## Goals
 
 1. **Editable from the admin dashboard**: When `/admin` view is active and the user unlocks with the existing PIN, the todo list should become editable inline (same typography/margins as kiosk view). Edits auto-save when pressing `Enter` or blurring the field, and changes propagate live to the kiosk view via the existing WebSocket channel.
-2. **Keep markdown as source of truth**: Todos continue to live in `household_todos.md` (git-managed) so future Obsidian integration is seamless.
-3. **PIN-gated write path**: All mutations require the same `X-Admin-Token` gate we’re already using for contracts/tenant scripts.
+2. **Git-backed persistence**: Every edit commits directly to main branch using Rugged (same pattern as handbook proposals). This ensures edits survive deployments and provides audit trail.
+3. **Future handbook integration**: File located in `handbook/docs/` so tenants can later propose todo changes via handbook's two-approval workflow.
+4. **PIN-gated write path**: All mutations require the same `X-Admin-Token` gate we're already using for contracts/tenant scripts.
+
+## File Location
+
+**Path**: `handbook/docs/household_todos.md`
+
+**Rationale**: Moved from project root to enable future handbook proposal integration. When handbook deploys publicly, tenants can suggest todo changes ("Sanna föreslår: Lägg till 'Städa balkongen'") that admins approve/reject via the existing two-approval workflow.
 
 ## Current Architecture Recap
 
-- `household_todos.md` stores a simple markdown list (e.g., `- Brottas & meditera`).
+- `handbook/docs/household_todos.md` stores a simple markdown list (e.g., `- Brottas & meditera`).
 - `TodosHandler` (`/api/todos`) reads the file and returns plaintext.
 - `DataBroadcaster` polls `/api/todos`, splits `- ...` lines into JSON, and publishes `todo_data` via WebSocket every ~5 minutes.
 - `TodoWidget` just renders `todoData` from the `DataContext`. No local editing, no state.
-- Deploy scripts already know to pull data files like `household_todos.md` before building.
+- Webhook deployments do `git pull` which syncs all committed changes including todo file.
 
 ## Proposed Changes
 
-### 1. Backend API for updates
+### 1. Backend API for updates (`POST /api/admin/todos`)
 
-- Add `POST /api/admin/todos` with body:
-  ```json
-  {
-    "items": ["Brottas & meditera", "Hitta vår nya crew", ...]
-  }
-  ```
+Request body:
+```json
+{
+  "items": ["Brottas & meditera", "Hitta vår nya crew", ...]
+}
+```
+
+**Git-backed persistence using Rugged** (same pattern as `handbook_handler.rb`):
+
+```ruby
+require 'rugged'
+
+class AdminTodosHandler
+  TODO_PATH = 'handbook/docs/household_todos.md'
+
+  def save_todos(items)
+    repo = Rugged::Repository.new('.')
+
+    # Build markdown content
+    content = "# Household Todos\n\n" + items.map { |t| "- #{t.strip}" }.join("\n") + "\n"
+
+    # Get current main branch
+    main_branch = repo.branches['master'] || repo.branches['main']
+    parent_commit = main_branch.target
+
+    # Create new blob with content
+    oid = repo.write(content, :blob)
+
+    # Build index from parent tree
+    index = repo.index
+    index.read_tree(parent_commit.tree)
+    index.add(path: TODO_PATH, oid: oid, mode: 0100644)
+
+    # Write tree and create commit
+    tree_oid = index.write_tree(repo)
+    commit_oid = Rugged::Commit.create(repo,
+      tree: tree_oid,
+      parents: [parent_commit],
+      message: "Update household todos via admin dashboard",
+      author: { name: 'Admin Dashboard', email: 'admin@kimonokittens.local', time: Time.now },
+      committer: { name: 'Admin Dashboard', email: 'admin@kimonokittens.local', time: Time.now },
+      update_ref: 'refs/heads/master'
+    )
+
+    # Push to origin (async to avoid blocking UI)
+    Thread.new { system('git push origin master') }
+
+    commit_oid
+  end
+end
+```
+
 - Request must include `X-Admin-Token`; reuse `AdminAuth.authorized?` helper.
-- Handler writes a sanitized markdown file:
-  ```ruby
-  File.write('household_todos.md', "# Household Todos\n\n" + items.map { "- #{text}" }.join("\n"))
-  ```
-- After write, call `DataBroadcaster.broadcast_todos` immediately so kiosk view refreshes without waiting for the next poll.
-- Consider a short file lock (`File.flock`) so two admins don’t clobber each other.
+- After commit, call `DataBroadcaster.broadcast_todos` immediately so kiosk view refreshes.
+- Git push runs async so UI doesn't block on network.
 
 ### 2. Frontend admin UX
 
@@ -38,39 +87,83 @@
 - Editing flow:
   - On focus: show caret but keep layout identical.
   - On blur or `Enter`: call the new endpoint with the full list (we keep local state of all items).
-  - Reuse the toast system to show “Sparat” / error messages.
+  - Reuse the toast system to show "Sparat" / error messages.
 - Add `+ Lägg till rad` and a delete icon per row (both behind the PIN gate). Deletions just drop the item from the list we POST.
-- Debounce network saves lightly (e.g., 300ms) so quick edits don’t spam the server, but also allow explicit `Enter` saves.
+- Debounce network saves lightly (e.g., 300ms) so quick edits don't spam the server, but also allow explicit `Enter` saves.
 
 ### 3. Data flow / consistency
 
-- After POST success, optimistically update `todoData` locally to avoid waiting for the broadcast.
-- When the WebSocket `todo_data` arrives, it will match what we just saved (since we just triggered a broadcast), keeping kiosk/admin views in sync.
-- If the file write fails, return 500 so the admin UI can show an error and revert to the last known state.
+```
+Admin Edit → POST /api/admin/todos → Rugged commit → async git push
+                                   ↓
+                          DataBroadcaster.broadcast_todos
+                                   ↓
+                          WebSocket → Kiosk view updates
+                                   ↓
+                          GitHub webhook → Production git pull (already committed)
+```
 
-### 4. Obsidian-friendly considerations
+- After POST success, optimistically update `todoData` locally.
+- WebSocket `todo_data` arrives and syncs kiosk/admin views.
+- If commit fails, return 500 so admin UI can show error and revert.
+- Production stays in sync via normal webhook flow (git pull fetches the committed change).
 
-- Continue to store todos in `household_todos.md` so Obsidian can watch the folder. Editing from Obsidian or git means the broadcaster will pick up changes on the next poll and push them to the kiosk (same as today).
-- Document in `TODO.md` which data files are “live-editable” and how to edit them safely.
-- Later, when the handbook moves to Obsidian, we can reuse this write-path pattern for other markdown-backed content.
+### 4. Security considerations
+
+- **PIN-gated**: Same security as tenant management, contracts
+- **Direct commits to main**: Acceptable for household todos (low-stakes content)
+- **Audit trail**: Full git history of all todo changes
+- **No public exposure**: Endpoint behind admin auth, not accessible without PIN
+
+### 5. Future handbook integration
+
+When handbook deploys publicly, tenants can propose todo changes:
+
+1. Tenant opens handbook → sees todo list → clicks "Föreslå ändring"
+2. Creates proposal branch: `proposals/{tenant}/{timestamp}-update-household-todos`
+3. Two admins approve → auto-merges to main → webhook deploys
+4. Admin dashboard direct edits bypass proposal workflow (PIN = trusted)
+
+This two-track approach: immediate admin edits + reviewed tenant proposals.
 
 ## Implementation Steps
 
-1. **Backend**
-   - [ ] Create `AdminTodosHandler` (or extend `TodosHandler`) with POST route under `/api/admin/todos`.
-   - [ ] Validate `items` array, sanitize leading/trailing whitespace, reject blank rows.
-   - [ ] Write file using `File.write` + `flock`. Include header line so file stays consistent.
-   - [ ] Directly call the broadcaster or publish a `todo_data` event to avoid delays.
+### Phase 1: Backend (AdminTodosHandler)
 
-2. **Frontend**
-   - [ ] Extend `TodoWidget` to detect admin mode via `useKeyboardNav` or a prop from `DashboardContent`.
-   - [ ] Render editable inputs with identical styling (use `contentEditable` or controlled `<input>`; keep `display: block` + same margins).
-   - [ ] Maintain local state array for edits; on save, call `/api/admin/todos` with `ensureAuth()`.
-   - [ ] Provide add/remove buttons (icon-only, small, subtle) and confetti-of-sorts with toasts.
+- [x] Move `household_todos.md` to `handbook/docs/` (future handbook compatibility)
+- [x] Update `TodosHandler` to read from new path
+- [ ] Add `rugged` gem to Gemfile (if not present)
+- [ ] Create `AdminTodosHandler` with POST route under `/api/admin/todos`
+- [ ] Validate `items` array, sanitize whitespace, reject blank rows
+- [ ] Implement Rugged git commit (write blob → index → tree → commit)
+- [ ] Add async git push after commit
+- [ ] Call `DataBroadcaster.broadcast_todos` after successful commit
+- [ ] Wire up route in `puma_server.rb`
 
-3. **Testing**
-   - [ ] Verify editing while offline fails gracefully.
-   - [ ] Ensure kiosk view updates after admin edit without reload.
-   - [ ] Confirm markdown file still works with manual git edits (simulate editing `household_todos.md` and pushing).
+### Phase 2: Frontend (TodoWidget)
 
-Once this is in place we’ll have a blueprint for other markdown-backed admin edits (handbook pages, etc.) while preserving Obsidian compatibility.
+- [ ] Extend `TodoWidget` to detect admin mode
+- [ ] Render editable inputs with identical styling
+- [ ] Maintain local state array for edits
+- [ ] On save, call `/api/admin/todos` with `ensureAuth()`
+- [ ] Add/remove buttons (icon-only, subtle)
+- [ ] Toast notifications ("Sparat" on success)
+- [ ] 300ms debounce for rapid edits
+
+### Phase 3: Testing
+
+- [ ] Verify editing while offline fails gracefully
+- [ ] Ensure kiosk view updates after admin edit without reload
+- [ ] Confirm git commit appears in history
+- [ ] Test webhook deployment picks up committed changes
+- [ ] Verify concurrent edit handling (file lock or last-write-wins)
+
+## Dependencies
+
+- `rugged` gem (Ruby bindings for libgit2) - same as handbook_handler.rb
+- Existing: `AdminAuth`, `DataBroadcaster`, `X-Admin-Token` header pattern
+
+## Status
+
+- **Nov 25, 2025**: File moved to `handbook/docs/`, plan updated with Git persistence
+- **Pending**: Backend implementation, frontend implementation

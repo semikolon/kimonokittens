@@ -197,7 +197,7 @@ function DashboardContent() {
           <div className="mb-6 relative z-50">
             <Widget accent={true} allowOverflow={true} className="min-h-[260px] w-full" innerClassName="px-6 pt-4 pb-2 md:px-8">
               <ErrorBoundary>
-                <ClockWidget />
+                <ClockWidget isAdmin={true} />
               </ErrorBoundary>
             </Widget>
           </div>

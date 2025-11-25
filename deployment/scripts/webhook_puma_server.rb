@@ -193,7 +193,7 @@ class DeploymentHandler
   end
 
   def process_webhook(event_data)
-    # ALWAYS pull latest code first (including data files like household_todos.md)
+    # ALWAYS pull latest code first (including data files like handbook/docs/household_todos.md)
     unless pull_latest_code
       return {
         success: false,
@@ -209,7 +209,7 @@ class DeploymentHandler
       $logger.info("✅ Data files updated via git pull, no deployment needed")
       return {
         success: true,
-        message: 'Data files updated (household_todos.md, electricity_bills_history.txt, etc)'
+        message: 'Data files updated (handbook/docs/household_todos.md, electricity_bills_history.txt, etc)'
       }
     end
 

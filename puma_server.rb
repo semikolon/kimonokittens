@@ -59,6 +59,7 @@ require_relative 'handlers/tenant_handler'
 require_relative 'handlers/admin_auth_handler'
 require_relative 'handlers/signup_handler'
 require_relative 'handlers/admin_leads_handler'
+require_relative 'handlers/admin_todos_handler'
 require_relative 'handlers/elks_webhooks'
 
 # Initialize handlers
@@ -86,6 +87,7 @@ tenant_handler = TenantHandler.new
 admin_auth_handler = AdminAuthHandler.new
 signup_handler = SignupHandler.new
 admin_leads_handler = AdminLeadsHandler.new
+admin_todos_handler = AdminTodosHandler.new
 
 # --- WebSocket Pub/Sub Manager ---
 class PubSub
@@ -329,6 +331,11 @@ app = Rack::Builder.new do
   # Admin leads API
   map "/api/admin/leads" do
     run admin_leads_handler
+  end
+
+  # Admin todos API (Git-backed, PIN-gated)
+  map "/api/admin/todos" do
+    run admin_todos_handler
   end
 
   # Public signup form

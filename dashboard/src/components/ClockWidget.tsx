@@ -3,7 +3,11 @@ import { formatSwedishDate } from '../utils/formatters'
 import { neonTheme } from '../utils/theme'
 import { TodoWidget } from './TodoWidget'
 
-export function ClockWidget() {
+interface ClockWidgetProps {
+  isAdmin?: boolean
+}
+
+export function ClockWidget({ isAdmin = false }: ClockWidgetProps) {
   const [time, setTime] = useState(new Date())
   const [isSimulating, setIsSimulating] = useState(false)
   const [simulationTime, setSimulationTime] = useState(new Date())
@@ -120,7 +124,7 @@ export function ClockWidget() {
           {formatSwedishDate(displayTime)}
         </div>
 
-        <TodoWidget />
+        <TodoWidget isAdmin={isAdmin} />
 
         {/* Time simulation toggle button - hidden but functional */}
         <button

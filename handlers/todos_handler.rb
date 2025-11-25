@@ -3,7 +3,7 @@
 class TodosHandler
   def call(req)
     begin
-      todos_content = File.read('household_todos.md')
+      todos_content = File.read('handbook/docs/household_todos.md')
       [200, { 'Content-Type' => 'text/plain' }, [todos_content]]
     rescue Errno::ENOENT
       # Fallback content if file doesn't exist
