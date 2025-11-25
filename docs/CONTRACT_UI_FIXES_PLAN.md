@@ -1,13 +1,35 @@
 # Contract UI & Webhook Fixes Plan
 
 **Created:** Nov 24, 2025, 14:35
-**Last Updated:** Nov 24, 2025, 23:10
-**Status:** ✅ PRODUCTION - Six bugs fixed, webhook signing working, layout redesign pending
-**Priority:** HIGH - Core functionality complete, UI improvements in progress
+**Last Updated:** Nov 25, 2025, 00:30
+**Status:** ✅ PRODUCTION - Complete system working, two production contracts created (Adam + Rasmus)
+**Priority:** COMPLETE - All core features deployed, self-contract auto-complete implemented
 
 ## 🚀 DEPLOYMENT STATUS
 
-**Tonight's Fixes (Nov 24, 22:00-23:10):**
+**Latest Session (Nov 24-25, 23:20-00:30):**
+- `aee6922` - **UI FIX:** Timeline timezone display (Europe/Stockholm)
+- `a55301b` - **UI POLISH:** Timeline one-liner format (timestamp - actor + event)
+- `af1527d` - **SYSTEM FIX:** DRY debounce duration (backend → frontend via WebSocket)
+- `af1527d` - **UI SIMPLIFY:** Hide timeline completely, fix vertical alignment for completed contracts
+- `e54e311` - **FEATURE:** Self-contract detection (tenant = landlord)
+- `2eece73` - **FIX:** Self-contract auto-complete both signatures (not just landlord)
+
+**Production Status:**
+- ✅ Adam McCarthy contract created & signed by landlord (pending tenant signature)
+- ✅ Rasmus Kasurinen contract created & signed by landlord (pending tenant signature)
+- ✅ Old unsigned self-contract deleted (next creation will auto-complete)
+- ✅ All deployments completed successfully
+
+**Key Improvements:**
+- **Timezone accuracy:** All contract events now display in Swedish time (CET/CEST)
+- **Single source of truth:** Webhook debounce duration read from backend (no hardcoded 120s)
+- **Smart contracts:** Self-contracts (landlord = tenant) auto-complete both signatures immediately
+- **Cleaner UI:** Timeline hidden in expanded view, status lines condensed
+
+---
+
+**Session 2 (Nov 24, 22:00-23:10):**
 - `759dd36` - **DOCS:** Condense repository checklist 114→38 lines (67% reduction)
 - `e718cd5` - **WEBHOOK FIX:** Match signer by email (landlord/tenant status updates)
 - `dbc0e69` - **API/TS FIX:** Include SMS fields in API response + TypeScript types
@@ -619,5 +641,5 @@ Frontend relies on `admin_contracts_data` for actual state updates. The `contrac
 
 ---
 
-**Last Updated:** Nov 24, 2025, 22:55
-**Next Review:** After testing new contract creation with fixed repository/validation
+**Last Updated:** Nov 25, 2025, 00:35
+**Next Review:** After Adam and Rasmus sign their contracts (test webhook flow end-to-end)
