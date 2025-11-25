@@ -1,13 +1,29 @@
 # Contract UI & Webhook Fixes Plan
 
 **Created:** Nov 24, 2025, 14:35
-**Last Updated:** Nov 25, 2025, 00:30
+**Last Updated:** Nov 25, 2025, 02:30
 **Status:** ✅ PRODUCTION - Complete system working, two production contracts created (Adam + Rasmus)
-**Priority:** COMPLETE - All core features deployed, self-contract auto-complete implemented
+**Priority:** COMPLETE - All core features deployed, self-contract creation fully fixed
 
 ## 🚀 DEPLOYMENT STATUS
 
-**Latest Session (Nov 24-25, 23:20-01:37):**
+**Latest Session (Nov 25, 01:48-02:30):**
+- `b7a160f` - **FIX:** Self-contract creation (emailDeliveryStatus constraint + reload window race condition)
+- `77b8092` - **FIX:** ContractParticipant field validation (remove invalid signed/phone fields)
+- `1d18711` - **FIX:** generation_status constraint violation ('generated' → 'completed')
+
+**Production Status:**
+- ✅ Self-contract creation fully debugged (3 constraint violations fixed)
+- ✅ Reload window ensures both kiosk + browser reload after deployment (2-minute window)
+- ✅ Ready for landlord self-contract testing
+
+**Key Fixes:**
+- **Database constraints:** emailDeliveryStatus='delivered' (not 'not_applicable'), generation_status='completed' (not 'generated')
+- **Participant validation:** Removed invalid fields (signed, phone), use status='fulfilled' + personal_number
+- **Reload race condition:** Backend restart → 0 clients → reload lost. Fixed: 2-min reload window for reconnecting clients
+- **SMS status:** Self-contracts create participants with smsDelivered=true for UI consistency
+
+**Session 3 (Nov 24-25, 23:20-01:37):**
 - `aee6922` - **UI FIX:** Timeline timezone display (Europe/Stockholm)
 - `a55301b` - **UI POLISH:** Timeline one-liner format (timestamp - actor + event)
 - `af1527d` - **SYSTEM FIX:** DRY debounce duration (backend → frontend via WebSocket)
