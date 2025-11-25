@@ -158,7 +158,7 @@ export function TodoWidget({ isAdmin = false }: TodoWidgetProps) {
                   onChange={(e) => handleItemChange(index, e.target.value)}
                   onBlur={handleItemBlur}
                   onKeyDown={(e) => handleKeyDown(e, index)}
-                  className="flex-1 bg-transparent border-b border-transparent hover:border-purple-500/30 focus:border-purple-400 focus:outline-none text-white font-bold transition-colors"
+                  className="flex-1 bg-transparent border-b border-transparent hover:border-purple-500/30 focus:border-purple-400 focus:outline-none text-white font-bold transition-colors py-0 leading-normal"
                   placeholder="Skriv något..."
                   disabled={isSaving}
                 />
