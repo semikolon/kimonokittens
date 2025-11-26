@@ -203,6 +203,12 @@ Todo editing from kiosk dashboard caused:
 - Uses `Rugged::Index.new` instead of `repo.index`
 - Prevents dirty staged state if commit fails
 
+**Disk Index Sync** (Nov 26, 2025):
+- After Rugged commit, sync disk index to match HEAD
+- `repo.index.read_tree(repo.head.target.tree)` + `repo.index.write`
+- Prevents git CLI commands (rebase) from seeing stale index state
+- Fixes issue: mixing Rugged (low-level) with git CLI (high-level) left index dirty
+
 **Synchronous Push with Retry** (pending):
 - Replaces async `Thread.new` push
 - On failure: fetch + rebase + retry (3 attempts)
@@ -235,8 +241,10 @@ Webhook pulls from GitHub → Fast-forward (no divergence)
 
 ### Backend (RSpec)
 - [ ] In-memory index doesn't dirty working tree
+- [ ] Disk index syncs to HEAD after commit (no staged changes)
 - [ ] push_with_retry handles non-fast-forward
 - [ ] Rebase conflict aborts cleanly
+- [ ] Git status is clean after successful save operation
 
 ## Related Files
 

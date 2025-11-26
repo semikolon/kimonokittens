@@ -143,6 +143,12 @@ class AdminTodosHandler
       update_ref: 'refs/heads/master'
     )
 
+    # Sync disk index to match the new HEAD commit
+    # Prevents git CLI commands (like rebase in push_with_retry) from seeing stale index state
+    # Without this, mixing Rugged (low-level) with git CLI (high-level) leaves index dirty
+    repo.index.read_tree(repo.head.target.tree)
+    repo.index.write
+
     commit_oid
   end
 
