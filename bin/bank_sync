@@ -6,6 +6,8 @@ require 'json'
 require 'fileutils'
 require_relative '../lib/banking/lunchflow_client'
 require_relative '../lib/persistence'
+require_relative '../lib/services/apply_bank_payment'
+require_relative '../lib/sms/gateway'
 
 # Helper: Extract phone number from Swish transaction description
 # @param description [String] Transaction description from Lunchflow
@@ -16,23 +18,6 @@ def extract_phone_from_description(description)
   # Lunchflow Swish format: "from: +46XXXXXXXXX ..."
   match = description.match(/from:\s*(\+46\d{9})/)
   match ? match[1] : nil
-end
-
-# IMPORTANT: SmsGateway and ApplyBankPayment will be implemented in Phase 3-4
-# For now, we create mock placeholders for dry-run testing
-
-# Mock SmsGateway (Phase 4 will implement actual 46elks client)
-module SmsGateway
-  def self.send_admin_alert(message)
-    puts "📱 [SMS MOCK] Admin alert: #{message}"
-  end
-end
-
-# Mock ApplyBankPayment service (Phase 3 will implement actual reconciliation)
-module ApplyBankPayment
-  def self.call(transaction_id:)
-    puts "💰 [MOCK] Would reconcile transaction: #{transaction_id}"
-  end
 end
 
 # Parse command line flags
