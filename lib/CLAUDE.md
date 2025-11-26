@@ -49,7 +49,7 @@ For LLM assistants and future developers:
 - **Complete API guide**: `docs/MODEL_ARCHITECTURE.md` (800+ lines)
 - **Migration commits**: d96d76f (models), d7b75ec (handlers), 7df8296 (tests)
 - **Business logic preservation**: Verified in test suite (spec/models/, spec/repositories/, spec/services/)
-- **Test coverage**: 37 tests for domain layer (all passing)
+- **Test coverage**: Comprehensive domain layer test suite (all passing)
 
 ### ⚠️ CRITICAL: Repository Pattern - Model/Persistence Checklist
 
@@ -363,7 +363,7 @@ sanna = repo.find_by_id('cmhqe9enc0000wopipuxgc3kw')  # SUCCESS
 
 **Testing philosophy:** See `/CLAUDE.md` for universal testing principles.
 
-**Status**: ✅ PRODUCTION READY (October 4, 2025) - 39/39 tests passing
+**Status**: ✅ PRODUCTION READY - All tests passing
 **Documentation**: `docs/TESTING_GUIDE.md` (complete reference)
 
 ### Critical Rules

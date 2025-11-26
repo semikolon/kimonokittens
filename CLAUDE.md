@@ -494,7 +494,7 @@ Handlers → Services → Domain Models + Repositories → Database
 
 **Repository SELECT Pattern:** Never enumerate fields in `.select()` - schema changes cause silent bugs (hydrate() expects new field, SELECT omits it → nil). Model `.to_h()` whitelists API exposure, making unrestricted fetch safe.
 
-**Documentation**: `docs/MODEL_ARCHITECTURE.md` (800+ lines), test coverage: 37 tests for domain layer (all passing)
+**Documentation**: `docs/MODEL_ARCHITECTURE.md` (800+ lines), comprehensive domain layer test coverage
 
 ---
 
@@ -740,7 +740,7 @@ When rent calculations seem wrong, check these patterns:
 
 **For complete backend testing guide:** See `/lib/CLAUDE.md`
 
-**Status**: ✅ 39/39 tests passing | **Documentation**: `docs/TESTING_GUIDE.md`
+**Status**: ✅ All tests passing | **Documentation**: `docs/TESTING_GUIDE.md`
 
 **Core philosophy**: Test database isolation (use `kimonokittens_test` database), spec_helper.rb must be first require, update test expectations when code evolves legitimately.
 
