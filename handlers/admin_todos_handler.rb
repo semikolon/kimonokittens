@@ -111,8 +111,9 @@ class AdminTodosHandler
     # Create new blob with content
     oid = repo.write(content, :blob)
 
-    # Build index from parent tree
-    index = repo.index
+    # Use in-memory index (NOT repo.index) to avoid leaving dirty staged state
+    # if the commit fails. repo.index writes to .git/index on disk.
+    index = Rugged::Index.new
     index.read_tree(parent_commit.tree)
     index.add(path: TODO_PATH, oid: oid, mode: 0100644)
 

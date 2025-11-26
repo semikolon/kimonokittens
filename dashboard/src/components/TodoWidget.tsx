@@ -151,9 +151,19 @@ export function TodoWidget({ isAdmin = false }: TodoWidgetProps) {
   }
 
   const removeItem = (index: number) => {
+    // Cancel blur-save to prevent race condition (blur fires before click completes)
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current)
+      blurTimeoutRef.current = null
+    }
+    // Reset edit tracking since we're explicitly saving
+    originalItemsRef.current = null
+
     const newItems = editingItems.filter((_, i) => i !== index)
     setEditingItems(newItems)
-    debouncedSave(newItems)
+    // Save immediately like Enter key (bypass debounce to avoid blur race)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    saveTodos(newItems)
   }
 
   if (connectionStatus !== 'open' || (!todoData && editingItems.length === 0)) {
