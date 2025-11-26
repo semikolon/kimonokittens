@@ -25,9 +25,19 @@
 
 **Status**: All tests passing (run `bundle exec rspec spec/` to verify)
 
-**Coverage areas**: Rent calculation, domain models, repositories, services, API handlers, integrations
-
 **Verification**: Test database isolation ensures production data is never affected
+
+### Coverage by Domain
+
+| Domain | What's Tested |
+|--------|---------------|
+| **Rent Calculation** | Config validation, weight-based distribution, room adjustments, partial stays, Swedish message formatting |
+| **Domain Models** | Tenant lifecycle (pending→active→departed), RentLedger payments, BankTransaction matching, SmsEvent tracking |
+| **API Handlers** | Admin tasks, contract CRUD, rent endpoints, webhook receivers |
+| **Repositories** | CRUD operations, active tenant filtering, payment queries |
+| **Services** | Contract HTML generation, electricity forecasting, SMS gateway, Zigned API |
+| **Integration** | Full rent workflows with database, VCR-recorded external API calls |
+| **Utilities** | Date handling, validation helpers, configuration loading |
 
 ### Test Philosophy
 
