@@ -337,6 +337,8 @@ class AdminContractsHandler
   end
 
   def resend_email(req, contract_id)
+    require_relative '../lib/landlord_profile'
+
     if (auth_error = require_admin_token(req))
       return auth_error
     end
@@ -405,17 +407,18 @@ class AdminContractsHandler
       sms_recipient_name = tenant&.name
       signing_url = contract.tenant_signing_url
     elsif !contract.landlord_signed
-      # Only landlord needs to sign → look up landlord's Tenant record
-      landlord_ssn = ENV['ADMIN_SSN']&.gsub('-', '')  # e.g., "198604230717"
-      landlord_ssn_short = landlord_ssn&.slice(-10..-1) if landlord_ssn  # e.g., "8604230717"
+      # Only landlord needs to sign → use LandlordProfile (checks Tenant DB + ENV fallback)
+      landlord_info = LandlordProfile.info
 
-      landlord_tenant = tenant_repo.all.find do |t|
-        t.personnummer&.gsub('-', '') == landlord_ssn ||
-        t.personnummer&.gsub('-', '') == landlord_ssn_short
+      # Format phone to E.164 if needed
+      landlord_phone = landlord_info[:phone]
+      if landlord_phone && !landlord_phone.start_with?('+')
+        landlord_phone = landlord_phone.gsub(/[\s\-]/, '')
+        landlord_phone = "+46#{landlord_phone.sub(/^0/, '')}"
       end
 
-      sms_recipient = landlord_tenant&.phone_e164 || ENV['ADMIN_PHONE']
-      sms_recipient_name = landlord_tenant&.name || "Landlord"
+      sms_recipient = landlord_phone
+      sms_recipient_name = landlord_info[:name]
       signing_url = contract.landlord_signing_url
     end
 
