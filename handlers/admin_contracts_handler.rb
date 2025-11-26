@@ -384,36 +384,59 @@ class AdminContractsHandler
       errors << "Email: #{e.message}"
     end
 
-    # Step 2: Send SMS reminder if tenant has phone number
+    # Step 2: Send SMS reminder to whoever needs to sign
     tenant_repo = Persistence.tenants
-    tenant = tenant_repo.find_by_id(contract.tenant_id)
 
-    if tenant&.phone
+    # Determine who needs to sign and get their contact info
+    sms_recipient = nil
+    sms_recipient_name = nil
+    signing_url = nil
+
+    if !contract.tenant_signed && !contract.landlord_signed
+      # Both need to sign → prioritize tenant (primary signer)
+      tenant = tenant_repo.find_by_id(contract.tenant_id)
+      sms_recipient = tenant&.phone_e164
+      sms_recipient_name = tenant&.name
+      signing_url = contract.tenant_signing_url
+    elsif !contract.tenant_signed
+      # Only tenant needs to sign
+      tenant = tenant_repo.find_by_id(contract.tenant_id)
+      sms_recipient = tenant&.phone_e164
+      sms_recipient_name = tenant&.name
+      signing_url = contract.tenant_signing_url
+    elsif !contract.landlord_signed
+      # Only landlord needs to sign → look up landlord's Tenant record
+      landlord_ssn = ENV['ADMIN_SSN']&.gsub('-', '')  # e.g., "198604230717"
+      landlord_ssn_short = landlord_ssn&.slice(-10..-1) if landlord_ssn  # e.g., "8604230717"
+
+      landlord_tenant = tenant_repo.all.find do |t|
+        t.personnummer&.gsub('-', '') == landlord_ssn ||
+        t.personnummer&.gsub('-', '') == landlord_ssn_short
+      end
+
+      sms_recipient = landlord_tenant&.phone_e164 || ENV['ADMIN_PHONE']
+      sms_recipient_name = landlord_tenant&.name || "Landlord"
+      signing_url = contract.landlord_signing_url
+    end
+
+    # Send SMS if we have a recipient and URL
+    if sms_recipient && signing_url
       begin
         require_relative '../lib/sms/gateway'
 
-        # Clean and format phone number
-        phone = tenant.phone.gsub(/[\s\-]/, '')
-        phone = "+46#{phone.sub(/^0/, '')}" unless phone.start_with?('+')
-
-        # Get tenant signing URL from contract
-        signing_url = contract.tenant_signing_url
-
-        if signing_url
-          SmsGateway.send(
-            to: phone,
-            body: "Påminnelse: Signera ditt hyresavtal med BankID här: #{signing_url}",
-            meta: { type: 'contract_reminder', contract_id: contract.id, tenant_id: tenant.id }
-          )
-          sms_sent = true
-          puts "📱 SMS reminder sent to #{tenant.name} (#{phone})"
-        else
-          errors << "SMS: No tenant signing URL available"
-        end
+        SmsGateway.send(
+          to: sms_recipient,
+          body: "Påminnelse: Signera ditt hyresavtal med BankID här: #{signing_url}",
+          meta: { type: 'contract_reminder', contract_id: contract.id }
+        )
+        sms_sent = true
+        puts "📱 SMS reminder sent to #{sms_recipient_name} (#{sms_recipient})"
       rescue => e
         puts "⚠️  Failed to send SMS reminder: #{e.message}"
         errors << "SMS: #{e.message}"
       end
+    elsif !contract.tenant_signed || !contract.landlord_signed
+      errors << "SMS: No phone number or signing URL available for unsigned party"
     end
 
     # Return success if at least one method succeeded
