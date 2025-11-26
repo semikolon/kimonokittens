@@ -43,6 +43,7 @@ class BankTransaction
   # Check if transaction is a Swish payment
   #
   # UPDATED Nov 15, 2025: Real Lunchflow data uses merchant field
+  # DEPRECATED Nov 26, 2025: Use incoming_swish_payment? to exclude outgoing
   #
   # @return [Boolean] True if merchant contains "Swish" (Mottagen/Skickad)
   #
@@ -54,6 +55,53 @@ class BankTransaction
     return false unless merchant
 
     merchant.to_s.upcase.include?('SWISH')
+  end
+
+  # Check if transaction is an INCOMING Swish payment (rent payment)
+  #
+  # Only "Swish Mottagen" (received) counts as rent.
+  # "Swish Skickad" (sent) is a reimbursement/house purchase.
+  #
+  # @return [Boolean] True if incoming Swish payment
+  #
+  # @example
+  #   tx.raw_json = { merchant: 'Swish Mottagen', amount: 6303 }
+  #   tx.incoming_swish_payment?  # => true
+  #
+  #   tx.raw_json = { merchant: 'Swish Skickad', amount: -400 }
+  #   tx.incoming_swish_payment?  # => false (outgoing)
+  def incoming_swish_payment?
+    merchant = raw_json.dig('merchant')
+    return false unless merchant
+
+    # Check merchant name for incoming direction
+    is_swish = merchant.to_s.upcase.include?('SWISH')
+    is_incoming = merchant.to_s.include?('Mottagen')
+
+    # Also verify amount is positive (double-check)
+    is_swish && is_incoming && amount > 0
+  end
+
+  # Determine transaction direction
+  #
+  # @return [Symbol] :incoming or :outgoing
+  #
+  # @example
+  #   tx.raw_json = { merchant: 'Swish Mottagen', amount: 6303 }
+  #   tx.direction  # => :incoming
+  #
+  #   tx.raw_json = { merchant: 'Swish Skickad', amount: -400 }
+  #   tx.direction  # => :outgoing
+  def direction
+    # Check merchant field first (more reliable than amount sign)
+    merchant = raw_json.dig('merchant')
+    if merchant
+      return :incoming if merchant.to_s.include?('Mottagen')
+      return :outgoing if merchant.to_s.include?('Skickad')
+    end
+
+    # Fallback to amount sign
+    amount >= 0 ? :incoming : :outgoing
   end
 
   # Check if transaction amount matches expected rent amount

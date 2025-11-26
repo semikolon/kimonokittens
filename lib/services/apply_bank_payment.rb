@@ -41,7 +41,7 @@ class ApplyBankPayment
 
   def call
     return unless @transaction
-    return unless swish_payment?
+    return unless @transaction.incoming_swish_payment?
 
     # Try 3-tier matching
     tenant, match_method = find_matching_tenant

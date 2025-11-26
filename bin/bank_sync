@@ -93,8 +93,9 @@ begin
         raw_json: tx
       )
 
-      # Trigger reconciliation for Swish payments (use merchant field for detection)
-      if tx[:merchant]&.to_s&.upcase&.include?('SWISH')
+      # Trigger reconciliation for INCOMING Swish payments only (rent)
+      # Exclude outgoing ("Swish Skickad") which are reimbursements
+      if tx[:merchant]&.to_s&.include?('Mottagen')
         ApplyBankPayment.call(transaction_id: bank_tx.id)
       end
     end
