@@ -145,9 +145,11 @@ class AdminTodosHandler
       end
 
       # Push failed - likely non-fast-forward, fetch and rebase
+      # Use env vars to prevent any interactive prompts in non-TTY
       puts "AdminTodosHandler: Push failed (attempt #{attempt + 1}/#{max_retries}), rebasing..."
       system('git fetch origin master 2>&1')
-      unless system('git rebase origin/master 2>&1')
+      env = { 'GIT_EDITOR' => 'true', 'GIT_SEQUENCE_EDITOR' => 'true' }
+      unless system(env, 'git rebase --no-edit --no-stat origin/master 2>&1')
         # Rebase conflict - abort and let manual intervention
         system('git rebase --abort 2>&1')
         puts "AdminTodosHandler: Rebase conflict, aborting"
