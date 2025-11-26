@@ -1,6 +1,35 @@
 # Rent Reminders Production Deployment Guide
 **Date**: November 18, 2025
-**Status**: Code pushed, migrations pending
+**Status**: ⚠️ **SYSTEM TEMPORARILY DISABLED** (Nov 26, 2025)
+
+## ⚠️ CRITICAL UPDATE (Nov 26, 2025)
+
+**Rent reminders cron job has been disabled** due to Lunchflow API failures:
+
+**Issue**:
+- Lunchflow API returning 500 errors → payment detection broken
+- `ApplyBankPayment` service still in MOCK mode → payments not reconciled even if API worked
+- Ledger showing all tenants unpaid → reminders would be inaccurate
+
+**Actions taken**:
+- Disabled rent reminders cron job in `/var/spool/cron/crontabs/kimonokittens`
+- Support ticket filed with Lunchflow
+- Awaiting API fix before re-enabling
+
+**SMS history before suspension**:
+- Nov 24: 5 "heads_up" reminders sent (✅ successful)
+- Nov 25: 4 "first_reminder" reminders sent (✅ successful)
+- Nov 26+: Cron disabled (⚠️ suspended)
+
+**Before re-enabling**:
+1. Lunchflow API must be fixed
+2. Implement real `ApplyBankPayment` (replace MOCK at `bin/bank_sync:32-35`)
+3. Run catch-up sync to reconcile missed payments
+4. Re-enable cron job
+
+---
+
+**Original Deployment Status**: Code pushed, migrations pending
 
 ---
 

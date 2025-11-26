@@ -1135,21 +1135,25 @@ Repository `.all()` method was using `.select()` but **missing fields**:
 
 ## 💸 PAYMENT DETECTION & RENT REMINDERS
 
-**Status**: ✅ **PRODUCTION** (Nov 2025) - All 5 phases complete
+**Status**: ⚠️ **TEMPORARILY DISABLED** (Nov 26, 2025) - Rent reminders suspended due to Lunchflow API failures
 
-**Payment Detection** (Lunchflow bank sync - ✅ Active, subscription renewed Nov 25, 2025):
-- Monitors house bank account (tied to Swish) for incoming transactions
+**Payment Detection** (Lunchflow bank sync - ⚠️ FAILING, subscription renewed Nov 25, 2025):
+- **CURRENT ISSUE**: Lunchflow API returning 500 errors ("Internal Server Error")
+- Support ticket filed, awaiting resolution
+- When working: Monitors house bank account (tied to Swish) for incoming transactions
 - 4-tier matching: reference code → phone number → amount+timing → fuzzy name
 - Syncs 3x daily (8:05, 14:05, 20:05) via cron
 - Automatically updates RentLedger payment status
 - Subscription: 35 EUR/year (next renewal Nov 2026)
 
-**Rent Reminders** (SMS via 46elks - ✅ Production, Nov 24 2025):
+**Rent Reminders** (SMS via 46elks - ⚠️ DISABLED Nov 26, 2025):
+- **CRON JOB DISABLED**: Temporarily suspended to prevent inaccurate reminders
+- Reason: Payment detection not working → ledger shows everyone unpaid → would spam tenants
+- Successfully tested Nov 24-25: 9 SMS sent with correct amounts before suspension
 - Automated SMS reminders (4 tones: heads_up day 24, first_reminder payday, urgent day 27, overdue 28+)
 - Idempotency checking prevents duplicate sends
 - Separate WEBHOOK_BASE_URL for external 46elks callbacks (public URL required)
-- Tested successfully: 5 SMS sent with correct amounts
-- Cron: daily 9:45am
+- **Re-enable when**: Lunchflow API fixed + ApplyBankPayment service implemented (currently MOCK)
 
 **Architecture**:
 - Backend: `lib/sms/gateway.rb` (46elks integration)

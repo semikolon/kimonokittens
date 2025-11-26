@@ -914,12 +914,23 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 
 ## 💰 Rent Reminders & Payment Automation
 
-**Status:** ✅ **PRODUCTION** (Nov 24, 2025) - SMS active, payment detection re-enabling Nov 27
+**Status:** ⚠️ **TEMPORARILY DISABLED** (Nov 26, 2025) - Lunchflow API 500 errors
 **Documentation:** `docs/RENT_REMINDERS_IMPLEMENTATION_PLAN.md`
+
+### 🚨 CRITICAL: Re-enable Rent Reminders (Nov 26, 2025)
+- [ ] **Wait for Lunchflow API fix** - Support ticket filed, awaiting response
+- [ ] **Implement real `ApplyBankPayment` service** - Replace MOCK at `bin/bank_sync:32-35`
+- [ ] **Run catch-up bank sync** - Reconcile any Swish payments made during downtime
+- [ ] **Verify ledger accuracy** - Check payment status for all tenants
+- [ ] **Re-enable rent reminders cron** - Uncomment in `/var/spool/cron/crontabs/kimonokittens`
+
+**Context:** Rent reminders cron disabled Nov 26 to prevent sending incorrect reminders while payment detection is broken. SMS successfully tested Nov 24-25 (9 messages sent) before suspension.
+
+**Note:** Tenants have individual `paydayStartDay` values in database (e.g., Fredrik: day 27 for Försäkringskassan sjukpenning, others: day 25). This is intentional - not everyone gets paid on Swedish norm day 25.
 
 ### MVP Implementation (6-Week Plan)
 - [x] **Phase 1:** Database schema (3 new tables: BankTransaction, RentReceipt, SmsEvent)
-- [x] **Phase 2:** Lunch Flow API integration (3x daily sync cron - temporarily disabled)
+- [x] **Phase 2:** Lunch Flow API integration (3x daily sync cron - ⚠️ CURRENTLY FAILING)
 - [x] **Phase 3:** Payment matching service (3-tier: reference, amount+name, partial)
 - [x] **Phase 4:** SMS infrastructure (46elks integration + webhooks)
 - [x] **Phase 5:** Rent reminder scheduling (daily 09:45, tone-based escalation)

@@ -1,6 +1,31 @@
 # Rent Reminders & Payment Automation - Implementation Plan
 **Date**: November 14-15, 2025
-**Status**: ✅ **ALL PHASES COMPLETE** (139/139 tests passing) | Ready for Code Review & Production Deployment
+**Status**: ⚠️ **TEMPORARILY DISABLED** (Nov 26, 2025) - See critical issue below
+
+## ⚠️ CRITICAL: System Temporarily Suspended (Nov 26, 2025)
+
+**Rent reminder cron job disabled** due to Lunchflow API failures preventing payment detection:
+
+**Issue**: Lunchflow API returning 500 errors ("Internal Server Error")
+- Bank sync failing → payment status not updated
+- Ledger showing all tenants unpaid (may not reflect reality)
+- Support ticket filed with Lunchflow
+- SMS reminders disabled to prevent spamming tenants with incorrect reminders
+
+**Before re-enabling**:
+1. Wait for Lunchflow API fix (support ticket pending)
+2. Implement real `ApplyBankPayment` service (currently MOCK at `bin/bank_sync:32-35`)
+3. Run catch-up bank sync to reconcile missed Swish payments
+4. Re-enable cron job: `/var/spool/cron/crontabs/kimonokittens`
+
+**SMS sent before suspension** (Nov 24-25):
+- Nov 24: 5 "heads_up" reminders sent
+- Nov 25: 4 "first_reminder" reminders sent
+- Nov 26: No reminders (correctly skipped, then cron disabled)
+
+---
+
+**Implementation Status**: ✅ **ALL PHASES COMPLETE** (139/139 tests passing) | Ready for Code Review & Production Deployment
 
 ## 🎉 IMPLEMENTATION COMPLETE (Nov 15, 2025)
 
