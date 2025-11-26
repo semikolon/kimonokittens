@@ -147,13 +147,13 @@ class BankTransaction
   #   tenant.phone = "+46702894437"
   #   tx.phone_matches?(tenant)  # => true
   def phone_matches?(tenant)
-    return false unless tenant.phone
+    return false unless tenant.phone_e164
 
     phone = extract_phone_number
     return false unless phone
 
     # Normalize both phones (remove spaces, compare)
-    normalize_phone(phone) == normalize_phone(tenant.phone)
+    normalize_phone(phone) == normalize_phone(tenant.phone_e164)
   end
 
   # Check if counterparty name matches tenant (Tier 3 matching - bank transfers)
