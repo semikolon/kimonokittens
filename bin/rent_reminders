@@ -5,22 +5,22 @@
 # Daily cron job that sends rent reminders based on payment status and timing.
 #
 # Timing:
-# - Day 23, 09:45: Heads-up reminder
+# - Day 24, 09:45: Heads-up reminder
 # - Payday, 09:45: First reminder
-# - Day 27, 10:00: Urgent reminder
-# - Day 27, 16:45: Very urgent reminder
-# - Day 28+, 09:45 & 16:45: Overdue (twice daily)
+# - Day 27, 09:45: Urgent reminder
+# - Day 28+, 09:45: Overdue (once daily)
 #
-# Admin alerts:
-# - Day 27, 10:00: Warning
-# - Day 27, 17:00: Critical
-# - Day 28+, 10:00: Daily overdue alert
+# Admin alerts (payday-aware):
+# - Day 26, 09:45: Info (ℹ️ "Påminnelse: ...") - 24hr warning for tenants past payday
+# - Day 27, 09:45: Warning (⚠️) - Deadline day, only tenants past their payday
+# - Day 28+, 09:45: Critical (🚨 "SENT: ...") - House rent now late
+#
+# Payday awareness: Tenants only flagged as unpaid AFTER their payday_start_day
+# (Fredrik: day 27, most others: day 25). Respects individual payment schedules.
 #
 # Usage:
 #   bundle exec ruby bin/rent_reminders           # Live mode
 #   bundle exec ruby bin/rent_reminders --dry-run # Test mode (no SMS sent)
-#
-# PRESERVED LOGIC from implementation plan (Phase 5)
 
 require 'dotenv/load'
 require 'time'
@@ -197,9 +197,10 @@ end
 
 puts "\n📊 Summary: #{reminders_sent} reminder(s) sent"
 
-# Admin deadline alerts
-# TESTING: Hour restrictions removed for immediate testing
-if current_day >= 27
+# Admin deadline alerts with payday awareness
+# Start checking from day 26 for early warning (24hr before deadline)
+# Only flag tenants as unpaid if their payday has passed
+if current_day >= 26
 
   puts "\n🚨 Checking for admin alerts..."
 
@@ -218,20 +219,28 @@ if current_day >= 27
     total_paid = receipts.sum(&:amount)
     remaining = ledger.amount_due - total_paid
 
-    remaining > 0
+    # PAYDAY-AWARE: Only flag as unpaid if their payday has passed
+    payday = tenant.payday_start_day || 25  # Default to Swedish norm
+    has_reached_payday = current_day >= payday
+
+    # Only alert if unpaid AND past their payday
+    remaining > 0 && has_reached_payday
   end
 
   if unpaid_tenants.any?
     names = unpaid_tenants.map(&:name).join(', ')
-    urgency = if current_day == 27 && current_hour == 10
-      "⚠️"
-    elsif current_day == 27 && current_hour == 17
-      "🚨"
-    else
-      "❗"
+
+    # Urgency based on day (NO HOUR CHECKS)
+    urgency, message_prefix = case current_day
+    when 26
+      ["ℹ️", "Påminnelse: "]  # Info: 24hr warning
+    when 27
+      ["⚠️", ""]              # Warning: Deadline day
+    else  # Day 28+
+      ["🚨", "SENT: "]        # Critical: House rent now late
     end
 
-    alert_message = "#{urgency} #{names} har inte betalt än (#{current_month})"
+    alert_message = "#{urgency} #{message_prefix}#{names} har inte betalt än (#{current_month})"
 
     if dry_run
       puts "\n  📲 Would send admin alert:"
@@ -245,7 +254,7 @@ if current_day >= 27
       end
     end
   else
-    puts "  ✅ All tenants have paid - no admin alert needed"
+    puts "  ✅ All tenants have paid (accounting for paydays) - no admin alert needed"
   end
 end
 
