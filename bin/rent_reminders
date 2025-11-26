@@ -228,7 +228,29 @@ if current_day >= 26
   end
 
   if unpaid_tenants.any?
-    names = unpaid_tenants.map(&:name).join(', ')
+    # Use first names only
+    first_names = unpaid_tenants.map { |t| t.name.split(' ').first }
+
+    # Check if admin is in the unpaid list
+    admin_phone = ENV['ADMIN_PHONE']
+    admin_unpaid = unpaid_tenants.any? { |t| t.phone_e164 == admin_phone }
+
+    # Build names text with "Du" if admin is unpaid
+    names_text = if admin_unpaid
+      other_names = first_names.reject do |name|
+        # Find tenant with this first name and check if it's admin
+        tenant = unpaid_tenants.find { |t| t.name.split(' ').first == name }
+        tenant&.phone_e164 == admin_phone
+      end
+
+      if other_names.any?
+        "Du och #{other_names.join(', ')}"
+      else
+        "Du"
+      end
+    else
+      first_names.join(', ')
+    end
 
     # Urgency based on day (NO HOUR CHECKS)
     urgency, message_prefix = case current_day
@@ -237,10 +259,10 @@ if current_day >= 26
     when 27
       ["⚠️", ""]              # Warning: Deadline day
     else  # Day 28+
-      ["🚨", "SENT: "]        # Critical: House rent now late
+      ["🚨", "Hyran är sen: "]        # Critical: House rent now late
     end
 
-    alert_message = "#{urgency} #{message_prefix}#{names} har inte betalt än (#{current_month})"
+    alert_message = "#{urgency} #{message_prefix}#{names_text} har inte betalt än"
 
     if dry_run
       puts "\n  📲 Would send admin alert:"
