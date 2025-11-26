@@ -396,8 +396,8 @@ class AdminContractsHandler
         phone = tenant.phone.gsub(/[\s\-]/, '')
         phone = "+46#{phone.sub(/^0/, '')}" unless phone.start_with?('+')
 
-        # Get signing URL from contract
-        signing_url = contract.signing_url || contract.signing_room_url
+        # Get tenant signing URL from contract
+        signing_url = contract.tenant_signing_url
 
         if signing_url
           SmsGateway.send(
@@ -408,7 +408,7 @@ class AdminContractsHandler
           sms_sent = true
           puts "📱 SMS reminder sent to #{tenant.name} (#{phone})"
         else
-          errors << "SMS: No signing URL available"
+          errors << "SMS: No tenant signing URL available"
         end
       rescue => e
         puts "⚠️  Failed to send SMS reminder: #{e.message}"
