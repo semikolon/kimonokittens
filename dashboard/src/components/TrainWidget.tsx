@@ -226,7 +226,6 @@ const useTrainDepartureAnimation = (trains: TrainDeparture[]) => {
         const animatedMinutes = animatedAtMinuteRef.current.get(trainId) || new Set()
         if (!animatedMinutes.has(minutesUntil)) {
           const isLastSwoosh = minutesUntil === 6 // Red-tinted at 6m (final warning before removal)
-          console.log(`Shine swoosh animation for train ${trainId} at ${minutesUntil}m${isLastSwoosh ? ' (RED)' : ''}`)
           animatedMinutes.add(minutesUntil)
           animatedAtMinuteRef.current.set(trainId, animatedMinutes)
 
@@ -269,7 +268,6 @@ const useBusDepartureAnimation = (buses: BusDeparture[]) => {
         const animatedMinutes = animatedAtMinuteRef.current.get(busId) || new Set()
         if (!animatedMinutes.has(minutesUntil)) {
           const isLastSwoosh = minutesUntil === 0 // Red-tinted at 0m (final urgent warning!)
-          console.log(`Shine swoosh animation for bus ${busId} at ${minutesUntil}m${isLastSwoosh ? ' (RED)' : ''}`)
           animatedMinutes.add(minutesUntil)
           animatedAtMinuteRef.current.set(busId, animatedMinutes)
 

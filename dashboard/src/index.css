@@ -337,7 +337,7 @@
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  animation: shineSwoosh 3s ease-in forwards;  /* forwards = keep final state until class removed */
+  animation: shineSwoosh 9s ease-in forwards;  /* forwards = keep final state until class removed */
 }
 
 /* Purple/pink swoosh for regular warnings - highly saturated */
