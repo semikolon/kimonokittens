@@ -110,6 +110,15 @@ export function TemperatureWidget() {
       .catch(err => console.error('Failed to reload heatpump config:', err))
   }, [])
 
+  // Open config modal (must be before early returns to satisfy Rules of Hooks)
+  const openConfig = useCallback(async () => {
+    const token = await ensureAuth()
+    if (token) {
+      setAdminToken(token)
+      setIsConfigModalOpen(true)
+    }
+  }, [ensureAuth])
+
   // TESTING: Show comparison cursors (active + residual glows side by side)
   const showTestCursors = false
 
@@ -289,14 +298,6 @@ export function TemperatureWidget() {
   const getTargetIcon = () => <Target className="w-6 h-6 text-purple-200" />
   const getHumidityIcon = () => <Droplets className="w-6 h-6 text-purple-200" />
   const getHotWaterIcon = () => <Zap className="w-6 h-6 text-purple-200" />
-
-  const openConfig = useCallback(async () => {
-    const token = await ensureAuth()
-    if (token) {
-      setAdminToken(token)
-      setIsConfigModalOpen(true)
-    }
-  }, [ensureAuth])
 
   const HeatpumpScheduleBar = () => {
     if (!heatpumpSchedule) return null
