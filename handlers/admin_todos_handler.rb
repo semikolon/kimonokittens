@@ -72,14 +72,10 @@ class AdminTodosHandler
       commit_oid = git_commit(content)
       puts "AdminTodosHandler: Committed todos (#{commit_oid[0..7]})"
 
-      # Async push to origin
-      Thread.new do
-        success = system('git push origin master 2>&1')
-        if success
-          puts "AdminTodosHandler: Pushed to origin"
-        else
-          puts "AdminTodosHandler: Push failed (will retry on next push)"
-        end
+      # Push to origin (synchronous with retry to handle divergent branches)
+      push_success = push_with_retry
+      unless push_success
+        puts "AdminTodosHandler: WARNING - Push failed after retries, local commit may diverge"
       end
 
       # Broadcast updated todos via WebSocket
@@ -91,7 +87,8 @@ class AdminTodosHandler
       json_response(200, {
         success: true,
         items: items,
-        commit: commit_oid[0..7]
+        commit: commit_oid[0..7],
+        pushed: push_success
       })
     rescue => e
       puts "AdminTodosHandler: Error - #{e.message}"
@@ -138,6 +135,26 @@ class AdminTodosHandler
     )
 
     commit_oid
+  end
+
+  def push_with_retry(max_retries: 3)
+    max_retries.times do |attempt|
+      if system('git push origin master 2>&1')
+        puts "AdminTodosHandler: Pushed to origin"
+        return true
+      end
+
+      # Push failed - likely non-fast-forward, fetch and rebase
+      puts "AdminTodosHandler: Push failed (attempt #{attempt + 1}/#{max_retries}), rebasing..."
+      system('git fetch origin master 2>&1')
+      unless system('git rebase origin/master 2>&1')
+        # Rebase conflict - abort and let manual intervention
+        system('git rebase --abort 2>&1')
+        puts "AdminTodosHandler: Rebase conflict, aborting"
+        return false
+      end
+    end
+    false
   end
 
   def parse_todos(content)
