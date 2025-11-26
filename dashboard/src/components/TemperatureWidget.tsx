@@ -12,9 +12,10 @@ interface ElectricityPriceSparklineProps {
     price_sek: number
     price_eur: number
   }>
+  isStale?: boolean
 }
 
-const ElectricityPriceSparkline: React.FC<ElectricityPriceSparklineProps> = ({ hours, electricityPrices }) => {
+const ElectricityPriceSparkline: React.FC<ElectricityPriceSparklineProps> = ({ hours, electricityPrices, isStale = false }) => {
   if (!electricityPrices || electricityPrices.length === 0) return null
 
   // Map hours to prices
@@ -73,7 +74,7 @@ const ElectricityPriceSparkline: React.FC<ElectricityPriceSparklineProps> = ({ h
       <path
         d={pathData}
         fill="none"
-        stroke="rgba(255, 255, 255, 0.1)"
+        stroke={isStale ? "rgba(0, 0, 0, 0.15)" : "rgba(255, 255, 255, 0.1)"}
         strokeWidth="2"
         vectorEffect="non-scaling-stroke"
       />
@@ -303,7 +304,7 @@ export function TemperatureWidget() {
     if (!heatpumpSchedule) return null
 
     const { hours, isStale, isActivelyHeating, hasHotSupplyLine } = heatpumpSchedule
-    const barOpacity = isStale ? '40%' : '100%'
+    const chunkColor = isStale ? '#000000' : '#ffffff'
 
     // Use the smart status from parent component
 
@@ -337,14 +338,14 @@ export function TemperatureWidget() {
         <div
           className="relative h-5 rounded-lg overflow-visible transition-all group-hover:brightness-110"
           style={{
-            opacity: barOpacity,
-            background: 'rgba(170, 90, 255, 0.06)'
+            background: isStale ? 'rgba(80, 40, 100, 0.08)' : 'rgba(170, 90, 255, 0.06)'
           }}
         >
           {/* Electricity price sparkline overlay */}
           <ElectricityPriceSparkline
             hours={hours}
             electricityPrices={state.electricityPriceData?.prices}
+            isStale={isStale}
           />
 
           {/* TEST CURSORS: Toggle with showTestCursors variable */}
@@ -399,7 +400,9 @@ export function TemperatureWidget() {
           {/* Single loop for all hour elements */}
           <div className="absolute inset-0 flex">
             {hours.map((hourData, index) => {
-              const chunkOpacity = hourData.isScheduledOn ? '20%' : '5%'
+              const chunkOpacity = hourData.isScheduledOn
+                ? (isStale ? '30%' : '20%')   // ON chunks: higher opacity when stale
+                : (isStale ? '15%' : '5%')    // OFF chunks: higher opacity when stale
               const isCurrentHour = hourData.isCurrentHour
 
               return (
@@ -414,7 +417,7 @@ export function TemperatureWidget() {
                   <div
                     className={`h-full ${index === 0 ? 'rounded-l-lg' : ''} ${index === hours.length - 1 ? 'rounded-r-lg' : ''}`}
                     style={{
-                      backgroundColor: '#ffffff',
+                      backgroundColor: chunkColor,
                       opacity: chunkOpacity,
                       mixBlendMode: 'overlay'
                     }}
