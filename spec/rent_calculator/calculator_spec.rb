@@ -3,11 +3,12 @@ require_relative 'support/test_helpers'
 
 RSpec.describe RentCalculator do
   describe '.calculate_rent' do
+    # Note: test_config_with_drift uses November 2024 config → December rent → 31 days
     context 'when all roommates stay the full month' do
       let(:roommates) do
         {
-          'Alice' => { days: 30, room_adjustment: 0 },
-          'Bob' => { days: 30, room_adjustment: 0 }
+          'Alice' => { days: 31, room_adjustment: 0 },
+          'Bob' => { days: 31, room_adjustment: 0 }
         }
       end
 
@@ -27,7 +28,7 @@ RSpec.describe RentCalculator do
     context 'when roommates have different occupancy durations' do
       let(:roommates) do
         {
-          'Alice' => { days: 30, room_adjustment: 0 },
+          'Alice' => { days: 31, room_adjustment: 0 },
           'Bob' => { days: 15, room_adjustment: 0 }
         }
       end
@@ -37,10 +38,10 @@ RSpec.describe RentCalculator do
           roommates: roommates,
           config: test_config_with_drift
         )
-        
-        total_weight = (30.0 + 15.0) / 30.0  # 1.5
-        expected_alice = (30.0/30.0 / total_weight) * test_config_with_drift.total_rent
-        expected_bob = (15.0/30.0 / total_weight) * test_config_with_drift.total_rent
+
+        total_weight = (31.0 + 15.0) / 31.0  # ~1.48
+        expected_alice = (31.0/31.0 / total_weight) * test_config_with_drift.total_rent
+        expected_bob = (15.0/31.0 / total_weight) * test_config_with_drift.total_rent
         
         expect(rents['Alice']).to be_within(0.01).of(expected_alice)
         expect(rents['Bob']).to be_within(0.01).of(expected_bob)
@@ -51,9 +52,9 @@ RSpec.describe RentCalculator do
     context 'when roommates have room adjustments' do
       let(:roommates) do
         {
-          'Alice' => { days: 30, room_adjustment: -200 },
-          'Bob' => { days: 30, room_adjustment: 0 },
-          'Charlie' => { days: 30, room_adjustment: 0 }
+          'Alice' => { days: 31, room_adjustment: -200 },
+          'Bob' => { days: 31, room_adjustment: 0 },
+          'Charlie' => { days: 31, room_adjustment: 0 }
         }
       end
 
@@ -83,10 +84,10 @@ RSpec.describe RentCalculator do
       context 'with multiple adjustments' do
         let(:roommates) do
           {
-            'Alice' => { days: 30, room_adjustment: -200 },
-            'Bob' => { days: 30, room_adjustment: -100 },
-            'Charlie' => { days: 30, room_adjustment: 0 },
-            'David' => { days: 30, room_adjustment: 0 }
+            'Alice' => { days: 31, room_adjustment: -200 },
+            'Bob' => { days: 31, room_adjustment: -100 },
+            'Charlie' => { days: 31, room_adjustment: 0 },
+            'David' => { days: 31, room_adjustment: 0 }
           }
         end
 
@@ -118,9 +119,9 @@ RSpec.describe RentCalculator do
       context 'with partial stays and adjustments' do
         let(:roommates) do
           {
-            'Alice' => { days: 30, room_adjustment: -200 },  # Full month with deduction
+            'Alice' => { days: 31, room_adjustment: -200 },  # Full month with deduction
             'Bob' => { days: 15, room_adjustment: 0 },       # Half month, no deduction
-            'Charlie' => { days: 30, room_adjustment: 0 }    # Full month, no deduction
+            'Charlie' => { days: 31, room_adjustment: 0 }    # Full month, no deduction
           }
         end
 
@@ -129,17 +130,17 @@ RSpec.describe RentCalculator do
             roommates: roommates,
             config: test_config_with_drift
           )
-          
+
           total_rent = test_config_with_drift.total_rent
           total_adjustments = -200  # Alice's adjustment
           adjusted_total = total_rent - total_adjustments
-          total_weight = (30.0 + 15.0 + 30.0) / 30.0  # 2.5
+          total_weight = (31.0 + 15.0 + 31.0) / 31.0  # ~2.48
           standard_rent_per_weight = adjusted_total / total_weight
-          
+
           # Calculate expected rents
-          alice_weight = 30.0/30.0  # 1.0
-          bob_weight = 15.0/30.0    # 0.5
-          charlie_weight = 30.0/30.0 # 1.0
+          alice_weight = 31.0/31.0  # 1.0
+          bob_weight = 15.0/31.0    # ~0.48
+          charlie_weight = 31.0/31.0 # 1.0
           
           expect(rents['Alice']).to be_within(0.01).of(standard_rent_per_weight * alice_weight - 200)
           expect(rents['Bob']).to be_within(0.01).of(standard_rent_per_weight * bob_weight)
@@ -157,8 +158,8 @@ RSpec.describe RentCalculator do
   describe '.rent_breakdown' do
     let(:roommates) do
       {
-        'Alice' => { days: 30, room_adjustment: 0 },
-        'Bob' => { days: 30, room_adjustment: 0 }
+        'Alice' => { days: 31, room_adjustment: 0 },
+        'Bob' => { days: 31, room_adjustment: 0 }
       }
     end
 
@@ -307,10 +308,11 @@ RSpec.describe RentCalculator do
   end
 
   describe '.friendly_message' do
+    # Use December 2024 config → January 2025 rent → 31 days
     let(:config) do
       {
-        year: 2025,
-        month: 1,  # January
+        year: 2024,
+        month: 12,  # December config → January rent (31 days)
         kallhyra: 24_530,
         el: 1_600,
         bredband: 400,
@@ -328,8 +330,8 @@ RSpec.describe RentCalculator do
 
       it 'formats message correctly for equal rents' do
         message = described_class.friendly_message(roommates: roommates, config: config)
-        expect(message).to include('*Hyran för februari 2025*')  # Shows next month
-        expect(message).to include('ska betalas innan 27 jan')   # Due in current month
+        expect(message).to include('*Hyran för januari 2025*')  # Shows rent month (config+1)
+        expect(message).to include('ska betalas innan 27 dec')   # Due in config month
         expect(message).to match(/\*\d+ kr\* för alla/)
       end
     end
@@ -345,8 +347,8 @@ RSpec.describe RentCalculator do
 
       it 'formats message correctly with different rents' do
         message = described_class.friendly_message(roommates: roommates, config: config)
-        expect(message).to include('*Hyran för februari 2025*')  # Shows next month
-        expect(message).to include('ska betalas innan 27 jan')   # Due in current month
+        expect(message).to include('*Hyran för januari 2025*')  # Shows rent month (config+1)
+        expect(message).to include('ska betalas innan 27 dec')   # Due in config month
         # Message format changed - now shows names grouped by amount
         expect(message).to include('Astrid')
         expect(message).to include('Fredrik')

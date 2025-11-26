@@ -75,14 +75,24 @@ RSpec.describe RentCalculator::Config do
   end
 
   describe '#days_in_month' do
-    it 'returns 30 when year/month not specified' do
+    it 'returns days for next month when year/month not specified' do
+      # When no config date specified, uses current month config → next month rent
       config = described_class.new
-      expect(config.days_in_month).to eq(30)
+      # Should return actual days in the rent month (next month from now)
+      expected_days = Date.civil(Date.today.next_month.year, Date.today.next_month.month, -1).day
+      expect(config.days_in_month).to eq(expected_days)
     end
 
-    it 'calculates correct days for specific month' do
-      config = described_class.new(year: 2024, month: 2)
-      expect(config.days_in_month).to eq(29)  # Leap year February
+    it 'calculates correct days for rent month (config+1)' do
+      # Config month = January 2024 → Rent month = February 2024 → 29 days (leap year)
+      config = described_class.new(year: 2024, month: 1)
+      expect(config.days_in_month).to eq(29)
+    end
+
+    it 'returns 31 for November config (December rent)' do
+      # Config month = November 2024 → Rent month = December 2024 → 31 days
+      config = described_class.new(year: 2024, month: 11)
+      expect(config.days_in_month).to eq(31)
     end
   end
 end 

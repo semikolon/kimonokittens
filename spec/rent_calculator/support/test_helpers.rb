@@ -38,7 +38,9 @@ module RentCalculatorSpec
       raise unless e.message.include?('does not exist')
     end
 
-    def test_config_with_drift(year: nil, month: nil)
+    # Default to November config → December rent (31 days) for deterministic tests
+    # This avoids test flakiness from dynamic Time.now defaults
+    def test_config_with_drift(year: 2024, month: 11)
       RentCalculator::Config.new(
         year: year, month: month,
         kallhyra: 10_000,
