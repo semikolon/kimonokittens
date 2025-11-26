@@ -506,6 +506,8 @@ Handlers → Services → Domain Models + Repositories → Database
 
 **Development environment on kiosk** - `/home/fredrik/Projects/kimonokittens/.env` configured with `DATABASE_URL` pointing to `_development` database and `NODE_ENV=development`. Allows independent local dev/test on kiosk hardware without affecting production.
 
+**Landlord credentials architecture** - `ADMIN_SSN`/`ADMIN_PHONE` in ENV identify which Tenant record is landlord (configuration), while Tenant DB stores actual profile data (single source of truth). Not a security boundary (personnummer already in DB), but enables deployment flexibility and bootstrap without circular dependencies. See `lib/landlord_profile.rb` for lookup hierarchy.
+
 ---
 
 ## 🚀 DEPLOYMENT ARCHITECTURE
