@@ -1137,31 +1137,37 @@ Repository `.all()` method was using `.select()` but **missing fields**:
 
 ## 💸 PAYMENT DETECTION & RENT REMINDERS
 
-**Status**: ⚠️ **TEMPORARILY DISABLED** (Nov 26, 2025) - Rent reminders suspended due to Lunchflow API failures
+**Status**: ✅ **PRODUCTION** (Nov 26, 2025) - Fully operational with payday-aware alerts
 
-**Payment Detection** (Lunchflow bank sync - ⚠️ FAILING, subscription renewed Nov 25, 2025):
-- **CURRENT ISSUE**: Lunchflow API returning 500 errors ("Internal Server Error")
-- Support ticket filed, awaiting resolution
-- When working: Monitors house bank account (tied to Swish) for incoming transactions
+**Payment Detection** (Lunchflow bank sync - ✅ Active, subscription renewed Nov 25, 2025):
+- Monitors house bank account (tied to Swish) for incoming transactions
+- Account ID 4653 "Huset" (updated Nov 26 after old account deprecated)
 - 4-tier matching: reference code → phone number → amount+timing → fuzzy name
+- Real `ApplyBankPayment` service (no mocks) - auto-updates RentLedger
 - Syncs 3x daily (8:05, 14:05, 20:05) via cron
-- Automatically updates RentLedger payment status
-- Subscription: 35 EUR/year (next renewal Nov 2026)
+- Subscription: 35 EUR/year (renewed Nov 25, 2025 → expires Nov 2026)
 
-**Rent Reminders** (SMS via 46elks - ⚠️ DISABLED Nov 26, 2025):
-- **CRON JOB DISABLED**: Temporarily suspended to prevent inaccurate reminders
-- Reason: Payment detection not working → ledger shows everyone unpaid → would spam tenants
-- Successfully tested Nov 24-25: 9 SMS sent with correct amounts before suspension
-- Automated SMS reminders (4 tones: heads_up day 24, first_reminder payday, urgent day 27, overdue 28+)
+**Rent Reminders** (SMS via 46elks - ✅ Active, Nov 26, 2025):
+- **Payday-aware admin alerts**: Only flags tenants as unpaid AFTER their payday has passed
+  - Fredrik (payday 27): Not alerted at 9:45am day 27 (only 9 hours after midnight payday)
+  - Others (payday 25): Early warning on day 26 if unpaid
+- **Smart message formatting**: First names only, "Du" for admin, "Hyran är sen" on day 28+
+- **Timing**: Daily at 9:45am
+  - Day 26: "ℹ️ Påminnelse: Adam, Rasmus har inte betalt än"
+  - Day 27: "⚠️ Du och Adam har inte betalt än"
+  - Day 28+: "🚨 Hyran är sen: Du har inte betalt än"
+- Automated SMS reminders to tenants (4 tones: heads_up day 24, first_reminder payday, urgent day 27, overdue 28+)
 - Idempotency checking prevents duplicate sends
 - Separate WEBHOOK_BASE_URL for external 46elks callbacks (public URL required)
-- **Re-enable when**: Lunchflow API fixed + ApplyBankPayment service implemented (currently MOCK)
 
 **Architecture**:
-- Backend: `lib/sms/gateway.rb` (46elks integration)
+- Backend: `lib/sms/gateway.rb` (46elks integration), `lib/services/apply_bank_payment.rb` (payment matching)
 - Ledger: `lib/models/rent_ledger.rb`, `bin/populate_monthly_ledger`
-- Matching: 4-tier payment detection in Lunchflow webhook handler
+- Scripts: `bin/bank_sync` (Lunchflow), `bin/rent_reminders` (SMS)
 
-**Docs**: `docs/RENT_REMINDERS_IMPLEMENTATION_PLAN.md`, `docs/CODE_REVIEW_RENT_REMINDERS_REWORK.md`
+**Docs**:
+- `docs/RENT_REMINDERS_IMPLEMENTATION_PLAN.md` - Original 5-phase implementation
+- `docs/CODE_REVIEW_RENT_REMINDERS_REWORK.md` - Critical rework (payment detection integration)
+- `docs/ADMIN_ALERTS_PAYDAY_AWARE_IMPLEMENTATION.md` - Payday-aware admin alerts (Nov 26, 2025)
 
 ---

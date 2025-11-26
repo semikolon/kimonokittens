@@ -753,19 +753,22 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 - [ ] `sms_tone` field (gentle-quirky, professional, etc.) - Add when personality customization needed
 - [ ] `lang` field (sv/en) - Add when non-Swedish tenants join
 
-- [ ] Implement automated rent reminders via SMS:
-  - Generate personalized Swish payment links with correct amounts
-  - Send monthly reminders with payment links
-  - Manual confirmation system for payments
-  - Update payment status in persistent storage
-  - Track payment history
-- [ ] **Automated Swish Payment Matching via Bank Sync**:
-  - [ ] Integrate bank transaction sync API (Tink/Nordigen/similar)
-  - [ ] Filter Swish transactions from synced bank history
-  - [ ] Match payments to expected rent amounts by tenant
-  - [ ] Automatic payment confirmation without manual checks
-  - [ ] Reduce manual verification overhead
-  - [ ] **Reference**: See ChatGPT thread for complete implementation plan
+- [x] **Implement automated rent reminders via SMS** - ✅ **PRODUCTION** (Nov 26, 2025)
+  - [x] Generate personalized Swish payment references (no links - Fredrik's Swish not commerce account)
+  - [x] Send monthly reminders with 4 tones (heads_up day 24, first_reminder payday, urgent day 27, overdue 28+)
+  - [x] Payday-aware admin alerts (only flags tenants unpaid AFTER their payday_start_day)
+  - [x] Smart message formatting (first names, "Du" for admin, "Hyran är sen" on day 28+)
+  - [x] Idempotency checking prevents duplicate sends
+  - [x] Update payment status in RentLedger via ApplyBankPayment service
+  - [x] Track payment history in RentReceipt table
+  - **Docs**: `docs/RENT_REMINDERS_IMPLEMENTATION_PLAN.md`, `docs/CODE_REVIEW_RENT_REMINDERS_REWORK.md`, `docs/ADMIN_ALERTS_PAYDAY_AWARE_IMPLEMENTATION.md`
+- [x] **Automated Swish Payment Matching via Bank Sync** - ✅ **PRODUCTION** (Nov 26, 2025)
+  - [x] Integrate bank transaction sync API (Lunchflow) - 35 EUR/year subscription
+  - [x] Filter Swish transactions from synced bank history (merchant field detection)
+  - [x] 4-tier matching: reference code → phone number → amount+timing → fuzzy name
+  - [x] Automatic payment confirmation updates RentLedger + creates RentReceipt
+  - [x] Syncs 3x daily (8:05, 14:05, 20:05) via cron
+  - [x] Account ID 4653 "Huset" (updated Nov 26 after old account deprecated)
 - [ ] Investigate Swish API access requirements:
   - Research requirements for företag/enskild firma
   - Evaluate costs and benefits
