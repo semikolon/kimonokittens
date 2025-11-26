@@ -399,6 +399,10 @@ Located at `config/sleep_schedule.json`:
 
 **Goal:** Address outstanding technical debt and improve overall code quality.
 
+-   [ ] **Create bin/query_ledger script** for easy RentLedger inspection (Nov 25, 2025)
+    -   Interactive Ruby script for common ledger queries (status, payments, periods)
+    -   Examples: `bin/query_ledger --period 2025-10 --tenant adam`, `bin/query_ledger --unpaid`
+    -   Better than manual psql commands (uses existing repository layer)
 -   [ ] **Test ViewTransition animations** (manual browser verification) ⚠️ **LIKELY IMPLEMENTED**
     -   **Status**: `TrainWidget.tsx` found with ViewTransition code - implementation exists
     -   **Testing needed**: Verify train intro/departure animations (5s slide-in, 400ms slide-out)

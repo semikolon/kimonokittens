@@ -1137,12 +1137,12 @@ Repository `.all()` method was using `.select()` but **missing fields**:
 
 **Status**: ✅ **PRODUCTION** (Nov 2025) - All 5 phases complete
 
-**Payment Detection** (Lunchflow bank sync - ⏸️ Temporarily disabled, re-enabling Nov 27):
+**Payment Detection** (Lunchflow bank sync - ✅ Active, subscription renewed Nov 25, 2025):
 - Monitors house bank account (tied to Swish) for incoming transactions
 - 4-tier matching: reference code → phone number → amount+timing → fuzzy name
-- Syncs 3x daily (8:05, 14:05, 20:05) when active
+- Syncs 3x daily (8:05, 14:05, 20:05) via cron
 - Automatically updates RentLedger payment status
-- Cron disabled until subscription renewed
+- Subscription: 35 EUR/year (next renewal Nov 2026)
 
 **Rent Reminders** (SMS via 46elks - ✅ Production, Nov 24 2025):
 - Automated SMS reminders (4 tones: heads_up day 24, first_reminder payday, urgent day 27, overdue 28+)
