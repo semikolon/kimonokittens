@@ -2,4 +2,4 @@
 
 - Betala hyran
 - Hitta ersättare till Adam
-- Fixa mögelknaset
+- Fixa & ring om källarmöglet
