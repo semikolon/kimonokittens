@@ -82,7 +82,7 @@ begin
                        tx[:counterparty_name]
                      end
 
-      Persistence.bank_transactions.upsert(
+      bank_tx = Persistence.bank_transactions.upsert(
         external_id: tx[:id],
         account_id: account_id,
         booked_at: DateTime.parse(tx[:date]),
@@ -95,7 +95,7 @@ begin
 
       # Trigger reconciliation for Swish payments (use merchant field for detection)
       if tx[:merchant]&.to_s&.upcase&.include?('SWISH')
-        ApplyBankPayment.call(transaction_id: tx[:id])
+        ApplyBankPayment.call(transaction_id: bank_tx.id)
       end
     end
   end
