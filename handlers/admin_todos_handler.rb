@@ -64,10 +64,15 @@ class AdminTodosHandler
         })
       end
     rescue Errno::ENOENT
-      # File doesn't exist yet, proceed with commit
+      # File doesn't exist yet, proceed with write
     end
 
-    # Commit to Git
+    # CRITICAL: Write to filesystem FIRST for immediate visibility
+    # DataBroadcaster reads from filesystem, not git - this ensures instant updates
+    File.write(TODO_PATH, content)
+    puts "AdminTodosHandler: Wrote todos to filesystem"
+
+    # Commit to Git and push - MUST succeed or we revert
     begin
       commit_oid = git_commit(content)
       puts "AdminTodosHandler: Committed todos (#{commit_oid[0..7]})"
@@ -75,10 +80,13 @@ class AdminTodosHandler
       # Push to origin (synchronous with retry to handle divergent branches)
       push_success = push_with_retry
       unless push_success
-        puts "AdminTodosHandler: WARNING - Push failed after retries, local commit may diverge"
+        # Push failed - revert filesystem to match origin/master
+        puts "AdminTodosHandler: Push failed, reverting filesystem to origin/master"
+        system("git checkout origin/master -- #{TODO_PATH} 2>&1")
+        return json_response(500, { error: "Save failed - could not sync to remote. Please try again." })
       end
 
-      # Broadcast updated todos via WebSocket
+      # Broadcast updated todos via WebSocket (after confirmed persistence)
       if defined?($data_broadcaster) && $data_broadcaster
         $data_broadcaster.broadcast_todos
         puts "AdminTodosHandler: Broadcasted todo update"
@@ -87,11 +95,12 @@ class AdminTodosHandler
       json_response(200, {
         success: true,
         items: items,
-        commit: commit_oid[0..7],
-        pushed: push_success
+        commit: commit_oid[0..7]
       })
     rescue => e
-      puts "AdminTodosHandler: Error - #{e.message}"
+      # Any error - revert filesystem to match origin/master
+      puts "AdminTodosHandler: Error - #{e.message}, reverting filesystem"
+      system("git checkout origin/master -- #{TODO_PATH} 2>&1")
       json_response(500, { error: "Failed to save: #{e.message}" })
     end
   end

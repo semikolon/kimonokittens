@@ -244,3 +244,134 @@ Webhook pulls from GitHub → Fast-forward (no divergence)
 - `handlers/admin_todos_handler.rb`
 - `lib/data_broadcaster.rb` (broadcast_todos)
 - `handbook/docs/household_todos.md` (data file)
+
+---
+
+# Filesystem + Git Consistency Fix
+
+**Status**: Implemented (Nov 26, 2025)
+
+## Problem Discovered
+
+The original git-only approach had a critical timing gap:
+
+1. `git_commit()` creates commit in git object store via Rugged
+2. **Working directory file is NOT updated** (Rugged writes to git, not filesystem)
+3. `DataBroadcaster` reads from filesystem → broadcasts OLD content
+4. After 2-second grace period, user sees edit REVERT
+5. Only after webhook `git pull` (up to 2-minute debounce) does filesystem update
+
+## Additional Failure Mode
+
+If push fails after local commit:
+- User sees "Sparat!" (success response)
+- GitHub doesn't have the commit
+- Next dev push could cause divergent branches
+- Silent failure - user thinks it saved but it didn't persist
+
+## Solution: Filesystem Write + Fail-Fast Push
+
+**Architecture change**: Write to filesystem FIRST, then git commit, fail if push fails.
+
+```
+User Edit → Write to filesystem → Git commit → Push with retry
+              ↓ (immediate)         ↓              ↓
+         DataBroadcaster        Git history    GitHub/webhook
+         sees new content       preserved      deployment
+```
+
+**On push failure**: Revert filesystem to match origin/master, return 500 error.
+
+**Benefits**:
+1. **Immediate visibility** - DataBroadcaster reads new content instantly
+2. **No silent failures** - Push failure = user error, not false success
+3. **Consistent state** - Filesystem always matches either local success OR origin/master
+4. **Audit trail preserved** - Git history still tracks all changes
+
+## Implementation
+
+```ruby
+def update_todos(req)
+  # ... validation ...
+
+  # 1. Write to filesystem FIRST (immediate visibility)
+  File.write(TODO_PATH, content)
+
+  begin
+    # 2. Create git commit
+    commit_oid = git_commit(content)
+
+    # 3. Push with retry - MUST succeed
+    push_success = push_with_retry
+    unless push_success
+      # Revert filesystem to match deployed state
+      system("git checkout origin/master -- #{TODO_PATH}")
+      return json_response(500, { error: "Save failed - could not sync to remote" })
+    end
+
+    # 4. Broadcast after confirmed persistence
+    $data_broadcaster&.broadcast_todos
+    json_response(200, { success: true, ... })
+
+  rescue => e
+    # Revert on any error
+    system("git checkout origin/master -- #{TODO_PATH}")
+    json_response(500, { error: "Failed to save: #{e.message}" })
+  end
+end
+```
+
+## Trade-off Accepted
+
+Failed commits still exist in local git history (orphaned). Could accumulate over time, but:
+- Rare edge case (push failures are uncommon)
+- Git garbage collection eventually cleans unreferenced objects
+- Alternative (`git reset --hard`) is destructive and risky
+- Acceptable technical debt for reliability
+
+---
+
+# Webhook Integration: Self-Triggering Scenario
+
+**Status**: Verified working (Nov 26, 2025)
+
+## The Round-Trip Flow
+
+When todos are edited on the production server:
+
+1. **Production** writes file + commits + pushes to GitHub
+2. **GitHub** receives push → sends webhook back to production
+3. **Production** receives webhook for its *own* push
+
+## Smart Change Detection
+
+The webhook (`deployment/scripts/webhook_puma_server.rb`) explicitly handles this:
+
+```ruby
+# If only data files changed (no code), git pull is enough
+unless changes[:frontend] || changes[:backend] || changes[:deployment] || changes[:config]
+  $logger.info("✅ Data files updated via git pull, no deployment needed")
+  return { success: true, message: 'Data files updated (handbook/docs/household_todos.md, ...)' }
+end
+```
+
+**Change detection patterns** (lines 370+):
+- `^dashboard/` → frontend rebuild
+- `\.(rb|ru|gemspec)$|^Gemfile$` → backend restart
+- `^deployment/` → webhook self-update warning
+- Config files → kiosk restart
+
+**Files like `handbook/docs/*.md`** don't match any pattern → no deployment flags → fast path.
+
+## Result: Minimal Overhead
+
+For todo edits originating from production:
+- `git pull` is a no-op (already at HEAD)
+- No backend restart
+- No frontend rebuild
+- Just the webhook round-trip (~2 seconds)
+
+For todo edits originating from dev machine (via git push):
+- `git pull` updates the file
+- DataBroadcaster reads new content on next poll
+- No deployment needed
