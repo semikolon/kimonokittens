@@ -1172,4 +1172,6 @@ Repository `.all()` method was using `.select()` but **missing fields**:
 - `docs/CODE_REVIEW_RENT_REMINDERS_REWORK.md` - Critical rework (payment detection integration)
 - `docs/ADMIN_ALERTS_PAYDAY_AWARE_IMPLEMENTATION.md` - Payday-aware admin alerts (Nov 26, 2025)
 
+**Deferred**: Billogram rent payment automation (outgoing 24,529 SEK/month to Bostadsagenturen) - resume end Dec 2025. See `docs/BILLOGRAM_RENT_PAYMENT_AUTOMATION_PLAN.md`
+
 ---

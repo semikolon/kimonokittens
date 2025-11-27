@@ -889,6 +889,10 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Added**: Nov 20, 2025 during emergencyPrice field removal
 - [ ] **⚡ FUTURE: Enhance Electricity Projection Accuracy** ⏳ **PLANNED**
   - Use Vattenfall/Fortum PDF scrapers to extract actual bill line-item breakdowns and model specific cost components (trading margins, certificates, administrative fees) instead of empirical 4.5% adjustment. See `bin/analyze_projection_accuracy.rb` for current accuracy baseline.
+- [ ] **💳 FUTURE: Billogram Rent Payment Automation** ⏳ **DEFERRED** (Resume end Dec 2025)
+  - Automate monthly house rent payment (24,529 SEK to Bostadsagenturen via Billogram) - reduce ~10 manual clicks to just BankID Face ID authentication
+  - Research: Playwright vs Ferrum/FerrumVCR vs iOS Shortcuts vs Billogram API
+  - See `docs/BILLOGRAM_RENT_PAYMENT_AUTOMATION_PLAN.md` for full context and research plan
 
 ### API Integration
 - [x] Expose rent calculator as API for voice/LLM assistants:
