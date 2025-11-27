@@ -33,6 +33,12 @@ class BankTransactionRepository < BaseRepository
     row && hydrate(row)
   end
 
+  # Get all transactions
+  # @return [Array<BankTransaction>]
+  def all
+    dataset.all.map { |row| hydrate(row) }
+  end
+
   # Find all unreconciled transactions (not yet matched to rent receipts)
   #
   # PRESERVED LOGIC from implementation plan (reconciliation flow)

@@ -7,6 +7,7 @@ require 'fileutils'
 require_relative '../lib/banking/lunchflow_client'
 require_relative '../lib/persistence'
 require_relative '../lib/services/apply_bank_payment'
+require_relative '../lib/services/payment_aggregator'
 require_relative '../lib/sms/gateway'
 
 # Helper: Extract phone number from Swish transaction description
@@ -56,6 +57,26 @@ begin
     puts "Found #{response[:transactions].length} transactions:"
   end
 
+  # Group same-day transactions by date + counterparty for aggregation
+  # This enables detecting multiple small payments on same day that together meet threshold
+  incoming_swish = response[:transactions].select { |tx| tx[:merchant]&.to_s&.include?('Mottagen') }
+
+  # Group by date and counterparty (phone for Swish)
+  grouped = incoming_swish.group_by do |tx|
+    date = DateTime.parse(tx[:date]).to_date
+    phone = extract_phone_from_description(tx[:description])
+    [date, phone]
+  end
+
+  # Calculate same-day totals for each group
+  same_day_totals = {}
+  grouped.each do |(date, phone), txs|
+    total = txs.sum { |tx| tx[:amount].abs }
+    txs.each do |tx|
+      same_day_totals[tx[:id]] = total
+    end
+  end
+
   # Process each transaction
   response[:transactions].each do |tx|
     if dry_run
@@ -66,12 +87,12 @@ begin
       puts "  Merchant: #{tx[:merchant] || 'N/A'}"
 
       # Check if this would trigger reconciliation (use merchant field for Swish detection)
-      reconcile_flag = if tx[:merchant]&.to_s&.upcase&.include?('SWISH')
-                         'YES (Swish payment)'
-                       else
-                         'NO'
-                       end
-      puts "  Would reconcile: #{reconcile_flag}"
+      if tx[:merchant]&.to_s&.include?('Mottagen')
+        same_day_total = same_day_totals[tx[:id]]
+        puts "  Would reconcile: YES (Swish payment, same-day total: #{same_day_total} kr)"
+      else
+        puts "  Would reconcile: NO"
+      end
     else
       # Production mode: upsert to database
       # For Swish: extract phone from description and populate counterparty
@@ -95,8 +116,47 @@ begin
 
       # Trigger reconciliation for INCOMING Swish payments only (rent)
       # Exclude outgoing ("Swish Skickad") which are reimbursements
+      # Process ALL transactions in same-day group with aggregated total
       if tx[:merchant]&.to_s&.include?('Mottagen')
-        ApplyBankPayment.call(transaction_id: bank_tx.id)
+        same_day_total = same_day_totals[tx[:id]]
+        ApplyBankPayment.call(
+          transaction_id: bank_tx.id,
+          same_day_total: same_day_total
+        )
+      end
+    end
+  end
+
+  unless dry_run
+    # Multi-day aggregation for partial payments
+    # Run after same-day processing to catch partial payment combinations
+    # spanning multiple days (up to 14 days, within rent-paying window day 15-27)
+
+    # Get current month from latest transaction (or today if no transactions)
+    current_month_start = if response[:transactions].any?
+                            latest_date = response[:transactions].map { |tx| DateTime.parse(tx[:date]) }.max
+                            Date.new(latest_date.year, latest_date.month, 1)
+                          else
+                            today = Date.today
+                            Date.new(today.year, today.month, 1)
+                          end
+
+    # For each active tenant, find and process multi-day partial groups
+    active_tenants = Persistence.tenants.find_active
+    active_tenants.each do |tenant|
+      groups = PaymentAggregator.find_partial_groups(tenant, current_month_start)
+
+      groups.each do |group|
+        group_total = group.sum(&:amount)
+
+        # Process each transaction in the group with the group total
+        # (similar to same-day aggregation, but for multi-day combinations)
+        group.each do |tx|
+          ApplyBankPayment.call(
+            transaction_id: tx.id,
+            same_day_total: group_total  # Reuse same parameter for multi-day
+          )
+        end
       end
     end
   end

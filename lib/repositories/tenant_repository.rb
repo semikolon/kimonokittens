@@ -119,6 +119,9 @@ class TenantRepository < BaseRepository
   def create(tenant)
     id = dataset.insert(dehydrate(tenant))
 
+    # Auto-generate phoneE164 from phone_e164 or phone field (same logic as dehydrate)
+    phone_e164 = tenant.phone_e164 || normalize_phone_to_e164(tenant.phone)
+
     Tenant.new(
       id: id,
       name: tenant.name,
@@ -135,6 +138,7 @@ class TenantRepository < BaseRepository
       # Contract fields
       personnummer: tenant.personnummer,
       phone: tenant.phone,
+      phone_e164: phone_e164,  # Include normalized phone in returned object
       deposit: tenant.deposit,
       furnishing_deposit: tenant.furnishing_deposit
     )
@@ -289,6 +293,9 @@ class TenantRepository < BaseRepository
   # @param tenant [Tenant] Domain object
   # @return [Hash] Database columns
   def dehydrate(tenant)
+    # Auto-generate phoneE164 from phone_e164 or phone field
+    phone_e164 = tenant.phone_e164 || normalize_phone_to_e164(tenant.phone)
+
     {
       id: tenant.id || generate_id,
       name: tenant.name,
@@ -305,6 +312,7 @@ class TenantRepository < BaseRepository
       # Contract fields
       personnummer: tenant.personnummer,
       phone: tenant.phone,
+      phoneE164: phone_e164,  # Auto-generate normalized phone
       deposit: tenant.deposit,
       furnishingDeposit: tenant.furnishing_deposit,
       # SMS reminder fields

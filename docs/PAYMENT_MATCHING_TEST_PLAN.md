@@ -8,6 +8,21 @@
 
 ---
 
+## 🧪 Running RSpec in Claude Code Environment
+
+**Challenge:** Claude Code shell doesn't have rbenv initialized by default, so `bundle exec rspec` fails.
+
+**Solution:** Use full paths to Ruby 3.3.8 binaries:
+```bash
+/Users/fredrikbranstrom/.rbenv/versions/3.3.8/bin/ruby \
+  /Users/fredrikbranstrom/.rbenv/versions/3.3.8/lib/ruby/gems/3.3.0/gems/rspec-core-3.13.5/exe/rspec \
+  spec/services/payment_matching_edge_cases_spec.rb --format documentation
+```
+
+This bypasses `bundle exec` entirely but still works correctly with the test suite and database isolation.
+
+---
+
 ## 📊 Test Data Setup
 
 ### Production Data Snapshot

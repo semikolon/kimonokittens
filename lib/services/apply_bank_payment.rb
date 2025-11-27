@@ -26,12 +26,21 @@ require 'time'
 # @example
 #   ApplyBankPayment.call(transaction_id: 'tx_abc123')
 class ApplyBankPayment
-  def self.call(transaction_id:)
-    new(transaction_id: transaction_id).call
+  # Deposit amount patterns (Swedish rental law: 1-2 months rent)
+  DEPOSIT_FIRST_MONTH_RANGE = (6000..6200)   # First month rent
+  DEPOSIT_SECOND_MONTH_RANGE = (2000..2200)  # Second month rent
+  DEPOSIT_COMPOSITE_RANGE = (8200..8600)     # Total deposit (first + second)
+
+  NEW_TENANT_WINDOW_DAYS = 30  # ± days from startDate to consider tenant "new"
+  PAYMENT_THRESHOLD_PERCENTAGE = 0.5  # 50% of expected rent
+
+  def self.call(transaction_id:, same_day_total: nil)
+    new(transaction_id: transaction_id, same_day_total: same_day_total).call
   end
 
-  def initialize(transaction_id:)
+  def initialize(transaction_id:, same_day_total: nil)
     @transaction = Persistence.bank_transactions.find_by_id(transaction_id)
+    @same_day_total = same_day_total  # For same-day aggregation support
     # Use transaction date for period matching (allows tests with historical dates)
     tx_date = @transaction&.booked_at || Time.now
     @current_month = tx_date.strftime('%Y-%m')
@@ -47,6 +56,12 @@ class ApplyBankPayment
     tenant, match_method = find_matching_tenant
     return unless tenant
 
+    # PHASE 1: Check for deposit before processing as rent
+    if deposit_payment?(tenant)
+      log_deposit_to_admin(tenant)
+      return nil  # Don't create rent receipt for deposits
+    end
+
     # Get expected rent for current month
     period_date = Date.parse("#{@current_month}-01")
     ledger = Persistence.rent_ledger.find_by_tenant_and_period(
@@ -54,6 +69,17 @@ class ApplyBankPayment
       period_date
     )
     return unless ledger
+
+    # PHASE 2: Check amount threshold (50% rule)
+    # Use same_day_total if provided (aggregation), otherwise individual amount
+    payment_amount = @same_day_total || @transaction.amount.abs
+    min_threshold = ledger.amount_due * PAYMENT_THRESHOLD_PERCENTAGE
+
+    # Reference code overrides threshold
+    unless payment_amount >= min_threshold || match_method == 'reference'
+      log_small_payment_to_admin(tenant, @transaction.amount.abs, ledger.amount_due)
+      return nil
+    end
 
     # Calculate remaining amount due
     existing_receipts = Persistence.rent_receipts.find_by_tenant(
@@ -174,6 +200,43 @@ class ApplyBankPayment
     end
 
     nil
+  end
+
+  # Check if payment is a deposit (new tenant within ±30 days of move-in)
+  # @param tenant [Tenant]
+  # @return [Boolean]
+  def deposit_payment?(tenant)
+    return false unless tenant.start_date
+
+    # Check if amount matches deposit pattern
+    amount = @transaction.amount.abs
+    amount_matches = DEPOSIT_FIRST_MONTH_RANGE.include?(amount) ||
+                     DEPOSIT_SECOND_MONTH_RANGE.include?(amount) ||
+                     DEPOSIT_COMPOSITE_RANGE.include?(amount)
+
+    return false unless amount_matches
+
+    # Check if tenant is new (within ±30 days of startDate)
+    days_since_start = (@transaction.booked_at.to_date - tenant.start_date).abs
+    days_since_start <= NEW_TENANT_WINDOW_DAYS
+  end
+
+  # Log deposit to admin (Swedish)
+  # @param tenant [Tenant]
+  def log_deposit_to_admin(tenant)
+    amount = @transaction.amount.to_i
+    # Swedish SMS: "💰 Deposition: [name] betalade [amount] kr"
+    SmsGateway.send_admin_alert("💰 Deposition: #{tenant.name} betalade #{amount} kr")
+  end
+
+  # Log small payment below threshold to admin (Swedish)
+  # @param tenant [Tenant]
+  # @param amount [Float]
+  # @param expected_rent [Float]
+  def log_small_payment_to_admin(tenant, amount, expected_rent)
+    # Swedish SMS: "⚠️ Liten betalning från [name]: [amount] kr (under 50% av hyra)"
+    threshold = (expected_rent * PAYMENT_THRESHOLD_PERCENTAGE).to_i
+    SmsGateway.send_admin_alert("⚠️ Liten betalning från #{tenant.name}: #{amount.to_i} kr (under 50% av #{expected_rent.to_i} kr)")
   end
 
   # Send admin SMS confirmation when payment completes
