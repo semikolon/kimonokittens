@@ -246,21 +246,21 @@ export function WeatherWidget() {
                 <span className="text-purple-100">
                   {index === 0 ? 'Idag' :
                    index === 1 ? 'Imorgon' :
-                   new Date(day.date).toLocaleDateString('sv-SE', { weekday: 'long' })}
+                   new Date(day.date).toLocaleDateString('sv-SE', { weekday: 'long' }).replace(/^./, c => c.toUpperCase())}
                 </span>
               </div>
 
               <div className="flex items-center space-x-2">
                 {sunHours && (
                   <>
-                    <span className="text-yellow-100">{sunHours}</span>
-                    <span className="text-purple-300 opacity-50">•</span>
+                    <span className="text-orange-400">{sunHours}</span>
+                    <span className="text-purple-300 opacity-25">•</span>
                   </>
                 )}
                 <span className="font-bold text-purple-100">
                   {Math.round(day.day.maxtemp_c)}°
                 </span>
-                <span className="text-purple-300 opacity-50">•</span>
+                <span className="text-purple-300 opacity-25">•</span>
                 <span className="text-purple-200">
                   {Math.round(day.day.mintemp_c)}°
                 </span>
