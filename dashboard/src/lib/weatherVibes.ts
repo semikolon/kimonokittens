@@ -24,9 +24,11 @@ export const VIBES = {
   snow_windy:       { short: 'Snöyra',          long: 'Snöyra' },
   snow:             { short: 'Mysigt',          long: 'Mysigt ute' },
 
-  // Rain conditions
+  // Rain conditions (intensity-aware)
   rain_windy:       { short: 'Ruskigt',         long: 'Stanna inne' },
+  rain_heavy:       { short: 'Ösregn',          long: 'Regnar rejält' },
   rain:             { short: 'Ta paraply',      long: 'Ta paraply' },
+  rain_light:       { short: 'Kanske paraply',  long: 'Ta med paraply' },
 
   // Fog conditions
   fog_icy:          { short: 'Halt!',           long: 'Akta halkan' },
@@ -84,6 +86,8 @@ export function detectVibeKey(params: WeatherParams): VibeKey {
   const isSleet = /snöblandat/.test(condLower)
   const isSnowing = /snö/.test(condLower) && !isSleet
   const isRaining = /regn|dugg|skur/.test(condLower)
+  const isLightRain = isRaining && /lätt|dugg/.test(condLower) && !/kraftigt|stört/.test(condLower)
+  const isHeavyRain = isRaining && /kraftigt|stört/.test(condLower)
   const isFoggy = /dimma|dis/.test(condLower)
   const isSunny = /sol|klart|klar/.test(condLower)
   const isIcy = isFreezing || /underkyld|frys/.test(condLower)
@@ -94,6 +98,8 @@ export function detectVibeKey(params: WeatherParams): VibeKey {
   if (isSnowing && isWindy) return 'snow_windy'
   if (isSnowing) return 'snow'
   if (isRaining && isWindy) return 'rain_windy'
+  if (isHeavyRain) return 'rain_heavy'
+  if (isLightRain) return 'rain_light'
   if (isRaining) return 'rain'
   if (isFoggy && isIcy) return 'fog_icy'
   if (isFoggy && isCold) return 'fog_cold'
