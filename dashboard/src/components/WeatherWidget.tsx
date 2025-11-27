@@ -190,6 +190,7 @@ export function WeatherWidget() {
     if (isSunny) return 'Fint'
 
     // Sun-aware fallbacks (Meteoblue predicts sun even if WeatherAPI says cloudy)
+    if (sunHoursForDay >= 3) return 'Soligt'
     if (sunHoursForDay >= 2) return 'Fint'
     if (sunHoursForDay >= 1) return 'Lite sol'
 
@@ -309,8 +310,12 @@ export function WeatherWidget() {
                    index === 1 ? 'Imorgon' :
                    new Date(day.date).toLocaleDateString('sv-SE', { weekday: 'long' }).replace(/^./, c => c.toUpperCase())}
                 </span>
-                <span className="text-purple-300 opacity-25">•</span>
-                <span className="text-purple-300">{index === 0 ? getWeatherVibe() : getForecastVibe(day, sunHoursCount)}</span>
+                {index > 0 && (
+                  <>
+                    <span className="text-purple-300 opacity-25">•</span>
+                    <span className="text-purple-300">{getForecastVibe(day, sunHoursCount)}</span>
+                  </>
+                )}
               </div>
 
               <div className="flex items-center space-x-2">
