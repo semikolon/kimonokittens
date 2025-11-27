@@ -153,6 +153,12 @@ export function WeatherWidget() {
             <div className="text-4xl font-bold text-purple-100">
               {weatherData.current.temp_c}°
             </div>
+            {getTodaySunStatus() && (
+              <div className="flex items-center space-x-1">
+                <SunDim className="w-4 h-4 text-orange-400" />
+                <span className="text-orange-400">{getTodaySunStatus()}</span>
+              </div>
+            )}
             <div className="text-purple-200">
               {shortenWeatherText(weatherData.current.condition.text)}
             </div>
@@ -160,12 +166,6 @@ export function WeatherWidget() {
         </div>
 
         <div className="text-purple-200 text-right">
-          {getTodaySunStatus() && (
-            <div className="flex items-center justify-end space-x-1">
-              <SunDim className="w-4 h-4 text-orange-400" />
-              <span className="text-orange-400">{getTodaySunStatus()}</span>
-            </div>
-          )}
           <div className="flex items-center justify-end space-x-1">
             <Droplets className="w-4 h-4" />
             <span>{weatherData.current.humidity}%</span>
