@@ -567,8 +567,10 @@ Handlers → Services → Domain Models + Repositories → Database
    - **Replaced** Tibber/Node-RED ps-strategy with Ruby backend implementation
    - Generates schedule from electricity prices (configurable: hours_on 9-14, maxPrice 1.5-3.0 kr/kWh)
    - Optimizes runtime for cheapest hours using ps-strategy algorithm
-   - Node-RED calls `/api/heatpump/schedule?hours_on=12&max_price=2.2` every 20 minutes
+   - Node-RED calls `/api/heatpump/schedule?hours_on=12&max_price=2.2` every 10 minutes
+   - Dashboard (DataBroadcaster) polls every 60s with `?skip_sms=true` (no emergency SMS)
    - Returns JSON with EVU state, schedule applies to MQTT
+   - **Temperature emergency SMS**: Max 1 alert per hour when hot water <40°C or indoor too cold (throttled)
 
 **Critical**: Hot water "priority" logic operates AFTER these three layers. EVU blocking occurs at the compressor (shared heat source), preventing the reversing valve from ever switching heat destination. Temperature override (when working) explains why `heatpump_disabled=0` even when schedule shows OFF - system stays enabled to maintain comfort, but only when EVU permits operation.
 
