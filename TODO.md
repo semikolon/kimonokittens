@@ -708,10 +708,10 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 - [ ] Add data validation and cleanup tools
 - [ ] Add monitoring for database size and performance
 - [ ] **Update all Tenant contact details** (personnummer, phone) for existing tenants (Fredrik, Adam, Rasmus, etc.) to enable contract generation for all
-- [ ] **Implement Tenant Lifecycle Management System** (BLOCKER for removing hardcoded tenant count)
+- [ ] **Implement Tenant Lifecycle Management System** (Quality of life improvement)
   - **Context**: Contract generator currently hardcodes 4 tenants (`contract_generator_html.rb:127`) as safeguard against incomplete data
   - **Why hardcoded**: Prevents accidental rent miscalculation if departure dates aren't updated immediately
-  - **Future requirement**: SMS reminders + Swish payment matching REQUIRE accurate tenant tracking
+  - **Note**: SMS reminders + Swish payment matching are ✅ **PRODUCTION** (Nov 26, 2025) - working with current tenant tracking
   - **Needed features**:
     - [ ] Tenant status tracking (active/pending_departure/departed/pending_arrival)
     - [ ] Automated reminders to update departure dates (email/SMS 30 days before expected departure)
@@ -721,10 +721,9 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
     - [ ] Room assignment tracking (which tenant in which room, room turnover history)
   - **Benefits**:
     - Remove hardcode from contract generator → accurate rent in contracts
-    - Enable SMS rent reminders (need current active tenant list)
-    - Enable Swish payment matching (need tenant count for amount validation)
+    - Improve tenant status visibility (current system works but could be more robust)
     - Support future features (room-specific rent adjustments, move-in/out workflows)
-  - **Priority**: MEDIUM-HIGH - Required before SMS/Swish automation can be implemented
+  - **Priority**: MEDIUM - Nice to have for better tenant management, but current system functional
   - **Discovered**: Nov 11, 2025 during contract testing financial number verification
 - [ ] **Store signed contract PDFs as blobs in database instead of filesystem**
   - **Current**: SignedContract table stores file paths (`pdfUrl` field), actual PDFs in `contracts/signed/` directory
@@ -917,31 +916,32 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 
 ## 💰 Rent Reminders & Payment Automation
 
-**Status:** ⚠️ **TEMPORARILY DISABLED** (Nov 26, 2025) - Lunchflow API 500 errors
-**Documentation:** `docs/RENT_REMINDERS_IMPLEMENTATION_PLAN.md`
+**Status:** ✅ **PRODUCTION** (Nov 26, 2025)
+**Documentation:** `docs/RENT_REMINDERS_IMPLEMENTATION_PLAN.md`, `docs/PAYMENT_MATCHING_TEST_PLAN.md`
 
-### 🚨 CRITICAL: Re-enable Rent Reminders (Nov 26, 2025)
-- [ ] **Wait for Lunchflow API fix** - Support ticket filed, awaiting response
-- [ ] **Implement real `ApplyBankPayment` service** - Replace MOCK at `bin/bank_sync:32-35`
-- [ ] **Run catch-up bank sync** - Reconcile any Swish payments made during downtime
-- [ ] **Verify ledger accuracy** - Check payment status for all tenants
-- [ ] **Re-enable rent reminders cron** - Uncomment in `/var/spool/cron/crontabs/kimonokittens`
+### Production Deployment (Nov 26, 2025)
+- [x] **Lunchflow subscription renewed** - 35 EUR/year (expires Nov 2026)
+- [x] **Swedbank reconnected** - Account ID 4653 "Huset" (old account deprecated)
+- [x] **Payment matching service deployed** - Same-day & multi-day aggregation, deposit detection, threshold checks
+- [x] **Bank sync operational** - 3x daily sync (8:05, 14:05, 20:05) processing transactions successfully
+- [x] **Rent receipts created** - 4 rent payments matched Nov 26 (4,903 kr, 6,303 kr, 6,302 kr, 5,896 kr)
+- [x] **SMS reminders active** - Daily 09:45 cron with payday-aware admin alerts
 
-**Context:** Rent reminders cron disabled Nov 26 to prevent sending incorrect reminders while payment detection is broken. SMS successfully tested Nov 24-25 (9 messages sent) before suspension.
+**Recent Activity:** Bank sync successfully processing transactions. Payment matching logic (4-tier strategy + aggregation) working as designed.
 
 **Note:** Tenants have individual `paydayStartDay` values in database (e.g., Fredrik: day 27 for Försäkringskassan sjukpenning, others: day 25). This is intentional - not everyone gets paid on Swedish norm day 25.
 
 ### MVP Implementation (6-Week Plan)
 - [x] **Phase 1:** Database schema (3 new tables: BankTransaction, RentReceipt, SmsEvent)
-- [x] **Phase 2:** Lunch Flow API integration (3x daily sync cron - ⚠️ CURRENTLY FAILING)
-- [x] **Phase 3:** Payment matching service (3-tier: reference, amount+name, partial)
+- [x] **Phase 2:** Lunch Flow API integration (3x daily sync cron - ✅ OPERATIONAL)
+- [x] **Phase 3:** Payment matching service (4-tier strategy + same-day/multi-day aggregation + deposit detection)
 - [x] **Phase 4:** SMS infrastructure (46elks integration + webhooks)
 - [x] **Phase 5:** Rent reminder scheduling (daily 09:45, tone-based escalation)
 - [ ] **Phase 6:** Admin dashboard UI (payment status badges + expanded details)
 
-### Service Signup Required
-- [ ] **Lunch Flow:** Sign up at https://www.lunchflow.app/signin/signup (£5/month, 7-day trial)
-- [ ] **46elks:** Sign up at https://46elks.com/register (Swedish SMS provider, ~0.65 SEK/SMS)
+### Service Subscriptions
+- [x] **Lunch Flow:** ✅ Active (35 EUR/year, renewed Nov 25, 2025)
+- [x] **46elks:** ✅ Active (Swedish SMS provider, ~0.65 SEK/SMS)
 
 ### Future Enhancements (Deferred from MVP)
 
