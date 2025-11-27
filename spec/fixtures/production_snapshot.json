@@ -1,0 +1,331 @@
+{
+  "exported_at": "2025-11-27T13:13:38+01:00",
+  "tenants": [
+    {
+      "id": "cmcp5ovvc0000mnpiq34uprjv",
+      "name": "Adam McCarthy",
+      "email": "adam@kimonokittens.com",
+      "phone_e164": "+46760177088",
+      "room": "Höger uppe",
+      "start_date": "2025-03-01",
+      "departure_date": null,
+      "room_adjustment": null,
+      "payday_start_day": 25,
+      "status": "active"
+    },
+    {
+      "id": "cmd4xvdmi00000zpiz9hfcspx",
+      "name": "Amanda Persson",
+      "email": "amanda@kimonokittens.com",
+      "phone_e164": null,
+      "room": null,
+      "start_date": "2025-08-02",
+      "departure_date": "2025-10-31",
+      "room_adjustment": null,
+      "payday_start_day": 25,
+      "status": "active"
+    },
+    {
+      "id": "cmcp56en8000ryzpi8q7wtlbx",
+      "name": "Astrid Wildner Wybert",
+      "email": "astrid@kimonokittens.com",
+      "phone_e164": null,
+      "room": null,
+      "start_date": "2024-02-01",
+      "departure_date": "2024-12-31",
+      "room_adjustment": -1400.0,
+      "payday_start_day": 25,
+      "status": "active"
+    },
+    {
+      "id": "cmhwkja0i0001bci0y7vaeb2c",
+      "name": "Ellinor Lidén",
+      "email": "ellinor.lidén@kimonokittens.local",
+      "phone_e164": null,
+      "room": null,
+      "start_date": "2023-09-15",
+      "departure_date": "2024-03-31",
+      "room_adjustment": null,
+      "payday_start_day": 25,
+      "status": "departed"
+    },
+    {
+      "id": "cmcp56en8000qyzpicykv9t82",
+      "name": "Elvira Karnstedt",
+      "email": "elvira@kimonokittens.com",
+      "phone_e164": null,
+      "room": null,
+      "start_date": "2024-11-22",
+      "departure_date": "2025-08-01",
+      "room_adjustment": null,
+      "payday_start_day": 25,
+      "status": "active"
+    },
+    {
+      "id": "cmcp56en7000oyzpilhvyi16d",
+      "name": "Frans-Lukas Otis Pirat Lövenvald",
+      "email": "frans-lukas@kimonokittens.com",
+      "phone_e164": null,
+      "room": null,
+      "start_date": "2023-12-01",
+      "departure_date": "2025-03-01",
+      "room_adjustment": null,
+      "payday_start_day": 25,
+      "status": "active"
+    },
+    {
+      "id": "cmhwkja0d0000bci02t0txfst",
+      "name": "Frans Sporsén",
+      "email": "frans.sporsén@kimonokittens.local",
+      "phone_e164": null,
+      "room": null,
+      "start_date": "2023-02-01",
+      "departure_date": "2024-06-01",
+      "room_adjustment": null,
+      "payday_start_day": 25,
+      "status": "departed"
+    },
+    {
+      "id": "cmcp56en7000myzpivjxfmxcc",
+      "name": "Fredrik Bränström",
+      "email": "branstrom@gmail.com",
+      "phone_e164": "+46738307222",
+      "room": "Mitten uppe",
+      "start_date": "2023-02-01",
+      "departure_date": null,
+      "room_adjustment": null,
+      "payday_start_day": 27,
+      "status": "active"
+    },
+    {
+      "id": "cmhqlmryv00004ipixj2zdkhj",
+      "name": "Frida Johansson",
+      "email": "frida9608@gmail.com",
+      "phone_e164": "+46739764479",
+      "room": null,
+      "start_date": "2025-12-03",
+      "departure_date": null,
+      "room_adjustment": null,
+      "payday_start_day": 25,
+      "status": "active"
+    },
+    {
+      "id": "cmcp56en8000pyzpivlwr1c4p",
+      "name": "Malin Lindberg",
+      "email": "malin@kimonokittens.com",
+      "phone_e164": null,
+      "room": null,
+      "start_date": "2023-02-01",
+      "departure_date": "2024-11-21",
+      "room_adjustment": null,
+      "payday_start_day": 25,
+      "status": "active"
+    },
+    {
+      "id": "cmhwkja0k0002bci09s7fsybd",
+      "name": "Patrik Ljungkvist",
+      "email": "patrik.ljungkvist@kimonokittens.local",
+      "phone_e164": null,
+      "room": null,
+      "start_date": "2023-02-01",
+      "departure_date": "2023-09-15",
+      "room_adjustment": null,
+      "payday_start_day": 25,
+      "status": "departed"
+    },
+    {
+      "id": "cmcp56en7000nyzpi90f6dnkx",
+      "name": "Rasmus Kasurinen",
+      "email": "rasmus@kimonokittens.com",
+      "phone_e164": "+46738174974",
+      "room": "Vänster uppe",
+      "start_date": "2023-06-01",
+      "departure_date": null,
+      "room_adjustment": -1400.0,
+      "payday_start_day": 25,
+      "status": "active"
+    },
+    {
+      "id": "cmhqe9enc0000wopipuxgc3kw",
+      "name": "Sanna Juni Benemar",
+      "email": "sanna_benemar@hotmail.com",
+      "phone_e164": "+46702894437",
+      "room": "Vänster nere",
+      "start_date": "2025-11-01",
+      "departure_date": null,
+      "room_adjustment": null,
+      "payday_start_day": 25,
+      "status": "active"
+    }
+  ],
+  "rent_configs": [
+    {
+      "period": "2025-11-01T00:00:00Z",
+      "key": "bredband",
+      "value": "400.0"
+    },
+    {
+      "period": "2025-11-01T00:00:00Z",
+      "key": "el",
+      "value": "3869"
+    },
+    {
+      "period": "2025-11-01T00:00:00Z",
+      "key": "gas",
+      "value": "83.0"
+    },
+    {
+      "period": "2025-11-01T00:00:00Z",
+      "key": "kallhyra",
+      "value": "24530.0"
+    },
+    {
+      "period": "2025-11-01T00:00:00Z",
+      "key": "larm",
+      "value": "150.0"
+    },
+    {
+      "period": "2025-11-01T00:00:00Z",
+      "key": "va",
+      "value": "300.0"
+    },
+    {
+      "period": "2025-11-01T00:00:00Z",
+      "key": "vattenavgift",
+      "value": "375.0"
+    },
+    {
+      "period": "2025-10-01T00:00:00Z",
+      "key": "drift_rakning",
+      "value": "2797"
+    },
+    {
+      "period": "2025-10-01T00:00:00Z",
+      "key": "el",
+      "value": "2581"
+    },
+    {
+      "period": "2025-09-01T00:00:00Z",
+      "key": "bredband",
+      "value": "400"
+    },
+    {
+      "period": "2025-09-01T00:00:00Z",
+      "key": "el",
+      "value": "2424"
+    },
+    {
+      "period": "2025-09-01T00:00:00Z",
+      "key": "kallhyra",
+      "value": "24530"
+    },
+    {
+      "period": "2025-09-01T00:00:00Z",
+      "key": "larm",
+      "value": "150"
+    },
+    {
+      "period": "2025-09-01T00:00:00Z",
+      "key": "va",
+      "value": "300"
+    },
+    {
+      "period": "2025-09-01T00:00:00Z",
+      "key": "vattenavgift",
+      "value": "375"
+    }
+  ],
+  "rent_ledgers": [
+    {
+      "tenant_id": "cmcp56en7000myzpivjxfmxcc",
+      "period": "2025-11-01T00:00:00Z",
+      "amount_due": 6303.0,
+      "amount_paid": 0.0,
+      "payment_date": null
+    },
+    {
+      "tenant_id": "cmcp56en7000nyzpi90f6dnkx",
+      "period": "2025-11-01T00:00:00Z",
+      "amount_due": 4903.0,
+      "amount_paid": 4903.0,
+      "payment_date": "2025-11-24T00:00:00+01:00"
+    },
+    {
+      "tenant_id": "cmcp5ovvc0000mnpiq34uprjv",
+      "period": "2025-11-01T00:00:00Z",
+      "amount_due": 6302.0,
+      "amount_paid": 6302.0,
+      "payment_date": "2025-11-25T00:00:00+01:00"
+    },
+    {
+      "tenant_id": "cmhqe9enc0000wopipuxgc3kw",
+      "period": "2025-11-01T00:00:00Z",
+      "amount_due": 6303.0,
+      "amount_paid": 6303.0,
+      "payment_date": "2025-11-24T00:00:00+01:00"
+    },
+    {
+      "tenant_id": "cmhqlmryv00004ipixj2zdkhj",
+      "period": "2025-11-01T00:00:00Z",
+      "amount_due": 5896.0,
+      "amount_paid": 5896.0,
+      "payment_date": "2025-11-25T00:00:00+01:00"
+    },
+    {
+      "tenant_id": "cmcp56en7000myzpivjxfmxcc",
+      "period": "2025-10-01T00:00:00Z",
+      "amount_due": 7084.0,
+      "amount_paid": 7084.0,
+      "payment_date": "2025-11-27T00:00:00+01:00"
+    },
+    {
+      "tenant_id": "cmcp56en7000nyzpi90f6dnkx",
+      "period": "2025-10-01T00:00:00Z",
+      "amount_due": 7084.0,
+      "amount_paid": 7084.0,
+      "payment_date": "2025-11-27T00:00:00+01:00"
+    },
+    {
+      "tenant_id": "cmcp5ovvc0000mnpiq34uprjv",
+      "period": "2025-10-01T00:00:00Z",
+      "amount_due": 7084.0,
+      "amount_paid": 7084.0,
+      "payment_date": "2025-11-27T00:00:00+01:00"
+    },
+    {
+      "tenant_id": "cmhqe9enc0000wopipuxgc3kw",
+      "period": "2025-10-01T00:00:00Z",
+      "amount_due": 7084.0,
+      "amount_paid": 7084.0,
+      "payment_date": "2025-11-27T00:00:00+01:00"
+    },
+    {
+      "tenant_id": "cmcp56en7000myzpivjxfmxcc",
+      "period": "2025-09-01T00:00:00Z",
+      "amount_due": 7044.75,
+      "amount_paid": 0.0,
+      "payment_date": null
+    },
+    {
+      "tenant_id": "cmcp56en7000nyzpi90f6dnkx",
+      "period": "2025-09-01T00:00:00Z",
+      "amount_due": 7044.75,
+      "amount_paid": 0.0,
+      "payment_date": null
+    },
+    {
+      "tenant_id": "cmcp5ovvc0000mnpiq34uprjv",
+      "period": "2025-09-01T00:00:00Z",
+      "amount_due": 7044.75,
+      "amount_paid": 0.0,
+      "payment_date": null
+    },
+    {
+      "tenant_id": "cmd4xvdmi00000zpiz9hfcspx",
+      "period": "2025-09-01T00:00:00Z",
+      "amount_due": 7044.75,
+      "amount_paid": 0.0,
+      "payment_date": null
+    }
+  ]
+}

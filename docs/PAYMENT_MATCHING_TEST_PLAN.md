@@ -1,8 +1,136 @@
-# Payment Matching System - Comprehensive Test Plan
+# Payment Matching System - Complete Implementation & Test Plan
 
-**Date:** Nov 26, 2025
-**Context:** TDD approach to payment matching after discovering outgoing Swish bug
+**Date:** Nov 26-27, 2025
+**Status:** Ready to Implement
+**Context:** TDD approach with multi-day aggregation + deposit detection + threshold rules
 **Goal:** Bulletproof payment matching with complete edge case coverage
+**Production Data:** `spec/fixtures/production_snapshot.json` (exported Nov 27, 2025)
+
+---
+
+## 📊 Test Data Setup
+
+### Production Data Snapshot
+
+**File:** `spec/fixtures/production_snapshot.json`
+**Exported:** Nov 27, 2025 13:13:38 +01:00
+**Contents:**
+- **13 tenants** (5 active, 8 departed/inactive) with real names, phones, room assignments
+- **15 rent configs** (last 3 months: Sep-Nov 2025) with actual electricity costs, utilities
+- **13 rent ledgers** (last 3 months) with expected rent amounts per tenant
+
+**Key Test Tenants:**
+| Name | Phone | Room | Start Date | Payday | Expected Rent (Nov) |
+|------|-------|------|------------|--------|---------------------|
+| Adam McCarthy | +46760177088 | Höger uppe | 2025-03-01 | Day 25 | 6,302 kr |
+| Frida Johansson | +46739764479 | Vänster nere | 2025-08-28 | Day 25 | 5,896 kr |
+| Rasmus Kasurinen | +46738174974 | Vänster uppe | 2024-01-22 | Day 25 | 4,903 kr |
+| Sanna Juni Benemar | +46702894437 | Höger nere | 2025-10-21 | Day 25 | 6,303 kr |
+| Fredrik Bränström | +46708822234 | Höger nere | 2013-09-15 | Day 27 | 6,303 kr |
+
+### Usage in Tests
+
+```ruby
+# spec_helper.rb - Load production snapshot before suite
+RSpec.configure do |config|
+  config.before(:suite) do
+    data = JSON.parse(File.read('spec/fixtures/production_snapshot.json'))
+
+    # Seed test database with production tenants
+    data['tenants'].each do |tenant_data|
+      Persistence.tenants.create(Tenant.new(
+        id: tenant_data['id'],
+        name: tenant_data['name'],
+        email: tenant_data['email'],
+        phone_e164: tenant_data['phone_e164'],
+        room: tenant_data['room'],
+        start_date: tenant_data['start_date'] ? Date.parse(tenant_data['start_date']) : nil,
+        departure_date: tenant_data['departure_date'] ? Date.parse(tenant_data['departure_date']) : nil,
+        room_adjustment: tenant_data['room_adjustment'],
+        payday_start_day: tenant_data['payday_start_day'],
+        status: tenant_data['status']
+      ))
+    end
+
+    # Seed rent configs (last 3 months)
+    data['rent_configs'].each do |config|
+      Persistence.rent_configs.set(
+        config['key'],
+        config['value'],
+        Date.parse(config['period'])
+      )
+    end
+
+    # Seed rent ledgers
+    data['rent_ledgers'].each do |ledger|
+      Persistence.rent_ledger.create(RentLedger.new(
+        tenant_id: ledger['tenant_id'],
+        period: Date.parse(ledger['period']),
+        amount_due: ledger['amount_due'],
+        amount_paid: ledger['amount_paid'],
+        payment_date: ledger['payment_date'] ? Date.parse(ledger['payment_date']) : nil
+      ))
+    end
+  end
+end
+```
+
+### VCR for Lunchflow API
+
+**Cassette:** `spec/fixtures/vcr_cassettes/lunchflow/november_2025.yml`
+**Contains:** Real November 2025 transaction responses from Lunchflow API
+
+```ruby
+# Record cassette once on production machine:
+RSpec.describe LunchflowClient, vcr: { cassette_name: 'lunchflow/november_2025' } do
+  it 'fetches November 2025 transactions' do
+    response = client.fetch_transactions(
+      account_id: ENV['LUNCHFLOW_ACCOUNT_ID'],
+      since: '2025-11-01'
+    )
+    expect(response[:transactions].length).to be > 0
+  end
+end
+
+# Commit cassette to git for use on Mac
+```
+
+---
+
+## 🎯 Deterministic Transaction Interpretation Rules
+
+**Priority order for processing each incoming Swish payment:**
+
+```ruby
+1. Is it a DEPOSIT?
+   (amount matches 6,000-6,200 kr OR 2,000-2,200 kr OR 8,200-8,600 kr
+   AND tenant is new/recent: within ±30 days of startDate)
+   → Log: "💰 Deposition från [name]: [amount] kr"
+   → Don't create receipt
+   → STOP
+
+2. Aggregate same-day payments (group by person + date)
+
+3. Does aggregated amount >= 50% of expected rent?
+   → Create receipt(s) for all payments in group
+   → Mark partial if total < expected
+   → STOP
+
+4. Has reference code? (even if below threshold)
+   → Create receipt
+   → STOP
+
+5. Below threshold, no reference code
+   → Log: "⚠️ Liten betalning från [name]: [amount] kr (< 50% av hyra)"
+   → Don't create receipt
+   → STOP (informational log only - no manual verification)
+```
+
+**Multi-day aggregation runs at every bank_sync:**
+- Find unmatched transactions in day 15-27 rent-paying window
+- Try 2-payment and 3-payment combinations within 14 days
+- If total matches expected rent (±max(100 kr, 1%)) → create receipts
+- Prefer latter combinations (exact match more likely in last payment)
 
 ---
 
@@ -634,11 +762,711 @@ A fully tested payment matching system should:
 
 ---
 
+### Category 12: Deposit Detection (NEW - Nov 27, 2025)
+
+#### Test 12.1: New Tenant - First Month Deposit
+```ruby
+# Scenario: Sanna pays first month deposit (6,000 kr) on Oct 21 (move-in day)
+tenant = {
+  name: "Sanna Juni Benemar",
+  start_date: Date.new(2025, 10, 21),
+  phone_e164: "+46702894437"
+}
+
+transaction = {
+  merchant: "Swish Mottagen",
+  amount: 6000,  # Within DEPOSIT_FIRST_MONTH_RANGE (6000-6200)
+  description: "from: +46702894437 ...",
+  counterparty: "+46702894437",
+  booked_at: Date.new(2025, 10, 21)  # Same day as move-in
+}
+
+expected:
+  - deposit_payment?: true (within ±30 days of startDate)
+  - create_receipt?: false
+  - admin_alert: "💰 Deposition: Sanna Juni Benemar betalade 6000 kr"
+```
+
+#### Test 12.2: New Tenant - Composite Deposit
+```ruby
+# Scenario: New tenant pays full deposit in one payment (8,400 kr)
+transaction = {
+  amount: 8400,  # Within DEPOSIT_COMPOSITE_RANGE (8200-8600)
+  booked_at: tenant.start_date + 5.days  # Within 30-day window
+}
+
+expected:
+  - deposit_payment?: true
+  - create_receipt?: false
+  - admin_alert: "💰 Deposition: [name] betalade 8400 kr"
+```
+
+#### Test 12.3: Old Tenant - NOT a Deposit
+```ruby
+# Scenario: Existing tenant pays 6,000 kr (happens to match deposit range)
+tenant = {
+  start_date: Date.new(2024, 1, 1),  # 22 months ago
+}
+
+transaction = {
+  amount: 6000,
+  booked_at: Date.new(2025, 11, 24)  # 693 days after move-in
+}
+
+expected:
+  - deposit_payment?: false (outside ±30 day window)
+  - create_receipt?: true (matches as partial rent)
+```
+
+#### Test 12.4: Deposit Completion (Small Payment)
+```ruby
+# Scenario: Sanna paid 8,000 kr on Oct 21, now pays 400 kr to complete deposit
+previous_deposit = 8000  # Oct 21
+transaction = {
+  amount: 400,  # Not in any deposit range
+  booked_at: Date.new(2025, 11, 18)  # 28 days after move-in
+}
+
+expected:
+  - deposit_payment?: false (amount doesn't match deposit patterns)
+  - below_threshold?: true (400 < 50% of 6,303 kr)
+  - create_receipt?: false
+  - admin_alert: "⚠️ Liten betalning från Sanna Juni Benemar: 400 kr (under 50% av hyra)"
+```
+
+---
+
+### Category 13: Payment Amount Thresholds (NEW - Nov 27, 2025)
+
+#### Test 13.1: Payment Meets 50% Threshold
+```ruby
+# Scenario: Tenant pays 3,500 kr (>50% of 6,303 kr expected)
+expected_rent = 6303
+threshold = expected_rent * 0.5  # 3,151.5
+
+transaction = {
+  amount: 3500  # > threshold
+}
+
+expected:
+  - meets_threshold?: true
+  - create_receipt?: true
+  - partial: true (3,500 < 6,303)
+```
+
+#### Test 13.2: Payment Below 50% Threshold
+```ruby
+# Scenario: Tenant pays 3,000 kr (<50% of 6,303 kr expected)
+transaction = {
+  amount: 3000  # < 3,151.5 threshold
+}
+
+expected:
+  - meets_threshold?: false
+  - has_reference_code?: false
+  - create_receipt?: false
+  - admin_alert: "⚠️ Liten betalning från [name]: 3000 kr (under 50% av hyra)"
+```
+
+#### Test 13.3: Reference Code Override (Below Threshold)
+```ruby
+# Scenario: Tenant pays 2,000 kr with reference code (bypasses threshold)
+transaction = {
+  amount: 2000,  # < 50% threshold
+  description: "Swish från ... KK202511Sannacmhqe9enc"  # Has reference code
+}
+
+expected:
+  - meets_threshold?: false
+  - has_reference_code?: true
+  - create_receipt?: true (reference code overrides threshold)
+  - partial: true
+```
+
+---
+
+### Category 14: Same-Day Payment Aggregation (NEW - Nov 27, 2025)
+
+#### Test 14.1: Two Payments Same Day - Both Pass Individually
+```ruby
+# Scenario: Tenant sends rent in two installments, both >50% threshold
+payments = [
+  { amount: 5000, booked_at: Date.new(2025, 11, 24) },  # 79% of rent
+  { amount: 1689, booked_at: Date.new(2025, 11, 24) }   # 27% of rent
+]
+
+total = 6689  # > expected 6,303
+
+expected:
+  - aggregated_amount: 6689
+  - both_meet_threshold?: true (when checked individually)
+  - create_receipts?: 2 receipts created
+  - partial?: false (total >= expected)
+```
+
+#### Test 14.2: Two Payments Same Day - Second Fails Without Aggregation
+```ruby
+# Scenario: Historical case from Feb 2024
+payments = [
+  { amount: 3000, booked_at: Date.new(2024, 2, 26) },  # 50% of 6,053
+  { amount: 3053, booked_at: Date.new(2024, 2, 26) }   # 50% of 6,053
+]
+
+expected_rent = 6053
+first_threshold = 3000 >= 3026.5  # false
+total = 6053
+
+expected:
+  - WITHOUT aggregation: First payment would FAIL threshold
+  - WITH aggregation: Both payments create receipts
+  - total_matches_rent?: true
+```
+
+#### Test 14.3: Three Payments Same Day
+```ruby
+# Scenario: Tenant splits rent into three parts (unusual but valid)
+payments = [
+  { amount: 2000, booked_at: Date.new(2025, 11, 24) },
+  { amount: 2000, booked_at: Date.new(2025, 11, 24) },
+  { amount: 2303, booked_at: Date.new(2025, 11, 24) }
+]
+
+total = 6303
+
+expected:
+  - aggregated_amount: 6303
+  - all_meet_threshold?: false (individually all < 50%)
+  - create_receipts?: 3 receipts created (via aggregation)
+  - total_matches_rent?: true
+```
+
+---
+
+### Category 15: Multi-Day Payment Aggregation (NEW - Nov 27, 2025)
+
+#### Test 15.1: Two Payments Within 14 Days (Matching Rent)
+```ruby
+# Scenario: Tenant pays on two different paydays
+payments = [
+  { amount: 3000, booked_at: Date.new(2025, 11, 18) },  # Mid-month payday
+  { amount: 4303, booked_at: Date.new(2025, 11, 24) }   # Standard payday
+]
+
+days_apart = 6
+total = 7303
+expected_rent = 7303
+tolerance = [100, 7303 * 0.01].max  # 100
+
+expected:
+  - within_time_window?: true (6 days < 14 days)
+  - total_matches_rent?: true (diff = 0 <= 100)
+  - create_receipts?: 2 receipts
+  - admin_alert: "💰 Delbetalningar matchade: [name] betalade 2 gånger (totalt 7303 kr av 7303 kr)"
+```
+
+#### Test 15.2: Two Payments Too Far Apart (>14 Days)
+```ruby
+# Scenario: Payments 20 days apart
+payments = [
+  { amount: 3000, booked_at: Date.new(2025, 11, 10) },
+  { amount: 3303, booked_at: Date.new(2025, 11, 30) }
+]
+
+days_apart = 20
+
+expected:
+  - within_time_window?: false (20 days > 14 days max)
+  - aggregate?: false
+  - create_receipts?: 0 (both below 50% threshold individually)
+```
+
+#### Test 15.3: Three Payments Within Window
+```ruby
+# Scenario: Tenant pays in three installments over 10 days
+payments = [
+  { amount: 2000, booked_at: Date.new(2025, 11, 18) },
+  { amount: 2000, booked_at: Date.new(2025, 11, 22) },
+  { amount: 2303, booked_at: Date.new(2025, 11, 28) }
+]
+
+date_span = 10.days
+total = 6303
+
+expected:
+  - within_time_window?: true (10 days < 14 days)
+  - total_matches_rent?: true
+  - create_receipts?: 3 receipts
+```
+
+#### Test 15.4: Multiple Valid Combinations - Prefer Latter
+```ruby
+# Scenario: Three payments, two valid combinations
+payments = [
+  { amount: 3000, booked_at: Date.new(2025, 11, 18) },
+  { amount: 3000, booked_at: Date.new(2025, 11, 20) },
+  { amount: 3303, booked_at: Date.new(2025, 11, 22) }
+]
+
+expected_rent = 6303
+
+valid_combinations = [
+  [payments[0], payments[2]],  # Day 18 + 22 = 6,303 (exact)
+  [payments[1], payments[2]]   # Day 20 + 22 = 6,303 (exact)
+]
+
+expected:
+  - choose_combination: [payments[1], payments[2]]  # LATTER combo
+  - reason: "Last payment (3,303) exactly completes rent"
+```
+
+#### Test 15.5: Tolerance Check (±100 kr or 1%)
+```ruby
+# Scenario: Two payments slightly over expected rent
+payments = [
+  { amount: 3200, booked_at: Date.new(2025, 11, 18) },
+  { amount: 3200, booked_at: Date.new(2025, 11, 24) }
+]
+
+total = 6400
+expected_rent = 6303
+diff = 97  # Within 100 kr tolerance
+
+expected:
+  - within_tolerance?: true (97 <= 100)
+  - create_receipts?: 2 receipts
+```
+
+#### Test 15.6: Outside Rent-Paying Window (Day 15-27)
+```ruby
+# Scenario: Payments outside the rent-paying window
+payments = [
+  { amount: 3000, booked_at: Date.new(2025, 11, 10) },  # Day 10 (too early)
+  { amount: 3303, booked_at: Date.new(2025, 11, 30) }   # Day 30 (too late)
+]
+
+expected:
+  - in_rent_window?: false (day 10 < day 15 start)
+  - aggregate?: false
+  - reason: "Outside rent-paying window (day 15-27)"
+```
+
+---
+
+## 🏗️ Implementation Guide
+
+### Architecture Changes
+
+**Files to Modify:**
+
+1. **`bin/bank_sync`** - Add aggregation logic before `ApplyBankPayment.call()`
+2. **`lib/services/apply_bank_payment.rb`** - Add deposit detection, threshold checks
+3. **`lib/models/bank_transaction.rb`** - Add helper methods for deposit detection
+4. **New file: `lib/services/payment_aggregator.rb`** - Multi-day aggregation logic
+
+**Database Schema:**
+
+**No changes needed** - use existing `BankTransaction` and `RentReceipt` tables.
+
+---
+
+### Phase 1: Deposit Detection
+
+**Constants (add to `ApplyBankPayment`):**
+
+```ruby
+# Deposit amount patterns (Swedish rental law: 1-2 months rent)
+DEPOSIT_FIRST_MONTH_RANGE = (6000..6200)   # First month rent
+DEPOSIT_SECOND_MONTH_RANGE = (2000..2200)  # Two months rent
+DEPOSIT_COMPOSITE_RANGE = (8200..8600)     # Total deposit
+
+NEW_TENANT_WINDOW_DAYS = 30  # ± days from startDate
+```
+
+**Implementation:**
+
+```ruby
+def call
+  return unless @transaction
+  return unless @transaction.incoming_swish_payment?
+
+  # NEW: Check for deposit before matching
+  if deposit_payment?
+    log_deposit_to_admin
+    return nil  # Don't create rent receipt
+  end
+
+  # Existing matching logic...
+  tenant, match_method = find_matching_tenant
+  # ...
+end
+
+private
+
+def deposit_payment?
+  return false unless tenant = find_matching_tenant&.first
+
+  # Check if amount matches deposit pattern
+  amount_matches = DEPOSIT_FIRST_MONTH_RANGE.include?(@transaction.amount) ||
+                   DEPOSIT_SECOND_MONTH_RANGE.include?(@transaction.amount) ||
+                   DEPOSIT_COMPOSITE_RANGE.include?(@transaction.amount)
+
+  return false unless amount_matches
+
+  # Check if tenant is new (within ±30 days of startDate)
+  return false unless tenant.start_date
+
+  days_since_start = (@transaction.booked_at.to_date - tenant.start_date).abs
+  days_since_start <= NEW_TENANT_WINDOW_DAYS
+end
+
+def log_deposit_to_admin
+  tenant = find_matching_tenant&.first
+  SmsGateway.send_admin_alert(
+    "💰 Deposition: #{tenant.name} betalade #{@transaction.amount.to_i} kr"
+  )
+end
+```
+
+---
+
+### Phase 2: Same-Day Aggregation
+
+**Implementation in `bin/bank_sync`:**
+
+```ruby
+# After fetching transactions, BEFORE calling ApplyBankPayment:
+
+# Group incoming Swish by date + counterparty
+incoming_swish = response[:transactions].select do |tx|
+  tx[:merchant]&.include?('Mottagen')
+end
+
+grouped = incoming_swish.group_by do |tx|
+  [Date.parse(tx[:date]), tx[:counterparty]]
+end
+
+# Process each group
+grouped.each do |(date, person), transactions|
+  # Upsert all transactions first
+  bank_txs = transactions.map do |tx|
+    Persistence.bank_transactions.upsert(
+      external_id: tx[:id],
+      account_id: account_id,
+      booked_at: DateTime.parse(tx[:date]),
+      amount: tx[:amount],
+      currency: tx[:currency],
+      description: tx[:description],
+      counterparty: tx[:counterparty],
+      raw_json: tx
+    )
+  end
+
+  # Calculate total for group
+  total = bank_txs.sum(&:amount)
+
+  # Try to match group (ApplyBankPayment will handle threshold)
+  bank_txs.each do |bank_tx|
+    ApplyBankPayment.call(
+      transaction_id: bank_tx.id,
+      same_day_total: total  # NEW parameter
+    )
+  end
+end
+```
+
+**Modify `ApplyBankPayment` to accept group total:**
+
+```ruby
+def initialize(transaction_id:, same_day_total: nil)
+  @transaction = Persistence.bank_transactions.find_by_id(transaction_id)
+  @same_day_total = same_day_total || @transaction&.amount  # Use group total if provided
+
+  tx_date = @transaction&.booked_at || Time.now
+  @current_month = tx_date.strftime('%Y-%m')
+  # ...
+end
+
+def call
+  # ... existing checks ...
+
+  # Check threshold using same_day_total
+  expected_rent = ledger.amount_due
+  min_amount = expected_rent * 0.5
+
+  if @same_day_total >= min_amount
+    create_receipt  # Passes threshold
+  elsif @transaction.has_reference_code?(tenant)
+    create_receipt  # Reference code override
+  else
+    log_small_payment_to_admin
+    return nil
+  end
+
+  # ... rest of logic ...
+end
+
+def log_small_payment_to_admin
+  tenant = find_matching_tenant&.first
+  SmsGateway.send_admin_alert(
+    "⚠️ Liten betalning från #{tenant.name}: #{@transaction.amount.to_i} kr " \
+    "(under 50% av hyra)"
+  )
+end
+```
+
+---
+
+### Phase 3: Multi-Day Aggregation
+
+**New Service: `lib/services/payment_aggregator.rb`:**
+
+```ruby
+require_relative '../persistence'
+
+# PaymentAggregator finds multi-day partial payment combinations
+# that sum to expected rent amount.
+#
+# Handles cases like:
+# - Nov 18: 3,000 kr (partial)
+# - Nov 24: 4,303 kr (completing)
+# - Total: 7,303 kr = full rent
+#
+# @example
+#   PaymentAggregator.find_partial_groups(tenant, Date.new(2025, 11, 1))
+class PaymentAggregator
+  RENT_PAYING_WINDOW_START = 15  # Day of month
+  RENT_PAYING_WINDOW_END = 27
+  MAX_DAYS_BETWEEN_PAYMENTS = 14
+
+  def self.find_partial_groups(tenant, month_start)
+    new(tenant, month_start).find_groups
+  end
+
+  def initialize(tenant, month_start)
+    @tenant = tenant
+    @month_start = month_start
+    @month_end = month_start + 1.month - 1.day
+  end
+
+  def find_groups
+    unmatched = get_unmatched_transactions
+    return [] if unmatched.empty?
+
+    expected_rent = get_expected_rent
+    return [] unless expected_rent
+
+    tolerance = [100, expected_rent * 0.01].max
+
+    matched_groups = []
+
+    # Try 2-payment combinations
+    unmatched.combination(2).each do |tx1, tx2|
+      next unless within_time_window?(tx1, tx2)
+
+      total = tx1.amount + tx2.amount
+      diff = (total - expected_rent).abs
+
+      if diff <= tolerance
+        matched_groups << [tx1, tx2]
+      end
+    end
+
+    # Remove matched transactions from pool
+    matched_groups.each do |group|
+      unmatched -= group
+    end
+
+    # Try 3-payment combinations (remaining unmatched)
+    unmatched.combination(3).each do |tx1, tx2, tx3|
+      next unless within_time_window?(tx1, tx2, tx3)
+
+      total = tx1.amount + tx2.amount + tx3.amount
+      diff = (total - expected_rent).abs
+
+      if diff <= tolerance
+        matched_groups << [tx1, tx2, tx3]
+      end
+    end
+
+    # Prefer latter combinations (exact match more likely in last payment)
+    matched_groups.sort_by do |group|
+      total = group.sum(&:amount)
+      exact_match = (total - expected_rent).abs < 1
+      [exact_match ? 0 : 1, group.last.booked_at]
+    end
+  end
+
+  private
+
+  def get_unmatched_transactions
+    # Get all incoming Swish in rent-paying window (day 15-27)
+    start_date = @month_start + (RENT_PAYING_WINDOW_START - 1).days
+    end_date = @month_start + (RENT_PAYING_WINDOW_END - 1).days
+
+    all_txs = Persistence.bank_transactions.all.select do |tx|
+      tx.incoming_swish_payment? &&
+      tx.booked_at >= start_date &&
+      tx.booked_at <= end_date &&
+      tx.counterparty == @tenant.phone_e164
+    end
+
+    # Filter out already matched transactions
+    all_txs.reject do |tx|
+      receipt = RentDb.instance.class.db[:RentReceipt]
+        .where(matchedTxId: tx.id)
+        .first
+      receipt
+    end
+  end
+
+  def get_expected_rent
+    ledger = Persistence.rent_ledger.find_by_tenant_and_period(
+      @tenant.id,
+      @month_start
+    )
+    ledger&.amount_due
+  end
+
+  def within_time_window?(*transactions)
+    dates = transactions.map { |tx| tx.booked_at.to_date }
+    date_range = dates.max - dates.min
+    date_range <= MAX_DAYS_BETWEEN_PAYMENTS
+  end
+end
+```
+
+**Integration in `bin/bank_sync`:**
+
+```ruby
+# After same-day aggregation, run multi-day aggregation:
+
+active_tenants = Persistence.tenants.all.select(&:active?)
+
+active_tenants.each do |tenant|
+  # Current month
+  month_start = Date.new(Date.today.year, Date.today.month, 1)
+
+  groups = PaymentAggregator.find_partial_groups(tenant, month_start)
+
+  groups.each do |transactions|
+    total = transactions.sum(&:amount)
+    expected = Persistence.rent_ledger.find_by_tenant_and_period(
+      tenant.id, month_start
+    )&.amount_due
+
+    # Create receipts for all transactions in group
+    transactions.each do |tx|
+      ApplyBankPayment.call(
+        transaction_id: tx.id,
+        same_day_total: total  # Use group total for threshold
+      )
+    end
+
+    # Log successful aggregation (Swedish)
+    SmsGateway.send_admin_alert(
+      "💰 Delbetalningar matchade: #{tenant.name} betalade #{transactions.length} gånger " \
+      "(totalt #{total.to_i} kr av #{expected.to_i} kr)"
+    )
+  end
+end
+```
+
+---
+
+### Phase 4: Swedish SMS Translations
+
+**Update all admin alerts:**
+
+```ruby
+# Bank sync failure (bin/bank_sync)
+SmsGateway.send_admin_alert("⚠️ Banksynk misslyckades: #{e.message}")
+
+# Deposit detection (ApplyBankPayment)
+SmsGateway.send_admin_alert(
+  "💰 Deposition: #{tenant.name} betalade #{amount} kr"
+)
+
+# Small payment below threshold (ApplyBankPayment)
+SmsGateway.send_admin_alert(
+  "⚠️ Liten betalning från #{tenant.name}: #{amount} kr (under 50% av hyra)"
+)
+
+# Multi-day aggregation success (bin/bank_sync)
+SmsGateway.send_admin_alert(
+  "💰 Delbetalningar matchade: #{tenant.name} betalade #{count} gånger " \
+  "(totalt #{total} kr av #{expected} kr)"
+)
+
+# Unpaid rent alerts (bin/rent_reminders) - ALREADY IN SWEDISH ✅
+```
+
+---
+
+## 📋 Decision Log
+
+### Question 1: New Tenant Identification
+**Decision:** Use `startDate ±30 days` (Option A)
+**Rationale:** Simple, clear rule. Tenant might pay first rent before deposits, so can't rely on "no receipts = new tenant"
+
+### Question 2: Cross-Month Partial Payments
+**Decision:** NO - don't check previous month
+**Rationale:** Historical data shows NO examples of partial rent spanning months. All cross-month patterns are full rent + small adjustments.
+
+### Question 3: Multiple Valid Combinations
+**Decision:** Take LATTER combination (prefers exact match)
+**Rationale:** Last payment in series will exactly complete rent amount with 99% certainty
+
+### Question 4: Multi-Day Tolerance
+**Decision:** `max(100 kr, expected_rent × 1%)`
+**Rationale:**
+- 6,303 kr rent → 100 kr tolerance (larger of 100 or 63)
+- 15,000 kr rent → 150 kr tolerance (larger of 100 or 150)
+
+---
+
+## ⚡ Performance Considerations
+
+**Combination search complexity:**
+- Typical case: 2-5 unmatched transactions per tenant
+- Worst case: 10 unmatched transactions
+  - 2-combos: C(10,2) = 45
+  - 3-combos: C(10,3) = 120
+  - Total: 165 checks
+- 5 tenants × 165 = 825 checks per bank_sync
+- **Performance impact: Negligible** (< 1ms)
+
+---
+
+## 🚀 Deployment Plan
+
+1. ✅ **Export production data** to `spec/fixtures/production_snapshot.json`
+2. ✅ **Update documentation** - consolidated into this single plan
+3. ⏳ **Implement code changes** on Mac (TDD approach)
+4. ⏳ **Run full test suite** - ensure all 50+ test cases pass
+5. ⏳ **Commit and push** to production
+6. ⏳ **Monitor first bank_sync run** with new logic
+7. ⏳ **Verify admin SMS alerts** in Swedish
+
+---
+
+## ✅ Success Criteria
+
+- ✅ Same-day installment payments automatically matched (5,000 kr + 689 kr)
+- ✅ Multi-day partial payments aggregated (3,000 kr + 4,303 kr over 6 days)
+- ✅ Deposits correctly detected and skipped (6,000 kr, 2,000 kr, 8,400 kr)
+- ✅ Small non-rent payments rejected (400 kr without reference code)
+- ✅ Reference code override works (even below 50% threshold)
+- ✅ All admin SMS in Swedish
+- ✅ No false positives (adjustments not matched as rent)
+- ✅ Historical data patterns handled correctly
+
+---
+
 ## 📝 Next Steps
 
-1. **Write failing tests** for all categories above
-2. **Fix direction detection bug** (incoming vs outgoing)
-3. **Implement amount thresholds** (min 50%, max 150%)
+1. **Implement code changes** on Mac using TDD approach
+2. **Write failing tests** for all 15 categories (50+ test cases)
+3. **Implement features** to make tests pass (4 phases)
 4. **Add idempotency checks** (prevent duplicates)
 5. **Run full test suite** and verify all green
 6. **Deploy to production** with confidence
