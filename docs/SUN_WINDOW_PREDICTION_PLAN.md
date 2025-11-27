@@ -62,21 +62,27 @@ Evaluated 15+ providers across three tiers:
 
 ### TODO
 
-3. **Test the service**
+3. ~~**Test the service**~~ ✅ DONE
    ```bash
-   cd /Users/fredrikbranstrom/Projects/kimonokittens
    bundle exec ruby lib/meteoblue_sun_predictor.rb
    ```
 
-4. **Integrate with dashboard weather widget**
-   - Discuss visual design with user
-   - Options: sun icon with countdown, timeline bar, notification badge
+4. **Integrate with dashboard weather widget** - IN PROGRESS
+   - ✅ Prototyped orange gradient on Klimat widget during daylight
+   - ✅ Tested multiple color variations (amber, coral, pink-orange)
+   - **Current approach**: Orange gradient background on weather widget
+   - **Color**: `rgba(255, 140, 50, 0.45)` → `rgba(255, 180, 80, 0.30)` (bright clean orange)
+   - **Next steps**:
+     - Add sun data to WebSocket broadcast from backend
+     - Make gradient conditional on `is_daylight` or `brightness_percent`
+     - Add brightness % indicator text to widget
+     - Consider adding "next sun window" countdown
 
 5. **Add API endpoint** (optional)
    - `GET /api/sun-windows` returning predictions for both locations
 
 6. **Production deployment**
-   - Add METEOBLUE_API_KEY to production .env
+   - Add METEOBLUE_API_KEY to production .env ✅ (already in .env)
    - Monitor credit consumption via meteoblue dashboard
 
 ---
