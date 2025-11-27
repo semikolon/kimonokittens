@@ -565,9 +565,9 @@ Handlers → Services → Domain Models + Repositories → Database
    - See `docs/HEATPUMP_CONFIG_UI_PLAN.md` for implementation details
 3. **Dell API Schedule** (price-optimized ps-strategy, Nov 20, 2025)
    - **Replaced** Tibber/Node-RED ps-strategy with Ruby backend implementation
-   - Generates schedule from electricity prices (configurable: hours_on 9-14, maxPrice 1.5-3.0 kr/kWh)
+   - Generates schedule from electricity prices (configurable via HeatpumpConfig in database)
    - Optimizes runtime for cheapest hours using ps-strategy algorithm
-   - Node-RED calls `/api/heatpump/schedule?hours_on=12&max_price=2.2` every 10 minutes
+   - Node-RED calls `/api/heatpump/schedule` every 10 minutes (no query params)
    - Dashboard (DataBroadcaster) polls every 60s with `?skip_sms=true` (no emergency SMS)
    - Returns JSON with EVU state, schedule applies to MQTT
    - **Temperature emergency SMS**: Max 1 alert per hour when hot water <40°C or indoor too cold (throttled)
