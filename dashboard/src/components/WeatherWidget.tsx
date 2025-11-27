@@ -85,9 +85,9 @@ export function WeatherWidget() {
     return text.replace('Områden med regn i närheten', 'Regn i närheten')
   }
 
-  // Generate a 3-word max Swedish weather FEEL (not description)
-  // Avoids weather words (grått, mulet, regn, snö, dimma, sol) since API already shows those
-  //
+  // ============================================================================
+  // WEATHER VIBES - Single source of truth for all weather descriptions
+  // ============================================================================
   // WeatherAPI Swedish condition texts (shown below temp as "Växlande molnighet" etc):
   //   Clear/Sunny: "Klart", "Soligt", "Sol"
   //   Cloudy: "Delvis molnigt", "Molnigt", "Mulet", "Växlande molnighet"
@@ -99,107 +99,138 @@ export function WeatherWidget() {
   //   Thunder: "Åska möjlig", "Åskregn", "Åskväder"
   //   Freezing: "Underkylt regn", "Underkylt duggregn"
   // Keep vibes FEELING-based to complement (not repeat) these descriptions!
-  const getWeatherVibe = (): string => {
-    const temp = weatherData.current.temp_c
-    const humidity = weatherData.current.humidity
-    const wind = weatherData.current.wind_kph
-    const condition = weatherData.current.condition.text.toLowerCase()
+
+  // All vibes defined ONCE with short (forecast) and long (current) versions
+  // This prevents drift between the two display contexts
+  const VIBES = {
+    // Extreme conditions
+    stormy:           { short: 'Storm!',          long: 'Stanna inne' },
+    sleet:            { short: 'Ruskigt',         long: 'Ruskigt' },
+
+    // Snow conditions
+    snow_windy:       { short: 'Snöyra',          long: 'Snöyra' },
+    snow:             { short: 'Mysigt',          long: 'Mysigt ute' },
+
+    // Rain conditions
+    rain_windy:       { short: 'Ruskigt',         long: 'Stanna inne' },
+    rain:             { short: 'Ta paraply',      long: 'Ta paraply' },
+
+    // Fog conditions
+    fog_icy:          { short: 'Halt!',           long: 'Akta halkan' },
+    fog_cold:         { short: 'Rått',            long: 'Dimmigt och rått' },
+    fog:              { short: 'Dimmigt',         long: 'Se dig för i dimman' },
+
+    // Sunny conditions (from WeatherAPI)
+    sunny_freezing:   { short: 'Kallt',           long: 'Soligt men kallt' },
+    sunny_cold_windy: { short: 'Blåsigt',         long: 'Soligt men blåsigt' },
+    sunny_cold:       { short: 'Friskt',          long: 'Friskt vinterväder' },
+    sunny_mild:       { short: 'Skönt',           long: 'Riktigt skönt' },
+    sunny:            { short: 'Fint',            long: 'Njut av solen' },
+
+    // Sun-aware fallbacks (Meteoblue predicts sun even if WeatherAPI says cloudy)
+    sun_3h:           { short: 'Soligt',          long: 'Lite sol idag' },
+    sun_2h:           { short: 'Fint',            long: 'Glimtar av sol' },
+    sun_1h:           { short: 'Lite sol',        long: 'Kanske lite sol' },
+
+    // Cold/overcast fallbacks
+    freezing_windy:   { short: 'Iskallt',         long: 'Biter i kinderna' },
+    freezing:         { short: 'Iskallt',         long: 'Riktigt kallt' },
+    cold_damp_windy:  { short: 'Ruskigt',         long: 'Riktigt otrevligt' },
+    cold_damp:        { short: 'Rått',            long: 'Klä dig varmt' },
+    cold_windy:       { short: 'Blåsigt',         long: 'Blåser kallt' },
+    cold:             { short: 'Kyligt',          long: 'Lite kyligt' },
+    damp:             { short: 'Fuktigt',         long: 'Lite fuktigt' },
+    windy:            { short: 'Blåsigt',         long: 'Blåser på' },
+
+    // Default
+    default:          { short: 'Grått',           long: 'Helt okej' },
+  } as const
+
+  type VibeKey = keyof typeof VIBES
+
+  // Single detection function - returns the vibe key based on weather parameters
+  const detectVibeKey = (params: {
+    temp: number
+    wind: number
+    humidity?: number
+    condition: string
+    sunHours?: number
+  }): VibeKey => {
+    const { temp, wind, humidity, condition, sunHours } = params
 
     const isFreezing = temp < -5
     const isCold = temp < 5
     const isMild = temp >= 5 && temp < 15
     const isWindy = wind >= 25
     const isStormy = wind >= 40
-    const isDamp = humidity > 70 && temp > -2 && temp < 8
+    const isDamp = humidity !== undefined && humidity > 70 && temp > -2 && temp < 8
 
-    const isRaining = /regn|dugg|skur/.test(condition)
-    const isSleet = /snöblandat/.test(condition)
-    const isSnowing = /snö/.test(condition) && !isSleet
-    const isFoggy = /dimma|dis/.test(condition)
-    const isSunny = /sol|klart|klar/.test(condition)
-    const isIcy = isFreezing || /underkyld|frys/.test(condition)
+    const condLower = condition.toLowerCase()
+    const isSleet = /snöblandat/.test(condLower)
+    const isSnowing = /snö/.test(condLower) && !isSleet
+    const isRaining = /regn|dugg|skur/.test(condLower)
+    const isFoggy = /dimma|dis/.test(condLower)
+    const isSunny = /sol|klart|klar/.test(condLower)
+    const isIcy = isFreezing || /underkyld|frys/.test(condLower)
 
-    // Stormy - always takes priority
-    if (isStormy) return 'Stanna inne'
-
-    // Sleet - wet and unpleasant
-    if (isSleet) return 'Ruskigt'
-
-    // Snow conditions - feeling-based
-    if (isSnowing && isWindy) return 'Blåser hårt'
-    if (isSnowing) return 'Mysigt ute'
-
-    // Rain conditions - actionable
-    if (isRaining && isWindy) return 'Stanna inne'
-    if (isRaining && isCold) return 'Ta paraply'
-    if (isRaining) return 'Ta paraply'
-
-    // Fog/ice conditions - pedestrian safety
-    if (isFoggy && isIcy) return 'Akta halkan'
-    if (isFoggy && isCold) return 'Dimmigt och rått'
-    if (isFoggy) return 'Se dig för i dimman'
-
-    // Sunny conditions - feeling-based
-    if (isSunny && isFreezing) return 'Soligt men kallt'
-    if (isSunny && isCold && isWindy) return 'Soligt men blåsigt'
-    if (isSunny && isCold) return 'Friskt vinterväder'
-    if (isSunny && isMild) return 'Riktigt skönt'
-    if (isSunny) return 'Njut av solen'
-
-    // Cloudy/overcast - feeling-based (no weather words!)
-    if (isFreezing && isWindy) return 'Biter i kinderna'
-    if (isCold && isDamp && isWindy) return 'Riktigt otrevligt'
-    if (isCold && isDamp) return 'Klä dig varmt'
-    if (isCold && isWindy) return 'Blåser kallt'
-    if (isFreezing) return 'Riktigt kallt'
-    if (isCold) return 'Lite kyligt'
-    if (isDamp) return 'Lite fuktigt'
-    if (isWindy) return 'Blåser på'
-
-    return 'Helt okej'
-  }
-
-  // Generate short vibe for forecast days (uses forecast data + Meteoblue sun hours)
-  const getForecastVibe = (day: typeof weatherData.forecast.forecastday[0], sunHoursForDay: number): string => {
-    const maxTemp = day.day.maxtemp_c
-    const wind = day.day.maxwind_kph
-    const condition = day.day.condition.text.toLowerCase()
-
-    const isFreezing = maxTemp < -5
-    const isCold = maxTemp < 5
-    const isMild = maxTemp >= 5 && maxTemp < 15
-    const isWindy = wind >= 25
-
-    const isRaining = /regn|dugg|skur/.test(condition)
-    const isSleet = /snöblandat/.test(condition)
-    const isSnowing = /snö/.test(condition) && !isSleet
-    const isFoggy = /dimma|dis/.test(condition)
-    const isSunny = /sol|klart|klar/.test(condition)
-
-    // Keep these SHORT - they appear inline in forecast rows
-    if (isSleet) return 'Ruskigt'
-    if (isSnowing && isWindy) return 'Snöyra'
-    if (isSnowing) return 'Mysigt'
-    if (isRaining && isWindy) return 'Ruskigt'
-    if (isRaining) return 'Ta paraply'
-    if (isFoggy) return 'Dimmigt'
-    if (isSunny && isFreezing) return 'Kallt'
-    if (isSunny && isCold && isWindy) return 'Blåsigt'
-    if (isSunny && isCold) return 'Friskt'
-    if (isSunny && isMild) return 'Skönt'
-    if (isSunny) return 'Fint'
+    // Priority-ordered detection (order matters!)
+    if (isStormy) return 'stormy'
+    if (isSleet) return 'sleet'
+    if (isSnowing && isWindy) return 'snow_windy'
+    if (isSnowing) return 'snow'
+    if (isRaining && isWindy) return 'rain_windy'
+    if (isRaining) return 'rain'
+    if (isFoggy && isIcy) return 'fog_icy'
+    if (isFoggy && isCold) return 'fog_cold'
+    if (isFoggy) return 'fog'
+    if (isSunny && isFreezing) return 'sunny_freezing'
+    if (isSunny && isCold && isWindy) return 'sunny_cold_windy'
+    if (isSunny && isCold) return 'sunny_cold'
+    if (isSunny && isMild) return 'sunny_mild'
+    if (isSunny) return 'sunny'
 
     // Sun-aware fallbacks (Meteoblue predicts sun even if WeatherAPI says cloudy)
-    if (sunHoursForDay >= 3) return 'Soligt'
-    if (sunHoursForDay >= 2) return 'Fint'
-    if (sunHoursForDay >= 1) return 'Lite sol'
+    if (sunHours !== undefined && sunHours >= 3) return 'sun_3h'
+    if (sunHours !== undefined && sunHours >= 2) return 'sun_2h'
+    if (sunHours !== undefined && sunHours >= 1) return 'sun_1h'
 
-    // No sun predicted
-    if (isFreezing) return 'Iskallt'
-    if (isCold && isWindy) return 'Blåsigt'
-    if (isCold) return 'Kyligt'
-    if (isWindy) return 'Blåsigt'
-    return 'Grått'
+    // Cloudy/overcast fallbacks
+    if (isFreezing && isWindy) return 'freezing_windy'
+    if (isCold && isDamp && isWindy) return 'cold_damp_windy'
+    if (isCold && isDamp) return 'cold_damp'
+    if (isCold && isWindy) return 'cold_windy'
+    if (isFreezing) return 'freezing'
+    if (isCold) return 'cold'
+    if (isDamp) return 'damp'
+    if (isWindy) return 'windy'
+
+    return 'default'
+  }
+
+  // Current weather vibe (uses humidity, returns long phrases)
+  const getWeatherVibe = (): string => {
+    const todayStr = new Date().toISOString().split('T')[0]
+    const todaySunHours = sunData?.daily_sun_hours?.find(d => d.date === todayStr)?.sun_hours || 0
+
+    const key = detectVibeKey({
+      temp: weatherData.current.temp_c,
+      wind: weatherData.current.wind_kph,
+      humidity: weatherData.current.humidity,
+      condition: weatherData.current.condition.text,
+      sunHours: todaySunHours,
+    })
+    return VIBES[key].long
+  }
+
+  // Forecast vibe (no humidity available, returns short phrases)
+  const getForecastVibe = (day: typeof weatherData.forecast.forecastday[0], sunHoursForDay: number): string => {
+    const key = detectVibeKey({
+      temp: day.day.maxtemp_c,
+      wind: day.day.maxwind_kph,
+      condition: day.day.condition.text,
+      sunHours: sunHoursForDay,
+    })
+    return VIBES[key].short
   }
 
   // Get sun hours text with timing for a specific date (YYYY-MM-DD format)
