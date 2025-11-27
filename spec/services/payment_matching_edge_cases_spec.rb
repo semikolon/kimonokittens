@@ -870,9 +870,9 @@ RSpec.describe 'Payment Matching Edge Cases' do
       end
     end
 
-    context 'Test 15.6: Outside Rent-Paying Window (Day 15-27)' do
+    context 'Test 15.6: Outside Rent-Paying Window (Day 15-31)' do
       it 'does NOT aggregate payments outside rent-paying window' do
-        # Payment 1: Nov 10 (day 10) - too early
+        # Payment 1: Nov 10 (day 10) - too early (before day 15)
         tx1 = BankTransaction.new(
           external_id: 'lf_tx_window_early',
           account_id: '4653',
@@ -888,7 +888,7 @@ RSpec.describe 'Payment Matching Edge Cases' do
           }
         )
 
-        # Payment 2: Nov 30 (day 30) - too late
+        # Payment 2: Nov 30 (day 30) - within window, but grouped with payment 1 which is outside
         tx2 = BankTransaction.new(
           external_id: 'lf_tx_window_late',
           account_id: '4653',
@@ -911,7 +911,7 @@ RSpec.describe 'Payment Matching Edge Cases' do
 
         groups = PaymentAggregator.find_partial_groups(sanna, Date.new(2025, 11, 1))
 
-        # Should NOT find match (outside day 15-27 window)
+        # Should NOT find match (payment 1 is outside day 15-31 window)
         expect(groups).to be_empty
       end
     end

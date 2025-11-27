@@ -10,7 +10,8 @@ require_relative '../models/bank_transaction'
 # - Total: 6,303 kr = full rent
 #
 # Rules:
-# - Only considers payments in rent-paying window (day 15-27)
+# - Only considers payments in rent-paying window (day 15-31)
+#   - Rent due on 27th, but allows late payments through end of month
 # - Max 14 days between any two payments in a group
 # - Tolerance: max(100 kr, expected_rent × 1%)
 # - Prefers latter combinations (exact match more likely in last payment)
@@ -19,7 +20,7 @@ require_relative '../models/bank_transaction'
 #   PaymentAggregator.find_partial_groups(tenant, Date.new(2025, 11, 1))
 class PaymentAggregator
   RENT_PAYING_WINDOW_START = 15  # Day of month
-  RENT_PAYING_WINDOW_END = 27
+  RENT_PAYING_WINDOW_END = 31    # Allow late payments through end of month
   MAX_DAYS_BETWEEN_PAYMENTS = 14
 
   def self.find_partial_groups(tenant, month_start)
