@@ -87,6 +87,18 @@ export function WeatherWidget() {
 
   // Generate a 3-word max Swedish weather FEEL (not description)
   // Avoids weather words (grått, mulet, regn, snö, dimma, sol) since API already shows those
+  //
+  // WeatherAPI Swedish condition texts (shown below temp as "Växlande molnighet" etc):
+  //   Clear/Sunny: "Klart", "Soligt", "Sol"
+  //   Cloudy: "Delvis molnigt", "Molnigt", "Mulet", "Växlande molnighet"
+  //   Fog: "Dis", "Dimma", "Underkyld dimma"
+  //   Rain: "Lätt duggregn", "Duggregn", "Lätt regn", "Måttligt regn", "Kraftigt regn",
+  //         "Regnskurar", "Lätt regnskur", "Störtregn", "Områden med regn"
+  //   Snow: "Lätt snöfall", "Måttligt snöfall", "Kraftigt snöfall", "Snöbyar",
+  //         "Snöblandat regn", "Isnålar", "Yr"
+  //   Thunder: "Åska möjlig", "Åskregn", "Åskväder"
+  //   Freezing: "Underkylt regn", "Underkylt duggregn"
+  // Keep vibes FEELING-based to complement (not repeat) these descriptions!
   const getWeatherVibe = (): string => {
     const temp = weatherData.current.temp_c
     const humidity = weatherData.current.humidity
@@ -101,13 +113,17 @@ export function WeatherWidget() {
     const isDamp = humidity > 70 && temp > -2 && temp < 8
 
     const isRaining = /regn|dugg|skur/.test(condition)
-    const isSnowing = /snö/.test(condition)
+    const isSleet = /snöblandat/.test(condition)
+    const isSnowing = /snö/.test(condition) && !isSleet
     const isFoggy = /dimma|dis/.test(condition)
     const isSunny = /sol|klart|klar/.test(condition)
     const isIcy = isFreezing || /underkyld|frys/.test(condition)
 
     // Stormy - always takes priority
     if (isStormy) return 'Stanna inne'
+
+    // Sleet - wet and unpleasant
+    if (isSleet) return 'Ruskigt'
 
     // Snow conditions - feeling-based
     if (isSnowing && isWindy) return 'Blåser hårt'
@@ -120,11 +136,13 @@ export function WeatherWidget() {
 
     // Fog/ice conditions - pedestrian safety
     if (isFoggy && isIcy) return 'Akta halkan'
-    if (isFoggy) return 'Se dig för'
+    if (isFoggy && isCold) return 'Dimmigt och rått'
+    if (isFoggy) return 'Se dig för i dimman'
 
     // Sunny conditions - feeling-based
-    if (isSunny && isFreezing) return 'Fint men kallt'
-    if (isSunny && isCold) return 'Skönt ute'
+    if (isSunny && isFreezing) return 'Soligt men kallt'
+    if (isSunny && isCold && isWindy) return 'Soligt men blåsigt'
+    if (isSunny && isCold) return 'Friskt vinterväder'
     if (isSunny && isMild) return 'Riktigt skönt'
     if (isSunny) return 'Njut av solen'
 
@@ -139,6 +157,48 @@ export function WeatherWidget() {
     if (isWindy) return 'Blåser på'
 
     return 'Helt okej'
+  }
+
+  // Generate short vibe for forecast days (uses forecast data + Meteoblue sun hours)
+  const getForecastVibe = (day: typeof weatherData.forecast.forecastday[0], sunHoursForDay: number): string => {
+    const maxTemp = day.day.maxtemp_c
+    const wind = day.day.maxwind_kph
+    const condition = day.day.condition.text.toLowerCase()
+
+    const isFreezing = maxTemp < -5
+    const isCold = maxTemp < 5
+    const isMild = maxTemp >= 5 && maxTemp < 15
+    const isWindy = wind >= 25
+
+    const isRaining = /regn|dugg|skur/.test(condition)
+    const isSleet = /snöblandat/.test(condition)
+    const isSnowing = /snö/.test(condition) && !isSleet
+    const isFoggy = /dimma|dis/.test(condition)
+    const isSunny = /sol|klart|klar/.test(condition)
+
+    // Keep these SHORT - they appear inline in forecast rows
+    if (isSleet) return 'Ruskigt'
+    if (isSnowing && isWindy) return 'Snöyra'
+    if (isSnowing) return 'Mysigt'
+    if (isRaining && isWindy) return 'Ruskigt'
+    if (isRaining) return 'Ta paraply'
+    if (isFoggy) return 'Dimmigt'
+    if (isSunny && isFreezing) return 'Kallt'
+    if (isSunny && isCold && isWindy) return 'Blåsigt'
+    if (isSunny && isCold) return 'Friskt'
+    if (isSunny && isMild) return 'Skönt'
+    if (isSunny) return 'Fint'
+
+    // Sun-aware fallbacks (Meteoblue predicts sun even if WeatherAPI says cloudy)
+    if (sunHoursForDay >= 2) return 'Fint'
+    if (sunHoursForDay >= 1) return 'Lite sol'
+
+    // No sun predicted
+    if (isFreezing) return 'Iskallt'
+    if (isCold && isWindy) return 'Blåsigt'
+    if (isCold) return 'Kyligt'
+    if (isWindy) return 'Blåsigt'
+    return 'Grått'
   }
 
   // Get sun hours text with timing for a specific date (YYYY-MM-DD format)
@@ -236,10 +296,11 @@ export function WeatherWidget() {
       <div className="space-y-2">
         <div className="text-purple-200 mb-2" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>3-dagars prognos</div>
         {weatherData.forecast.forecastday.slice(0, 3).map((day, index) => {
-          const sunHours = getSunHoursForDate(day.date)
+          const sunHoursText = getSunHoursForDate(day.date)
+          const sunHoursCount = sunData?.daily_sun_hours?.find(d => d.date === day.date)?.sun_hours || 0
           return (
             <div key={day.date} className="flex items-center justify-between">
-              <div className="flex items-center">
+              <div className="flex items-center space-x-2">
                 <div className="mr-2">
                   {getWeatherIcon(day.day.condition.icon)}
                 </div>
@@ -248,12 +309,14 @@ export function WeatherWidget() {
                    index === 1 ? 'Imorgon' :
                    new Date(day.date).toLocaleDateString('sv-SE', { weekday: 'long' }).replace(/^./, c => c.toUpperCase())}
                 </span>
+                <span className="text-purple-300 opacity-25">•</span>
+                <span className="text-purple-300">{index === 0 ? getWeatherVibe() : getForecastVibe(day, sunHoursCount)}</span>
               </div>
 
               <div className="flex items-center space-x-2">
-                {sunHours && index > 0 && (
+                {sunHoursText && index > 0 && (
                   <>
-                    <span className="text-orange-400">{sunHours}</span>
+                    <span className="text-orange-400">{sunHoursText}</span>
                     <span className="text-purple-300 opacity-25">•</span>
                   </>
                 )}
