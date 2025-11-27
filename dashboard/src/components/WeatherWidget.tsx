@@ -1,5 +1,5 @@
 import { useData } from '../context/DataContext'
-import { Sun, Cloud, CloudRain, CloudSnow, Zap, CloudDrizzle, Droplets, Wind, SunDim } from 'lucide-react'
+import { Sun, Cloud, CloudRain, CloudSnow, Zap, CloudDrizzle, SunDim } from 'lucide-react'
 
 export function WeatherWidget() {
   const { state } = useData()
@@ -85,19 +85,85 @@ export function WeatherWidget() {
     return text.replace('Områden med regn i närheten', 'Regn i närheten')
   }
 
+  // Generate a 3-word max Swedish weather vibe based on conditions
+  const getWeatherVibe = (): string => {
+    const temp = weatherData.current.temp_c
+    const humidity = weatherData.current.humidity
+    const wind = weatherData.current.wind_kph
+    const condition = weatherData.current.condition.text.toLowerCase()
+
+    const isFreezing = temp < -5
+    const isCold = temp < 5
+    const isMild = temp >= 5 && temp < 15
+    const isCalm = wind < 10
+    const isWindy = wind >= 25
+    const isStormy = wind >= 40
+    const isDamp = humidity > 70 && temp > -2 && temp < 8
+
+    const isRaining = /regn|dugg|skur/.test(condition)
+    const isSnowing = /snö/.test(condition)
+    const isFoggy = /dimma|dis/.test(condition)
+    const isCloudy = /mulet|molnigt|övervägande/.test(condition)
+    const isSunny = /sol|klart|klar/.test(condition)
+
+    // Stormy - always takes priority
+    if (isStormy) return 'Stanna inne idag'
+
+    // Snow conditions
+    if (isSnowing && isWindy) return 'Snöyra ute'
+    if (isSnowing) return 'Mysigt snöväder'
+
+    // Rain conditions
+    if (isRaining && isWindy) return 'Riktigt ruskigt'
+    if (isRaining && isCold) return 'Kallt och blött'
+    if (isRaining) return 'Regnigt ute'
+
+    // Fog conditions
+    if (isFoggy && isCold) return 'Dimmigt och rått'
+    if (isFoggy) return 'Dimmigt ute'
+
+    // Sunny conditions
+    if (isSunny && isFreezing) return 'Soligt men kallt'
+    if (isSunny && isCold && isCalm) return 'Friskt vinterväder'
+    if (isSunny && isCold && isWindy) return 'Soligt men blåsigt'
+    if (isSunny && isMild) return 'Skönt väder ute'
+    if (isSunny) return 'Fint väder'
+
+    // Cloudy/overcast conditions (most common in Swedish winter)
+    if (isCloudy && isFreezing && isWindy) return 'Bitande kallt'
+    if (isCloudy && isCold && isDamp) return 'Råkallt och grått'
+    if (isCloudy && isCold && isWindy) return 'Kallt och blåsigt'
+    if (isCloudy && isFreezing) return 'Grått och kallt'
+    if (isCloudy && isCold) return 'Grått vinterväder'
+    if (isCloudy && isDamp) return 'Fuktigt och grått'
+    if (isCloudy) return 'Grått som vanligt'
+
+    // Fallbacks based on temp/wind
+    if (isFreezing && isWindy) return 'Bitande kallt'
+    if (isFreezing) return 'Riktigt kallt'
+    if (isCold && isWindy) return 'Kallt och blåsigt'
+    if (isCold && isDamp) return 'Råkallt ute'
+    if (isCold) return 'Kyligt ute'
+    if (isWindy) return 'Blåsigt ute'
+
+    return 'Helt okej'
+  }
+
   // Get sun hours text with timing for a specific date (YYYY-MM-DD format)
-  // Returns: "2h sol vid 09" or null if no sun
+  // Returns: "Sol 9-11" or null if no sun (duration implicit from range)
   const getSunHoursForDate = (dateStr: string): string | null => {
     if (!sunData?.daily_sun_hours) return null
     const entry = sunData.daily_sun_hours.find(d => d.date === dateStr)
-    if (!entry?.sun_hours_text || !entry.first_sun_hour) return null
-    return `${entry.sun_hours_text} sol vid ${entry.first_sun_hour}`
+    if (!entry?.first_sun_hour || !entry?.last_sun_end) return null
+    const start = parseInt(entry.first_sun_hour).toString()
+    const end = parseInt(entry.last_sun_end).toString()
+    return `Sol ${start}-${end}`
   }
 
   // Get today's sun status for display (Option D):
   // - "Sol nu" when currently sunny
   // - "Sol vid HH" when sun is coming today
-  // - "Sol var HH-HH" when sun already passed today
+  // - "Sol var H-H" when sun already passed today (no leading zeros)
   // - "Grått idag" when no sun today
   const getTodaySunStatus = (): string | null => {
     if (!sunData) return null
@@ -126,15 +192,19 @@ export function WeatherWidget() {
     const lastSunEnd = todayData.last_sun_end ? parseInt(todayData.last_sun_end) : null
 
     if (firstSunHour !== null && lastSunEnd !== null) {
+      // Format without leading zeros
+      const startStr = firstSunHour.toString()
+      const endStr = lastSunEnd.toString()
+
       if (currentHour < firstSunHour) {
         // Sun is coming later today
-        return `Sol vid ${todayData.first_sun_hour}`
+        return `Sol vid ${startStr}`
       } else if (currentHour >= lastSunEnd) {
         // Sun already passed
-        return `Sol var ${todayData.first_sun_hour}-${todayData.last_sun_end}`
+        return `Sol var ${startStr}-${endStr}`
       } else {
         // We're in the sun window but brightness is below threshold (edge case)
-        return `Sol vid ${todayData.first_sun_hour}`
+        return `Sol vid ${startStr}`
       }
     }
 
@@ -153,12 +223,6 @@ export function WeatherWidget() {
             <div className="text-4xl font-bold text-purple-100">
               {weatherData.current.temp_c}°
             </div>
-            {getTodaySunStatus() && (
-              <div className="flex items-center space-x-1">
-                <SunDim className="w-4 h-4 text-orange-400" />
-                <span className="text-orange-400">{getTodaySunStatus()}</span>
-              </div>
-            )}
             <div className="text-purple-200">
               {shortenWeatherText(weatherData.current.condition.text)}
             </div>
@@ -166,14 +230,13 @@ export function WeatherWidget() {
         </div>
 
         <div className="text-purple-200 text-right">
-          <div className="flex items-center justify-end space-x-1">
-            <Droplets className="w-4 h-4" />
-            <span>{weatherData.current.humidity}%</span>
-          </div>
-          <div className="flex items-center justify-end space-x-1">
-            <Wind className="w-4 h-4" />
-            <span>{weatherData.current.wind_kph} km/h {weatherData.current.wind_dir}</span>
-          </div>
+          {getTodaySunStatus() && (
+            <div className="flex items-center justify-end space-x-1">
+              <SunDim className="w-4 h-4 text-orange-400" />
+              <span className="text-orange-400">{getTodaySunStatus()}</span>
+            </div>
+          )}
+          <div>{getWeatherVibe()}</div>
         </div>
       </div>
 
