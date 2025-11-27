@@ -85,7 +85,8 @@ export function WeatherWidget() {
     return text.replace('Områden med regn i närheten', 'Regn i närheten')
   }
 
-  // Generate a 3-word max Swedish weather vibe based on conditions
+  // Generate a 3-word max Swedish weather FEEL (not description)
+  // Avoids weather words (grått, mulet, regn, snö, dimma, sol) since API already shows those
   const getWeatherVibe = (): string => {
     const temp = weatherData.current.temp_c
     const humidity = weatherData.current.humidity
@@ -95,7 +96,6 @@ export function WeatherWidget() {
     const isFreezing = temp < -5
     const isCold = temp < 5
     const isMild = temp >= 5 && temp < 15
-    const isCalm = wind < 10
     const isWindy = wind >= 25
     const isStormy = wind >= 40
     const isDamp = humidity > 70 && temp > -2 && temp < 8
@@ -103,48 +103,40 @@ export function WeatherWidget() {
     const isRaining = /regn|dugg|skur/.test(condition)
     const isSnowing = /snö/.test(condition)
     const isFoggy = /dimma|dis/.test(condition)
-    const isCloudy = /mulet|molnigt|övervägande/.test(condition)
     const isSunny = /sol|klart|klar/.test(condition)
+    const isIcy = isFreezing || /underkyld|frys/.test(condition)
 
     // Stormy - always takes priority
-    if (isStormy) return 'Stanna inne idag'
+    if (isStormy) return 'Stanna inne'
 
-    // Snow conditions
-    if (isSnowing && isWindy) return 'Snöyra ute'
-    if (isSnowing) return 'Mysigt snöväder'
+    // Snow conditions - feeling-based
+    if (isSnowing && isWindy) return 'Blåser hårt'
+    if (isSnowing) return 'Mysigt ute'
 
-    // Rain conditions
-    if (isRaining && isWindy) return 'Riktigt ruskigt'
-    if (isRaining && isCold) return 'Kallt och blött'
-    if (isRaining) return 'Regnigt ute'
+    // Rain conditions - actionable
+    if (isRaining && isWindy) return 'Stanna inne'
+    if (isRaining && isCold) return 'Ta paraply'
+    if (isRaining) return 'Ta paraply'
 
-    // Fog conditions
-    if (isFoggy && isCold) return 'Dimmigt och rått'
-    if (isFoggy) return 'Dimmigt ute'
+    // Fog/ice conditions - pedestrian safety
+    if (isFoggy && isIcy) return 'Akta halkan'
+    if (isFoggy) return 'Se dig för'
 
-    // Sunny conditions
-    if (isSunny && isFreezing) return 'Soligt men kallt'
-    if (isSunny && isCold && isCalm) return 'Friskt vinterväder'
-    if (isSunny && isCold && isWindy) return 'Soligt men blåsigt'
-    if (isSunny && isMild) return 'Skönt väder ute'
-    if (isSunny) return 'Fint väder'
+    // Sunny conditions - feeling-based
+    if (isSunny && isFreezing) return 'Fint men kallt'
+    if (isSunny && isCold) return 'Skönt ute'
+    if (isSunny && isMild) return 'Riktigt skönt'
+    if (isSunny) return 'Njut av solen'
 
-    // Cloudy/overcast conditions (most common in Swedish winter)
-    if (isCloudy && isFreezing && isWindy) return 'Bitande kallt'
-    if (isCloudy && isCold && isDamp) return 'Råkallt och grått'
-    if (isCloudy && isCold && isWindy) return 'Kallt och blåsigt'
-    if (isCloudy && isFreezing) return 'Grått och kallt'
-    if (isCloudy && isCold) return 'Grått vinterväder'
-    if (isCloudy && isDamp) return 'Fuktigt och grått'
-    if (isCloudy) return 'Grått som vanligt'
-
-    // Fallbacks based on temp/wind
-    if (isFreezing && isWindy) return 'Bitande kallt'
+    // Cloudy/overcast - feeling-based (no weather words!)
+    if (isFreezing && isWindy) return 'Biter i kinderna'
+    if (isCold && isDamp && isWindy) return 'Riktigt otrevligt'
+    if (isCold && isDamp) return 'Klä dig varmt'
+    if (isCold && isWindy) return 'Blåser kallt'
     if (isFreezing) return 'Riktigt kallt'
-    if (isCold && isWindy) return 'Kallt och blåsigt'
-    if (isCold && isDamp) return 'Råkallt ute'
-    if (isCold) return 'Kyligt ute'
-    if (isWindy) return 'Blåsigt ute'
+    if (isCold) return 'Lite kyligt'
+    if (isDamp) return 'Lite fuktigt'
+    if (isWindy) return 'Blåser på'
 
     return 'Helt okej'
   }
@@ -260,7 +252,7 @@ export function WeatherWidget() {
 
               <div className="flex items-center space-x-3">
                 {sunHours && (
-                  <span className="text-orange-400">
+                  <span className="text-purple-100">
                     {sunHours}
                   </span>
                 )}
