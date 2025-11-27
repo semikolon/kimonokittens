@@ -85,6 +85,8 @@ module MeteoblueSunPredictor
         next_sun_window_peak_brightness: sun_window&.dig(:peak_brightness),
         # Today's brightness curve
         todays_brightness_curve: build_brightness_curve(forecast),
+        # Daily sun hours for next 7 days (for weather forecast integration)
+        daily_sun_hours: build_daily_sun_hours(forecast),
         forecast_fetched_at: Time.now.iso8601
       }
     end
@@ -166,6 +168,36 @@ module MeteoblueSunPredictor
                   clearsky_ghi: p[:clearsky_ghi].round
                 }
               end
+    end
+
+    # Calculates daily sun hours (brightness >= 80%) for next 7 days
+    #
+    # @param forecast [Array<Hash>] Forecast data points
+    # @return [Array<Hash>] Daily sun hours with date and hours
+    def build_daily_sun_hours(forecast)
+      # Group by date
+      by_date = forecast.group_by { |p| p[:time].to_date }
+
+      by_date.map do |date, points|
+        # Count daylight hours with brightness >= threshold
+        sunny_hours = points.count { |p| p[:is_daylight] && p[:brightness_percent] >= BRIGHTNESS_THRESHOLD }
+
+        {
+          date: date.iso8601,
+          sun_hours: sunny_hours,
+          # Format for display: "2h", "30m", etc.
+          sun_hours_text: format_sun_hours(sunny_hours)
+        }
+      end.sort_by { |d| d[:date] }
+    end
+
+    # Formats sun hours for display
+    #
+    # @param hours [Integer] Number of sunny hours
+    # @return [String, nil] Formatted string like "2h", "30m", or nil if 0
+    def format_sun_hours(hours)
+      return nil if hours == 0
+      "#{hours}h"
     end
 
     # Finds the first continuous sun window meeting minimum duration

@@ -1,9 +1,9 @@
 import { useData } from '../context/DataContext'
-import { Sun, Cloud, CloudRain, CloudSnow, Zap, CloudDrizzle, Droplets, Wind } from 'lucide-react'
+import { Sun, Cloud, CloudRain, CloudSnow, Zap, CloudDrizzle, Droplets, Wind, SunDim } from 'lucide-react'
 
 export function WeatherWidget() {
   const { state } = useData()
-  const { weatherData, connectionStatus } = state
+  const { weatherData, sunData, connectionStatus } = state
 
   const loading = connectionStatus === 'connecting' && !weatherData
   const error = connectionStatus === 'closed' ? 'WebSocket-anslutning avbruten' : null
@@ -85,6 +85,25 @@ export function WeatherWidget() {
     return text.replace('Områden med regn i närheten', 'Regn i närheten')
   }
 
+  // Get sun hours text for a specific date (YYYY-MM-DD format)
+  const getSunHoursForDate = (dateStr: string): string | null => {
+    if (!sunData?.daily_sun_hours) return null
+    const entry = sunData.daily_sun_hours.find(d => d.date === dateStr)
+    return entry?.sun_hours_text || null
+  }
+
+  // Get brightness display for current conditions
+  const getBrightnessDisplay = () => {
+    if (!sunData) return null
+    if (!sunData.is_daylight) return null // Don't show at night
+
+    const brightness = sunData.current_brightness_percent
+    // Only show if there's meaningful brightness (sun partially visible)
+    if (brightness < 60) return null
+
+    return `${brightness}%`
+  }
+
   return (
     <div>
       {/* Current Weather */}
@@ -104,6 +123,12 @@ export function WeatherWidget() {
         </div>
 
         <div className="text-purple-200 text-right">
+          {getBrightnessDisplay() && (
+            <div className="flex items-center justify-end space-x-1">
+              <SunDim className="w-4 h-4 text-yellow-400" />
+              <span className="text-yellow-400">{getBrightnessDisplay()}</span>
+            </div>
+          )}
           <div className="flex items-center justify-end space-x-1">
             <Droplets className="w-4 h-4" />
             <span>{weatherData.current.humidity}%</span>
@@ -118,29 +143,39 @@ export function WeatherWidget() {
       {/* 3-Day Forecast */}
       <div className="space-y-2">
         <div className="text-purple-200 mb-2" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>3-dagars prognos</div>
-        {weatherData.forecast.forecastday.slice(0, 3).map((day, index) => (
-          <div key={day.date} className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="mr-2">
-                {getWeatherIcon(day.day.condition.icon)}
+        {weatherData.forecast.forecastday.slice(0, 3).map((day, index) => {
+          const sunHours = getSunHoursForDate(day.date)
+          return (
+            <div key={day.date} className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="mr-2">
+                  {getWeatherIcon(day.day.condition.icon)}
+                </div>
+                <span className="text-purple-100">
+                  {index === 0 ? 'Idag' :
+                   index === 1 ? 'Imorgon' :
+                   new Date(day.date).toLocaleDateString('sv-SE', { weekday: 'short' })}
+                </span>
               </div>
-              <span className="text-purple-100">
-                {index === 0 ? 'Idag' :
-                 index === 1 ? 'Imorgon' :
-                 new Date(day.date).toLocaleDateString('sv-SE', { weekday: 'short' })}
-              </span>
-            </div>
 
-            <div className="flex items-center space-x-2">
-              <span className="font-bold text-purple-100">
-                {Math.round(day.day.maxtemp_c)}°
-              </span>
-              <span className="text-purple-200">
-                {Math.round(day.day.mintemp_c)}°
-              </span>
+              <div className="flex items-center space-x-3">
+                {sunHours && (
+                  <span className="text-yellow-400 text-sm">
+                    {sunHours} sol
+                  </span>
+                )}
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-purple-100">
+                    {Math.round(day.day.maxtemp_c)}°
+                  </span>
+                  <span className="text-purple-200">
+                    {Math.round(day.day.mintemp_c)}°
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

@@ -84,7 +84,8 @@ class SunHandler
             'duration_minutes' => p[:next_sun_window_duration_minutes],
             'peak_brightness' => p[:next_sun_window_peak_brightness]
           } : nil,
-          'todays_brightness_curve' => p[:todays_brightness_curve]
+          'todays_brightness_curve' => p[:todays_brightness_curve],
+          'daily_sun_hours' => p[:daily_sun_hours]
         }
       end,
       # Primary location data for simple dashboard access
@@ -96,6 +97,8 @@ class SunHandler
         'peak_brightness' => primary[:next_sun_window_peak_brightness]
       } : nil,
       'sun_status' => calculate_sun_status(primary),
+      # Daily sun hours for weather forecast integration (next 7 days)
+      'daily_sun_hours' => primary[:daily_sun_hours] || [],
       'generated_at' => now.utc.iso8601,
       'generated_timestamp' => now.to_i
     }

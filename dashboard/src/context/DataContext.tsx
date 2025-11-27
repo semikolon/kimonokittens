@@ -130,6 +130,13 @@ interface ElectricityPriceData {
   generated_at?: string
 }
 
+// Daily sun hours forecast entry
+interface DailySunHours {
+  date: string  // ISO8601 date
+  sun_hours: number
+  sun_hours_text: string | null  // "2h", "1h", or null if 0
+}
+
 // Sun window prediction data from Meteoblue CMV nowcasting
 interface SunLocation {
   name: string
@@ -150,6 +157,7 @@ interface SunLocation {
     ghi: number
     clearsky_ghi: number
   }>
+  daily_sun_hours: DailySunHours[]
 }
 
 interface SunData {
@@ -163,6 +171,8 @@ interface SunData {
     peak_brightness: number
   } | null
   sun_status: 'clear' | 'bright' | 'partly' | 'overcast' | 'night' | 'unknown'
+  // Daily sun hours for weather forecast integration
+  daily_sun_hours: DailySunHours[]
   generated_at?: string
   generated_timestamp?: number
   error?: string
