@@ -173,20 +173,32 @@ module MeteoblueSunPredictor
     # Calculates daily sun hours (brightness >= 80%) for next 7 days
     #
     # @param forecast [Array<Hash>] Forecast data points
-    # @return [Array<Hash>] Daily sun hours with date and hours
+    # @return [Array<Hash>] Daily sun hours with date, hours, and timing
     def build_daily_sun_hours(forecast)
       # Group by date
       by_date = forecast.group_by { |p| p[:time].to_date }
 
       by_date.map do |date, points|
-        # Count daylight hours with brightness >= threshold
-        sunny_hours = points.count { |p| p[:is_daylight] && p[:brightness_percent] >= BRIGHTNESS_THRESHOLD }
+        # Find all sunny hours (brightness >= threshold during daylight)
+        sunny_points = points.select { |p| p[:is_daylight] && p[:brightness_percent] >= BRIGHTNESS_THRESHOLD }
+                             .sort_by { |p| p[:time] }
+        sunny_hours = sunny_points.count
+
+        # Find first and last sunny hour for time display
+        first_sunny = sunny_points.first
+        last_sunny = sunny_points.last
+
+        # Format times: "09" for on-the-hour display
+        first_sun_hour = first_sunny ? first_sunny[:time].strftime('%H') : nil
+        # Last sun END is the hour after the last sunny hour starts (e.g., 10:00 sunny -> ends at 11)
+        last_sun_end = last_sunny ? (last_sunny[:time] + 3600).strftime('%H') : nil
 
         {
           date: date.iso8601,
           sun_hours: sunny_hours,
-          # Format for display: "2h", "30m", etc.
-          sun_hours_text: format_sun_hours(sunny_hours)
+          sun_hours_text: format_sun_hours(sunny_hours),
+          first_sun_hour: first_sun_hour,  # "09" or nil
+          last_sun_end: last_sun_end       # "11" or nil (for "var 09-11" display)
         }
       end.sort_by { |d| d[:date] }
     end

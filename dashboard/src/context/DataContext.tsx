@@ -135,6 +135,8 @@ interface DailySunHours {
   date: string  // ISO8601 date
   sun_hours: number
   sun_hours_text: string | null  // "2h", "1h", or null if 0
+  first_sun_hour: string | null  // "09" or null - when first sun window starts
+  last_sun_end: string | null    // "11" or null - when last sun window ends (for "var 09-11")
 }
 
 // Sun window prediction data from Meteoblue CMV nowcasting

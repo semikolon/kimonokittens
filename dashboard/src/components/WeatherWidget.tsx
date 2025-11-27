@@ -85,59 +85,60 @@ export function WeatherWidget() {
     return text.replace('Områden med regn i närheten', 'Regn i närheten')
   }
 
-  // Get sun hours text for a specific date (YYYY-MM-DD format)
+  // Get sun hours text with timing for a specific date (YYYY-MM-DD format)
+  // Returns: "2h sol vid 09" or null if no sun
   const getSunHoursForDate = (dateStr: string): string | null => {
     if (!sunData?.daily_sun_hours) return null
     const entry = sunData.daily_sun_hours.find(d => d.date === dateStr)
-    return entry?.sun_hours_text || null
+    if (!entry?.sun_hours_text || !entry.first_sun_hour) return null
+    return `${entry.sun_hours_text} sol vid ${entry.first_sun_hour}`
   }
 
-  // Get today's sun status for display: "Xh sol nu" or "Xh sol vid HH:MM"
+  // Get today's sun status for display (Option D):
+  // - "Sol nu" when currently sunny
+  // - "Sol vid HH" when sun is coming today
+  // - "Sol var HH-HH" when sun already passed today
+  // - "Grått idag" when no sun today
   const getTodaySunStatus = (): string | null => {
-    if (!sunData?.todays_brightness_curve) return null
+    if (!sunData) return null
+    if (!sunData.is_daylight) return null  // Don't show at night
 
     const now = new Date()
     const currentHour = now.getHours()
     const BRIGHTNESS_THRESHOLD = 80
 
-    // Check if currently sunny (use current_brightness_percent for real-time accuracy)
+    // Get today's sun data from daily_sun_hours
+    const todayStr = now.toISOString().split('T')[0]
+    const todayData = sunData.daily_sun_hours?.find(d => d.date === todayStr)
+
+    // Check if currently sunny
     if (sunData.current_brightness_percent >= BRIGHTNESS_THRESHOLD) {
-      // Count remaining sunny hours including current
-      const remainingSunny = sunData.todays_brightness_curve.filter(h => {
-        const hourNum = parseInt(h.hour.split(':')[0])
-        return hourNum >= currentHour && h.brightness_percent >= BRIGHTNESS_THRESHOLD
-      }).length
+      return 'Sol nu'
+    }
 
-      if (remainingSunny > 0) {
-        return `${remainingSunny}h sol nu`
+    // Check if there's sun data for today
+    if (!todayData || todayData.sun_hours === 0) {
+      return 'Grått idag'
+    }
+
+    // Has sun today - check if it's upcoming or already passed
+    const firstSunHour = todayData.first_sun_hour ? parseInt(todayData.first_sun_hour) : null
+    const lastSunEnd = todayData.last_sun_end ? parseInt(todayData.last_sun_end) : null
+
+    if (firstSunHour !== null && lastSunEnd !== null) {
+      if (currentHour < firstSunHour) {
+        // Sun is coming later today
+        return `Sol vid ${todayData.first_sun_hour}`
+      } else if (currentHour >= lastSunEnd) {
+        // Sun already passed
+        return `Sol var ${todayData.first_sun_hour}-${todayData.last_sun_end}`
+      } else {
+        // We're in the sun window but brightness is below threshold (edge case)
+        return `Sol vid ${todayData.first_sun_hour}`
       }
     }
 
-    // Find upcoming sun window today (hours after current hour)
-    const upcomingWindows = sunData.todays_brightness_curve.filter(h => {
-      const hourNum = parseInt(h.hour.split(':')[0])
-      return hourNum > currentHour && h.brightness_percent >= BRIGHTNESS_THRESHOLD
-    })
-
-    if (upcomingWindows.length > 0) {
-      // Find first sunny hour
-      const firstSunnyHour = upcomingWindows[0].hour
-      // Count consecutive sunny hours from that point
-      let consecutiveHours = 1
-      for (let i = 1; i < upcomingWindows.length; i++) {
-        const prevHour = parseInt(upcomingWindows[i-1].hour.split(':')[0])
-        const thisHour = parseInt(upcomingWindows[i].hour.split(':')[0])
-        if (thisHour === prevHour + 1) {
-          consecutiveHours++
-        } else {
-          break
-        }
-      }
-      return `${consecutiveHours}h sol vid ${firstSunnyHour}`
-    }
-
-    // No upcoming sun today
-    return null
+    return 'Grått idag'
   }
 
   return (
@@ -197,7 +198,7 @@ export function WeatherWidget() {
               <div className="flex items-center space-x-3">
                 {sunHours && (
                   <span className="text-orange-400">
-                    {sunHours} sol
+                    {sunHours}
                   </span>
                 )}
                 <div className="flex items-center space-x-2">
