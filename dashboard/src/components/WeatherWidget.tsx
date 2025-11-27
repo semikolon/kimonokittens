@@ -92,16 +92,52 @@ export function WeatherWidget() {
     return entry?.sun_hours_text || null
   }
 
-  // Get brightness display for current conditions
-  const getBrightnessDisplay = () => {
-    if (!sunData) return null
-    if (!sunData.is_daylight) return null // Don't show at night
+  // Get today's sun status for display: "Xh sol nu" or "Xh sol vid HH:MM"
+  const getTodaySunStatus = (): string | null => {
+    if (!sunData?.todays_brightness_curve) return null
 
-    const brightness = sunData.current_brightness_percent
-    // Only show if there's meaningful brightness (sun partially visible)
-    if (brightness < 60) return null
+    const now = new Date()
+    const currentHour = now.getHours()
+    const BRIGHTNESS_THRESHOLD = 80
 
-    return `${brightness}%`
+    // Check if currently sunny (use current_brightness_percent for real-time accuracy)
+    if (sunData.current_brightness_percent >= BRIGHTNESS_THRESHOLD) {
+      // Count remaining sunny hours including current
+      const remainingSunny = sunData.todays_brightness_curve.filter(h => {
+        const hourNum = parseInt(h.hour.split(':')[0])
+        return hourNum >= currentHour && h.brightness_percent >= BRIGHTNESS_THRESHOLD
+      }).length
+
+      if (remainingSunny > 0) {
+        return `${remainingSunny}h sol nu`
+      }
+    }
+
+    // Find upcoming sun window today (hours after current hour)
+    const upcomingWindows = sunData.todays_brightness_curve.filter(h => {
+      const hourNum = parseInt(h.hour.split(':')[0])
+      return hourNum > currentHour && h.brightness_percent >= BRIGHTNESS_THRESHOLD
+    })
+
+    if (upcomingWindows.length > 0) {
+      // Find first sunny hour
+      const firstSunnyHour = upcomingWindows[0].hour
+      // Count consecutive sunny hours from that point
+      let consecutiveHours = 1
+      for (let i = 1; i < upcomingWindows.length; i++) {
+        const prevHour = parseInt(upcomingWindows[i-1].hour.split(':')[0])
+        const thisHour = parseInt(upcomingWindows[i].hour.split(':')[0])
+        if (thisHour === prevHour + 1) {
+          consecutiveHours++
+        } else {
+          break
+        }
+      }
+      return `${consecutiveHours}h sol vid ${firstSunnyHour}`
+    }
+
+    // No upcoming sun today
+    return null
   }
 
   return (
@@ -123,10 +159,10 @@ export function WeatherWidget() {
         </div>
 
         <div className="text-purple-200 text-right">
-          {getBrightnessDisplay() && (
+          {getTodaySunStatus() && (
             <div className="flex items-center justify-end space-x-1">
-              <SunDim className="w-4 h-4 text-yellow-400" />
-              <span className="text-yellow-400">{getBrightnessDisplay()}</span>
+              <SunDim className="w-4 h-4 text-orange-400" />
+              <span className="text-orange-400">{getTodaySunStatus()}</span>
             </div>
           )}
           <div className="flex items-center justify-end space-x-1">
@@ -160,7 +196,7 @@ export function WeatherWidget() {
 
               <div className="flex items-center space-x-3">
                 {sunHours && (
-                  <span className="text-yellow-400 text-sm">
+                  <span className="text-orange-400">
                     {sunHours} sol
                   </span>
                 )}
