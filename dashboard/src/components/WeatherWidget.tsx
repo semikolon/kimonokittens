@@ -251,7 +251,7 @@ export function WeatherWidget() {
               </div>
 
               <div className="flex items-center space-x-2">
-                {sunHours && (
+                {sunHours && index > 0 && (
                   <>
                     <span className="text-orange-400">{sunHours}</span>
                     <span className="text-purple-300 opacity-25">•</span>
