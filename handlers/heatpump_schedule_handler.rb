@@ -36,6 +36,7 @@ class HeatpumpScheduleHandler
     params = req.params
     config = Persistence.heatpump_config.get_current
     hours_on = params['hours_on'] ? params['hours_on'].to_i : (config&.hours_on || DEFAULT_HOURS_ON)
+    skip_sms = params['skip_sms'] == 'true'  # Dashboard/polling callers set this to avoid SMS spam
 
     # Get prices from heatpump_price_handler
     status, headers, body = @price_handler.call(env)
@@ -55,14 +56,14 @@ class HeatpumpScheduleHandler
     if today.empty? && tomorrow.empty?
       # Emergency fallback: return safe default (heatpump ON)
       puts "⚠️  WARNING: No price data available! Using emergency fallback (EVU=0, heatpump ON)"
-      return emergency_fallback_response(config, temps)
+      return emergency_fallback_response(config, temps, skip_sms)
     end
 
     # Generate schedule using ps-strategy algorithm (process each day independently)
     schedule = generate_schedule_per_day(today, tomorrow, hours_on)
 
     # Apply temperature override logic
-    current_state = calculate_current_state(schedule, config, temps)
+    current_state = calculate_current_state(schedule, config, temps, skip_sms)
 
     # Return ps-strategy compatible format with current state
     response = {
@@ -186,7 +187,7 @@ class HeatpumpScheduleHandler
   # Calculate current state with priority-based override logic
   # Priority 1: Temperature emergency (safety) - force ON if too cold
   # Priority 2: Schedule (default) - use ps-strategy calculated schedule
-  def calculate_current_state(schedule, config, temps)
+  def calculate_current_state(schedule, config, temps, skip_sms = false)
     # Find current hour in schedule
     now = Time.now
     current_hour = schedule.find { |h| Time.parse(h['start']) <= now && Time.parse(h['start']) + 3600 > now }
@@ -204,7 +205,8 @@ class HeatpumpScheduleHandler
       override_reason = 'temperature_emergency'
 
       # Send SMS alert if this is a new emergency (not sent recently)
-      send_emergency_sms_if_needed(temps, config)
+      # Skip SMS if caller requested it (e.g., dashboard polling every 60s)
+      send_emergency_sms_if_needed(temps, config) unless skip_sms
 
     # Priority 2: Schedule (use calculated schedule)
     else
@@ -242,9 +244,9 @@ class HeatpumpScheduleHandler
         if indoor_low && hotwater_low
           message = "Båda för kalla!"  # "Both too cold!"
         elsif indoor_low
-          message = "#{temps[:indoor].round(1)}°C inne"  # "#{temp}°C indoors"
+          message = "#{temps[:indoor].round(0).to_i}°C inne"  # "#{temp}°C indoors"
         else
-          message = "#{temps[:hotwater].round(1)}°C vatten"  # "#{temp}°C water"
+          message = "#{temps[:hotwater].round(0).to_i}°C vatten"  # "#{temp}°C water"
         end
 
         SmsGateway.send_admin_alert(message)
@@ -262,7 +264,7 @@ class HeatpumpScheduleHandler
 
   # Emergency fallback when NO price data available
   # Returns safe default: EVU=0 (heatpump ON) to prevent freezing
-  def emergency_fallback_response(config, temps)
+  def emergency_fallback_response(config, temps, skip_sms = false)
     current_state = {
       'state' => true,
       'evu' => 0,  # Heatpump ON
