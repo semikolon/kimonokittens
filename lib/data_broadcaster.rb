@@ -23,6 +23,7 @@ class DataBroadcaster
     @threads << periodic(60) { fetch_and_publish('admin_contracts_data', "#{@base_url}/api/admin/contracts") }
     @threads << periodic(60) { fetch_and_publish('admin_leads_data', "#{@base_url}/api/admin/leads") }
     @threads << periodic(300) { fetch_and_publish('weather_data', "#{@base_url}/data/weather") }
+    @threads << periodic(300) { fetch_and_publish('sun_data', "#{@base_url}/data/sun_windows") }
     @threads << periodic(600) { fetch_and_publish('strava_data', "#{@base_url}/data/strava_stats") }
     @threads << periodic(3600) { fetch_and_publish('rent_data', "#{@base_url}/api/rent/friendly_message") }
     @threads << periodic(300) { fetch_and_publish_todos }
@@ -38,6 +39,7 @@ class DataBroadcaster
     Thread.new do
       puts "DataBroadcaster: Sending initial broadcasts..."
       fetch_and_publish('weather_data', "#{@base_url}/data/weather")
+      fetch_and_publish('sun_data', "#{@base_url}/data/sun_windows")
       fetch_and_publish('strava_data', "#{@base_url}/data/strava_stats")
       fetch_and_publish('train_data', "#{@base_url}/data/train_departures")
       fetch_and_publish('temperature_data', "#{@base_url}/data/temperature")
@@ -57,6 +59,7 @@ class DataBroadcaster
     Thread.new do
       puts "DataBroadcaster: Sending immediate data to new client..."
       fetch_and_publish('weather_data', "#{@base_url}/data/weather")
+      fetch_and_publish('sun_data', "#{@base_url}/data/sun_windows")
       fetch_and_publish('strava_data', "#{@base_url}/data/strava_stats")
       fetch_and_publish('train_data', "#{@base_url}/data/train_departures")
       fetch_and_publish('temperature_data', "#{@base_url}/data/temperature")

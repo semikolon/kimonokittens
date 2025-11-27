@@ -130,6 +130,44 @@ interface ElectricityPriceData {
   generated_at?: string
 }
 
+// Sun window prediction data from Meteoblue CMV nowcasting
+interface SunLocation {
+  name: string
+  lat: number
+  lng: number
+  current_brightness_percent: number
+  current_ghi: number
+  current_clearsky_ghi: number
+  is_daylight: boolean
+  next_sun_window: {
+    start: string
+    duration_minutes: number
+    peak_brightness: number
+  } | null
+  todays_brightness_curve: Array<{
+    hour: string
+    brightness_percent: number
+    ghi: number
+    clearsky_ghi: number
+  }>
+}
+
+interface SunData {
+  locations: SunLocation[]
+  // Primary location data for simple dashboard access
+  current_brightness_percent: number
+  is_daylight: boolean
+  next_sun_window: {
+    start: string
+    duration_minutes: number
+    peak_brightness: number
+  } | null
+  sun_status: 'clear' | 'bright' | 'partly' | 'overcast' | 'night' | 'unknown'
+  generated_at?: string
+  generated_timestamp?: number
+  error?: string
+}
+
 interface ElectricityDailyCost {
   date: string
   weekday: string
@@ -316,6 +354,7 @@ interface DashboardState {
   trainData: TrainData | null
   temperatureData: TemperatureData | null
   weatherData: WeatherData | null
+  sunData: SunData | null
   stravaData: StravaData | null
   rentData: RentData | null
   todoData: TodoData[] | null
@@ -330,6 +369,7 @@ interface DashboardState {
     train: number | null
     temperature: number | null
     weather: number | null
+    sun: number | null
     strava: number | null
     rent: number | null
     todo: number | null
@@ -346,6 +386,7 @@ type DashboardAction =
   | { type: 'SET_TRAIN_DATA'; payload: TrainData }
   | { type: 'SET_TEMPERATURE_DATA'; payload: TemperatureData }
   | { type: 'SET_WEATHER_DATA'; payload: WeatherData }
+  | { type: 'SET_SUN_DATA'; payload: SunData }
   | { type: 'SET_STRAVA_DATA'; payload: StravaData }
   | { type: 'SET_RENT_DATA'; payload: RentData }
   | { type: 'SET_TODO_DATA'; payload: TodoData[] }
@@ -362,6 +403,7 @@ const initialState: DashboardState = {
   trainData: null,
   temperatureData: null,
   weatherData: null,
+  sunData: null,
   stravaData: null,
   rentData: null,
   todoData: null,
@@ -376,6 +418,7 @@ const initialState: DashboardState = {
     train: null,
     temperature: null,
     weather: null,
+    sun: null,
     strava: null,
     rent: null,
     todo: null,
@@ -407,6 +450,12 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         ...state,
         weatherData: action.payload,
         lastUpdated: { ...state.lastUpdated, weather: Date.now() }
+      }
+    case 'SET_SUN_DATA':
+      return {
+        ...state,
+        sunData: action.payload,
+        lastUpdated: { ...state.lastUpdated, sun: Date.now() }
       }
     case 'SET_STRAVA_DATA':
       return {
@@ -551,6 +600,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             break
           case 'weather_data':
             dispatch({ type: 'SET_WEATHER_DATA', payload: message.payload })
+            break
+          case 'sun_data':
+            dispatch({ type: 'SET_SUN_DATA', payload: message.payload })
             break
           case 'strava_data':
             dispatch({ type: 'SET_STRAVA_DATA', payload: message.payload })

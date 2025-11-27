@@ -61,6 +61,7 @@ require_relative 'handlers/signup_handler'
 require_relative 'handlers/admin_leads_handler'
 require_relative 'handlers/admin_todos_handler'
 require_relative 'handlers/elks_webhooks'
+require_relative 'handlers/sun_handler'
 
 # Initialize handlers
 home_page_handler = HomePageHandler.new
@@ -88,6 +89,7 @@ admin_auth_handler = AdminAuthHandler.new
 signup_handler = SignupHandler.new
 admin_leads_handler = AdminLeadsHandler.new
 admin_todos_handler = AdminTodosHandler.new
+sun_handler = SunHandler.new
 
 # --- WebSocket Pub/Sub Manager ---
 class PubSub
@@ -459,6 +461,10 @@ app = Rack::Builder.new do
 
   map "/data/electricity_prices" do
     run electricity_price_handler
+  end
+
+  map "/data/sun_windows" do
+    run sun_handler
   end
 
   map "/api/electricity/daily_costs" do

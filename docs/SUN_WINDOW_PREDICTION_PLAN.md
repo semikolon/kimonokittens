@@ -67,19 +67,21 @@ Evaluated 15+ providers across three tiers:
    bundle exec ruby lib/meteoblue_sun_predictor.rb
    ```
 
-4. **Integrate with dashboard weather widget** - IN PROGRESS
+4. ~~**Backend WebSocket Integration**~~ ✅ DONE
+   - `handlers/sun_handler.rb` - API endpoint at `/data/sun_windows`
+   - `lib/data_broadcaster.rb` - Broadcasts `sun_data` every 5 minutes
+   - `dashboard/src/context/DataContext.tsx` - SunData types and reducer
+
+5. **Dashboard Visual Integration** - IN PROGRESS
    - ✅ Prototyped orange gradient on Klimat widget during daylight
    - ✅ Tested multiple color variations (amber, coral, pink-orange)
    - **Current approach**: Orange gradient background on weather widget
    - **Color**: `rgba(255, 140, 50, 0.45)` → `rgba(255, 180, 80, 0.30)` (bright clean orange)
    - **Next steps**:
-     - Add sun data to WebSocket broadcast from backend
-     - Make gradient conditional on `is_daylight` or `brightness_percent`
+     - Make gradient conditional on `is_daylight` or `brightness_percent` from `sunData`
      - Add brightness % indicator text to widget
      - Consider adding "next sun window" countdown
-
-5. **Add API endpoint** (optional)
-   - `GET /api/sun-windows` returning predictions for both locations
+     - Refine orange color to match logo (user feedback: less brown)
 
 6. **Production deployment**
    - Add METEOBLUE_API_KEY to production .env ✅ (already in .env)
