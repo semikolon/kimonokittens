@@ -37,7 +37,7 @@ module MeteoblueSunPredictor
   #   60-79%:  Partly cloudy, occasional glimpses
   #   <60%:    Overcast, no direct sun
   SUN_THRESHOLD = 80     # percent - direct sun perceivable through thin clouds
-  BRIGHT_THRESHOLD = 40  # percent - relatively bright, good for walks on grey days
+  BRIGHT_THRESHOLD = 50  # percent - relatively bright, good for walks on grey days
 
   # Minimum continuous sun duration to report (minutes)
   MIN_SUN_DURATION_MINUTES = 10
