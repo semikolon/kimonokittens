@@ -76,8 +76,8 @@ export function ClockWidget({ isAdmin = false }: ClockWidgetProps) {
     <div className="flex items-start gap-4 overflow-visible max-w-full relative" style={{ minHeight: '40px' }}>
       <div className="flex-1 min-w-0 relative">
         {/* Time text positioned at very top of page */}
-        <div className="relative overflow-visible" style={{ marginTop: '-60px', marginLeft: '-2px', height: '200px' }}>
-          <svg className="absolute inset-0 overflow-visible" style={{ width: '600px', height: '200px', zIndex: 1 }}>
+        <div className="clock-time-container relative overflow-visible" style={{ marginTop: '-60px', marginLeft: '-2px', height: '200px' }}>
+          <svg className="clock-svg absolute inset-0 overflow-visible" style={{ width: '600px', height: '200px', zIndex: 1 }}>
             <defs>
               <linearGradient id="hoursGradient" x1="0%" y1="0%" x2="94%" y2="34%" gradientUnits="objectBoundingBox">
                 <stop offset="0%" stopColor="#8b5cf6" />
@@ -120,7 +120,7 @@ export function ClockWidget({ isAdmin = false }: ClockWidgetProps) {
         </div>
 
         {/* Date text with proper spacing below time */}
-        <div className={`text-2xl ${neonTheme.text.secondary} capitalize`} style={{ marginTop: '290px'}}>
+        <div className={`clock-date text-2xl ${neonTheme.text.secondary} capitalize`} style={{ marginTop: '290px'}}>
           {formatSwedishDate(displayTime)}
         </div>
 
@@ -136,7 +136,7 @@ export function ClockWidget({ isAdmin = false }: ClockWidgetProps) {
       </div>
 
       {/* Logo positioned within widget boundaries */}
-      <div className="flex-shrink-0 w-3/5 max-w-full flex items-end justify-end relative" style={{ zIndex: 50, marginTop: '300px' }}>
+      <div className="clock-logo flex-shrink-0 w-3/5 max-w-full flex items-end justify-end relative" style={{ zIndex: 50, marginTop: '300px' }}>
         <img
           src="/logo.png"
           alt="Kimonokittens"

@@ -287,14 +287,14 @@ export function WeatherWidget() {
       </div>
 
       {/* 3-Day Forecast */}
-      <div className="space-y-2">
+      <div className="weather-forecast space-y-2">
         <div className="text-purple-200 mt-8 mb-2" style={{ textTransform: 'uppercase', fontSize: '0.8em' }}>3-dagars prognos</div>
         <div className="text-[21px] space-y-2">
         {weatherData.forecast.forecastday.slice(0, 3).map((day, index) => {
           const sunHoursText = getSunHoursForDate(day.date)
           const sunHoursCount = sunData?.daily_sun_hours?.find(d => d.date === day.date)?.sun_hours || 0
           return (
-            <div key={day.date} className="flex items-center justify-between">
+            <div key={day.date} className="forecast-row flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="mr-2">
                   {getWeatherIcon(day.day.condition.icon)}
