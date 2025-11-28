@@ -1,7 +1,7 @@
 # Smart Appliance Monitoring - Implementation Plan
 
 **Created**: 2025-11-23
-**Status**: Phase 1 - In Progress (TinyTuya Setup)
+**Status**: Deferred to Dec 2025/Jan 2026
 **Related**: ChatGPT conversation `/Users/fredrikbranstrom/Downloads/Smart Washing Machine Dishwasher.md`
 
 ---
@@ -13,17 +13,23 @@
 - Network scan completed: 24 Tuya devices discovered on 192.168.4.x
 - Device protocol versions identified: 7× v3.3, 15× v3.4, 2× v3.5
 - Scan results saved to `snapshot.json`
+- **Clarified**: TinyTuya still requires Tuya IoT Platform API setup (not a workaround)
 
-### ⏳ Next Steps
-1. **Run TinyTuya wizard with Smart Life credentials** (requires interactive terminal)
+### ⏳ Deferred Until Dec 2025/Jan 2026
+**Blocker**: Tuya IoT Platform API access required for local_key extraction
+
+**Next steps when resuming:**
+1. **Renew Tuya IoT Core subscription** on iot.tuya.com (1-6 month renewal via form)
+2. **Run TinyTuya wizard** with API credentials (Access ID + Secret + Region)
    ```bash
    python -m tinytuya wizard
-   # Enter Smart Life email/password when prompted
+   # Enter API ID, Secret, Region when prompted
+   # Wizard fetches local_keys from cloud and saves to devices.json
    ```
-2. Extract device names and local_keys from generated `devices.json`
-3. Identify washing machine plug from device list
-4. Set DHCP reservation for stable IP
-5. Continue with Phase 1 Node-RED integration
+3. Extract device names and local_keys from generated `devices.json`
+4. Identify washing machine plug from device list
+5. Set DHCP reservation for stable IP
+6. Continue with Phase 1 Node-RED integration
 
 ---
 
@@ -75,14 +81,20 @@ Hallway Dashboard (React)
 **Goal**: Get washing machine power readings into Node-RED with state detection.
 
 **Tasks**:
-1. **Get device credentials** (using TinyTuya - no web UI!):
+1. **Get device credentials** (using TinyTuya):
    ```bash
+   # Prerequisites: Tuya IoT Platform account + Cloud Project setup
+   # 1. Renew IoT Core subscription on iot.tuya.com (1-6 month renewal)
+   # 2. Get API credentials: Access ID + Secret + Region
+   # 3. Link Smart Life app via QR code in Cloud Project
+
    # On Pi (or Mac for testing)
    pip install tinytuya
    python -m tinytuya wizard
-   # Enter Smart Life app credentials when prompted
-   # Auto-discovers devices + extracts local_key + finds IP addresses
-   # Saves to devices.json
+   # Enter API ID, Secret, Region when prompted
+   # Wizard fetches local_keys from Tuya cloud
+   # Auto-discovers device IPs via network scan
+   # Saves complete device info to devices.json
    ```
    - Device ID: `bf011c1842a8f0201fxjdy` (confirm from wizard output)
    - Local key: Extract from `devices.json` after wizard completes
@@ -327,7 +339,8 @@ Hallway Dashboard (React)
 - WiFi repeater (if needed): **300 kr**
 
 ### Services
-- TinyTuya: **Free** (open source, no subscription required)
+- Tuya IoT Platform: **Free** (IoT Core subscription renewal required every 1-6 months)
+- TinyTuya: **Free** (open source Python tool)
 - SMS (future): 46elks ~0.65 kr/SMS
 
 ### Development Time
@@ -341,8 +354,9 @@ Hallway Dashboard (React)
 ## Dependencies
 
 ### External Services
-- ✅ Smart Life app (for device pairing + TinyTuya credentials)
-- ✅ TinyTuya (Python CLI for local_key extraction - no subscription needed)
+- ✅ Smart Life app (for device pairing)
+- ⏳ Tuya IoT Platform (for local_key extraction - subscription renewal required)
+- ✅ TinyTuya (Python CLI tool - simplifies extraction after API setup)
 - ✅ Local WiFi network (2.4 GHz required for plugs)
 
 ### Existing Infrastructure
@@ -358,14 +372,27 @@ Hallway Dashboard (React)
 
 ## Risk Mitigation
 
-### Tuya Subscription Expiration (RESOLVED)
-**Risk**: Trial edition expired Aug 2025, can't use web UI for local_key extraction.
-**Solution**: Using TinyTuya instead (open source Python CLI)
-- No subscription required - uses Smart Life app credentials directly
-- Auto-discovers devices + extracts local_key + finds IP addresses
-- Command: `python -m tinytuya wizard`
-- One-time setup, works forever after
-- Document extracted credentials in this file for all devices
+### Tuya IoT Platform Dependency
+**Reality**: Local_key extraction requires Tuya IoT Platform API access (unavoidable)
+**Status**: IoT Core subscription expired Aug 28, 2025 - requires renewal
+
+**TinyTuya Clarification**:
+- TinyTuya simplifies local_key extraction AFTER you have API credentials
+- Does NOT eliminate need for Tuya IoT Platform account + Cloud Project
+- Requires: API ID + Secret + Region from iot.tuya.com
+- Once extracted, local_keys work forever (until device reset/re-pair)
+
+**Renewal Process** (as of Nov 2024):
+- IoT Core subscription can be renewed for 1, 3, or 6 months
+- Renewal via simple form (purpose, developer type)
+- Less complex than initial setup
+
+**Alternatives Considered**:
+- Packet sniffing Smart Life app traffic (complex, fragile)
+- Flash with Tasmota/ESPHome (hardware-dependent, may not support Deltaco plugs)
+- Different hardware (Shelly, etc.) - requires buying new plugs
+
+**Decision**: Defer until time permits Tuya renewal hassle (Dec 2025/Jan 2026)
 
 ### WiFi Signal Weak in Basement
 **Risk**: Plugs disconnect frequently, status unreliable.
@@ -409,29 +436,32 @@ Hallway Dashboard (React)
 ## References
 
 - **ChatGPT Conversation**: `/Users/fredrikbranstrom/Downloads/Smart Washing Machine Dishwasher.md`
-- **TinyTuya**: Primary method for local_key extraction (Python CLI, no web UI needed)
+- **TinyTuya**: Simplifies local_key extraction after Tuya IoT Platform setup
   - GitHub: https://github.com/jasonacox/tinytuya
-  - Docs: https://github.com/jasonacox/tinytuya/blob/master/README.md
+  - Setup Guide: https://github.com/jasonacox/tinytuya/blob/master/README.md#setup-wizard-getting-local-keys
+  - Requires: Tuya IoT Platform API credentials (Access ID + Secret + Region)
+- **Tuya IoT Platform**: https://iot.tuya.com (Cloud Project + IoT Core subscription required)
 - **Node-RED Module**: `node-red-contrib-tuya-smart-device` (npm)
 - **Tuya Local Protocol**: Community docs on GitHub
 - **Existing Dashboard Patterns**: See `RentWidget.tsx`, `DataBroadcaster.rb`
-- **Smart Life App**: Device management + initial setup only
+- **Smart Life App**: Device pairing + linking to Cloud Project via QR code
 
 ---
 
-## Next Steps
+## Next Steps (When Resuming Dec 2025/Jan 2026)
 
-1. **Extract local_key** via Tuya IoT Platform API Explorer
-2. **Find plug LAN IP** (router DHCP table, MAC: `18:de:50:3e:f4:a5`)
-3. **Install Node-RED module** on Pi
-4. **Build test flow** with state detection
-5. **Run calibration cycle** to tune thresholds
-6. **Implement backend handler**
-7. **Build dashboard widget**
-8. **Deploy & monitor for 1 week**
-9. **Add dryer + dishwasher** (repeat process)
-10. **SMS notifications** (after rent reminders infrastructure)
+1. **Renew Tuya IoT Core subscription** on iot.tuya.com (1-6 month renewal)
+2. **Run TinyTuya wizard** with API credentials to extract local_keys
+3. **Find plug LAN IP** (router DHCP table, MAC: `18:de:50:3e:f4:a5`)
+4. **Install Node-RED module** on Pi
+5. **Build test flow** with state detection
+6. **Run calibration cycle** to tune thresholds
+7. **Implement backend handler**
+8. **Build dashboard widget**
+9. **Deploy & monitor for 1 week**
+10. **Add dryer + dishwasher** (repeat process)
+11. **SMS notifications** (after rent reminders infrastructure)
 
 ---
 
-**Status**: Ready to implement Phase 1 when user gives go-ahead.
+**Status**: Deferred to Dec 2025/Jan 2026 - awaiting time for Tuya IoT Platform renewal process.
