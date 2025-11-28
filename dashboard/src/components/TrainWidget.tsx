@@ -430,8 +430,21 @@ const DeviationAlerts: React.FC<{
   }, {} as Record<string, Deviation[]>)
 
   return (
-    <div className="text-yellow-200 bg-yellow-400/10 p-2 rounded inline-block max-w-full mb-3 -ml-2 text-sm">
-      <div className="space-y-1">
+    <div
+      className="p-2.5 rounded-lg inline-block max-w-full mb-3 -ml-2 text-sm"
+      style={{
+        background: 'linear-gradient(180deg, rgba(253, 224, 71, 0.12) 0%, rgba(253, 224, 71, 0.03) 100%)'
+      }}
+    >
+      <div
+        className="space-y-1"
+        style={{
+          backgroundImage: 'linear-gradient(90deg, #fcd34d 0%, #fb923c 100%)',
+          WebkitBackgroundClip: 'text',
+          backgroundClip: 'text',
+          color: 'transparent'
+        }}
+      >
         {Object.entries(grouped).map(([reason, items], index) => (
           <div key={index} className="leading-tight">
             <strong>{items.map(item => item.time).join(', ')}:</strong>{' '}
