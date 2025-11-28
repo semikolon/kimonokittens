@@ -24,11 +24,13 @@ export const VIBES = {
   snow_windy:       { short: 'Snöyra',          long: 'Snöyra' },
   snow:             { short: 'Mysigt',          long: 'Mysigt ute' },
 
-  // Rain conditions (intensity-aware)
-  rain_windy:       { short: 'Ruskigt',         long: 'Stanna inne' },
+  // Rain conditions (intensity-aware) - descriptive, not advisory
+  rain_windy_damp:  { short: 'Ruskigt',         long: 'Rått och ruskigt' },
+  rain_windy:       { short: 'Blåsigt',         long: 'Blåsigt regn' },
   rain_heavy:       { short: 'Ösregn',          long: 'Regnar rejält' },
-  rain:             { short: 'Ta paraply',      long: 'Ta paraply' },
-  rain_light:       { short: 'Kanske paraply',  long: 'Ta med paraply' },
+  rain_showers:     { short: 'Skurar',          long: 'Regnskurar' },
+  rain:             { short: 'Regn',            long: 'Regnigt' },
+  rain_light:       { short: 'Duggigt',         long: 'Lite dugg' },
 
   // Fog conditions
   fog_icy:          { short: 'Halt!',           long: 'Akta halkan' },
@@ -88,6 +90,7 @@ export function detectVibeKey(params: WeatherParams): VibeKey {
   const isRaining = /regn|dugg|skur/.test(condLower)
   const isLightRain = isRaining && /lätt|dugg/.test(condLower) && !/kraftigt|stört/.test(condLower)
   const isHeavyRain = isRaining && /kraftigt|stört/.test(condLower)
+  const isShowers = /skur/.test(condLower) && !isLightRain && !isHeavyRain
   const isFoggy = /dimma|dis/.test(condLower)
   const isSunny = /sol|klart|klar/.test(condLower)
   const isIcy = isFreezing || /underkyld|frys/.test(condLower)
@@ -97,8 +100,10 @@ export function detectVibeKey(params: WeatherParams): VibeKey {
   if (isSleet) return 'sleet'
   if (isSnowing && isWindy) return 'snow_windy'
   if (isSnowing) return 'snow'
+  if (isRaining && isWindy && isDamp) return 'rain_windy_damp'
   if (isRaining && isWindy) return 'rain_windy'
   if (isHeavyRain) return 'rain_heavy'
+  if (isShowers) return 'rain_showers'
   if (isLightRain) return 'rain_light'
   if (isRaining) return 'rain'
   if (isFoggy && isIcy) return 'fog_icy'

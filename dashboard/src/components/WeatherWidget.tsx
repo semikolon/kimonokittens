@@ -123,11 +123,61 @@ export function WeatherWidget() {
     return `Sol ${start}-${end}`
   }
 
-  // Get today's sun status for display (Option D):
-  // - "Sol nu" when currently sunny
+  // Find brightest window from brightness curve (for grey days without direct sun)
+  // Returns "Ljust 10-14" if there's a meaningful window of relative brightness
+  const getBrightestWindow = (): string | null => {
+    if (!sunData?.todays_brightness_curve?.length) return null
+
+    const curve = sunData.todays_brightness_curve
+    const BRIGHTNESS_THRESHOLD = 40 // Lower threshold for "relatively bright" (vs 80 for direct sun)
+
+    // Find hours above threshold
+    const brightHours = curve
+      .filter(p => p.brightness_percent >= BRIGHTNESS_THRESHOLD)
+      .map(p => parseInt(p.hour.split(':')[0]))
+
+    if (brightHours.length < 2) return null // Need at least 2 hours
+
+    // Find contiguous window (hours are sorted)
+    let windowStart = brightHours[0]
+    let windowEnd = brightHours[0] + 1
+    let bestStart = windowStart
+    let bestEnd = windowEnd
+
+    for (let i = 1; i < brightHours.length; i++) {
+      if (brightHours[i] === brightHours[i-1] + 1) {
+        // Contiguous - extend window
+        windowEnd = brightHours[i] + 1
+      } else {
+        // Gap - check if current window is best, then start new
+        if (windowEnd - windowStart > bestEnd - bestStart) {
+          bestStart = windowStart
+          bestEnd = windowEnd
+        }
+        windowStart = brightHours[i]
+        windowEnd = brightHours[i] + 1
+      }
+    }
+    // Final check
+    if (windowEnd - windowStart > bestEnd - bestStart) {
+      bestStart = windowStart
+      bestEnd = windowEnd
+    }
+
+    // Only show if meaningful window (2+ hours)
+    if (bestEnd - bestStart >= 2) {
+      return `Ljust ${bestStart}-${bestEnd}`
+    }
+
+    return null
+  }
+
+  // Get today's sun status for display:
+  // - "Sol nu" when currently sunny (>80% brightness)
   // - "Sol vid HH" when sun is coming today
-  // - "Sol var H-H" when sun already passed today (no leading zeros)
-  // - "Grått idag" when no sun today
+  // - "Sol var H-H" when sun already passed today
+  // - "Ljust H-H" when no direct sun but relatively bright window exists
+  // - null when truly grey (hide indicator - don't say "Grått idag")
   const getTodaySunStatus = (): string | null => {
     if (!sunData) return null
     if (!sunData.is_daylight) return null  // Don't show at night
@@ -145,9 +195,10 @@ export function WeatherWidget() {
       return 'Sol nu'
     }
 
-    // Check if there's sun data for today
+    // Check if there's sun data for today (direct sun periods)
     if (!todayData || todayData.sun_hours === 0) {
-      return 'Grått idag'
+      // No direct sun - try to find brightest window instead
+      return getBrightestWindow()
     }
 
     // Has sun today - check if it's upcoming or already passed
@@ -171,7 +222,8 @@ export function WeatherWidget() {
       }
     }
 
-    return 'Grått idag'
+    // Fallback: try brightness window, or hide entirely
+    return getBrightestWindow()
   }
 
   return (
