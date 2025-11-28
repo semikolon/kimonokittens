@@ -771,6 +771,11 @@ curl -s http://localhost:3001/api/rent/friendly_message | jq .message
 curl -s http://localhost:3001/data/temperature | jq '{temp: .supplyline_temperature, disabled: .heatpump_disabled, demand: .heating_demand}'
 ```
 
+### Check Sun/Brightness Data (Meteoblue):
+```bash
+curl -s http://localhost:3001/data/sun_windows | jq '{is_daylight, current_brightness_percent, daily_sun_hours}'
+```
+
 ### Rent Config Change Workflow:
 1. **Before making rent changes**: Read this file (timing quirks above)
 2. **Check database state**: Use quick reference commands above

@@ -36,7 +36,8 @@ module MeteoblueSunPredictor
   #   80-89%:  Thin clouds, sun visible
   #   60-79%:  Partly cloudy, occasional glimpses
   #   <60%:    Overcast, no direct sun
-  BRIGHTNESS_THRESHOLD = 80  # percent (sun perceivable through thin clouds)
+  SUN_THRESHOLD = 80     # percent - direct sun perceivable through thin clouds
+  BRIGHT_THRESHOLD = 40  # percent - relatively bright, good for walks on grey days
 
   # Minimum continuous sun duration to report (minutes)
   MIN_SUN_DURATION_MINUTES = 10
@@ -179,8 +180,8 @@ module MeteoblueSunPredictor
       by_date = forecast.group_by { |p| p[:time].to_date }
 
       by_date.map do |date, points|
-        # Find all sunny hours (brightness >= threshold during daylight)
-        sunny_points = points.select { |p| p[:is_daylight] && p[:brightness_percent] >= BRIGHTNESS_THRESHOLD }
+        # Find all sunny hours (brightness >= 80% during daylight)
+        sunny_points = points.select { |p| p[:is_daylight] && p[:brightness_percent] >= SUN_THRESHOLD }
                              .sort_by { |p| p[:time] }
         sunny_hours = sunny_points.count
 
@@ -193,12 +194,22 @@ module MeteoblueSunPredictor
         # Last sun END is the hour after the last sunny hour starts (e.g., 10:00 sunny -> ends at 11)
         last_sun_end = last_sunny ? (last_sunny[:time] + 3600).strftime('%H') : nil
 
+        # Find brightness window (40%+ hours) for grey days without direct sun
+        bright_points = points.select { |p| p[:is_daylight] && p[:brightness_percent] >= BRIGHT_THRESHOLD }
+                              .sort_by { |p| p[:time] }
+        first_bright = bright_points.first
+        last_bright = bright_points.last
+        first_bright_hour = first_bright ? first_bright[:time].strftime('%H') : nil
+        last_bright_end = last_bright ? (last_bright[:time] + 3600).strftime('%H') : nil
+
         {
           date: date.iso8601,
           sun_hours: sunny_hours,
           sun_hours_text: format_sun_hours(sunny_hours),
           first_sun_hour: first_sun_hour,  # "09" or nil
-          last_sun_end: last_sun_end       # "11" or nil (for "var 09-11" display)
+          last_sun_end: last_sun_end,      # "11" or nil (for "Sol 09-11" display)
+          first_bright_hour: first_bright_hour,  # "08" or nil (for "Ljust 08-16" on grey days)
+          last_bright_end: last_bright_end       # "16" or nil
         }
       end.sort_by { |d| d[:date] }
     end
@@ -231,7 +242,7 @@ module MeteoblueSunPredictor
       current_duration = 0
 
       sorted.each do |point|
-        if point[:brightness_percent] >= BRIGHTNESS_THRESHOLD
+        if point[:brightness_percent] >= SUN_THRESHOLD
           # Sun is perceivable at this hour
           current_window_start ||= point[:time]
           current_duration += 60  # hourly data
@@ -266,7 +277,7 @@ module MeteoblueSunPredictor
 
       sorted.each do |point|
         next if point[:time] < start_time
-        break if point[:brightness_percent] < BRIGHTNESS_THRESHOLD
+        break if point[:brightness_percent] < SUN_THRESHOLD
 
         duration += 60  # hourly intervals
       end
@@ -280,7 +291,7 @@ module MeteoblueSunPredictor
     # @param start_time [Time] Window start time
     # @return [Integer] Peak brightness percentage
     def find_peak_brightness(sorted, start_time)
-      sorted.select { |p| p[:time] >= start_time && p[:brightness_percent] >= BRIGHTNESS_THRESHOLD }
+      sorted.select { |p| p[:time] >= start_time && p[:brightness_percent] >= SUN_THRESHOLD }
             .map { |p| p[:brightness_percent] }
             .max || 0
     end

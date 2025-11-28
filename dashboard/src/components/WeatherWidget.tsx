@@ -122,15 +122,28 @@ export function WeatherWidget() {
     return VIBES[key].short
   }
 
-  // Get sun hours text with timing for a specific date (YYYY-MM-DD format)
-  // Returns: "Sol 9-11" or null if no sun (duration implicit from range)
+  // Get sun/brightness text with timing for a specific date (YYYY-MM-DD format)
+  // Returns: "Sol 9-15" for sunny days, "Ljust 8-16" for grey days, or null
   const getSunHoursForDate = (dateStr: string): string | null => {
     if (!sunData?.daily_sun_hours) return null
     const entry = sunData.daily_sun_hours.find(d => d.date === dateStr)
-    if (!entry?.first_sun_hour || !entry?.last_sun_end) return null
-    const start = parseInt(entry.first_sun_hour).toString()
-    const end = parseInt(entry.last_sun_end).toString()
-    return `Sol ${start}-${end}`
+    if (!entry) return null
+
+    // First try direct sun hours (80%+ brightness)
+    if (entry.first_sun_hour && entry.last_sun_end) {
+      const start = parseInt(entry.first_sun_hour).toString()
+      const end = parseInt(entry.last_sun_end).toString()
+      return `Sol ${start}-${end}`
+    }
+
+    // Fall back to brightness window (40%+ brightness) for grey days
+    if (entry.first_bright_hour && entry.last_bright_end) {
+      const start = parseInt(entry.first_bright_hour).toString()
+      const end = parseInt(entry.last_bright_end).toString()
+      return `Ljust ${start}-${end}`
+    }
+
+    return null
   }
 
   // Find brightest window from brightness curve (for grey days without direct sun)
@@ -207,7 +220,13 @@ export function WeatherWidget() {
 
     // Check if there's sun data for today (direct sun periods)
     if (!todayData || todayData.sun_hours === 0) {
-      // No direct sun - try to find brightest window instead
+      // No direct sun - try brightness window from backend data
+      if (todayData?.first_bright_hour && todayData?.last_bright_end) {
+        const start = parseInt(todayData.first_bright_hour).toString()
+        const end = parseInt(todayData.last_bright_end).toString()
+        return `Ljust ${start}-${end}`
+      }
+      // Fall back to curve-based calculation (legacy)
       return getBrightestWindow()
     }
 
