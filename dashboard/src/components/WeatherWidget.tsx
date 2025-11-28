@@ -25,6 +25,15 @@ export function WeatherWidget() {
     return <div className="text-red-400">{weatherData.error}</div>
   }
 
+  // Shared style for sun hour text with gradient and layered glow
+  const sunTextStyle: React.CSSProperties = {
+    backgroundImage: 'linear-gradient(180deg, #fdba74 0%, #f97316 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    textShadow: '0 0 5px rgba(251, 147, 60, 0.3), 0 0 12px rgba(251, 147, 60, 0.3), 0 0 30px rgba(251, 147, 60, 0.3)',
+  }
+
   const getWeatherIcon = (iconUrl: string) => {
     // Extract numeric code from WeatherAPI icon URL (e.g., "113.png" from "//cdn.weatherapi.com/weather/64x64/day/113.png")
     const codeMatch = iconUrl.match(/\/(\d+)\.png$/)
@@ -249,7 +258,9 @@ export function WeatherWidget() {
           {getTodaySunStatus() && (
             <div className="flex items-center justify-end space-x-1">
               <SunDim className="w-4 h-4 text-orange-400" />
-              <span className="text-orange-400">{getTodaySunStatus()}</span>
+              <span style={sunTextStyle}>
+                {getTodaySunStatus()}
+              </span>
             </div>
           )}
           <div>{getWeatherVibe()}</div>
@@ -285,7 +296,9 @@ export function WeatherWidget() {
               <div className="flex items-center space-x-2">
                 {sunHoursText && index > 0 && (
                   <>
-                    <span className="text-orange-400">{sunHoursText}</span>
+                    <span style={sunTextStyle}>
+                      {sunHoursText}
+                    </span>
                     <span className="text-purple-300 opacity-25">•</span>
                   </>
                 )}
