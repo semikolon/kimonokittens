@@ -16,12 +16,15 @@
 // All vibes defined ONCE with short (forecast) and long (current) versions
 // This prevents drift between the two display contexts
 export const VIBES = {
-  // Extreme conditions
+  // Dangerous/extreme conditions (high priority)
   stormy:           { short: 'Storm!',          long: 'Stanna inne' },
+  thunder:          { short: 'Åska!',           long: 'Åskväder' },
+  rain_icy:         { short: 'Ishalka!',        long: 'Riktigt halt' },
   sleet:            { short: 'Ruskigt',         long: 'Ruskigt' },
 
   // Snow conditions
   snow_windy:       { short: 'Snöyra',          long: 'Snöyra' },
+  snow_flurries:    { short: 'Snöyr',           long: 'Lätt snöyr' },
   snow:             { short: 'Mysigt',          long: 'Mysigt ute' },
 
   // Rain conditions (intensity-aware) - descriptive, not advisory
@@ -35,7 +38,7 @@ export const VIBES = {
   // Fog conditions
   fog_icy:          { short: 'Halt!',           long: 'Akta halkan' },
   fog_cold:         { short: 'Rått',            long: 'Dimmigt och rått' },
-  fog:              { short: 'Dimmigt',         long: 'Se dig för i dimman' },
+  fog:              { short: 'Dimmigt',         long: 'Dimmigt ute' },
 
   // Sunny conditions (from WeatherAPI)
   sunny_freezing:   { short: 'Kallt',           long: 'Soligt men kallt' },
@@ -49,14 +52,16 @@ export const VIBES = {
   sun_2h:           { short: 'Fint',            long: 'Glimtar av sol' },
   sun_1h:           { short: 'Lite sol',        long: 'Kanske lite sol' },
 
-  // Cold/overcast fallbacks
+  // Air quality warning
+  poor_air:         { short: 'Dålig luft',      long: 'Dålig luftkvalitet' },
+
+  // Cold/overcast fallbacks (damp only triggers with cold, not standalone)
   freezing_windy:   { short: 'Iskallt',         long: 'Biter i kinderna' },
   freezing:         { short: 'Iskallt',         long: 'Riktigt kallt' },
   cold_damp_windy:  { short: 'Ruskigt',         long: 'Riktigt otrevligt' },
-  cold_damp:        { short: 'Rått',            long: 'Klä dig varmt' },
+  cold_damp:        { short: 'Rått',            long: 'Rått ute' },
   cold_windy:       { short: 'Blåsigt',         long: 'Blåser kallt' },
   cold:             { short: 'Kyligt',          long: 'Lite kyligt' },
-  damp:             { short: 'Fuktigt',         long: 'Lite fuktigt' },
   windy:            { short: 'Blåsigt',         long: 'Blåser på' },
 
   // Default
@@ -71,11 +76,12 @@ export interface WeatherParams {
   humidity?: number
   condition: string
   sunHours?: number
+  airQualityIndex?: number  // US EPA index: 1=Good, 2=Moderate, 3+=Unhealthy
 }
 
 // Single detection function - returns the vibe key based on weather parameters
 export function detectVibeKey(params: WeatherParams): VibeKey {
-  const { temp, wind, humidity, condition, sunHours } = params
+  const { temp, wind, humidity, condition, sunHours, airQualityIndex } = params
 
   const isFreezing = temp < -5
   const isCold = temp < 5
@@ -83,10 +89,13 @@ export function detectVibeKey(params: WeatherParams): VibeKey {
   const isWindy = wind >= 25
   const isStormy = wind >= 40
   const isDamp = humidity !== undefined && humidity > 70 && temp > -2 && temp < 8
+  const isPoorAir = airQualityIndex !== undefined && airQualityIndex >= 3
 
   const condLower = condition.toLowerCase()
   const isSleet = /snöblandat/.test(condLower)
-  const isSnowing = /snö/.test(condLower) && !isSleet
+  const isFlurries = /\byr\b/.test(condLower)  // "Yr" = fine snow flurries
+  const isSnowing = (/snö/.test(condLower) || isFlurries) && !isSleet
+  const isThunder = /åska/.test(condLower)
   const isRaining = /regn|dugg|skur/.test(condLower)
   const isLightRain = isRaining && /lätt|dugg/.test(condLower) && !/kraftigt|stört/.test(condLower)
   const isHeavyRain = isRaining && /kraftigt|stört/.test(condLower)
@@ -96,19 +105,31 @@ export function detectVibeKey(params: WeatherParams): VibeKey {
   const isIcy = isFreezing || /underkyld|frys/.test(condLower)
 
   // Priority-ordered detection (order matters!)
+  // Dangerous conditions first
   if (isStormy) return 'stormy'
+  if (isThunder) return 'thunder'
+  if (isRaining && isIcy) return 'rain_icy'  // Freezing rain = very dangerous!
   if (isSleet) return 'sleet'
+
+  // Snow conditions
   if (isSnowing && isWindy) return 'snow_windy'
+  if (isFlurries) return 'snow_flurries'
   if (isSnowing) return 'snow'
+
+  // Rain conditions
   if (isRaining && isWindy && isDamp) return 'rain_windy_damp'
   if (isRaining && isWindy) return 'rain_windy'
   if (isHeavyRain) return 'rain_heavy'
   if (isShowers) return 'rain_showers'
   if (isLightRain) return 'rain_light'
   if (isRaining) return 'rain'
+
+  // Fog conditions
   if (isFoggy && isIcy) return 'fog_icy'
   if (isFoggy && isCold) return 'fog_cold'
   if (isFoggy) return 'fog'
+
+  // Sunny conditions
   if (isSunny && isFreezing) return 'sunny_freezing'
   if (isSunny && isCold && isWindy) return 'sunny_cold_windy'
   if (isSunny && isCold) return 'sunny_cold'
@@ -120,14 +141,17 @@ export function detectVibeKey(params: WeatherParams): VibeKey {
   if (sunHours !== undefined && sunHours >= 2) return 'sun_2h'
   if (sunHours !== undefined && sunHours >= 1) return 'sun_1h'
 
-  // Cloudy/overcast fallbacks
+  // Air quality warning (only show when no other notable weather)
+  if (isPoorAir) return 'poor_air'
+
+  // Cloudy/overcast fallbacks (damp only with cold, not standalone)
   if (isFreezing && isWindy) return 'freezing_windy'
   if (isCold && isDamp && isWindy) return 'cold_damp_windy'
   if (isCold && isDamp) return 'cold_damp'
   if (isCold && isWindy) return 'cold_windy'
   if (isFreezing) return 'freezing'
   if (isCold) return 'cold'
-  if (isDamp) return 'damp'
+  // Note: standalone 'damp' removed - humidity without cold isn't notable enough
   if (isWindy) return 'windy'
 
   return 'default'

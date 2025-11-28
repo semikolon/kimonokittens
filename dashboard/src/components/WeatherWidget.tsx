@@ -86,7 +86,7 @@ export function WeatherWidget() {
     return text.replace('Områden med regn i närheten', 'Regn i närheten')
   }
 
-  // Current weather vibe (uses humidity, returns long phrases)
+  // Current weather vibe (uses humidity + air quality, returns long phrases)
   const getWeatherVibe = (): string => {
     const todayStr = new Date().toISOString().split('T')[0]
     const todaySunHours = sunData?.daily_sun_hours?.find(d => d.date === todayStr)?.sun_hours || 0
@@ -97,6 +97,7 @@ export function WeatherWidget() {
       humidity: weatherData.current.humidity,
       condition: weatherData.current.condition.text,
       sunHours: todaySunHours,
+      airQualityIndex: weatherData.current.air_quality?.us_epa_index,
     })
     return VIBES[key].long
   }
