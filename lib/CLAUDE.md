@@ -127,12 +127,28 @@ rspec                   # Wrong gem versions or missing gems
 
 **The system stores rent parameters one month early because rent is paid in advance.**
 
+**WHY:** Rent is paid **in advance** for the upcoming month, but operational costs (electricity) are paid **in arrears** for the previous month. Therefore, November's config stores December's rent parameters.
+
 **Concrete example (November 2025):**
 - **Today: November 19, 2025**
 - **Dashboard requests: November config** (`/api/rent/friendly_message`)
 - **Actually displays: December 2025 rent** ("Hyran för december 2025 ska betalas innan 27 nov")
 
-**WHY:** Rent is paid **in advance** for the upcoming month, but operational costs (electricity) are paid **in arrears** for the previous month. Therefore, November's config stores December's rent parameters.
+#### Period Lookup Table (Ground Truth)
+
+**Claude treats `period` as config month and adds 1 to get rent month.**
+
+| `period` value | Rent Month | Payment Due |
+|----------------|------------|-------------|
+| `2025-11` | **December 2025** | Nov 27 |
+| `2025-10` | **November 2025** | Oct 27 |
+| `2025-09` | **October 2025** | Sep 27 |
+
+**Formula**: `rent_month = period + 1`
+
+**Vocabulary**: `RentLedger.period` = `RentConfig.period` = config month (NOT rent month)
+
+Use this mapping directly when interpreting period data - it's architectural fact, not something to verify via code.
 
 ### Database Period Logic
 
@@ -144,8 +160,6 @@ db.set_config('el', 3869, Time.new(2025, 11, 1))  # November period
 # Or: October 2025 rent on September 27:
 db.set_config('el', 2424, Time.new(2025, 9, 1))   # September period
 ```
-
-**The rule:** Config month = rent month - 1 (Nov config → Dec rent).
 
 ### RentLedger Population Timing
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { CheckCircle } from 'lucide-react'
 import { useData } from '../context/DataContext'
 
 // Anomaly Summary Component - generates dynamic text about anomalous electricity usage
@@ -675,7 +676,26 @@ export function RentWidget() {
       {/* Header - just the header text, no inline amounts */}
       {header && (
         <div className="text-purple-200 mb-3 leading-relaxed">
-          {parseMarkdown(header)}
+          {rentData.all_paid
+            ? <>
+                {parseMarkdown(header.replace(/ska betalas innan \d+ \w+/, 'har betalats'))}
+                <CheckCircle
+                  className="inline-block ml-2 w-5 h-5"
+                  style={{
+                    verticalAlign: '-0.15em',
+                    stroke: 'url(#paidGradient)'
+                  }}
+                />
+                <svg width="0" height="0">
+                  <defs>
+                    <linearGradient id="paidGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#c084fc" />
+                      <stop offset="100%" stopColor="#f472b6" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </>
+            : parseMarkdown(header)}
           {firstAmountParsed && (
             <>
               <span style={{ opacity: 0.25, margin: '0 0.3em' }}>•</span>

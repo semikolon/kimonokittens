@@ -594,6 +594,10 @@ class RentCalculatorHandler
       # Calculate virtual pot status for savings tracking
       virtual_pot_data = calculate_virtual_pot_status(year: year, month: month)
 
+      # Check if all tenants have paid for this period
+      # Period uses config month (year/month), which corresponds to rent month + 1
+      all_paid = check_all_tenants_paid(year: year, month: month)
+
       result = {
         message: friendly_text,
         year: year,
@@ -605,7 +609,8 @@ class RentCalculatorHandler
         heating_cost_line: heating_cost_data[:line],
         quarterly_invoice_projection: @drift_rakning_is_projection || false,
         drift_rakning_amount: config[:drift_rakning]&.to_i,
-        virtual_pot: virtual_pot_data
+        virtual_pot: virtual_pot_data,
+        all_paid: all_paid
       }
 
       [200, { 'Content-Type' => 'application/json' }, [result.to_json]]
@@ -618,6 +623,23 @@ class RentCalculatorHandler
   end
 
   private
+
+  # Check if all tenants have paid for the given config period
+  # Returns true only if ledger entries exist AND all have amount_paid >= amount_due
+  #
+  # @param year [Integer] Config year
+  # @param month [Integer] Config month (rent month = config month + 1)
+  # @return [Boolean]
+  def check_all_tenants_paid(year:, month:)
+    config_period = Time.utc(year, month, 1)
+    ledger_entries = Persistence.rent_ledger.find_by_period(config_period)
+
+    # No entries = no one has been billed yet (ledger not populated)
+    return false if ledger_entries.empty?
+
+    # Check if all entries are fully paid
+    ledger_entries.all? { |entry| entry.amount_paid >= entry.amount_due }
+  end
 
   def determine_electricity_data_source(config, year, month)
     el_cost = config[:el]
