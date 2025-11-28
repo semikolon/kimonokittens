@@ -84,11 +84,11 @@ export function detectVibeKey(params: WeatherParams): VibeKey {
   const { temp, wind, humidity, condition, sunHours, airQualityIndex } = params
 
   const isFreezing = temp < -5
-  const isCold = temp < 5
-  const isMild = temp >= 5 && temp < 15
+  const isCold = temp < 10
+  const isMild = temp >= 10 && temp < 15
   const isWindy = wind >= 25
   const isStormy = wind >= 40
-  const isDamp = humidity !== undefined && humidity > 70 && temp > -2 && temp < 8
+  const isDamp = humidity !== undefined && humidity > 70 && temp > -2 && temp < 10
   const isPoorAir = airQualityIndex !== undefined && airQualityIndex >= 3
 
   const condLower = condition.toLowerCase()
