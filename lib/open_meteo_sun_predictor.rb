@@ -113,14 +113,13 @@ module OpenMeteoSunPredictor
         sunshine_seconds = sunshine[i].to_f
         ghi_value = ghi[i].to_f
 
-        # Convert sunshine_duration to brightness_percent
-        # 3600 seconds = 100% sunshine that hour
-        brightness = (sunshine_seconds / 3600.0 * 100).round
-
         # Estimate clear-sky GHI based on time of year and solar position
         # In Swedish winter at 59°N, max is ~100 W/m² at solar noon
-        # Use a simple seasonal model
         clearsky_ghi = estimate_clearsky_ghi(time)
+
+        # Calculate brightness as GHI/clearsky ratio (matches Meteoblue approach)
+        # This captures diffuse light on overcast days, not just direct sun
+        brightness = clearsky_ghi > 0 ? ((ghi_value / clearsky_ghi) * 100).round : 0
 
         {
           time: time,
