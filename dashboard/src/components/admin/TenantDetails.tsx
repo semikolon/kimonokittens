@@ -491,59 +491,66 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
 
             <div>
               <h4 className="text-sm font-semibold text-purple-200 mb-3">Utflyttningsdatum:</h4>
-              {tenant.tenant_departure_date ? (
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-purple-300" />
-                  <div className="text-purple-100">
-                    {new Date(tenant.tenant_departure_date).toLocaleDateString('sv-SE')}
-                  </div>
-                </div>
+              {!isSettingDepartureDate ? (
+                tenant.tenant_departure_date ? (
+                  <button
+                    onClick={() => {
+                      // Pre-populate with existing date in YYYY-MM-DD format for the input
+                      const existingDate = new Date(tenant.tenant_departure_date!)
+                      setDepartureDate(existingDate.toISOString().split('T')[0])
+                      setIsSettingDepartureDate(true)
+                    }}
+                    className="flex items-center gap-3 hover:bg-slate-800/30 rounded-lg px-2 py-1 -mx-2
+                             transition-all cursor-pointer group"
+                  >
+                    <Calendar className="w-5 h-5 text-purple-300" />
+                    <div className="text-purple-100 group-hover:text-purple-50">
+                      {new Date(tenant.tenant_departure_date).toLocaleDateString('sv-SE')}
+                    </div>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setIsSettingDepartureDate(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                             bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                             transition-all border border-purple-900/30"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Sätt utflyttningsdatum
+                  </button>
+                )
               ) : (
-                <>
-                  {!isSettingDepartureDate ? (
-                    <button
-                      onClick={() => setIsSettingDepartureDate(true)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                               bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                               transition-all border border-purple-900/30"
-                    >
-                      <Calendar className="w-4 h-4" />
-                      Sätt utflyttningsdatum
-                    </button>
-                  ) : (
-                    <form onSubmit={(e) => { e.preventDefault(); handleSetDepartureDate(); }} className="flex items-center gap-2">
-                      <input
-                        type="date"
-                        value={departureDate}
-                        onChange={(e) => setDepartureDate(e.target.value)}
-                        className="px-3 py-2 rounded-lg bg-slate-900 border border-purple-500/30
-                                 text-purple-100 text-sm focus:outline-none focus:border-purple-500"
-                      />
-                      <button
-                        type="submit"
-                        disabled={!departureDate}
-                        className="px-4 py-2 rounded-lg text-sm font-medium
-                                 bg-cyan-600 hover:bg-cyan-700 text-white
-                                 disabled:opacity-50 disabled:cursor-not-allowed
-                                 transition-all"
-                      >
-                        Spara
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsSettingDepartureDate(false)
-                          setDepartureDate('')
-                        }}
-                        className="px-4 py-2 rounded-lg text-sm font-medium
-                                 bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
-                                 transition-all"
-                      >
-                        Avbryt
-                      </button>
-                    </form>
-                  )}
-                </>
+                <form onSubmit={(e) => { e.preventDefault(); handleSetDepartureDate(); }} className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={departureDate}
+                    onChange={(e) => setDepartureDate(e.target.value)}
+                    className="px-3 py-2 rounded-lg bg-slate-900 border border-purple-500/30
+                             text-purple-100 text-sm focus:outline-none focus:border-purple-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!departureDate}
+                    className="px-4 py-2 rounded-lg text-sm font-medium
+                             bg-cyan-600 hover:bg-cyan-700 text-white
+                             disabled:opacity-50 disabled:cursor-not-allowed
+                             transition-all"
+                  >
+                    Spara
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSettingDepartureDate(false)
+                      setDepartureDate('')
+                    }}
+                    className="px-4 py-2 rounded-lg text-sm font-medium
+                             bg-slate-800/50 hover:bg-slate-700/50 text-purple-200
+                             transition-all"
+                  >
+                    Avbryt
+                  </button>
+                </form>
               )}
             </div>
           </div>
