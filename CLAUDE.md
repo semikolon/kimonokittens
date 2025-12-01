@@ -452,11 +452,16 @@ cd dashboard && rm -rf node_modules && npm install && cd ..
 
 **Actual Data Sources:**
 - **Consumption data**: `vattenfall.rb` → `electricity_usage.json` (Vattenfall Eldistribution API, hourly kWh)
-- **Spot price data**: `lib/electricity_projector.rb` → elprisetjustnu.se API (SE3 Stockholm, live API calls)
+- **Spot price data**: `lib/electricity_projector.rb` → elprisetjustnu.se API (SE3 Stockholm, historical data for completed months)
 - **Fixed service fees** (constants in ElectricityProjector):
   - Vattenfall: 590 kr/month (grid connection base fee)
   - Fortum: 88 kr/month (trading service 39 kr + Priskollen 49 kr)
   - Total: 678 kr/month (added to consumption costs in projections)
+
+**Projection Logic (when bills haven't arrived yet):**
+- **Smart projection**: Actual hourly consumption × historical spot prices (for that consumption period) + fees + 4.5% empirical adjustment
+- **Seasonal baseline**: Trailing 12-month average × seasonal multiplier (fallback if consumption data unavailable)
+- API response indicates projection type: "faktisk förbrukning och aktuella elpriser" vs "prognos från förra årets elräkningar"
 
 **"Tibber" References in Codebase (Historical Context):**
 - **Legacy files DELETED Nov 20, 2025**: `tibber.rb`, `tibber_price_data.json` - Used 1+ years ago for Dakboard dashboard
