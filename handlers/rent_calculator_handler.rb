@@ -52,6 +52,7 @@ require_relative '../lib/heating_cost_calculator'
 require_relative '../lib/services/quarterly_invoice_projector'
 require 'json'
 require 'date'
+require 'date/datetime'
 
 class RentCalculatorHandler
   def call(req)
@@ -668,14 +669,36 @@ class RentCalculatorHandler
       }
     end
 
-    # No actual bills exist - check if using historical projection
+    # No actual bills exist - check projection type
+    # ElectricityProjector tries consumption-based first, then falls back to seasonal
+    # We need to detect which method was actually used
+
+    # Check if consumption data is available for the target consumption month
+    consumption_month = month - 1
+    consumption_year = year
+    if consumption_month < 1
+      consumption_month = 12
+      consumption_year -= 1
+    end
+
+    consumption_available = check_consumption_data_available(consumption_year, consumption_month)
+
     historical_cost = get_historical_electricity_cost(year: year, month: month)
     if historical_cost > 0 && el_cost.to_i == historical_cost.to_i
-      return {
-        type: 'historical',
-        electricity_source: 'historical_lookup',
-        description_sv: 'Baserad på prognos från förra årets elräkningar'
-      }
+      # Projection was used - determine which type
+      if consumption_available
+        return {
+          type: 'consumption_projection',
+          electricity_source: 'actual_consumption_with_current_pricing',
+          description_sv: 'Baserad på faktisk förbrukning och aktuella elpriser'
+        }
+      else
+        return {
+          type: 'historical',
+          electricity_source: 'historical_lookup',
+          description_sv: 'Baserad på prognos från förra årets elräkningar'
+        }
+      end
     end
 
     # If historical lookup failed (returned 0), it's a manual projection
@@ -687,11 +710,12 @@ class RentCalculatorHandler
       }
     end
 
-    # Otherwise, assume it's from manually entered current bills
+    # Fallback: No bills exist, value doesn't match historical projection
+    # This means manual entry or unknown source - treat as projection to be safe
     return {
-      type: 'actual',
-      electricity_source: 'current_bills',
-      description_sv: 'Baserad på aktuella elräkningar'
+      type: 'projection',
+      electricity_source: 'unknown_projection',
+      description_sv: 'Baserad på uppskattad prognos'
     }
   end
 
@@ -854,5 +878,29 @@ class RentCalculatorHandler
   # @return [Integer] Number of months between dates
   def calculate_months_between(start_date, end_date)
     (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
+  end
+
+  # Check if consumption data is available for a given month
+  #
+  # @param year [Integer] Consumption year
+  # @param month [Integer] Consumption month (1-12)
+  # @return [Boolean] true if consumption data exists and has data for target month
+  def check_consumption_data_available(year, month)
+    consumption_file = 'electricity_usage.json'
+    return false unless File.exist?(consumption_file)
+
+    begin
+      data = JSON.parse(File.read(consumption_file))
+      # Check if we have data for the target month
+      month_data = data.select do |hour|
+        date = DateTime.parse(hour['date'])
+        date.year == year && date.month == month
+      end
+      # Consider it available if we have at least 20 days worth of data (480 hours)
+      month_data.size >= 480
+    rescue => e
+      warn "Error checking consumption data: #{e.message}"
+      false
+    end
   end
 end 
