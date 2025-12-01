@@ -941,7 +941,7 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
 - [x] **Phase 3:** Payment matching service (4-tier strategy + same-day/multi-day aggregation + deposit detection)
 - [x] **Phase 4:** SMS infrastructure (46elks integration + webhooks)
 - [x] **Phase 5:** Rent reminder scheduling (daily 09:45, tone-based escalation)
-- [ ] **Phase 6:** Admin dashboard UI (payment status badges + expanded details)
+- [x] **Phase 6:** Admin dashboard UI (payment status + smart SMS count display)
 
 ### Service Subscriptions
 - [x] **Lunch Flow:** ✅ Active (35 EUR/year, renewed Nov 25, 2025)
