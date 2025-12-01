@@ -33,6 +33,7 @@ export interface SignedContract {
   rent_remaining?: number      // Amount still owed for current month
   last_payment_date?: string   // Most recent payment date (ISO 8601)
   sms_reminder_count?: number  // Number of SMS reminders sent this month
+  has_overdue_rent?: boolean   // Whether previous period rent is unpaid (overdue)
   case_id: string              // Zigned agreement ID
   pdf_url: string              // Generated PDF path
   status: 'pending' | 'landlord_signed' | 'tenant_signed' | 'completed' | 'expired' | 'cancelled' | 'failed'
@@ -94,6 +95,7 @@ export interface TenantMember {
   rent_remaining?: number
   last_payment_date?: string
   sms_reminder_count?: number
+  has_overdue_rent?: boolean
 }
 
 export type Member = SignedContract | TenantMember

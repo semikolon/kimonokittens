@@ -170,7 +170,8 @@ class AdminContractsHandler
           rent_amount: current_rent_amount(tenant, current_month),
           rent_remaining: remaining_amount(tenant, current_month),
           last_payment_date: last_payment_date(tenant, current_month),
-          sms_reminder_count: sms_count(tenant, current_month)
+          sms_reminder_count: sms_count(tenant, current_month),
+          has_overdue_rent: has_overdue_rent?(tenant, current_month)
         }
       else
         {
@@ -178,7 +179,8 @@ class AdminContractsHandler
           rent_amount: 0,
           rent_remaining: 0,
           last_payment_date: nil,
-          sms_reminder_count: 0
+          sms_reminder_count: 0,
+          has_overdue_rent: false
         }
       end
 
@@ -269,7 +271,8 @@ class AdminContractsHandler
         rent_amount: current_rent_amount(tenant, current_month),
         rent_remaining: remaining_amount(tenant, current_month),
         last_payment_date: last_payment_date(tenant, current_month),
-        sms_reminder_count: sms_count(tenant, current_month)
+        sms_reminder_count: sms_count(tenant, current_month),
+        has_overdue_rent: has_overdue_rent?(tenant, current_month)
       }
 
       members << {
@@ -954,5 +957,37 @@ class AdminContractsHandler
   # Note: Phase 6 returns 0 (mocked) - Phase 4 will implement actual SMS tracking
   def sms_count(tenant, month)
     0 # Mocked for Phase 6 - Phase 4 will query actual SmsEvent table
+  end
+
+  # Checks if tenant has overdue rent from the PREVIOUS period
+  # @param tenant [Tenant] The tenant object
+  # @param current_month [String] Current month in format "YYYY-MM" (e.g. "2025-12")
+  # @return [Boolean] True if previous period rent is unpaid or partially paid (overdue)
+  #
+  # Example: On December 2nd, current_month="2025-12" (January rent, due Dec 27)
+  #          Previous period="2025-11" (December rent, due Nov 27) - this would be OVERDUE
+  #
+  # Uses ledger.amount_paid directly - ApplyBankPayment updates this when fully paid,
+  # so amount_paid < amount_due means not fully paid (partial or unpaid = overdue)
+  def has_overdue_rent?(tenant, current_month)
+    year = current_month.split('-')[0].to_i
+    month_num = current_month.split('-')[1].to_i
+
+    # Calculate previous period
+    prev_month = month_num - 1
+    prev_year = year
+    if prev_month < 1
+      prev_month = 12
+      prev_year -= 1
+    end
+
+    period_start = Date.new(prev_year, prev_month, 1)
+    ledger = Persistence.rent_ledger.find_by_tenant_and_period(tenant.id, period_start)
+
+    # No ledger entry = no rent due for that period = not overdue
+    return false unless ledger
+
+    # Overdue if amount_paid < amount_due (partial or unpaid)
+    ledger.amount_paid.to_f < ledger.amount_due.to_f
   end
 end
