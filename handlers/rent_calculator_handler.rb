@@ -52,7 +52,6 @@ require_relative '../lib/heating_cost_calculator'
 require_relative '../lib/services/quarterly_invoice_projector'
 require 'json'
 require 'date'
-require 'date/datetime'
 
 class RentCalculatorHandler
   def call(req)
