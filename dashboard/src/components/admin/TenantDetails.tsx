@@ -593,7 +593,7 @@ export const TenantDetails: React.FC<TenantDetailsProps> = ({ tenant, showRent =
             <div>
               <div className="text-xs text-purple-300/60 uppercase tracking-wide mb-1 flex items-center gap-2">
                 <MessageSquare className="w-3 h-3" />
-                <span>SMS påminnelser</span>
+                <span>SMS-påminnelser</span>
               </div>
               <div className="text-purple-100">
                 {tenant.sms_reminder_count || 0} skickade
