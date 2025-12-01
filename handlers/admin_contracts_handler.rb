@@ -165,13 +165,29 @@ class AdminContractsHandler
       # Calculate payment status for current month
       current_month = "#{year}-#{month.to_s.rjust(2, '0')}"
       payment_info = if tenant
+        # Smart SMS count: show reminders from overdue period if applicable
+        overdue = has_overdue_rent?(tenant, current_month)
+        sms_month = if overdue
+          # Show SMS from previous period (the overdue one)
+          prev_month = month - 1
+          prev_year = year
+          if prev_month < 1
+            prev_month = 12
+            prev_year -= 1
+          end
+          "#{prev_year}-#{prev_month.to_s.rjust(2, '0')}"
+        else
+          # Show SMS from current period
+          current_month
+        end
+
         {
           rent_paid: payment_status(tenant, current_month) == 'paid',
           rent_amount: current_rent_amount(tenant, current_month),
           rent_remaining: remaining_amount(tenant, current_month),
           last_payment_date: last_payment_date(tenant, current_month),
-          sms_reminder_count: sms_count(tenant, current_month),
-          has_overdue_rent: has_overdue_rent?(tenant, current_month)
+          sms_reminder_count: sms_count(tenant, sms_month),
+          has_overdue_rent: overdue
         }
       else
         {
@@ -266,13 +282,29 @@ class AdminContractsHandler
 
       # Calculate payment status for current month
       current_month = "#{year}-#{month.to_s.rjust(2, '0')}"
+      # Smart SMS count: show reminders from overdue period if applicable
+      overdue = has_overdue_rent?(tenant, current_month)
+      sms_month = if overdue
+        # Show SMS from previous period (the overdue one)
+        prev_month = month - 1
+        prev_year = year
+        if prev_month < 1
+          prev_month = 12
+          prev_year -= 1
+        end
+        "#{prev_year}-#{prev_month.to_s.rjust(2, '0')}"
+      else
+        # Show SMS from current period
+        current_month
+      end
+
       payment_info = {
         rent_paid: payment_status(tenant, current_month) == 'paid',
         rent_amount: current_rent_amount(tenant, current_month),
         rent_remaining: remaining_amount(tenant, current_month),
         last_payment_date: last_payment_date(tenant, current_month),
-        sms_reminder_count: sms_count(tenant, current_month),
-        has_overdue_rent: has_overdue_rent?(tenant, current_month)
+        sms_reminder_count: sms_count(tenant, sms_month),
+        has_overdue_rent: overdue
       }
 
       members << {
