@@ -1,7 +1,7 @@
-# Sun Window Handler - Returns brightness predictions from Meteoblue API
+# Sun Window Handler - Returns brightness predictions from Open-Meteo API
 #
-# Uses CMV (Cloud Motion Vector) nowcasting for accurate 1-2 hour predictions.
-# Returns current brightness % and next sun window for both Huddinge locations.
+# Uses Open-Meteo (FREE, no API key) for sun/brightness predictions.
+# Replaced Meteoblue due to credit exhaustion ($31/year unsustainable).
 #
 # Endpoint: GET /data/sun_windows
 #
@@ -12,49 +12,72 @@
 #   - next_sun_window_duration_minutes: How long the sun window lasts
 #   - todays_brightness_curve: Hourly brightness data for today
 #
+# Brightness calculation:
+#   Open-Meteo provides sunshine_duration (seconds of direct sun per hour).
+#   brightness_percent = (sunshine_duration / 3600) * 100
+#   This directly measures "is sun visible" rather than GHI ratios.
+#
 # Swedish Winter Context:
 #   At 59°N, max clear-sky GHI is only ~100 W/m² in winter (not 200+ like summer).
-#   So we use brightness % (GHI/ClearSky × 100) instead of absolute W/m²:
-#     90-100%: Clear sky, direct sun visible
-#     80-89%:  Thin clouds, sun perceivable
-#     60-79%:  Partly cloudy, occasional glimpses
-#     <60%:    Overcast, no direct sun
+#   brightness_percent thresholds:
+#     80-100%: Direct sun perceivable
+#     50-79%:  Partly sunny, occasional glimpses
+#     <50%:    Overcast, no direct sun
 #
 require 'oj'
-require_relative '../lib/meteoblue_sun_predictor'
+require_relative '../lib/open_meteo_sun_predictor'
 
 class SunHandler
-  CACHE_THRESHOLD = 60 * 15 # 15 minutes cache (API updates every 15 min)
+  CACHE_THRESHOLD = 60 * 60  # 1 hour cache (Open-Meteo is free, no rush)
+  CACHE_FILE = '/tmp/kimonokittens_sun_cache.json'
+
+  # Backoff configuration for API errors (lighter since Open-Meteo is free)
+  INITIAL_BACKOFF = 60 * 5       # 5 minutes initial backoff
+  MAX_BACKOFF = 60 * 60          # 1 hour maximum backoff
+  BACKOFF_MULTIPLIER = 2         # Double backoff each time
 
   def initialize
     @data = nil
     @fetched_at = nil
     @error_count = 0
+    @backoff_until = nil          # Time when we can retry after errors
+    @current_backoff = INITIAL_BACKOFF
+
+    # Try to load cached data from file on startup
+    load_file_cache
   end
 
   def call(req)
-    # Check if we have API key
-    unless ENV['METEOBLUE_API_KEY']
-      return placeholder_response("METEOBLUE_API_KEY not configured")
+    # Check if we're in backoff period (API errors)
+    if in_backoff_period?
+      remaining = (@backoff_until - Time.now).to_i
+      puts "SunHandler: In backoff period, #{remaining}s remaining. Returning cached data."
+      return serve_cached_or_placeholder("API error - retry in #{remaining / 60} minutes")
     end
 
-    # Check cache
-    if @data.nil? || Time.now - @fetched_at > CACHE_THRESHOLD
+    # Check cache freshness
+    if @data.nil? || @fetched_at.nil? || Time.now - @fetched_at > CACHE_THRESHOLD
       begin
-        predictions = MeteoblueSunPredictor.predict_sun_windows
+        predictions = OpenMeteoSunPredictor.predict_sun_windows
         @data = transform_sun_data(predictions)
         @fetched_at = Time.now
         @error_count = 0
+
+        # Reset backoff on successful request
+        @current_backoff = INITIAL_BACKOFF
+        @backoff_until = nil
+
+        # Save to file cache for persistence across restarts
+        save_file_cache
+
+        puts "SunHandler: Fresh data fetched from Open-Meteo"
       rescue => e
         @error_count += 1
-        puts "SunHandler error (#{@error_count}): #{e.message}"
+        start_backoff
+        puts "SunHandler error (#{@error_count}): #{e.message}. Backoff for #{@current_backoff / 60} minutes."
 
-        # Return cached data if available, otherwise error response
-        if @data
-          puts "SunHandler: Returning stale cached data"
-        else
-          return error_response(e.message)
-        end
+        # Return cached data if available
+        return serve_cached_or_placeholder(e.message)
       end
     end
 
@@ -137,5 +160,64 @@ class SunHandler
 
   def error_response(message)
     [500, { 'Content-Type' => 'application/json' }, [Oj.dump({ 'error' => message }, mode: :compat)]]
+  end
+
+  # Check if we're currently in a backoff period
+  def in_backoff_period?
+    @backoff_until && Time.now < @backoff_until
+  end
+
+  # Start or extend backoff period (exponential)
+  def start_backoff
+    @backoff_until = Time.now + @current_backoff
+    @current_backoff = [@current_backoff * BACKOFF_MULTIPLIER, MAX_BACKOFF].min
+  end
+
+  # Return cached data if available, otherwise placeholder
+  def serve_cached_or_placeholder(error_message)
+    if @data
+      # Add staleness indicator to cached data
+      stale_data = @data.dup
+      stale_data['stale'] = true
+      stale_data['stale_reason'] = error_message
+      stale_data['cached_at'] = @fetched_at&.iso8601
+      [200, { 'Content-Type' => 'application/json' }, [Oj.dump(stale_data, mode: :compat)]]
+    else
+      placeholder_response(error_message)
+    end
+  end
+
+  # Load cached data from file (survives service restarts)
+  def load_file_cache
+    return unless File.exist?(CACHE_FILE)
+
+    begin
+      cached = Oj.load(File.read(CACHE_FILE), mode: :compat)
+      if cached && cached['generated_timestamp']
+        cache_age = Time.now.to_i - cached['generated_timestamp']
+        # Accept file cache if less than 6 hours old
+        if cache_age < 6 * 3600
+          @data = cached
+          @fetched_at = Time.at(cached['generated_timestamp'])
+          puts "SunHandler: Loaded file cache (#{cache_age / 60} minutes old)"
+        else
+          puts "SunHandler: File cache too old (#{cache_age / 3600} hours), ignoring"
+        end
+      end
+    rescue => e
+      puts "SunHandler: Failed to load file cache: #{e.message}"
+    end
+  end
+
+  # Save current data to file cache
+  def save_file_cache
+    return unless @data
+
+    begin
+      File.write(CACHE_FILE, Oj.dump(@data, mode: :compat))
+      puts "SunHandler: Saved to file cache"
+    rescue => e
+      puts "SunHandler: Failed to save file cache: #{e.message}"
+    end
   end
 end
