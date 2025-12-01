@@ -953,10 +953,13 @@ class AdminContractsHandler
   # Returns count of SMS reminders sent to tenant in given month
   # @param tenant [Tenant] The tenant object
   # @param month [String] Month in format "YYYY-MM"
-  # @return [Integer] Count of SMS reminders
-  # Note: Phase 6 returns 0 (mocked) - Phase 4 will implement actual SMS tracking
+  # @return [Integer] Count of SMS reminders sent (queries SmsEvent table)
   def sms_count(tenant, month)
-    0 # Mocked for Phase 6 - Phase 4 will query actual SmsEvent table
+    # Query SmsEvent table for reminders sent to this tenant in this month
+    # Uses indexed columns [tenantId, month] for fast lookup
+    RentDb.instance.class.db[:SmsEvent]
+      .where(tenantId: tenant.id, month: month, direction: 'out')
+      .count
   end
 
   # Checks if tenant has overdue rent from the PREVIOUS period

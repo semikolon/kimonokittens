@@ -164,6 +164,7 @@ class SmsEventRepository < BaseRepository
     SmsEvent.new(
       id: row[:id],
       tenant_id: row[:tenantId],
+      month: row[:month],  # Rent month in "YYYY-MM" format
       direction: row[:direction],
       provider_id: row[:providerId],
       body: row[:body],
@@ -194,7 +195,7 @@ class SmsEventRepository < BaseRepository
     {
       id: event.id || generate_id,
       tenantId: event.tenant_id,
-      month: nil, # Will be set by service layer for rent reminders
+      month: event.month,  # Rent month in "YYYY-MM" format (e.g., "2025-11")
       direction: event.direction,
       providerId: event.provider_id,
       body: event.body,

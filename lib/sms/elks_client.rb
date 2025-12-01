@@ -132,11 +132,12 @@ class ElksClient
   # @param api_response [Hash] 46elks API response
   # @param to [String] Recipient phone number
   # @param body [String] Message text
-  # @param meta [Hash] Metadata
+  # @param meta [Hash] Metadata (tenant_id, type, tone, month, etc.)
   # @return [SmsEvent] Created event
   def log_sms_event(api_response, to, body, meta)
     event = SmsEvent.new(
       tenant_id: meta[:tenant_id],
+      month: meta[:month],  # Rent month in "YYYY-MM" format (e.g., "2025-11")
       phone_number: to,
       message_body: body,
       sms_type: meta[:type] || 'reminder',

@@ -39,11 +39,12 @@ class SmsEvent
   E164_REGEX = /^\+[1-9]\d{1,14}$/.freeze
 
   # Internal attributes mapping to actual schema
-  attr_reader :id, :tenant_id, :direction, :provider_id, :body, :status, :meta, :created_at
+  attr_reader :id, :tenant_id, :month, :direction, :provider_id, :body, :status, :meta, :created_at
 
   def initialize(
     id: nil,
     tenant_id: nil,
+    month: nil,
     phone_number:,
     message_body:,
     sms_type:,
@@ -65,6 +66,7 @@ class SmsEvent
   )
     @id = id
     @tenant_id = tenant_id
+    @month = month
 
     # Use schema fields if provided, otherwise construct from legacy fields
     @direction = direction || 'out'
