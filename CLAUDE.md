@@ -771,7 +771,7 @@ curl -s http://localhost:3001/api/rent/friendly_message | jq .message
 curl -s http://localhost:3001/data/temperature | jq '{temp: .supplyline_temperature, disabled: .heatpump_disabled, demand: .heating_demand}'
 ```
 
-### Check Sun/Brightness Data (Meteoblue):
+### Check Sun/Brightness Data (Open-Meteo):
 ```bash
 curl -s http://localhost:3001/data/sun_windows | jq '{is_daylight, current_brightness_percent, daily_sun_hours}'
 ```

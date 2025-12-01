@@ -13,9 +13,8 @@
 #   - todays_brightness_curve: Hourly brightness data for today
 #
 # Brightness calculation:
-#   Open-Meteo provides sunshine_duration (seconds of direct sun per hour).
-#   brightness_percent = (sunshine_duration / 3600) * 100
-#   This directly measures "is sun visible" rather than GHI ratios.
+#   brightness_percent = (GHI / clearsky_GHI) * 100
+#   This captures diffuse light on overcast days (like Meteoblue did).
 #
 # Swedish Winter Context:
 #   At 59°N, max clear-sky GHI is only ~100 W/m² in winter (not 200+ like summer).
