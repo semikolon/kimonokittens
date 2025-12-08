@@ -2,6 +2,8 @@
 
 *Dokumentet skapades december 2025 som referens för kollektivet på Sördalavägen efter en incident där en boende framförde falska anklagelser mot andra medlemmar.*
 
+**Relaterat dokument:** Se även `INNEBOENDE_VS_ANDRAHAND_JURIDISK_ANALYS.md` för analys av kollektivets avtalsstruktur och frågan om andrahandsuthyrning vs inneboende.
+
 ---
 
 ## Bakgrund
@@ -276,6 +278,115 @@ I kollektivets kontext utgör sådant beteende även **väsentligt avtalsbrott**
 
 ---
 
+## Depositionsfrågan - Analys och Beslut (8 december 2025)
+
+### Bakgrund
+
+Efter incidenten uppstod frågan om huruvida Sannas deposition (~7 200 kr, bestående av grunddeposition + inredningsdeposition) kunde hållas inne som kompensation för de skador hon orsakat kollektivet.
+
+### Kollektivets initiala ståndpunkter
+
+Diskussion fördes mellan Fredrik, Adam, Rasmus och Frida via Messenger:
+
+| Person | Ståndpunkt |
+|--------|------------|
+| **Adam** | "Jag tycker inte hon ska ha en enda krona" – förlorat ~2 000 kr i sjukskrivning pga stress, anser att hon "tekniskt sett förbrukat sin deposition" |
+| **Rasmus** | Försiktig approach, föreslog "halva först", flaggade för risker |
+| **Fredrik** | Initialt benägen att hålla inne, men övervägde pragmatiska risker |
+| **Frida** | Stöttande men orolig för hämndåtgärder (t.ex. falsk polisanmälan) |
+
+### Juridisk analys av depositionsavdrag
+
+**Vad en deposition enligt svensk rätt får användas till:**
+
+| Typ av kostnad | Får dras av? | Kommentar |
+|----------------|--------------|-----------|
+| Obetald hyra | ✅ Ja | Primärt syfte med deposition |
+| Fysiska skador på rum/möbler | ✅ Ja | Standard depositionsändamål |
+| Städkostnader | ✅ Ja | Om rummet inte lämnas i acceptabelt skick |
+| Indirekta skador (sjukskrivning, förlorad arbetstid) | ❌ Nej | Kräver separat skadeståndsprocess |
+| Psykisk påverkan / "kaos" | ❌ Nej | Ej materiell skada |
+| Att annan hyresgäst inte flyttade in | ❌ Nej | Kollektiv skada, ej kopplad till individens deposition |
+
+**Faktiska förhållanden i Sannas fall:**
+- Sanna har **betalat all hyra** fram till utflytt
+- Inga kända **fysiska skador** på rummet
+- Inga dokumenterade **städkostnader** (ännu ej inspekterat)
+- Kollektivet vill **inte** att hon betalar januarihyra och stannar – prioritet är snabb utflytt
+
+**Slutsats:** Det finns inga **legitima juridiska grunder** för depositionsavdrag baserat på de skador kollektivet upplevt.
+
+### Riskanalys: Att hålla inne depositionen utan grund
+
+**Juridiska risker:**
+- Sanna kan ansöka om **betalningsföreläggande** via Kronofogden
+- Fredrik måste då **bevisa legitima avdrag** – "hon var hemsk" räcker inte
+- Risk för **skuldsaneringsavbrott** om Kronofogden blir involverad
+
+**Praktiska risker med en desperat, potentiellt instabil person:**
+- Återbesök vid huset
+- Kontakt med arbetsgivare/vänner/familjer
+- Fortsatt ryktespridning
+- Stalking-beteende
+- Falsk polisanmälan som hämnd
+
+**Spelteoretisk insikt:** En person med ingenting att förlora, mycket tid, instabil psykologi och upplevd orättvisa är oberäknelig och potentiellt farlig i vardagen.
+
+### Strategialternativ som övervägdes
+
+**A) "Nolltolerans" – Ge henne ingenting**
+- Rättvisa: ⭐⭐⭐⭐⭐ (känns rätt)
+- Juridisk hållbarhet: ⭐⭐ (svag om hon bestrider)
+- Risk för vardagskaos: ⭐⭐⭐⭐⭐ (maximal)
+
+**B) "Halva nu, resten aldrig" – Kompromiss**
+- Rättvisa: ⭐⭐⭐ (mellanting)
+- Juridisk hållbarhet: ⭐⭐⭐ (okej med motivering)
+- Risk för vardagskaos: ⭐⭐⭐ (medel)
+
+**C) "Klinisk avslut" – Betala allt, dokumentera, strid senare**
+- Rättvisa: ⭐ (känns fel)
+- Juridisk hållbarhet: ⭐⭐⭐⭐⭐ (oantastlig)
+- Risk för vardagskaos: ⭐ (minimal)
+
+### Beslut
+
+**Fredrik beslutar att betala tillbaka hela depositionen.**
+
+**Avgörande faktorer:**
+
+1. **Skuldsanering:** Fredrik är inne på sista halvåret av sin skuldsanering. En Kronofogde-process nu skulle kunna avbryta skuldsaneringen – att "snubbla på målsnöret till skuldfrihet" vore katastrofalt.
+
+2. **Inga legitima avdrag:** Utan obetald hyra eller dokumenterade skador finns ingen juridisk grund att hålla inne pengar.
+
+3. **Prioritet: Utflytt:** Sanna har sagt att hon flyttar senast onsdag. Att provocera henne nu riskerar att fördröja eller komplicera detta.
+
+4. **Perspektiv:** En vän (Sofia Zetterström) förlorade sitt hus i brand samma vecka – "sätter saker i perspektiv".
+
+**Villkor för återbetalning:**
+- Depositionen återbetalas **när nästa hyresgäst flyttar in** och betalar sin deposition
+- Detta följer avtalets normala flöde för inredningsdepositionen
+
+### Lärdomar för framtiden
+
+1. **Depositioner skyddar mot materiella skador** – inte mot "dåliga människor"
+
+2. **Screening är viktigare än juridiska verktyg** – bättre att inte släppa in problematiska personer från början
+
+3. **Dokumentera tidigt** – om det funnits fysiska skador hade de behövt fotograferas
+
+4. **Skuldsanering begränsar handlingsutrymmet** – ta inte risker som kan äventyra pågående sanering
+
+5. **Pragmatism före rättvisa** – ibland är det klokare att "förlora" ekonomiskt för att vinna lugn och ro
+
+### Status
+
+- **Utflytt:** Planerad till onsdag 11 december 2025
+- **Deposition:** Återbetalas i sin helhet efter nästa inflyttare
+- **Juridiska åtgärder:** Inga planerade i nuläget, men preskriptionstiderna medger framtida åtal om situationen förändras
+
+---
+
 *Detta dokument är inte juridisk rådgivning. Vid konkreta situationer, konsultera alltid en kvalificerad jurist.*
 
-*Senast uppdaterad: December 2025*
+*Senast uppdaterad: 8 december 2025*
