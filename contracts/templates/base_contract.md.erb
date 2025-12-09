@@ -1,16 +1,18 @@
-# HYRESAVTAL – ANDRAHANDSUTHYRNING
+# AVTAL OM DELAT BOENDE
+
+*Detta avtal avser inneboende i delat hushåll där parterna gemensamt nyttjar kök, badrum och övriga gemensamma utrymmen.*
 
 Mellan nedanstående parter har följande avtal slutits:
 
 ## Parter
 
-**Förstahandshyresgäst (Hyresvärd i detta avtal):**
+**Upplåtare (förstahandshyresgäst):**
 - Namn: <%= landlord[:name] %>
 - Personnummer: <%= landlord[:personnummer] %>
 - Telefon: <%= landlord[:phone] %>
 - E-post: <%= landlord[:email] %>
 
-**Andrahands-hyresgäst (Hyresgäst i detta avtal):**
+**Inneboende:**
 - Namn: <%= tenant[:name] %>
 - Personnummer: <%= tenant[:personnummer] %>
 - Telefon: <%= tenant[:phone] %>
@@ -44,7 +46,7 @@ Hyresgästen erlägger en deposition om en dryg (1) kall månadshyra, dvs. **<%=
 
 ## Inredningsdeposition
 
-Vid inträde i kollektivet erlägger andrahandsgästen, utöver depositionen, en inredningsdeposition om **<%= deposits[:furnishing_deposit] %> kr** till den utflyttande parten.
+Vid inträde i kollektivet erlägger den inneboende, utöver depositionen, en inredningsdeposition om **<%= deposits[:furnishing_deposit] %> kr** till den utflyttande parten.
 
 Inredningsdepositionen utgör en delad investering i kollektivets gemensamma inredning och hushållsartiklar. Detta inkluderar bland annat sopkärl, växter, lampor, kuddar, filtar, mattor, ljus, förvaringslösningar, köksredskap, städmaterial och liknande. Det totala värdet av gemensamma inredningsartiklar överstiger depositionens belopp.
 
@@ -96,12 +98,12 @@ Huddinge den ____________________
 
 ## Underskrifter
 
-**Förstahandshyresgäst:**
+**Upplåtare:**
 
 _________________________________
 <%= landlord[:name] %>
 
-**Andrahands-hyresgäst:**
+**Inneboende:**
 
 _________________________________
 <%= tenant[:name] %>
