@@ -99,12 +99,14 @@ class FacebookHousingScraper
 
   attr_reader :browser, :page, :logger, :processed_post_ids, :post_analyzer
 
-  def initialize(logger: nil, headless: true, debug: ENV['DEBUG'], use_llm: false)
+  def initialize(logger: nil, headless: true, debug: ENV['DEBUG'], use_llm: false, scroll_depth_multiplier: 20)
     @logger = logger || create_logger(debug)
     @debug = debug
     @use_llm = use_llm
+    @scroll_depth_multiplier = scroll_depth_multiplier  # How many scrolls per max_post (default 20 for ~90% OFFERING groups)
     @processed_post_ids = Set.new
     @leads = []
+    @filtered_posts = []  # Track filtered/excluded posts for false negative review
     @post_analyzer = nil
 
     @logger.info "=" * 80
@@ -112,6 +114,7 @@ class FacebookHousingScraper
     @logger.info "Started: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
     @logger.info "Debug mode: #{@debug ? 'ENABLED' : 'disabled'}"
     @logger.info "LLM mode: #{@use_llm ? 'ENABLED (Gemini 3 Pro)' : 'disabled (keyword-based)'}"
+    @logger.info "Scroll depth: #{@scroll_depth_multiplier}x max_posts"
     @logger.info "Chrome profile: #{CHROME_PROFILE_PATH}"
     @logger.info "=" * 80
 
@@ -400,8 +403,10 @@ class FacebookHousingScraper
     posts_analyzed = 0
     scroll_count = 0
     # Scroll enough to ANALYZE max_posts, not just FIND max_posts leads
-    # Most posts are offerings/comments, so we need to see ~5x more to find seekers
-    max_scrolls = (max_posts * 2).ceil + 10
+    # In kollektiv groups ~90% are OFFERING (kollektivs seeking members), so we need
+    # to scroll through 10-20x more posts to find enough SEEKING posts
+    # Use @scroll_depth_multiplier (default 20) - can be overridden via CLI --scroll-depth
+    max_scrolls = (max_posts * @scroll_depth_multiplier).ceil + 20
     no_new_posts_count = 0  # Track when we've hit the end
     max_empty_scrolls = 6   # Be patient with lazy loading before giving up
 
@@ -427,8 +432,11 @@ class FacebookHousingScraper
           classification = classify_post(post[:content])
         end
 
-        next if classification[:type] == :exclude
-        next if classification[:type] == :offering
+        # Log filtered posts for false negative review
+        if classification[:type] == :exclude || classification[:type] == :offering
+          @filtered_posts << build_filtered_post(post, group, classification)
+          next
+        end
 
         # This is a lead!
         lead = build_lead(post, group, classification)
@@ -461,8 +469,9 @@ class FacebookHousingScraper
       @logger.debug "  Scroll #{scroll_count}/#{max_scrolls} - #{new_unique_posts} new posts, #{posts_analyzed} analyzed, #{posts_found} leads" if @debug
 
       # Brief pause between scrolls (FB detection risk is low for real browser)
-      # Longer wait allows lazy-loaded content to appear
-      sleep rand(0.5..1.0)
+      # Optimized: 0.3-0.6s (was 0.5-1.0s) - still human-like, ~50% faster
+      # Safe because: real Chrome, real cookies, random delays, manual infrequent execution
+      sleep rand(0.3..0.6)
     end
 
     @logger.info "  ✓ Found #{posts_found} leads (#{posts_analyzed} posts analyzed, #{scroll_count} scrolls)"
@@ -655,11 +664,13 @@ class FacebookHousingScraper
   def classify_post_with_llm(post, group)
     result = @post_analyzer.analyze(post[:content], group_name: group[:name])
 
-    # LLM failed (API error, parse error, etc.) - fail hard, don't silently continue
+    # LLM failed (API error, parse error, etc.) - fall back to keyword classification
     if result[:confidence] == 0.0 && result[:exclude_reason]&.include?('error')
-      error_msg = "LLM analysis failed: #{result[:exclude_reason]}"
-      @logger.error "❌ #{error_msg}"
-      raise RuntimeError, error_msg
+      @logger.warn "⚠️ LLM failed (#{result[:exclude_reason]}), using keyword fallback"
+      fallback = classify_post(post[:content])
+      fallback[:llm_fallback] = true
+      fallback[:llm_error] = result[:exclude_reason]
+      return fallback
     end
 
     # Convert LLM result to classification format
@@ -816,6 +827,23 @@ class FacebookHousingScraper
     lead
   end
 
+  # Build filtered post record for false negative review
+  def build_filtered_post(post, group, classification)
+    {
+      poster_name: classification[:llm_poster_name] || post[:poster_name],
+      post_id: post[:post_id],
+      post_url: post[:post_url],
+      group_name: group[:name],
+      relative_time: post[:relative_time],
+      content_preview: post[:content][0..500],  # More content for review
+      filter_type: classification[:type].to_s,
+      filter_reason: classification[:reason] || classification[:llm_exclude_reason],
+      llm_intent: classification[:llm_intent],
+      llm_confidence: classification[:llm_confidence],
+      scraped_at: Time.now.iso8601
+    }
+  end
+
   def extract_budget(content)
     # Look for Swedish budget patterns: "8000 kr", "8 000kr", "budget 8000"
     match = content.match(/(\d[\d\s]*)\s*kr/i) ||
@@ -887,9 +915,23 @@ class FacebookHousingScraper
     output_dir = 'data/housing_leads'
     FileUtils.mkdir_p(output_dir) unless Dir.exist?(output_dir)
 
+    # Save leads
     filename = "#{output_dir}/#{Date.today}_leads.json"
     Oj.to_file(filename, results, mode: :compat)
     @logger.info "💾 Results saved: #{filename}"
+
+    # Save filtered posts for false negative review
+    if @filtered_posts && @filtered_posts.any?
+      filtered_filename = "#{output_dir}/#{Date.today}_filtered.json"
+      filtered_data = {
+        scraped_at: Time.now.iso8601,
+        total_filtered: @filtered_posts.size,
+        by_type: @filtered_posts.group_by { |p| p[:filter_type] }.transform_values(&:size),
+        posts: @filtered_posts
+      }
+      Oj.to_file(filtered_filename, filtered_data, mode: :compat)
+      @logger.info "📋 Filtered posts saved: #{filtered_filename} (#{@filtered_posts.size} posts for review)"
+    end
   end
 
   def save_error_screenshot

@@ -23,8 +23,8 @@
 #   - GEMINI_API_KEY environment variable
 #   - ruby-gemini-api gem
 #
-# Cost estimate (Gemini 3 Pro):
-#   ~$0.001-0.002 per post analysis (~100 posts = $0.10-0.20)
+# Cost estimate (Gemini 3 Pro - Nov 2025 pricing):
+#   ~$0.0048 per post analysis (~100 posts = $0.48)
 #
 # Created: December 10, 2025
 
@@ -191,9 +191,12 @@ class GeminiPostAnalyzer
       result = parse_json_response(response.text)
       @stats[:analyzed] += 1
 
-      # Estimate cost (~$1.25/1M input, ~$5/1M output for Gemini 3 Pro)
-      # Rough estimate: ~500 input tokens, ~100 output tokens per call
-      @stats[:total_cost] += 0.0015
+      # Estimate cost using actual Gemini 3 Pro pricing (Nov 2025):
+      # - Input: $2.00/1M tokens (prompts ≤200k)
+      # - Output: $12.00/1M tokens (including thinking tokens)
+      # Prompt ~1500 tokens (prompt template + post content), output ~150 tokens (JSON response)
+      # Cost = (1500 * $2.00 / 1M) + (150 * $12.00 / 1M) = $0.003 + $0.0018 = ~$0.0048/call
+      @stats[:total_cost] += 0.0048
 
       @logger.debug "  → #{result[:intent]} (#{result[:poster_name]}, fit: #{result[:kollektiv_fit]})"
 

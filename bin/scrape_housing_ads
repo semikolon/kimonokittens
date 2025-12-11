@@ -19,7 +19,7 @@
 # LLM Mode (Phase 2):
 #   bin/scrape_housing_ads --llm --debug
 #   Requires: GEMINI_API_KEY environment variable
-#   Cost: ~$0.001-0.002 per post (~$0.10-0.20 per 100 posts)
+#   Cost: ~$0.0048 per post (~$0.48 per 100 posts) - Gemini 3 Pro Nov 2025 pricing
 
 require 'optparse'
 
@@ -29,8 +29,9 @@ options = {
   show_browser: false,
   debug: false,
   use_llm: false,
-  days_back: 7,
-  max_posts: 50
+  days_back: 30,  # Extended from 7 - older posts still worth checking
+  max_posts: 50,
+  scroll_depth: 20  # Multiplier: scrolls = max_posts * scroll_depth (default 20 for ~90% OFFERING groups)
 }
 
 OptionParser.new do |opts|
@@ -58,6 +59,10 @@ OptionParser.new do |opts|
 
   opts.on('--max-posts NUM', Integer, 'Max posts per group (default: 50)') do |n|
     options[:max_posts] = n
+  end
+
+  opts.on('--scroll-depth NUM', Integer, 'Scroll depth multiplier (default: 20, scrolls = max_posts * depth)') do |n|
+    options[:scroll_depth] = n
   end
 
   opts.on('-h', '--help', 'Show this help') do
@@ -88,7 +93,8 @@ else
   scraper = FacebookHousingScraper.new(
     debug: options[:debug],
     headless: !options[:show_browser],
-    use_llm: options[:use_llm]
+    use_llm: options[:use_llm],
+    scroll_depth_multiplier: options[:scroll_depth]
   )
 
   scraper.run(
