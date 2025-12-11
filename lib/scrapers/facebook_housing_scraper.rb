@@ -486,9 +486,10 @@ class FacebookHousingScraper
           const feed = document.querySelector('[role="feed"]');
           if (!feed) return posts;
 
-          // Strategy: Find all h2 elements with poster links, then walk up to get the post container
-          // This works because each post has exactly one h2 with the poster's name
-          const posterHeadings = feed.querySelectorAll('h2');
+          // Strategy: Find all heading elements with poster links, then walk up to get the post container
+          // This works because each post has exactly one heading with the poster's name
+          // NOTE: Facebook uses h3 (not h2) for poster names as of Dec 2025 - query both for resilience
+          const posterHeadings = feed.querySelectorAll('h2, h3, h4');
 
           posterHeadings.forEach(h2 => {
             // Skip if not a post heading (must have user link inside)
