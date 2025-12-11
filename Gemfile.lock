@@ -247,6 +247,10 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
     rspec-support (3.13.4)
+    ruby-gemini-api (0.1.5)
+      faraday (~> 2.0)
+      faraday-multipart (~> 1.0)
+      json (~> 2.0)
     ruby-openai (6.5.0)
       event_stream_parser (>= 0.3.0, < 2.0.0)
       faraday (>= 1)
@@ -331,6 +335,7 @@ DEPENDENCIES
   rack
   rack-test (~> 2.1)
   rspec (~> 3.13)
+  ruby-gemini-api (~> 0.1)
   ruby-openai (~> 6.4)
   rufus-scheduler (~> 3.9)
   rugged (~> 1.7)

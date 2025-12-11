@@ -1,0 +1,121 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Facebook Housing Ads Scraper - CLI Runner
+#
+# Usage:
+#   bin/scrape_housing_ads                        # Scrape all groups (keyword mode)
+#   bin/scrape_housing_ads --llm                  # Use Gemini 3 Pro for analysis
+#   bin/scrape_housing_ads --login                # Setup/refresh FB session
+#   bin/scrape_housing_ads --days 14              # Last 14 days
+#   bin/scrape_housing_ads --max-posts 100        # Max 100 posts per group
+#   bin/scrape_housing_ads --show-browser         # Watch browser (debugging)
+#   bin/scrape_housing_ads --debug                # Verbose logging
+#
+# First-time setup:
+#   bin/scrape_housing_ads --login
+#   (Log into Facebook manually, handle 2FA, then Ctrl+C)
+#
+# LLM Mode (Phase 2):
+#   bin/scrape_housing_ads --llm --debug
+#   Requires: GEMINI_API_KEY environment variable
+#   Cost: ~$0.001-0.002 per post (~$0.10-0.20 per 100 posts)
+
+require 'optparse'
+
+# Parse command line options
+options = {
+  login_only: false,
+  show_browser: false,
+  debug: false,
+  use_llm: false,
+  days_back: 7,
+  max_posts: 50
+}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$PROGRAM_NAME} [options]"
+
+  opts.on('--login', 'Login-only mode (setup FB session)') do
+    options[:login_only] = true
+  end
+
+  opts.on('--llm', 'Use Gemini 3 Pro for intelligent post analysis') do
+    options[:use_llm] = true
+  end
+
+  opts.on('--show-browser', 'Show browser window (not headless)') do
+    options[:show_browser] = true
+  end
+
+  opts.on('--debug', 'Enable debug logging') do
+    options[:debug] = true
+  end
+
+  opts.on('--days DAYS', Integer, 'Days back to search (default: 7)') do |d|
+    options[:days_back] = d
+  end
+
+  opts.on('--max-posts NUM', Integer, 'Max posts per group (default: 50)') do |n|
+    options[:max_posts] = n
+  end
+
+  opts.on('-h', '--help', 'Show this help') do
+    puts opts
+    exit
+  end
+end.parse!
+
+# Set environment variables for the scraper
+ENV['DEBUG'] = '1' if options[:debug]
+ENV['SHOW_BROWSER'] = '1' if options[:show_browser]
+ENV['LOGIN_ONLY'] = '1' if options[:login_only]
+
+# Change to project root
+Dir.chdir(File.expand_path('../..', __FILE__))
+
+# Load the scraper
+require_relative '../lib/scrapers/facebook_housing_scraper'
+
+# Run
+if options[:login_only]
+  scraper = FacebookHousingScraper.new(
+    debug: options[:debug],
+    headless: false
+  )
+  scraper.login_only
+else
+  scraper = FacebookHousingScraper.new(
+    debug: options[:debug],
+    headless: !options[:show_browser],
+    use_llm: options[:use_llm]
+  )
+
+  scraper.run(
+    max_posts_per_group: options[:max_posts],
+    days_back: options[:days_back]
+  ) do |results|
+    puts "\n" + "=" * 60
+    puts "📊 SCRAPING COMPLETE"
+    puts "=" * 60
+    puts "  Groups scraped: #{results[:groups_scraped].size}"
+    puts "  Total leads: #{results[:summary][:total_leads]}"
+    puts "    Priority 1 (kollektiv-minded): #{results[:summary][:priority_1]}"
+    puts "    Priority 2 (generic need): #{results[:summary][:priority_2]}"
+    puts "    Priority 3 (apartment seekers): #{results[:summary][:priority_3]}"
+
+    # Show LLM statistics if used
+    if options[:use_llm] && scraper.post_analyzer
+      stats = scraper.post_analyzer.statistics
+      puts ""
+      puts "  🤖 LLM Analysis (Gemini 3 Pro):"
+      puts "    Posts analyzed: #{stats[:analyzed]}"
+      puts "    Errors: #{stats[:errors]}"
+      puts "    Estimated cost: $#{stats[:estimated_cost_usd]}"
+    end
+
+    puts ""
+    puts "  Output: data/housing_leads/#{Date.today}_leads.json"
+    puts "=" * 60
+  end
+end

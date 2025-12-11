@@ -39,6 +39,7 @@ gem 'ferrum'
 # AI / Vector Search
 gem 'pinecone', '~> 1.2' # Corrected gem name
 gem 'ruby-openai', '~> 6.4'
+gem 'ruby-gemini-api', '~> 0.1' # Gemini 3 Pro for Facebook post analysis
 
 # Testing
 group :test, :development do
