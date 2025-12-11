@@ -1,7 +1,7 @@
 # January 2025 Tenant Crisis - Master Plan
 
 **Created:** December 10, 2025
-**Last Updated:** December 10, 2025 (Wed ~22:00 - Added Lisa's friend as hot lead from FB scraper testing)
+**Last Updated:** December 11, 2025 (Thu 12:30 - Added Aaron Juarez P1 + Milla Degerman P3 from scraper)
 **Status:** ACTIVE CRISIS
 **Owner:** Fredrik Bränström
 
@@ -467,6 +467,135 @@ If downstairs room could work as family room, or if willing to discuss multi-roo
 
 **Next Action:** Contact Lisa Juntunen Roos via Facebook to learn more about her friend's situation
 **Decision Deadline:** ASAP - her need is urgent
+
+---
+
+#### PROSPECT 6: Aaron Juarez
+
+**Status:** CONTACTED (Dec 11, 12:27) - Messenger sent
+**Priority:** **P1 - BEST KOLLEKTIV FIT** - Explicitly seeking kollektiv, perfect match
+**Source:** Facebook scraper - "Kollektiv i Stockholm" group
+
+**Profile:**
+- **Age:** 32
+- **Occupation:** Climate & sustainability policy
+- **Seeking:** "Hemtrevligt kollektiv, helst långsiktigt"
+- **Timeline:** January/February 2025
+- **Location:** "Åtminstone hyfsat nära till stan"
+- **Interests:** Hiking (fjällen), climbing, cooking/baking, yoga, piano
+- **Values:** Social but needs alone time, queer-friendly environment
+
+**Fit Assessment:**
+| Factor | Score | Notes |
+|--------|-------|-------|
+| January availability | **PERFECT** | Jan/Feb explicitly mentioned |
+| Kollektiv intent | **EXPLICIT** | "Söker kollektiv" - not settling, actively wants this |
+| Cultural fit | **EXCELLENT** | Outdoor activities, cooking, music, queer-friendly - matches house vibe perfectly |
+| Income stability | HIGH | Policy work = stable professional income |
+| Long-term potential | **HIGH** | "Helst långsiktigt" - wants stability |
+
+**Why P1:**
+- Only prospect explicitly seeking kollektiv lifestyle (not apartment → maybe kollektiv)
+- Professional with stable income
+- Values align: community, cooking together, creative expression
+- Long-term mindset matches what we need post-crisis
+
+**Conversation History:**
+| Date | Channel | Notes |
+|------|---------|-------|
+| Dec 11 12:27 | Messenger | Sent intro + kollektiv ad link. "Vi har plats i vårt kollektiv, det låter som vi skulle kunna matcha ❤️" + follow-up about quick timeline |
+
+**Next Action:** Await response - if interested, prioritize viewing/call
+**Decision Deadline:** ASAP - he's actively searching
+
+---
+
+#### PROSPECT 7: Milla Degerman
+
+**Status:** CONTACTED (Dec 11) - Comment on her post
+**Priority:** P3 - Seeks apartment but may be open
+**Source:** Facebook scraper - "Lägenheter i Stockholm" group
+
+**Profile:**
+- **Age:** 23
+- **Location:** Currently Midsommarkransen (loves the area)
+- **Situation:** "Står utan bostad från 1 januari" - housing situation changed suddenly
+- **Budget:** Max 9,000 kr
+- **Seeking:** 1:a eller 2:a (apartment)
+- **Timeline:** January 1, 2025
+
+**Fit Assessment:**
+| Factor | Score | Notes |
+|--------|-------|-------|
+| January availability | **URGENT** | Needs housing Jan 1 - same as us |
+| Budget fit | GOOD | 9,000 kr > our 7,300 kr - can afford |
+| Kollektiv intent | UNKNOWN | Seeking apartment, but Fredrik pitched kollektiv alternative |
+| Location preference | CHALLENGING | Loves Midsommarkransen - Huddinge is different vibe |
+
+**Approach Taken:**
+Fredrik commented on her post pitching kollektiv as alternative:
+- Highlighted 3 female-presenting people already interested (gender balance)
+- Mentioned community aspects (baking, dinners, parties)
+- Acknowledged she's seeking own apartment but planted the seed
+- Linked to kollektiv ad
+
+**Conversation History:**
+| Date | Channel | Notes |
+|------|---------|-------|
+| Dec 11 | Facebook comment | Long pitch comment on her post explaining kollektiv option, linked ad |
+
+**Next Action:** Await response - lower priority than Aaron
+**Decision Deadline:** She needs Jan 1 housing so will decide quickly
+
+---
+
+#### PROSPECT 8: Matilda Carlsson
+
+**Status:** NEW LEAD (Dec 11) - Found via manual Playwright scroll
+**Priority:** **P1 - EXCELLENT KOLLEKTIV FIT** - Explicitly seeking kollektiv, has experience
+**Source:** Manual inspection - "Kollektiv i Stockholm" group
+
+**Profile:**
+- **Age:** 42
+- **Situation:** "söker ett kollektiv i Stockholms kommun från ungefär februari"
+- **Background:** Has lived in kollektiv before ("har bott i kollektiv förut")
+- **Work:** Studying warehouse worker ("lagerarbetare") in Solna from January
+- **Interests:** Roller derby, music, animals
+- **Timeline:** February onwards
+- **Profile:** https://www.facebook.com/groups/203046459800453/user/575306491/
+
+**Fit Assessment:**
+| Factor | Score | Notes |
+|--------|-------|-------|
+| Kollektiv intent | **PERFECT** | Explicitly seeking kollektiv, has experience |
+| Timeline | GOOD | February aligns well - gives time to meet & decide |
+| Age/maturity | EXCELLENT | 42yo, likely stable and experienced |
+| Cultural fit | STRONG | Roller derby + music + animals = interesting person |
+| Location | OKAY | Studying in Solna - Huddinge is commute but doable |
+
+**Why P1:**
+- Explicitly seeking kollektiv (not being converted)
+- Prior kollektiv experience = understands shared living dynamics
+- February timeline = not desperate, can make thoughtful decision
+- Diverse interests suggest engaged, social personality
+
+**Approach Strategy:**
+Send warm Messenger introduction:
+- Reference her post and kollektiv experience
+- Mention our kollektiv vibe (creative people, community dinners)
+- Ask about her kollektiv preferences/dealbreakers
+- Offer video call or in-person viewing
+
+**Original Post Text:**
+> "Hej! Jag söker ett kollektiv i Stockholms kommun från ungefär februari och framåt. Jag ska plugga till lagerarbetare i Solna från januari. Jag är 42 år och har bott i kollektiv förut. Mina intressen är roller derby, musik och djur."
+
+**Conversation History:**
+| Date | Channel | Notes |
+|------|---------|-------|
+| Dec 11 | - | Found during manual group inspection |
+
+**Next Action:** Send Messenger introduction TODAY
+**Decision Deadline:** No rush - February timeline, but don't let lead go cold
 
 ---
 
@@ -1017,7 +1146,9 @@ Vi kan diskutera eventuell extra deposition om det känns relevant."
 
 | Time | Action | Result | Next Step |
 |------|--------|--------|-----------|
-| | | | |
+| 12:27 | Messaged Aaron Juarez (P1) | Sent intro + ad link via Messenger | Await response |
+| 12:30 | Commented on Milla Degerman's post (P3) | Long pitch about kollektiv option | Await response |
+| 12:30 | Fixed FB scraper h3 selector bug | Aaron now captured (was missing due to h2→h3 DOM change) | Scraper operational |
 
 ### December 12, 2025
 

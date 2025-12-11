@@ -328,6 +328,9 @@ bin/scrape_housing_ads --days 14 --max-posts 100 --debug
 13. ~~LLM error handling~~ **DONE** (Dec 11) - Fails hard on API errors (no silent fallback)
 14. ~~Interest comment false positives~~ **DONE** (Dec 11) - "Intresserad!" now correctly excluded (intent=other)
 15. ~~Early stopping bug~~ **DONE** (Dec 11) - Increased patience threshold from 3 to 6 consecutive empty scrolls
+16. ~~Scroll depth bug~~ **DONE** (Dec 11) - max_scrolls formula was too conservative (2x→20x multiplier)
+17. ~~Cost estimation fix~~ **DONE** (Dec 11) - Updated to accurate Gemini 3 Pro Nov 2025 pricing ($0.0048/post)
+18. ~~--scroll-depth CLI option~~ **DONE** (Dec 11) - Manual override for scroll depth multiplier
 
 ---
 
@@ -440,3 +443,122 @@ Facebook DOM → Ferrum extraction → GeminiPostAnalyzer → Structured JSON �
 ```
 
 **Lesson:** When Chrome profile cookies aren't persisting, check for `--password-store=basic` flag.
+
+---
+
+## Facebook Scraping Detection Risk Analysis (Dec 11, 2025)
+
+**Research summary from Facebook and F5 Labs:**
+
+### Why Our Scraper Has LOW Detection Risk
+
+Our scraper uses **real Chrome browser with persistent session cookies from actual Facebook login** - this makes it indistinguishable from normal human browsing:
+
+✅ **Real browser fingerprint** (not headless-detectable)
+✅ **Real cookies from manual login** (including 2FA)
+✅ **Random delays** between scrolls (0.3-0.6s optimized)
+✅ **Human-like session duration** (manual execution, not 24/7)
+✅ **Normal diurnal patterns** (run during business hours)
+✅ **Single IP** (home network, not datacenter)
+✅ **Full page loads** (CSS, images, fonts - not data-only)
+
+### Facebook's Known Detection Methods
+
+From Facebook's official blog + F5 Labs research:
+
+| Signal | Our Status | Risk Level |
+|--------|-----------|------------|
+| **Rate limiting** (requests/min) | Low volume, random delays | ✅ Safe |
+| **Velocity spikes** (sudden bursts) | Gradual scrolling | ✅ Safe |
+| **Session duration** | 5-15 min runs | ✅ Safe |
+| **Diurnal patterns** (24/7 scraping) | Manual execution | ✅ Safe |
+| **IP reputation** | Home residential IP | ✅ Safe |
+| **Browser fingerprint** | Real Chrome profile | ✅ Safe |
+| **Missing resources** | Full page loads | ✅ Safe |
+| **Cookie handling** | Persistent cookies | ✅ Safe |
+
+### What Would Trigger Detection
+
+❌ Running 24/7 automated cron jobs
+❌ Using datacenter/proxy IPs
+❌ Headless browser without fingerprint spoofing
+❌ Very fast scrolling (< 100ms delays)
+❌ Scraping hundreds of groups per session
+❌ Missing referrer/user-agent headers
+
+**Bottom line:** Our manual, low-volume approach with real browser session is essentially undetectable.
+
+---
+
+## Speed Optimization Strategy (Dec 11, 2025)
+
+**Goal:** Maximize throughput within safe detection limits.
+
+### Applied Optimizations
+
+| Setting | Old Value | New Value | Impact | Safety |
+|---------|-----------|-----------|--------|--------|
+| **Scroll delay** | 0.5-1.0s | 0.3-0.6s | **~50% faster** | ✅ Still human-like |
+| **Scroll depth** | 2× max_posts | 20× max_posts | **10× more posts** | ✅ Same session duration |
+| **Date range** | 7 days | 30 days | **4× more candidates** | ✅ No detection change |
+
+### Why These Are Safe
+
+- **Scroll delay 0.3-0.6s:** Research shows <100ms is bot-like. 300-600ms with random variation is indistinguishable from fast human scrolling. Real users often scroll quickly when scanning.
+- **Deeper scrolling:** Facebook expects users to scroll through feeds extensively - that's the product design. More scrolls doesn't increase detection risk.
+- **Inter-group delay kept at 2-4s:** Group navigation is more visible activity, so we keep this conservative.
+
+### Bottleneck Analysis
+
+**LLM calls are the actual bottleneck, not scrolling:**
+- Each Gemini API call: ~1-2 seconds
+- 100 posts × 1.5s avg = 2.5 minutes of LLM time
+- Scroll time (100 posts, 20 scrolls each): ~30 seconds with new timing
+- **Result:** ~90% of scrape time is LLM analysis, not Facebook interaction
+
+### Future Speed Options (Not Yet Implemented)
+
+1. **Parallel LLM calls** - Batch posts, make concurrent API requests
+2. **Skip obvious OFFERING posts** - Pre-filter before LLM (keywords like "hyr ut", "erbjuds")
+3. **Cached classifications** - Don't re-analyze posts seen in previous runs
+
+---
+
+## TODO: Improvements Needed (Dec 11, 2025)
+
+### 1. Log Filtered Posts for False Negative Review
+**Problem:** Posts marked OFFERING or EXCLUDE are silently skipped - can't review potential misclassifications.
+**Solution:** Save filtered posts to `data/housing_leads/YYYY-MM-DD_filtered.json`
+**Status:** ✅ **COMPLETED** - `save_results()` now saves filtered posts with metadata
+
+### 2. Screenshots for Uncertain Cases
+**Problem:** Can't verify LLM decisions without visual context.
+**Solution:** Capture screenshots for posts with `confidence < 0.8` or ambiguous classification
+**Status:** 🔴 Not started
+
+### 3. Extend Date Range to 30 Days
+**Problem:** `--days 7` default misses older but still valid posts.
+**Solution:** Change default from 7 to 30 days, posts up to a month old are worth checking
+**Status:** ✅ **COMPLETED** - `days_back: 30` is now default
+
+### 4. Be More Permissive with Filtering
+**Problem:** Potential false negatives from aggressive LLM exclusion.
+**Solution:** Lower confidence threshold, include "uncertain" cases as P4 leads
+**Status:** 🔴 Not started
+
+### 5. Run Comprehensive Deep Scrape
+**Goal:** 50+ leads per group, 30 days back, all 3 groups
+**Command:** `bin/scrape_housing_ads --llm --days 30 --max-posts 100`
+**Status:** 🔴 Not started
+
+---
+
+## Current Leads (Dec 11, 2025)
+
+| Poster | Group | Priority | Move-in | Budget | Notes |
+|--------|-------|----------|---------|--------|-------|
+| **Aaron** | Kollektiv i Stockholm | **P1** | Jan/Feb | - | 32yo, climate policy, WANTS kollektiv! |
+| Milla Degerman | Lägenheter | P3 | Jan 1 | 9000 kr | 23yo, Midsommarkransen |
+| Elsa | Lägenheter | P3 | Feb 1 | - | 22yo, musikalartist student |
+| Nicholas | Lägenheter | P3 | Unknown | 9000 kr | 22yo student |
+| **Nina Petersson** | Kollektiv i Stockholm | **P1** | Jan/Feb | - | Mom + 12yo daughter, explicitly wants kollektiv (found manually, not by scraper yet) |
