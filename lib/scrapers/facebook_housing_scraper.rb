@@ -327,7 +327,11 @@ class FacebookHousingScraper
     )
 
     @page = browser.create_page
-    @logger.info "  ✓ Browser ready (profile: #{CHROME_PROFILE_PATH})"
+
+    # Taller viewport for efficient post capture (more posts per scroll)
+    # Width 1920 standard, height 1400 (moderate - 1.5x default without breaking FB rendering)
+    @page.resize(width: 1920, height: 1400)
+    @logger.info "  ✓ Browser ready (viewport: 1920x1400, profile: #{CHROME_PROFILE_PATH})"
   rescue => e
     @logger.error "❌ Browser initialization failed: #{e.message}"
     @logger.error e.backtrace.first(5).join("\n") if @debug
@@ -424,6 +428,17 @@ class FacebookHousingScraper
         next unless within_date_range?(post[:relative_time], days_back)
 
         posts_analyzed += 1
+
+        # Pre-filter obvious OFFERING posts BEFORE LLM (saves ~60% of API calls)
+        if @use_llm && obvious_offering_post?(post[:content])
+          @logger.debug "  ⏭️ Skipped obvious OFFERING (pre-filter)" if @debug
+          @filtered_posts << build_filtered_post(post, group, {
+            type: :offering,
+            reason: 'Pre-filter: obvious offering keywords',
+            llm_confidence: nil
+          })
+          next
+        end
 
         # Classify post - LLM or keyword-based
         if @use_llm && @post_analyzer
@@ -781,6 +796,43 @@ class FacebookHousingScraper
 
     # Default: include if can't parse
     true
+  end
+
+  # Pre-filter obvious OFFERING posts to skip LLM calls (saves ~60% of API costs)
+  # CONSERVATIVE: Only filters posts that are CLEARLY offering, never SEEKING
+  # If in doubt, let LLM decide (false negatives are worse than extra API calls)
+  def obvious_offering_post?(content)
+    return false if content.nil? || content.empty?
+    content_lower = content.downcase
+
+    # Strong OFFERING indicators (landlord phrases) - CONSERVATIVE list only
+    # Removed ambiguous phrases that seekers might also use:
+    # - 'ledigt rum' (seeker: "söker ledigt rum")
+    # - 'rum att hyra' (seeker: "letar efter rum att hyra")
+    # - 'vi söker en till' (couple: "we're looking for one more place")
+    offering_phrases = [
+      'hyr ut ',          # "renting out " (space prevents matching "hyr ut?" questions)
+      'jag hyr ut',       # "I'm renting out"
+      'hyrs ut',          # "is being rented out"
+      'uthyres',          # "for rent" (formal, always landlord)
+      'rum uthyres',      # "room for rent"
+      'lägenhet uthyres', # "apartment for rent"
+      'andrahandsuthyrning',  # "subletting" (formal term)
+      'söker hyresgäst',  # "looking for tenant" - unambiguous
+      'söker ny hyresgäst', # "looking for new tenant"
+      'person sökes till', # "person wanted for" (kollektiv offering)
+    ]
+
+    # Check for offering phrases
+    has_offering = offering_phrases.any? { |phrase| content_lower.include?(phrase) }
+    return false unless has_offering
+
+    # SAFETY CHECK: Don't filter if SEEKING keywords also present (ambiguous post)
+    seeking_safety = ['söker bostad', 'söker lägenhet', 'söker rum', 'behöver bostad', 'jag söker', 'letar efter bostad']
+    has_seeking = seeking_safety.any? { |phrase| content_lower.include?(phrase) }
+
+    # Only filter if clearly OFFERING and NOT seeking
+    has_offering && !has_seeking
   end
 
   def build_lead(post, group, classification)
