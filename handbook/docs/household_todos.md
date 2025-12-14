@@ -1,4 +1,4 @@
 # Household Todos
 
-- Fixa & ring om källarmöglet
+- Städ-frenzy på tisdag
 - Husvagn & studio - kaching?
