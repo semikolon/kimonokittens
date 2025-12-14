@@ -97,7 +97,7 @@ class FacebookHousingScraper
     ledig uthyres hyr\ ut available for\ rent
   ].freeze
 
-  attr_reader :browser, :page, :logger, :processed_post_ids, :post_analyzer
+  attr_reader :browser, :page, :logger, :processed_post_ids, :post_analyzer, :known_lead_profiles
 
   def initialize(logger: nil, headless: true, debug: ENV['DEBUG'], use_llm: false, scroll_depth_multiplier: 20)
     @logger = logger || create_logger(debug)
@@ -105,9 +105,11 @@ class FacebookHousingScraper
     @use_llm = use_llm
     @scroll_depth_multiplier = scroll_depth_multiplier  # How many scrolls per max_post (default 20 for ~90% OFFERING groups)
     @processed_post_ids = Set.new
+    @known_lead_profiles = Set.new  # Profile URLs from previous scrapes (deduplication)
     @leads = []
     @filtered_posts = []  # Track filtered/excluded posts for false negative review
     @post_analyzer = nil
+    @skipped_known_leads = 0  # Track how many LLM calls we saved
 
     @logger.info "=" * 80
     @logger.info "Facebook Housing Scraper (Ferrum)"
@@ -142,6 +144,9 @@ class FacebookHousingScraper
     target_groups = groups || TARGET_GROUPS
 
     begin
+      # Step 0: Load known leads for deduplication (saves LLM calls)
+      load_known_leads
+
       # Step 1: Verify Facebook session
       unless verify_facebook_session
         @logger.error "❌ Not logged into Facebook. Run with LOGIN_ONLY=1 SHOW_BROWSER=1 to authenticate."
@@ -197,6 +202,60 @@ class FacebookHousingScraper
     ensure
       cleanup
     end
+  end
+
+  # Load known leads from previous scrape files to avoid re-analyzing the same people
+  # Uses profile_url as unique identifier (Facebook user ID is embedded in URL)
+  def load_known_leads
+    leads_dir = 'data/housing_leads'
+    return unless Dir.exist?(leads_dir)
+
+    lead_files = Dir.glob("#{leads_dir}/*_leads.json").sort
+    return if lead_files.empty?
+
+    total_loaded = 0
+    lead_files.each do |file|
+      begin
+        data = Oj.load_file(file)
+        posts = data['posts_found'] || data[:posts_found] || []
+
+        posts.each do |post|
+          profile_url = post['profile_url'] || post[:profile_url]
+          next unless profile_url && !profile_url.empty?
+
+          # Normalize profile URL (strip tracking params for consistent matching)
+          normalized = normalize_profile_url(profile_url)
+          @known_lead_profiles.add(normalized)
+          total_loaded += 1
+        end
+      rescue => e
+        @logger.warn "  ⚠️ Could not load #{File.basename(file)}: #{e.message}"
+      end
+    end
+
+    @logger.info "  ✓ Loaded #{total_loaded} known leads from #{lead_files.size} files (deduplication active)"
+  end
+
+  # Normalize Facebook profile URL by extracting just the user ID path
+  # Strips tracking params (__cft__, __tn__, etc.) for consistent matching
+  def normalize_profile_url(url)
+    return '' if url.nil? || url.empty?
+
+    # Extract the base URL before any query params
+    # Pattern: https://www.facebook.com/groups/123/user/456/?...
+    # We want: https://www.facebook.com/groups/123/user/456
+    if url.include?('?')
+      url.split('?').first
+    else
+      url
+    end
+  end
+
+  # Check if a profile URL matches a known lead
+  def known_lead?(profile_url)
+    return false if profile_url.nil? || profile_url.empty?
+    normalized = normalize_profile_url(profile_url)
+    @known_lead_profiles.include?(normalized)
   end
 
   def login_only
@@ -429,6 +488,22 @@ class FacebookHousingScraper
 
         posts_analyzed += 1
 
+        # Skip if we already have this person as a lead (previous scrapes OR this session)
+        # Uses profile_url as unique identifier (saves LLM calls for known leads)
+        if known_lead?(post[:profile_url])
+          @skipped_known_leads += 1
+          @logger.debug "  ⏭️ Skipped known lead: #{post[:poster_name]}" if @debug
+          next
+        end
+
+        # Also track within this session to avoid duplicate LLM calls for same person
+        normalized_profile = normalize_profile_url(post[:profile_url])
+        if @known_lead_profiles.include?(normalized_profile) && !normalized_profile.empty?
+          @skipped_known_leads += 1
+          @logger.debug "  ⏭️ Skipped (already found this session): #{post[:poster_name]}" if @debug
+          next
+        end
+
         # Pre-filter obvious OFFERING posts BEFORE LLM (saves ~60% of API calls)
         if @use_llm && obvious_offering_post?(post[:content])
           @logger.debug "  ⏭️ Skipped obvious OFFERING (pre-filter)" if @debug
@@ -457,6 +532,10 @@ class FacebookHousingScraper
         lead = build_lead(post, group, classification)
         @leads << lead
         posts_found += 1
+
+        # Add to known leads for within-session deduplication
+        normalized_profile = normalize_profile_url(post[:profile_url])
+        @known_lead_profiles.add(normalized_profile) unless normalized_profile.empty?
 
         poster_display = classification[:llm_poster_name] || post[:poster_name]
         @logger.info "  📝 Lead #{posts_found}: #{poster_display} (P#{classification[:priority]})"
@@ -489,7 +568,8 @@ class FacebookHousingScraper
       sleep rand(0.3..0.6)
     end
 
-    @logger.info "  ✓ Found #{posts_found} leads (#{posts_analyzed} posts analyzed, #{scroll_count} scrolls)"
+    skip_msg = @skipped_known_leads > 0 ? ", #{@skipped_known_leads} known leads skipped" : ""
+    @logger.info "  ✓ Found #{posts_found} leads (#{posts_analyzed} posts analyzed, #{scroll_count} scrolls#{skip_msg})"
   end
 
   def extract_posts_from_viewport(group)
