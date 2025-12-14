@@ -1,4 +1,4 @@
 # Household Todos
 
 - Städ-frenzy på tisdag
-- Hitta helt ny crew
+- Samla de ev nya
