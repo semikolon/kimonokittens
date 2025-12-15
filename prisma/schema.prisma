@@ -249,16 +249,15 @@ model HeatpumpConfig {
 }
 
 // Track heatpump override events for self-learning analysis
-// Records when temperature emergency forced heatpump ON outside schedule
+// Only logged for TRUE overrides (schedule said OFF, we forced ON)
 // Used to optimize hours_on and distribution parameters
 model HeatpumpOverride {
-  id           String   @id @default(cuid())
-  type         String   // 'indoor' or 'hotwater' - which threshold triggered
-  temperature  Float    // actual temperature when override triggered
-  price        Float    // electricity price at that hour (kr/kWh)
-  scheduledOn  Boolean  // was heatpump supposed to be ON? (timing vs capacity issue)
-  hourOfDay    Int      // 0-23, for analyzing which time blocks need more coverage
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  type        String   // 'indoor' or 'hotwater' - which threshold triggered
+  temperature Float    // actual temperature when override triggered
+  price       Float    // electricity price at that hour (kr/kWh)
+  hourOfDay   Int      // 0-23, for analyzing which time blocks need more coverage
+  createdAt   DateTime @default(now())
 
   @@index([type, createdAt(sort: Desc)])
   @@index([hourOfDay])

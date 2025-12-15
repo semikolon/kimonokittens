@@ -5,9 +5,12 @@ require_relative '../lib/persistence'
 #
 # Provides analysis of override patterns to optimize scheduling parameters.
 # Analyzes data from HeatpumpOverride table to detect:
-# - Timing issues (overrides during scheduled OFF → need better distribution)
-# - Capacity issues (overrides during scheduled ON → need more hours)
+# - Type patterns (indoor vs hotwater - which is the bottleneck?)
 # - Time-of-day patterns (which hours need more coverage)
+# - Cost impact (how much are overrides costing?)
+#
+# Note: Overrides only occur when schedule said OFF but we forced ON.
+# If schedule said ON, there's no override - just low temps during scheduled run.
 #
 # GET /api/heatpump/analysis
 #   ?days=7  (default: 7, analyze last N days)
@@ -23,7 +26,6 @@ class HeatpumpAnalysisHandler
     # Fetch all aggregations
     by_type = Persistence.heatpump_overrides.count_by_type(days: days)
     by_hour = Persistence.heatpump_overrides.count_by_hour(days: days)
-    by_issue = Persistence.heatpump_overrides.count_by_issue_type(days: days)
     avg_price = Persistence.heatpump_overrides.average_override_price(days: days)
     recent = Persistence.heatpump_overrides.last_n_days(days)
 
@@ -37,7 +39,6 @@ class HeatpumpAnalysisHandler
     recommendations = generate_recommendations(
       total: total_overrides,
       by_type: by_type,
-      by_issue: by_issue,
       hour_blocks: hour_blocks,
       days: days
     )
@@ -52,12 +53,6 @@ class HeatpumpAnalysisHandler
         'overrides_per_day' => (total_overrides.to_f / days).round(2)
       },
       'by_type' => by_type,
-      'by_issue' => {
-        'timing' => by_issue[:timing],
-        'capacity' => by_issue[:capacity],
-        'timing_description' => 'Override during scheduled OFF (gap in schedule)',
-        'capacity_description' => 'Override during scheduled ON (not enough hours)'
-      },
       'by_hour' => by_hour,
       'hour_blocks' => hour_blocks,
       'cost_analysis' => {
@@ -106,7 +101,7 @@ class HeatpumpAnalysisHandler
   end
 
   # Generate actionable recommendations based on analysis
-  def generate_recommendations(total:, by_type:, by_issue:, hour_blocks:, days:)
+  def generate_recommendations(total:, by_type:, hour_blocks:, days:)
     recommendations = []
     overrides_per_day = total.to_f / days
 
@@ -114,12 +109,12 @@ class HeatpumpAnalysisHandler
     if overrides_per_day > 3
       recommendations << {
         'severity' => 'high',
-        'message' => "High override frequency (#{overrides_per_day.round(1)}/day). System needs adjustment."
+        'message' => "High override frequency (#{overrides_per_day.round(1)}/day). Schedule has too many gaps."
       }
     elsif overrides_per_day > 1
       recommendations << {
         'severity' => 'medium',
-        'message' => "Moderate override frequency (#{overrides_per_day.round(1)}/day). Consider optimization."
+        'message' => "Moderate override frequency (#{overrides_per_day.round(1)}/day). Consider increasing hours_on or improving distribution."
       }
     elsif overrides_per_day > 0
       recommendations << {
@@ -133,56 +128,39 @@ class HeatpumpAnalysisHandler
       }
     end
 
-    # Timing vs capacity analysis
-    if by_issue[:timing] > by_issue[:capacity] * 2
-      recommendations << {
-        'severity' => 'medium',
-        'action' => 'distribution',
-        'message' => "Most overrides are timing issues (#{by_issue[:timing]} timing vs #{by_issue[:capacity]} capacity). The distribution-aware algorithm should help.",
-        'suggestion' => 'Ensure MIN_HOURS_PER_BLOCK covers problem periods.'
-      }
-    elsif by_issue[:capacity] > by_issue[:timing] * 2
-      recommendations << {
-        'severity' => 'medium',
-        'action' => 'increase_hours',
-        'message' => "Most overrides are capacity issues (#{by_issue[:capacity]} capacity vs #{by_issue[:timing]} timing). Consider increasing hours_on.",
-        'suggestion' => 'Try increasing hours_on by 1-2 hours.'
-      }
-    end
-
     # Type-specific analysis
     if by_type['hotwater'] > by_type['indoor'] * 3
       recommendations << {
         'severity' => 'info',
-        'message' => "Hot water is the primary issue (#{by_type['hotwater']} vs #{by_type['indoor']} indoor). Hot water tank recovery is the bottleneck."
+        'message' => "Hot water is the primary issue (#{by_type['hotwater']} vs #{by_type['indoor']} indoor). Hot water tank depletes faster than house cools."
       }
     elsif by_type['indoor'] > by_type['hotwater']
       recommendations << {
         'severity' => 'info',
-        'message' => "Indoor temperature is the primary issue (#{by_type['indoor']} vs #{by_type['hotwater']} hot water). May need more heating capacity in cold weather."
+        'message' => "Indoor temperature is the primary issue (#{by_type['indoor']} vs #{by_type['hotwater']} hot water). May need more total heating hours in cold weather."
       }
     end
 
     # Hour block analysis
     worst_block = hour_blocks['worst_block']
-    if worst_block
+    if worst_block && total > 0
       block_data = hour_blocks[worst_block]
       if block_data && block_data[:count] > total * 0.4
         recommendations << {
           'severity' => 'medium',
           'action' => 'check_block',
           'message' => "#{worst_block.capitalize} block (#{block_data[:range]}) has #{block_data[:count]} overrides (#{(block_data[:count].to_f / total * 100).round(0)}% of total).",
-          'suggestion' => "Ensure adequate coverage during #{worst_block} hours."
+          'suggestion' => "The OFF gaps during #{worst_block} hours are too long. Distribution algorithm should help."
         }
       end
     end
 
-    # Self-learning suggestion if enough data
-    if total >= 14 && overrides_per_day <= 1
+    # Self-learning suggestion if enough data and low overrides
+    if total >= 14 && overrides_per_day <= 0.5
       recommendations << {
         'severity' => 'low',
         'action' => 'can_reduce',
-        'message' => "Override frequency is low. Could test reducing hours_on by 1 to optimize cost.",
+        'message' => "Override frequency is very low. Could test reducing hours_on by 1 to optimize cost.",
         'suggestion' => 'Monitor for 1 week after any reduction.'
       }
     end

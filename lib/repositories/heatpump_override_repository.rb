@@ -14,13 +14,14 @@ class HeatpumpOverrideRepository < BaseRepository
   end
 
   # Record a new override event
+  # Only called for TRUE overrides (schedule said OFF, we forced ON)
+  #
   # @param type [String] 'indoor' or 'hotwater'
   # @param temperature [Float] Temperature when triggered
   # @param price [Float] Electricity price at that hour
-  # @param scheduled_on [Boolean] Was heatpump scheduled to be ON?
   # @param hour_of_day [Integer] Hour 0-23
   # @return [HeatpumpOverride]
-  def record(type:, temperature:, price:, scheduled_on:, hour_of_day:)
+  def record(type:, temperature:, price:, hour_of_day:)
     id = SecureRandom.uuid
     now = Time.now
 
@@ -29,7 +30,6 @@ class HeatpumpOverrideRepository < BaseRepository
       type: type,
       temperature: temperature,
       price: price,
-      scheduledOn: scheduled_on,
       hourOfDay: hour_of_day,
       createdAt: now
     )
@@ -103,29 +103,6 @@ class HeatpumpOverrideRepository < BaseRepository
     counts
   end
 
-  # Count timing vs capacity issues in last N days
-  # @param days [Integer] Number of days
-  # @return [Hash] { timing: count, capacity: count }
-  def count_by_issue_type(days:)
-    cutoff = Time.now - (days * 24 * 60 * 60)
-    result = dataset
-      .where { createdAt >= cutoff }
-      .group(:scheduledOn)
-      .select { [scheduledOn, count(id).as(count)] }
-      .all
-
-    counts = { timing: 0, capacity: 0 }
-    result.each do |row|
-      if row[:scheduledOn]
-        counts[:capacity] = row[:count]
-      else
-        counts[:timing] = row[:count]
-      end
-    end
-
-    counts
-  end
-
   # Calculate average override cost (price during override hours)
   # @param days [Integer] Number of days
   # @return [Float] Average price in kr/kWh
@@ -150,7 +127,6 @@ class HeatpumpOverrideRepository < BaseRepository
       type: row[:type],
       temperature: row[:temperature],
       price: row[:price],
-      scheduled_on: row[:scheduledOn],
       hour_of_day: row[:hourOfDay],
       created_at: row[:createdAt]
     )

@@ -258,15 +258,21 @@ class HeatpumpScheduleHandler
       final_state = true
       override_reason = 'temperature_emergency'
 
-      # Log override and send SMS alert if this is a new emergency (not sent recently)
-      # Skip if caller requested it (e.g., dashboard polling every 60s)
+      # Log override and send SMS alert only if we're actually overriding
+      # (i.e., schedule said OFF but we're forcing ON)
+      # If schedule already said ON, there's no override - just low temps during scheduled run
       unless skip_sms
-        log_and_alert_override(
-          temps: temps,
-          config: config,
-          scheduled_on: base_state,
-          price: current_hour['price']
-        )
+        # Only log to database if this is a true override (schedule said OFF)
+        unless base_state
+          log_override(
+            temps: temps,
+            config: config,
+            price: current_hour['price']
+          )
+        end
+
+        # Always send SMS alert for temperature emergencies (throttled to 1/hour)
+        send_emergency_sms(temps, config)
       end
 
     # Priority 2: Schedule (use calculated schedule)
@@ -290,60 +296,72 @@ class HeatpumpScheduleHandler
     }
   end
 
-  # Log override to database and send SMS alert if temperature failsafe triggered
-  # SMS only sent once per hour to avoid spam, but ALL overrides are logged for analysis
+  # Log override to database for self-learning analysis
+  # Only called for TRUE overrides (schedule said OFF, we forced ON)
   #
   # @param temps [Hash] Current temperatures (indoor, hotwater, target)
   # @param config [HeatpumpConfig] Current configuration
-  # @param scheduled_on [Boolean] Was heatpump scheduled to be ON? (timing vs capacity analysis)
   # @param price [Float] Current electricity price
-  def log_and_alert_override(temps:, config:, scheduled_on:, price:)
+  def log_override(temps:, config:, price:)
     now = Time.now
 
     # Determine which condition triggered
     indoor_low = temps[:indoor] <= (temps[:target] - config.emergency_temp_offset)
     hotwater_low = temps[:hotwater] < config.min_hotwater
 
-    # Determine override type and temperature for logging
+    # Determine override type and temperature
     if indoor_low && hotwater_low
-      # Both triggered - log as indoor (primary concern)
-      override_type = 'indoor'
+      override_type = 'indoor'  # Primary concern when both trigger
       override_temp = temps[:indoor]
-      message = "Båda för kalla!"
     elsif indoor_low
       override_type = 'indoor'
       override_temp = temps[:indoor]
-      message = "#{temps[:indoor].round(0).to_i}°C inne"
     else
       override_type = 'hotwater'
       override_temp = temps[:hotwater]
-      message = "#{temps[:hotwater].round(0).to_i}°C vatten"
     end
 
-    # ALWAYS log override to database for self-learning analysis
     begin
       Persistence.heatpump_overrides.record(
         type: override_type,
         temperature: override_temp,
         price: price,
-        scheduled_on: scheduled_on,
         hour_of_day: now.hour
       )
-      issue_type = scheduled_on ? 'capacity' : 'timing'
-      puts "📊 Override logged: #{override_type} @ #{override_temp.round(1)}°C, hour #{now.hour}, #{issue_type} issue"
+      puts "📊 Override logged: #{override_type} @ #{override_temp.round(1)}°C, hour #{now.hour}, price #{price.round(2)} kr/kWh"
     rescue => e
       puts "⚠️  Failed to log override: #{e.message}"
     end
+  end
 
-    # Send SMS only if we haven't sent one recently (max 1 per hour)
-    if @last_emergency_sms_time.nil? || (now - @last_emergency_sms_time) > 3600
-      begin
-        SmsGateway.send_admin_alert(message)
-        @last_emergency_sms_time = now
-        puts "📱 Emergency SMS sent: #{message}"
-      rescue => e
-        puts "⚠️  Failed to send emergency SMS: #{e.message}"
-      end
+  # Send emergency SMS alert (throttled to max 1 per hour)
+  #
+  # @param temps [Hash] Current temperatures
+  # @param config [HeatpumpConfig] Current configuration
+  def send_emergency_sms(temps, config)
+    now = Time.now
+
+    # Don't spam - only send if we haven't sent SMS in last hour
+    return if @last_emergency_sms_time && (now - @last_emergency_sms_time) <= 3600
+
+    # Determine which condition triggered (concise Swedish)
+    indoor_low = temps[:indoor] <= (temps[:target] - config.emergency_temp_offset)
+    hotwater_low = temps[:hotwater] < config.min_hotwater
+
+    message = if indoor_low && hotwater_low
+      "Båda för kalla!"
+    elsif indoor_low
+      "#{temps[:indoor].round(0).to_i}°C inne"
+    else
+      "#{temps[:hotwater].round(0).to_i}°C vatten"
+    end
+
+    begin
+      SmsGateway.send_admin_alert(message)
+      @last_emergency_sms_time = now
+      puts "📱 Emergency SMS sent: #{message}"
+    rescue => e
+      puts "⚠️  Failed to send emergency SMS: #{e.message}"
     end
   end
 
