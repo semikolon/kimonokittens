@@ -533,8 +533,8 @@ export function AnomalySparklineBar({ anomalySummary, regressionData }: {
   const sparklinePath = generateSparkline()
 
   return (
-    <div>
-      <div className="relative h-24 rounded-lg overflow-hidden"
+    <div className="anomaly-sparkline-container">
+      <div className="anomaly-sparkline relative h-24 rounded-lg overflow-hidden"
            style={{
              mixBlendMode: 'screen'
            }}>
