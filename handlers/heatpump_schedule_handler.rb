@@ -8,20 +8,45 @@ require_relative '../lib/sms/gateway'
 
 # Heatpump Schedule Generator
 # Implements ps-strategy-lowest-price algorithm from node-red-contrib-power-saver
+# with DISTRIBUTION-AWARE hour selection to prevent long OFF gaps
 #
 # Purpose: Generate ready-to-use heatpump schedule based on electricity prices
 # Replaces: Tibber Query + ps-receive-price + ps-strategy-lowest-price nodes in Node-RED
 #
-# Algorithm (from https://github.com/ottopaulsen/node-red-contrib-power-saver):
-#   1. Sort all hours by price (cheapest first)
-#   2. Select N cheapest hours
+# Algorithm (enhanced from https://github.com/ottopaulsen/node-red-contrib-power-saver):
+#   1. Ensure minimum hours per 6-hour block (prevents long gaps)
+#   2. Fill remaining hours from globally cheapest
 #   3. Return schedule with EVU values (0=ON, 1=OFF)
 #
+# Distribution rationale (Dec 2025):
+#   Hot water tank has low thermal mass - depletes quickly during usage.
+#   Pure "cheapest N hours" can cluster hours, leaving 4-6 hour gaps where
+#   hot water cools below threshold, triggering expensive emergency overrides.
+#   Minimum distribution ensures recovery periods throughout the day.
+#
 # Created: November 19, 2025
+# Updated: December 2025 - Added distribution-aware scheduling
 # Related: docs/HEATPUMP_SCHEDULE_API_PLAN.md
 
 class HeatpumpScheduleHandler
   DEFAULT_HOURS_ON = 12
+
+  # Minimum hours per 6-hour block to ensure hot water recovery throughout the day
+  # With 14 hours_on: 8 distributed (2×4 blocks) + 6 from cheapest = 14 total
+  # This prevents gaps > 4 hours which cause hot water to deplete below threshold
+  MIN_HOURS_PER_BLOCK = 2
+
+  # 6-hour blocks for distribution
+  # Block 0: 00:00-05:59 (overnight - recovery while sleeping)
+  # Block 1: 06:00-11:59 (morning - post-shower recovery)
+  # Block 2: 12:00-17:59 (afternoon - maintain through day)
+  # Block 3: 18:00-23:59 (evening - dinner/evening recovery)
+  HOUR_BLOCKS = [
+    (0..5),   # overnight
+    (6..11),  # morning
+    (12..17), # afternoon
+    (18..23)  # evening
+  ].freeze
 
   def initialize(heatpump_price_handler)
     @price_handler = heatpump_price_handler
@@ -101,26 +126,55 @@ class HeatpumpScheduleHandler
     today_schedule + tomorrow_schedule
   end
 
-  # Select N cheapest hours from a single 24-hour period
-  # Returns schedule array with onOff flags set for cheapest hours
+  # Select N cheapest hours from a single 24-hour period WITH DISTRIBUTION
+  # Returns schedule array with onOff flags set
   #
-  # NOTE: Always selects cheapest hours regardless of absolute price.
+  # Distribution algorithm (Dec 2025):
+  #   1. First pass: Select MIN_HOURS_PER_BLOCK cheapest hours from EACH 6-hour block
+  #      This guarantees coverage throughout the day (no gaps > 4 hours)
+  #   2. Second pass: Fill remaining slots from globally cheapest available hours
+  #      This optimizes cost while respecting distribution constraints
+  #
+  # Example with 14 hours_on and MIN_HOURS_PER_BLOCK=2:
+  #   - 8 hours distributed (2 per block × 4 blocks)
+  #   - 6 hours from cheapest remaining
+  #   - Result: Good coverage + cost optimization
+  #
+  # NOTE: Always selects hours regardless of absolute price.
   # Heatpump is essential infrastructure - can't defer like washing machines.
-  # With peak/off-peak pricing (2-4 kr/kWh), any price-based filtering is meaningless.
   def select_cheapest_hours(prices, hours_on)
     return [] if prices.empty?
 
-    # Sort prices by value, keeping original indices
-    sorted_indices = prices.each_with_index
-      .sort_by { |p, _| p['total'] }
-      .map { |_, i| i }
+    selected = Set.new
 
-    # Select N cheapest hours from THIS period only (regardless of price)
-    on_indices = sorted_indices.first(hours_on).to_set
+    # First pass: ensure minimum coverage in each 6-hour block
+    # Pick the cheapest MIN_HOURS_PER_BLOCK hours within each block
+    HOUR_BLOCKS.each do |block_range|
+      block_hours = block_range.to_a.select { |h| h < prices.length }
+      next if block_hours.empty?
+
+      # Sort hours in this block by price, pick cheapest
+      cheapest_in_block = block_hours
+        .sort_by { |h| prices[h]['total'] }
+        .first(MIN_HOURS_PER_BLOCK)
+
+      selected.merge(cheapest_in_block)
+    end
+
+    # Second pass: fill remaining slots from globally cheapest (not already selected)
+    remaining_slots = hours_on - selected.size
+    if remaining_slots > 0
+      available_hours = (0...prices.length).to_a - selected.to_a
+      cheapest_remaining = available_hours
+        .sort_by { |h| prices[h]['total'] }
+        .first(remaining_slots)
+
+      selected.merge(cheapest_remaining)
+    end
 
     # Build schedule array for this period
     prices.map.with_index do |price, i|
-      is_on = on_indices.include?(i)
+      is_on = selected.include?(i)
       {
         'start' => price['startsAt'],
         'price' => price['total'].round(4),
@@ -204,9 +258,22 @@ class HeatpumpScheduleHandler
       final_state = true
       override_reason = 'temperature_emergency'
 
-      # Send SMS alert if this is a new emergency (not sent recently)
-      # Skip SMS if caller requested it (e.g., dashboard polling every 60s)
-      send_emergency_sms_if_needed(temps, config) unless skip_sms
+      # Log override and send SMS alert only if we're actually overriding
+      # (i.e., schedule said OFF but we're forcing ON)
+      # If schedule already said ON, there's no override - just low temps during scheduled run
+      unless skip_sms
+        # Only log to database if this is a true override (schedule said OFF)
+        unless base_state
+          log_override(
+            temps: temps,
+            config: config,
+            price: current_hour['price']
+          )
+        end
+
+        # Always send SMS alert for temperature emergencies (throttled to 1/hour)
+        send_emergency_sms(temps, config)
+      end
 
     # Priority 2: Schedule (use calculated schedule)
     else
@@ -229,32 +296,72 @@ class HeatpumpScheduleHandler
     }
   end
 
-  # Send emergency SMS if temperature failsafe triggered
-  # Only sends once per hour to avoid spam
-  def send_emergency_sms_if_needed(temps, config)
+  # Log override to database for self-learning analysis
+  # Only called for TRUE overrides (schedule said OFF, we forced ON)
+  #
+  # @param temps [Hash] Current temperatures (indoor, hotwater, target)
+  # @param config [HeatpumpConfig] Current configuration
+  # @param price [Float] Current electricity price
+  def log_override(temps:, config:, price:)
+    now = Time.now
+
+    # Determine which condition triggered
+    indoor_low = temps[:indoor] <= (temps[:target] - config.emergency_temp_offset)
+    hotwater_low = temps[:hotwater] < config.min_hotwater
+
+    # Determine override type and temperature
+    if indoor_low && hotwater_low
+      override_type = 'indoor'  # Primary concern when both trigger
+      override_temp = temps[:indoor]
+    elsif indoor_low
+      override_type = 'indoor'
+      override_temp = temps[:indoor]
+    else
+      override_type = 'hotwater'
+      override_temp = temps[:hotwater]
+    end
+
+    begin
+      Persistence.heatpump_overrides.record(
+        type: override_type,
+        temperature: override_temp,
+        price: price,
+        hour_of_day: now.hour
+      )
+      puts "📊 Override logged: #{override_type} @ #{override_temp.round(1)}°C, hour #{now.hour}, price #{price.round(2)} kr/kWh"
+    rescue => e
+      puts "⚠️  Failed to log override: #{e.message}"
+    end
+  end
+
+  # Send emergency SMS alert (throttled to max 1 per hour)
+  #
+  # @param temps [Hash] Current temperatures
+  # @param config [HeatpumpConfig] Current configuration
+  def send_emergency_sms(temps, config)
     now = Time.now
 
     # Don't spam - only send if we haven't sent SMS in last hour
-    if @last_emergency_sms_time.nil? || (now - @last_emergency_sms_time) > 3600
-      begin
-        # Determine which condition triggered (concise Swedish)
-        indoor_low = temps[:indoor] <= (temps[:target] - config.emergency_temp_offset)
-        hotwater_low = temps[:hotwater] < config.min_hotwater
+    return if @last_emergency_sms_time && (now - @last_emergency_sms_time) <= 3600
 
-        if indoor_low && hotwater_low
-          message = "Båda för kalla!"  # "Both too cold!"
-        elsif indoor_low
-          message = "#{temps[:indoor].round(0).to_i}°C inne"  # "#{temp}°C indoors"
-        else
-          message = "#{temps[:hotwater].round(0).to_i}°C vatten"  # "#{temp}°C water"
-        end
+    # Determine which condition triggered (concise Swedish)
+    indoor_low = temps[:indoor] <= (temps[:target] - config.emergency_temp_offset)
+    hotwater_low = temps[:hotwater] < config.min_hotwater
 
-        SmsGateway.send_admin_alert(message)
-        @last_emergency_sms_time = now
-        puts "📱 Emergency SMS sent: #{message}"
-      rescue => e
-        puts "⚠️  Failed to send emergency SMS: #{e.message}"
-      end
+    message = if indoor_low && hotwater_low
+      "Båda för kalla!"
+    elsif indoor_low
+      "#{temps[:indoor].round(0).to_i}°C inne"
+    else
+      "#{temps[:hotwater].round(0).to_i}°C vatten"
+    end
+
+    begin
+      SmsGateway.send_admin_alert(message)
+      @last_emergency_sms_time = now
+      puts "📱 Emergency SMS sent: #{message}"
+    rescue => e
+      puts "⚠️  Failed to send emergency SMS: #{e.message}"
     end
   end
 
