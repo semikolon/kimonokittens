@@ -1,7 +1,7 @@
 # Heatpump Schedule Configuration UI Plan
 
 **Created:** November 20, 2025
-**Status:** ✅ BACKEND COMPLETE - UI Pending
+**Status:** ✅ FULLY DEPLOYED
 **Goal:** Make heatpump schedule parameters configurable via dashboard + move temperature override logic to backend
 
 **Progress (Dec 20, 2025):**
@@ -12,7 +12,7 @@
 - ✅ **ALGORITHM BUG FIXED**: ps-strategy now processes each 24-hour period independently
 - ✅ **REMOVED**: Price opportunity logic + emergencyPrice field (Nov 20, 2025)
 - ✅ **DEPLOYED**: Auto-learning system adjusts hours_on + block distribution (Dec 20, 2025)
-- ⏳ **PENDING**: Build heatpump config UI widget (manual config via database for now)
+- ✅ **UI COMPLETE**: `HeatpumpConfigModal.tsx` integrated in TemperatureWidget (Swedish labels, sliders for hours_on/emergencyTempOffset/minHotwater)
 
 **Key Decisions (Nov 20):**
 1. **Removed price opportunity logic**: emergencyPrice field was redundant with hours_on control, rarely triggered in winter

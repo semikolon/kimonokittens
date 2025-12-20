@@ -541,8 +541,8 @@ Handlers → Services → Domain Models + Repositories → Database
 - **Dashboard data generation**: All data consumed by widgets or useful for online handbook
 - **Heatpump schedule generation** (Nov 20, 2025): Moved from Pi Tibber/ps-strategy → Dell Ruby backend
   - ps-strategy algorithm now in `/api/heatpump/schedule` handler
-  - Configurable parameters via database (HeatpumpConfig table) - UI in progress
-  - Temperature override logic now working (Dec 19, 2025) - triggers SMS + logs to HeatpumpOverride table
+  - Configurable via `HeatpumpConfigModal.tsx` in TemperatureWidget (hours_on, emergencyTempOffset, minHotwater)
+  - Temperature override logic working (Dec 19, 2025) - triggers SMS + logs to HeatpumpOverride table
 - **Heatpump auto-learning** (Dec 20, 2025): Self-optimizing schedule adjustments
   - Weekly cron job (Sunday 3am) analyzes override patterns
   - Layer 2: Adjusts hours_on (>1.5 overrides/day → +1h, zero for 2 weeks → -1h)
