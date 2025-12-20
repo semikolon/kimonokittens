@@ -31,10 +31,13 @@ require_relative '../lib/sms/gateway'
 class HeatpumpScheduleHandler
   DEFAULT_HOURS_ON = 12
 
-  # Minimum hours per 6-hour block to ensure hot water recovery throughout the day
-  # With 14 hours_on: 8 distributed (2×4 blocks) + 6 from cheapest = 14 total
+  # Block distribution is now configurable via HeatpumpConfig.block_distribution
+  # Default: [2, 2, 2, 2] = 2 hours per 6-hour block
+  # Learned: e.g., [2, 3, 2, 2] = 3 hours in morning block (if overrides cluster there)
+  #
+  # With 14 hours_on and [2,2,2,2]: 8 distributed + 6 from cheapest = 14 total
   # This prevents gaps > 4 hours which cause hot water to deplete below threshold
-  MIN_HOURS_PER_BLOCK = 2
+  DEFAULT_BLOCK_DISTRIBUTION = [2, 2, 2, 2].freeze
 
   # 6-hour blocks for distribution
   # Block 0: 00:00-05:59 (overnight - recovery while sleeping)
@@ -85,7 +88,9 @@ class HeatpumpScheduleHandler
     end
 
     # Generate schedule using ps-strategy algorithm (process each day independently)
-    schedule = generate_schedule_per_day(today, tomorrow, hours_on)
+    # Use learned block distribution from config (or default [2,2,2,2])
+    block_distribution = config&.block_distribution || DEFAULT_BLOCK_DISTRIBUTION
+    schedule = generate_schedule_per_day(today, tomorrow, hours_on, block_distribution)
 
     # Apply temperature override logic
     current_state = calculate_current_state(schedule, config, temps, skip_sms)
@@ -115,12 +120,12 @@ class HeatpumpScheduleHandler
   # Implements ps-strategy-lowest-price getBestX algorithm (per 24-hour period)
   # CRITICAL: Processes each day independently to ensure consistent daily heating
   # Prevents bug where all hours could be selected from one day, leaving other day with 0 hours
-  def generate_schedule_per_day(today, tomorrow, hours_on)
+  def generate_schedule_per_day(today, tomorrow, hours_on, block_distribution)
     # Process today's 24 hours independently
-    today_schedule = select_cheapest_hours(today, hours_on)
+    today_schedule = select_cheapest_hours(today, hours_on, block_distribution)
 
     # Process tomorrow's 24 hours independently
-    tomorrow_schedule = select_cheapest_hours(tomorrow, hours_on)
+    tomorrow_schedule = select_cheapest_hours(tomorrow, hours_on, block_distribution)
 
     # Combine into single schedule (chronological order preserved)
     today_schedule + tomorrow_schedule
@@ -130,33 +135,40 @@ class HeatpumpScheduleHandler
   # Returns schedule array with onOff flags set
   #
   # Distribution algorithm (Dec 2025):
-  #   1. First pass: Select MIN_HOURS_PER_BLOCK cheapest hours from EACH 6-hour block
+  #   1. First pass: Select min hours from EACH 6-hour block (per block_distribution)
   #      This guarantees coverage throughout the day (no gaps > 4 hours)
   #   2. Second pass: Fill remaining slots from globally cheapest available hours
   #      This optimizes cost while respecting distribution constraints
   #
-  # Example with 14 hours_on and MIN_HOURS_PER_BLOCK=2:
-  #   - 8 hours distributed (2 per block × 4 blocks)
-  #   - 6 hours from cheapest remaining
-  #   - Result: Good coverage + cost optimization
+  # Example with 14 hours_on and block_distribution=[2,3,2,2]:
+  #   - 9 hours distributed (2+3+2+2 per block)
+  #   - 5 hours from cheapest remaining
+  #   - Result: Good coverage + cost optimization + learned block preferences
   #
   # NOTE: Always selects hours regardless of absolute price.
   # Heatpump is essential infrastructure - can't defer like washing machines.
-  def select_cheapest_hours(prices, hours_on)
+  #
+  # @param prices [Array] Hourly prices for the day
+  # @param hours_on [Integer] Total hours to run
+  # @param block_distribution [Array] Min hours per block [overnight, morning, afternoon, evening]
+  def select_cheapest_hours(prices, hours_on, block_distribution)
     return [] if prices.empty?
 
     selected = Set.new
 
     # First pass: ensure minimum coverage in each 6-hour block
-    # Pick the cheapest MIN_HOURS_PER_BLOCK hours within each block
-    HOUR_BLOCKS.each do |block_range|
+    # Pick the cheapest N hours within each block (N from block_distribution)
+    HOUR_BLOCKS.each_with_index do |block_range, block_index|
       block_hours = block_range.to_a.select { |h| h < prices.length }
       next if block_hours.empty?
+
+      # Get learned minimum for this block
+      min_hours_for_block = block_distribution[block_index] || 2
 
       # Sort hours in this block by price, pick cheapest
       cheapest_in_block = block_hours
         .sort_by { |h| prices[h]['total'] }
-        .first(MIN_HOURS_PER_BLOCK)
+        .first(min_hours_for_block)
 
       selected.merge(cheapest_in_block)
     end

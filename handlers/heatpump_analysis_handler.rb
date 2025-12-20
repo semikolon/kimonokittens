@@ -46,6 +46,12 @@ class HeatpumpAnalysisHandler
     # Get current config for context
     config = Persistence.heatpump_config.get_current
 
+    # Get auto-tuner status
+    auto_tuner_status = build_auto_tuner_status(config)
+
+    # Get adjustment history
+    adjustment_history = Persistence.heatpump_adjustments.recent(limit: 5).map(&:to_h)
+
     response = {
       'period' => {
         'days' => days,
@@ -61,9 +67,13 @@ class HeatpumpAnalysisHandler
       },
       'current_config' => {
         'hours_on' => config.hours_on,
+        'block_distribution' => config.block_distribution,
         'min_hotwater' => config.min_hotwater,
-        'emergency_temp_offset' => config.emergency_temp_offset
+        'emergency_temp_offset' => config.emergency_temp_offset,
+        'last_auto_adjustment' => config.last_auto_adjustment&.iso8601
       },
+      'auto_tuner' => auto_tuner_status,
+      'adjustment_history' => adjustment_history,
       'recommendations' => recommendations,
       'recent_overrides' => recent.first(10).map(&:to_h)
     }
@@ -166,5 +176,47 @@ class HeatpumpAnalysisHandler
     end
 
     recommendations
+  end
+
+  # Build auto-tuner status information
+  def build_auto_tuner_status(config)
+    days_since = Persistence.heatpump_adjustments.days_since_last_adjustment
+    adjustments_30d = Persistence.heatpump_adjustments.count_recent(days: 30)
+
+    min_interval_days = 7  # Must match HeatpumpAutoTuner::MIN_ADJUSTMENT_INTERVAL_DAYS
+
+    if days_since.nil?
+      # No adjustments ever made
+      {
+        'enabled' => true,
+        'last_adjustment' => nil,
+        'next_eligible' => Time.now.iso8601,
+        'status' => 'ready',
+        'message' => 'Auto-tuner ready (no adjustments yet)',
+        'adjustments_last_30_days' => 0
+      }
+    elsif days_since < min_interval_days
+      days_until = (min_interval_days - days_since).ceil
+      next_eligible = Time.now + (days_until * 24 * 60 * 60)
+      {
+        'enabled' => true,
+        'last_adjustment' => config.last_auto_adjustment&.iso8601,
+        'days_since_last' => days_since.round(1),
+        'next_eligible' => next_eligible.iso8601,
+        'status' => 'rate_limited',
+        'message' => "Rate limited: #{days_until} day(s) until next adjustment eligible",
+        'adjustments_last_30_days' => adjustments_30d
+      }
+    else
+      {
+        'enabled' => true,
+        'last_adjustment' => config.last_auto_adjustment&.iso8601,
+        'days_since_last' => days_since.round(1),
+        'next_eligible' => Time.now.iso8601,
+        'status' => 'ready',
+        'message' => 'Auto-tuner ready for next scheduled run',
+        'adjustments_last_30_days' => adjustments_30d
+      }
+    end
   end
 end

@@ -36,6 +36,8 @@ class HeatpumpConfigRepository < BaseRepository
     update_hash[:hoursOn] = params[:hours_on] if params[:hours_on]
     update_hash[:emergencyTempOffset] = params[:emergency_temp_offset] if params[:emergency_temp_offset]
     update_hash[:minHotwater] = params[:min_hotwater] if params[:min_hotwater]
+    update_hash[:blockDistribution] = params[:block_distribution].to_json if params[:block_distribution]
+    update_hash[:lastAutoAdjustment] = params[:last_auto_adjustment] if params.key?(:last_auto_adjustment)
 
     dataset.where(id: id).update(update_hash)
 
@@ -79,6 +81,8 @@ class HeatpumpConfigRepository < BaseRepository
       hours_on: row[:hoursOn],
       emergency_temp_offset: row[:emergencyTempOffset],
       min_hotwater: row[:minHotwater],
+      block_distribution: row[:blockDistribution] || "[2,2,2,2]",
+      last_auto_adjustment: row[:lastAutoAdjustment],
       created_at: row[:createdAt],
       updated_at: row[:updatedAt]
     )
