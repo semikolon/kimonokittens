@@ -36,7 +36,7 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
    - (See `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md` for full checklist)
 4. **Log Rotation** - Needs verification if actually needed in production
 5. **Contract Replacement Workflow** - Delete+Re-sign not yet implemented
-6. **Heatpump Peak Avoidance** - Requires Pi Node-RED config (separate infrastructure)
+6. ~~**Heatpump Peak Avoidance**~~ - ✅ **COMPLETE** (Nov 20, 2025) - Schedule API migrated from Pi/Tibber to Dell Ruby backend. See `docs/HEATPUMP_SCHEDULE_API_PLAN.md`
 7. ~~**Horsemen Font**~~ - ✅ **COMPLETE** (Nov 20-21, 2025) - Font files added to `/fonts/`, @font-face declarations in signup.html, nginx config deployed
 8. **Whenever Gem vs Manual Cron** - Consider pros/cons of using Whenever gem (already installed) for cron job management instead of manual crontab entries (rent reminders, bank sync, electricity scrapers)
 9. **Electricity Price Awareness System** - Smart warnings for high-cost periods to optimize household appliance usage (washing machine, tumble dryer, dishwasher). System auto-detects abnormally high prices via statistical analysis (rolling baseline, no manual threshold). Features: (a) Predictive SMS/notifications day(s) before expensive periods, (b) Enhanced dashboard sparkline with visual price peak warnings overlaid on heatpump schedule bar. Context-aware: accounts for seasonal patterns while alerting on objectively high prices regardless of outdoor temperature. **Architecture:** See `docs/PRICE_AWARENESS_ARCHITECTURE_ANALYSIS.md` for design rationale (on-demand calculation, separate from heatpump config).
@@ -870,23 +870,19 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Swedish holiday handling**: Red days excluded from peak pricing ✅
   - **Testing**: Validated against actual 2025 invoices ✅
   - **Impact**: Pricing model now accounts for time-of-use rates in projections
-- [ ] **⚡ FUTURE: Heatpump Optimization for Peak Avoidance** ⏳ **PLANNED**
+- [x] ~~**⚡ Heatpump Optimization for Peak Avoidance**~~ ✅ **COMPLETE** (Nov 20, 2025)
   - **Goal**: ~400-500 kr/month savings by shifting consumption to off-peak
-  - **Priority 1**: Migrate Node-RED heatpump schedule from Tibber API to elprisetjustnu.se API
-  - **Priority 2**: Implement smart scheduling to avoid 06:00-22:00 weekdays in winter months
-  - **Priority 3**: Target 22:00-06:00 + weekends for heating during winter
-  - **Blocker**: Requires Node-RED configuration changes (not code changes in this repo)
-  - **Location**: Heatpump control runs on Raspberry Pi via MQTT (separate infrastructure)
-- [ ] **⚡ FUTURE: Self-learning hours_on adjustment** ⏳ **PLANNED**
+  - **Achieved**: Migrated from Pi/Tibber to Dell Ruby backend with ps-strategy algorithm
+  - **Implementation**: `handlers/heatpump_schedule_handler.rb` selects cheapest hours with block distribution
+  - **Docs**: `docs/HEATPUMP_SCHEDULE_API_PLAN.md`
+- [x] ~~**⚡ Self-learning hours_on adjustment**~~ ✅ **COMPLETE** (Dec 20, 2025)
   - **Goal**: Replace fixed hours_on value with adaptive algorithm
-  - **Approach**: Monitor performance metrics to automatically optimize baseline
-    - Temperature override frequency (too many overrides = increase hours_on)
-    - Energy cost vs target (overspending → reduce hours_on, underspending → can increase)
-    - Weather pattern correlation (colder winters need higher baseline)
-    - Indoor temperature stability (fluctuations indicate poor scheduling)
-  - **Benefit**: Intelligent baseline optimization vs removed emergency_price reactive approach
-  - **Context**: Replaces removed price opportunity logic (emergency_price threshold) with proactive learning
-  - **Added**: Nov 20, 2025 during emergencyPrice field removal
+  - **Deployed**: Full auto-learning system with weekly cron job (Sunday 3am)
+  - **Layer 2**: Adjusts hours_on based on override frequency (>1.5/day → increase, 0 for 2 weeks → decrease)
+  - **Layer 3**: Per-block distribution learning based on override clustering
+  - **First Adjustment**: 15 → 14 hours (detected 8 weeks zero overrides)
+  - **Implementation**: `lib/services/heatpump_auto_tuner.rb`, `bin/heatpump_auto_tune`
+  - **Docs**: `docs/HEATPUMP_AUTO_LEARNING_PLAN.md`
 - [ ] **⚡ FUTURE: Enhance Electricity Projection Accuracy** ⏳ **PLANNED**
   - Use Vattenfall/Fortum PDF scrapers to extract actual bill line-item breakdowns and model specific cost components (trading margins, certificates, administrative fees) instead of empirical 4.5% adjustment. See `bin/analyze_projection_accuracy.rb` for current accuracy baseline.
 - [ ] **💳 FUTURE: Billogram Rent Payment Automation** ⏳ **DEFERRED** (Resume end Dec 2025)

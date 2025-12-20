@@ -1,7 +1,8 @@
 # Heatpump Auto-Learning Implementation Plan
 
 **Created:** December 20, 2025
-**Status:** Implementation Complete - Awaiting Migration
+**Status:** ✅ DEPLOYED TO PRODUCTION
+**Deployed:** December 20, 2025 12:31 CET
 **Prerequisites:** Override logging + analysis endpoint (deployed Dec 19, 2025)
 **Related:** `HEATPUMP_SCHEDULE_API_PLAN.md`, `HEATPUMP_CONFIG_UI_PLAN.md`
 
@@ -9,7 +10,7 @@
 
 ## Executive Summary
 
-**Problem:** Current heatpump scheduling uses static parameters (`hours_on=15`, `MIN_HOURS_PER_BLOCK=2`). When these don't match actual heating demand, temperature emergencies trigger overrides - wasting money by running during expensive hours.
+**Problem:** Heatpump scheduling used static parameters (`hours_on=15`, `MIN_HOURS_PER_BLOCK=2`). When these didn't match actual heating demand, temperature emergencies triggered overrides - wasting money by running during expensive hours.
 
 **Solution:** Closed-loop auto-learning system that:
 1. Analyzes override patterns weekly
@@ -20,27 +21,33 @@
 
 ---
 
-## Current State (Dec 19, 2025)
+## Deployment Status (Dec 20, 2025)
 
-### What's Deployed
+### ✅ All Components Deployed
 
 | Component | Status | Location |
 |-----------|--------|----------|
 | Override logging | ✅ Live | `heatpump_schedule_handler.rb:log_override()` |
 | HeatpumpOverride table | ✅ Live | Prisma schema + migration applied |
 | Analysis endpoint | ✅ Live | `GET /api/heatpump/analysis?days=N` |
-| Distribution algorithm | ✅ Live | MIN_HOURS_PER_BLOCK=2 per 6-hour block |
+| Distribution algorithm | ✅ Live | Per-block distribution from config |
 | Recommendations | ✅ Live | Text suggestions in analysis response |
+| **Auto-adjustment logic** | ✅ Live | `lib/services/heatpump_auto_tuner.rb` |
+| **Per-block learning** | ✅ Live | Layer 3 in auto-tuner |
+| **Cron job** | ✅ Live | Sunday 3am (kimonokittens crontab) |
+| **Adjustment history** | ✅ Live | `HeatpumpAdjustment` table + `/api/heatpump/analysis` |
+| **SMS notifications** | ✅ Live | Admin alert on every adjustment |
 
-### What's Missing (This Plan)
+### First Adjustment Applied
 
-| Component | Status | Description |
-|-----------|--------|-------------|
-| Auto-adjustment logic | ❌ | Actually apply recommendations |
-| Per-block learning | ❌ | Variable MIN_HOURS per block |
-| Cron job | ❌ | Weekly execution trigger |
-| Adjustment history | ❌ | Audit log of all changes |
-| SMS notifications | ❌ | Alert when auto-adjusted |
+```
+Time: 2025-12-20 12:35:43
+Adjustment: hours_on 15 → 14
+Reason: Zero overrides for 8 consecutive weeks
+SMS: Sent to admin ✅
+```
+
+The system correctly detected 8 weeks of zero overrides and reduced heating hours to optimize cost while maintaining comfort.
 
 ---
 

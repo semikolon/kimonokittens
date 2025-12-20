@@ -1,21 +1,22 @@
 # Heatpump Schedule Configuration UI Plan
 
 **Created:** November 20, 2025
-**Status:** IN PROGRESS - Backend API Complete ✅
+**Status:** ✅ BACKEND COMPLETE - UI Pending
 **Goal:** Make heatpump schedule parameters configurable via dashboard + move temperature override logic to backend
 
-**Progress (Nov 20, 2025 19:20):**
-- ✅ Database schema complete (HeatpumpConfig table with emergencyTempOffset)
+**Progress (Dec 20, 2025):**
+- ✅ Database schema complete (HeatpumpConfig table with emergencyTempOffset, blockDistribution)
 - ✅ Backend API complete (GET/PUT /api/heatpump/config)
 - ✅ Field rename complete (minTemp → emergencyTempOffset, dynamic offset design)
-- ✅ Temperature override logic implemented (NEEDS REVISION - see below)
+- ✅ Temperature override logic implemented and working (Dec 19, 2025)
 - ✅ **ALGORITHM BUG FIXED**: ps-strategy now processes each 24-hour period independently
-- ⏳ **PENDING**: Remove price opportunity logic + emergencyPrice field
-- ⏳ **PENDING**: Build heatpump config UI widget
+- ✅ **REMOVED**: Price opportunity logic + emergencyPrice field (Nov 20, 2025)
+- ✅ **DEPLOYED**: Auto-learning system adjusts hours_on + block distribution (Dec 20, 2025)
+- ⏳ **PENDING**: Build heatpump config UI widget (manual config via database for now)
 
 **Key Decisions (Nov 20):**
-1. **Remove price opportunity logic**: emergencyPrice field is redundant with hours_on control, rarely triggers in winter, adds unnecessary complexity
-2. **TODO for self-learning**: System should adjust hours_on dynamically to prevent temperature emergency overrides during expensive hours (see TODO.md)
+1. **Removed price opportunity logic**: emergencyPrice field was redundant with hours_on control, rarely triggered in winter
+2. **Self-learning COMPLETE**: System now auto-adjusts hours_on weekly based on override patterns (see `docs/HEATPUMP_AUTO_LEARNING_PLAN.md`)
 
 **Algorithm Fix (COMPLETED):**
 - ✅ **Refactored**: `generate_schedule_per_day()` processes today and tomorrow independently
