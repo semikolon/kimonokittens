@@ -23,9 +23,13 @@ Mellan nedanstående parter har följande avtal slutits:
 - **Adress:** <%= property[:address] %>
 - **Bostadstyp:** <%= property[:type] %>
 
-## Hyrestid
+## Hyrestid och prövoperiod
 
-Avtalet gäller omedelbart med inflytt från och med **<%= tenant[:move_in_date] %>** tills vidare med en uppsägningstid om **två (2) månader** räknat från den dag då uppsägningen skriftligen meddelats motparten.
+Avtalet gäller från och med **<%= tenant[:move_in_date] %>** tills vidare.
+
+**Prövoperiod:** De första tre (3) månaderna utgör en prövoperiod under vilken båda parter kan säga upp avtalet med en (1) månads varsel. Prövoperioden löper ut den **<%= tenant[:probation_end_date] %>**.
+
+**Efter prövoperioden:** Från och med <%= tenant[:probation_end_date] %> gäller två (2) månaders uppsägningstid för båda parter.
 
 ## Hyra
 
@@ -59,9 +63,13 @@ Om gemensamma föremål skadats eller förlorats under hyrestiden kan motsvarand
 
 ## Uppsägning
 
-Uppsägning ska ske skriftligen med minst **två (2) månaders** varsel. Uppsägning räknas från den sista dagen i den månad då uppsägningen delges motparten.
+Uppsägning ska ske skriftligen. Uppsägning räknas från den sista dagen i den månad då uppsägningen delges motparten.
 
-**Förverkande:** Vid väsentligt avtalsbrott enligt punkt 7 ovan, eller om hyresgästen på annat sätt allvarligt stör husfriden på ett sätt som gör fortsatt samlevnad orimlig, äger hyresvärden rätt att säga upp avtalet med omedelbar verkan i enlighet med 12 kap 42 § jordabalken. Hyresvärden ska i sådana fall först ge hyresgästen skriftlig rättelseanmaning, såvida inte störningen är så allvarlig att omedelbar uppsägning är påkallad.
+**Uppsägningstid:**
+- Under prövoperioden (t.o.m. <%= tenant[:probation_end_date] %>): **en (1) månad** för båda parter
+- Efter prövoperioden: **två (2) månader** för båda parter
+
+**Förverkande:** Vid väsentligt avtalsbrott, eller om den inneboende på annat sätt allvarligt stör husfriden på ett sätt som gör fortsatt samlevnad orimlig, äger upplåtaren rätt att säga upp avtalet med omedelbar verkan i enlighet med 12 kap 42 § jordabalken. Upplåtaren ska i sådana fall först ge den inneboende skriftlig rättelseanmaning, såvida inte störningen är så allvarlig att omedelbar uppsägning är påkallad.
 
 ## Övriga villkor
 
