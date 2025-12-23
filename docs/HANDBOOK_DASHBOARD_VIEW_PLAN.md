@@ -1,12 +1,29 @@
 # Handbook Dashboard View Implementation Plan
 
-**Status**: 📋 PLANNING (Dec 21, 2025)
+**Status**: 🚧 IN PROGRESS (Dec 21, 2025)
 **Priority**: High - Internal visibility for household members
-**Prerequisite**: Backend already exists and is mounted
+**Approach**: Pragmatic MVP - readable content first, AI features later
 
 ## Overview
 
 Add the handbook as a third view in the existing dashboard SPA, accessible via Tab key cycling (public → admin → handbook). This provides internal visibility to all household members before considering public deployment.
+
+## Current Sprint: MVP (Dec 2025)
+
+**Goal**: Simple, readable handbook view - no AI/RAG complexity yet.
+
+### What We're Building NOW:
+1. ✅ Extend view mode to 3 views (Tab cycling)
+2. ✅ Create HandbookDashboard.tsx
+3. ✅ Display markdown content in readable format
+4. ✅ Navigation between handbook pages
+5. ✅ Consistent styling with dashboard
+
+### What's Deferred (Jan 2025+):
+- AI query widget (Pinecone/RAG)
+- Proposal creation UI
+- Approval workflow UI
+- Real-time WebSocket updates
 
 ## Current State Assessment
 

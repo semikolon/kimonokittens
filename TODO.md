@@ -48,6 +48,31 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 
 ---
 
+## 🔥 HIGH PRIORITY: Handbook Dashboard View (Dec 2025)
+
+**Goal:** Add handbook as third tab-navigable view in dashboard (public → admin → handbook)
+
+**Status:** 🚧 IN PROGRESS - Implementation started, paused for other priorities
+
+**What we're building (MVP - no AI/RAG yet):**
+- [ ] Extend `useKeyboardNav.tsx` to cycle through 3 views
+- [ ] Create `HandbookDashboard.tsx` with readable markdown content
+- [ ] Navigation between handbook pages (agreements, house-rules, etc.)
+- [ ] Consistent styling with existing dashboard
+
+**What's deferred (Jan 2025+):**
+- AI query widget (Pinecone/RAG indexing)
+- Proposal creation/approval UI
+- Real-time WebSocket updates
+
+**Backend already exists:** `handlers/handbook_handler.rb` (388 lines) mounted at `/api/handbook/*`
+
+**Plan document:** `docs/HANDBOOK_DASHBOARD_VIEW_PLAN.md`
+
+**Why high priority:** Household members need access to handbook content on the kiosk display.
+
+---
+
 ## ✅ RESOLVED - Deposit Formula Fixed (Nov 16, 2025)
 
 **PROBLEM:** Deposit formula in code (6,746 kr) didn't match actual practice (6,221 kr per person)!
