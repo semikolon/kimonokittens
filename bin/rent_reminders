@@ -52,14 +52,32 @@ unless admin_swish_number
   exit 1
 end
 
-# Get all active tenants (not opted out, not departed)
+# Helper: Check if tenant has a completed (signed) contract
+def has_signed_contract?(tenant_id)
+  contracts = Persistence.signed_contracts.find_by_tenant_id(tenant_id)
+  contracts.any?(&:completed?)
+end
+
+# Get all active tenants (not opted out, not departed, has signed contract)
 all_tenants = Persistence.tenants.all
 active_tenants = all_tenants.select do |t|
   !t.sms_opt_out &&
-  (!t.departure_date || t.departure_date > now.to_date)
+  (!t.departure_date || t.departure_date > now.to_date) &&
+  has_signed_contract?(t.id)
 end
 
-puts "👥 Found #{all_tenants.length} total tenants, #{active_tenants.length} active"
+# Log filtering details
+unsigned_tenants = all_tenants.select do |t|
+  !t.sms_opt_out &&
+  (!t.departure_date || t.departure_date > now.to_date) &&
+  !has_signed_contract?(t.id)
+end
+
+puts "👥 Found #{all_tenants.length} total tenants, #{active_tenants.length} active (with signed contracts)"
+if unsigned_tenants.any?
+  names = unsigned_tenants.map { |t| t.name.split(' ').first }.join(', ')
+  puts "   ⏭️  Skipped (no signed contract): #{names}"
+end
 
 # Helper: Generate reference code for tenant (no dashes for iPhone copy compatibility)
 def generate_reference(tenant, month)
