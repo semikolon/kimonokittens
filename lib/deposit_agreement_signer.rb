@@ -37,6 +37,7 @@ class DepositAgreementSigner
   # @param repayment_deadline [String] Human-readable deadline (e.g., "1 mars 2026")
   # @param test_mode [Boolean] Use Zigned test environment (default: false)
   # @param send_emails [Boolean] Whether Zigned should send email invitations (default: true)
+  # @param tenant_phone [String, nil] Tenant's phone for SMS notification (optional)
   #
   # @return [Hash] Result with case_id, signing_links, etc.
   def self.create_and_send(
@@ -46,7 +47,8 @@ class DepositAgreementSigner
     deposit_amount:,
     repayment_deadline:,
     test_mode: false,
-    send_emails: true
+    send_emails: true,
+    tenant_phone: nil
   )
     new.create_and_send(
       tenant_name: tenant_name,
@@ -55,7 +57,8 @@ class DepositAgreementSigner
       deposit_amount: deposit_amount,
       repayment_deadline: repayment_deadline,
       test_mode: test_mode,
-      send_emails: send_emails
+      send_emails: send_emails,
+      tenant_phone: tenant_phone
     )
   end
 
@@ -66,7 +69,8 @@ class DepositAgreementSigner
     deposit_amount:,
     repayment_deadline:,
     test_mode: false,
-    send_emails: true
+    send_emails: true,
+    tenant_phone: nil
   )
     landlord = LandlordProfile.info
 
@@ -182,6 +186,7 @@ class DepositAgreementSigner
     # Step 5: Send SMS notifications
     sms_sent = send_sms_invitations(
       tenant_name: tenant_name,
+      tenant_phone: tenant_phone,
       tenant_link: tenant_link,
       landlord: landlord,
       landlord_link: landlord_link
@@ -307,19 +312,18 @@ class DepositAgreementSigner
     "deposit-agreement-#{personnummer.gsub(/\D/, '')}"
   end
 
-  def send_sms_invitations(tenant_name:, tenant_link:, landlord:, landlord_link:)
+  def send_sms_invitations(tenant_name:, tenant_phone:, tenant_link:, landlord:, landlord_link:)
     require_relative 'sms/gateway'
 
     tenant_success = false
     landlord_success = false
 
-    # Get landlord phone
-    landlord_phone = landlord[:phone]&.gsub(/[\s\-]/, '')
-    landlord_phone = "+46#{landlord_phone.sub(/^0/, '')}" unless landlord_phone&.start_with?('+')
-
     message = "Vänligen signera depositionsavtalet med BankID: "
 
     # Send to landlord
+    landlord_phone = landlord[:phone]&.gsub(/[\s\-]/, '')
+    landlord_phone = "+46#{landlord_phone.sub(/^0/, '')}" unless landlord_phone&.start_with?('+')
+
     begin
       SmsGateway.send(
         to: landlord_phone,
@@ -332,8 +336,25 @@ class DepositAgreementSigner
       puts "⚠️  Failed to send SMS to landlord: #{e.message}"
     end
 
-    # Note: We don't have tenant phone in this context - they'll get email from Zigned
-    puts "ℹ️  Tenant will receive email invitation from Zigned"
+    # Send to tenant
+    if tenant_phone && !tenant_phone.empty?
+      formatted_phone = tenant_phone.gsub(/[\s\-]/, '')
+      formatted_phone = "+46#{formatted_phone.sub(/^0/, '')}" unless formatted_phone.start_with?('+')
+
+      begin
+        SmsGateway.send(
+          to: formatted_phone,
+          body: "#{message}#{tenant_link}",
+          meta: { type: 'deposit_agreement', role: 'tenant' }
+        )
+        puts "📱 SMS sent to tenant: #{tenant_name}"
+        tenant_success = true
+      rescue => e
+        puts "⚠️  Failed to send SMS to tenant: #{e.message}"
+      end
+    else
+      puts "ℹ️  Tenant phone not provided - they'll receive email from Zigned"
+    end
 
     { tenant_success: tenant_success, landlord_success: landlord_success }
   end

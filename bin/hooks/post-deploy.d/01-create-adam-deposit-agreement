@@ -14,11 +14,11 @@
 #   TEST_MODE=true bin/create_adam_deposit_agreement  # Test mode (free, no real signatures)
 
 require 'dotenv/load'
-require_relative '../lib/rent_db'
-require_relative '../lib/persistence'
-require_relative '../lib/deposit_agreement_signer'
-require_relative '../lib/repositories/tenant_repository'
-require_relative '../lib/repositories/signed_contract_repository'
+require_relative '../../../lib/rent_db'
+require_relative '../../../lib/persistence'
+require_relative '../../../lib/deposit_agreement_signer'
+require_relative '../../../lib/repositories/tenant_repository'
+require_relative '../../../lib/repositories/signed_contract_repository'
 
 # Adam's details from the agreement
 ADAM_PERSONNUMMER = '19890714-0357'
@@ -71,6 +71,7 @@ def main
     tenant_name: adam.name,
     tenant_personnummer: adam.personnummer || ADAM_PERSONNUMMER,
     tenant_email: adam.email,
+    tenant_phone: adam.phone,
     deposit_amount: DEPOSIT_AMOUNT,
     repayment_deadline: REPAYMENT_DEADLINE,
     test_mode: test_mode,
