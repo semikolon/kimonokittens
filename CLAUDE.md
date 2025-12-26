@@ -649,9 +649,11 @@ machinectl shell kimonokittens@ /usr/bin/systemctl --user status kimonokittens-k
 4. **Deploy components**:
    ```bash
    # Frontend: npm ci → npx vite build → rsync to nginx → restart kiosk
-   # Backend: git pull → bundle install → systemctl restart dashboard
+   # Backend: git pull → bundle install → systemctl restart dashboard → run post-deploy hooks
    ```
 5. **Monitor**: `journalctl -u kimonokittens-webhook -f`
+
+**Post-deploy hooks**: Backend deployments run `bin/create_adam_deposit_agreement` (idempotent) after service reload.
 
 **Webhook endpoints**: `/webhook` (GitHub), `/health`, `/status` (deployment queue info)
 
