@@ -453,7 +453,33 @@ class DeploymentHandler
     end
     $logger.info("✅ Backend service reloaded (PID #{pid})")
 
+    # Run post-deployment hooks
+    run_post_deploy_hooks
+
     true
+  end
+
+  def run_post_deploy_hooks
+    $logger.info("🔄 Running post-deployment hooks...")
+
+    # Create Adam's deposit agreement (idempotent - only creates once)
+    deposit_script = File.join(@project_dir, 'bin/create_adam_deposit_agreement')
+    if File.exist?(deposit_script)
+      Dir.chdir(@project_dir)
+      output = `bundle exec #{deposit_script} 2>&1`
+      if $?.success?
+        # Only log summary (the script handles detailed output)
+        if output.include?('Skipping creation')
+          $logger.info("ℹ️  Deposit agreement already exists (idempotent skip)")
+        elsif output.include?('created successfully')
+          $logger.info("✨ Deposit agreement created and sent for signing!")
+        end
+      else
+        $logger.error("⚠️  Deposit agreement script failed (non-critical):")
+        $logger.error(output.lines.last(5).join)
+        # Don't fail deployment - this is a non-critical hook
+      end
+    end
   end
 
   def deploy_frontend

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Depositionsavtal - <%= tenant[:name] %></title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    @font-face {
+      font-family: 'Horsemen';
+      src: url('file:///<%= fonts_dir %>/Horsemen.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'Galvji';
+      src: url('file:///<%= fonts_dir %>/Galvji.ttc') format('truetype-collection');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    html {
+      background: #ffffff !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Galvji', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      font-size: 11pt;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-family: 'Horsemen', sans-serif;
+      color: #331D5B;
+      font-weight: bold;
+      line-height: 1.3;
+    }
+
+    h2 {
+      font-family: 'Galvji', sans-serif;
+      color: #300C67;
+      font-weight: bold;
+    }
+
+    .widget-box {
+      background: #f9f8fa;
+      border: 1.5px solid rgba(80, 86, 159, 0.18);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(85, 49, 152, 0.08);
+      page-break-inside: avoid;
+    }
+
+    .section-title {
+      font-family: 'Galvji', sans-serif;
+      font-size: 0.9em;
+      color: #50569F;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .logo {
+      width: 200px;
+      float: right;
+      margin-left: 20px;
+    }
+
+    @page {
+      margin: 50px 0;
+      size: A4;
+    }
+
+    .container {
+      max-width: 100%;
+      margin: 0;
+      padding: 0 45px 50px 45px;
+    }
+
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Logo and Title -->
+    <div style="margin-bottom: 40px; overflow: hidden;">
+      <img src="file:///<%= logo_path %>" class="logo" alt="Kimonokittens">
+      <h1 style="font-size: 22pt; margin: 0 0 0.8em 0; padding-top: 15px; padding-left: 15px;">
+        DEPOSITIONSAVTAL
+      </h1>
+      <p style="color: #64748b; font-size: 10pt; margin: 8px 0 0 0;">
+        Överenskommelse om återbetalning av deposition
+      </p>
+    </div>
+
+    <div style="margin-top: 30px;">
+      <p style="margin-bottom: 20px;">Mellan undertecknade parter har följande överenskommelse träffats:</p>
+
+      <!-- Section 1: Parter -->
+      <h2 class="section-title">1. Parter</h2>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div class="widget-box" style="margin-bottom: 0;">
+          <h3 style="font-size: 11pt; margin: 0 0 8px 0; text-transform: uppercase; color: #50569F;">UTHYRARE</h3>
+          <div style="margin-left: 15px; font-size: 10.5pt;">
+            <p style="margin: 3px 0;"><strong>Namn:</strong> <span style="color: #475569;"><%= landlord[:name] %></span></p>
+            <p style="margin: 3px 0;"><strong>Personnummer:</strong> <span style="color: #475569;"><%= landlord[:personnummer] %></span></p>
+          </div>
+        </div>
+
+        <div class="widget-box" style="margin-bottom: 0;">
+          <h3 style="font-size: 11pt; margin: 0 0 8px 0; text-transform: uppercase; color: #50569F;">HYRESGÄST</h3>
+          <div style="margin-left: 15px; font-size: 10.5pt;">
+            <p style="margin: 3px 0;"><strong>Namn:</strong> <span style="color: #475569;"><%= tenant[:name] %></span></p>
+            <p style="margin: 3px 0;"><strong>Personnummer:</strong> <span style="color: #475569;"><%= tenant[:personnummer] %></span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Bakgrund -->
+      <h2 class="section-title">2. Bakgrund</h2>
+
+      <div class="widget-box">
+        <p style="margin: 0 0 10px 0;"><%= tenant[:first_name] %> har bott i kollektivboende hos <%= landlord[:first_name] %> enligt muntlig överenskommelse.</p>
+        <p style="margin: 10px 0;"><strong>En deposition om <%= deposit[:amount] %> kronor</strong> har erlagts av <%= tenant[:first_name] %>.</p>
+        <p style="margin: 10px 0 0 0;">Uppsägning skedde muntligen i rätt tid, en månad före utflytt, med vittnen närvarande.</p>
+      </div>
+
+      <!-- Section 3: Deposition -->
+      <h2 class="section-title">3. Deposition</h2>
+
+      <div class="widget-box">
+        <p style="margin: 0;"><%= landlord[:first_name] %> bekräftar härmed att depositionen om <strong><%= deposit[:amount] %> kronor</strong> tillhör <%= tenant[:first_name] %> och ska återbetalas i sin helhet.</p>
+      </div>
+
+      <!-- Section 4: Återbetalning -->
+      <h2 class="section-title">4. Återbetalning</h2>
+
+      <div class="widget-box">
+        <p style="margin: 0;">Återbetalning ska ske senast den <strong><%= deposit[:repayment_deadline] %></strong> genom banköverföring till konto som <%= tenant[:first_name] %> anvisar.</p>
+      </div>
+
+      <!-- Section 5: Avtalets giltighet -->
+      <h2 class="section-title">5. Avtalets giltighet</h2>
+
+      <div class="widget-box">
+        <p style="margin: 0;">Denna handling utgör en bindande överenskommelse mellan parterna och gäller oavsett tidigare muntliga avtal.</p>
+      </div>
+
+      <!-- Digital signatures -->
+      <div style="margin-top: 40px;">
+        <p style="margin-bottom: 20px; color: rgb(148, 163, 184); font-size: 10pt; font-style: italic;">
+          Detta avtal signeras digitalt med BankID via Zigned e-signeringstjänst.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

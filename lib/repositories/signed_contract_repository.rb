@@ -47,6 +47,15 @@ class SignedContractRepository
       .map { |row| hydrate(row) }
   end
 
+  # Find by PDF URL pattern (for idempotency checks)
+  # Uses SQL LIKE pattern matching (% = wildcard)
+  def find_by_pdf_pattern(pattern)
+    @db.class.db[:SignedContract]
+      .where(Sequel.like(:pdfUrl, pattern))
+      .order(Sequel.desc(:createdAt))
+      .map { |row| hydrate(row) }
+  end
+
   # Save (insert or update)
   def save(signed_contract)
     data = dehydrate(signed_contract)
