@@ -460,24 +460,37 @@ class DeploymentHandler
   end
 
   def run_post_deploy_hooks
-    $logger.info("🔄 Running post-deployment hooks...")
+    hooks_dir = File.join(@project_dir, 'bin/hooks/post-deploy.d')
 
-    # Create Adam's deposit agreement (idempotent - only creates once)
-    deposit_script = File.join(@project_dir, 'bin/create_adam_deposit_agreement')
-    if File.exist?(deposit_script)
-      Dir.chdir(@project_dir)
-      output = `bundle exec #{deposit_script} 2>&1`
+    unless Dir.exist?(hooks_dir)
+      $logger.info("ℹ️  No post-deploy hooks directory (#{hooks_dir})")
+      return
+    end
+
+    # Find all executable scripts, run in alphabetical order
+    scripts = Dir.glob(File.join(hooks_dir, '*')).select { |f| File.executable?(f) }.sort
+
+    if scripts.empty?
+      $logger.info("ℹ️  No post-deploy hooks found")
+      return
+    end
+
+    $logger.info("🔄 Running #{scripts.length} post-deploy hook(s)...")
+    Dir.chdir(@project_dir)
+
+    scripts.each do |script|
+      script_name = File.basename(script)
+      $logger.info("  → Running #{script_name}...")
+
+      output = `bundle exec #{script} 2>&1`
       if $?.success?
-        # Only log summary (the script handles detailed output)
-        if output.include?('Skipping creation')
-          $logger.info("ℹ️  Deposit agreement already exists (idempotent skip)")
-        elsif output.include?('created successfully')
-          $logger.info("✨ Deposit agreement created and sent for signing!")
-        end
+        # Log first meaningful line of output as summary
+        summary = output.lines.find { |l| l.strip.length > 0 }&.strip || 'completed'
+        $logger.info("  ✅ #{script_name}: #{summary}")
       else
-        $logger.error("⚠️  Deposit agreement script failed (non-critical):")
+        $logger.error("  ⚠️  #{script_name} failed (non-critical):")
         $logger.error(output.lines.last(5).join)
-        # Don't fail deployment - this is a non-critical hook
+        # Don't fail deployment - hooks are non-critical
       end
     end
   end
