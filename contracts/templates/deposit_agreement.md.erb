@@ -1,0 +1,49 @@
+# Överenskommelse om återbetalning av deposition
+
+Mellan undertecknade parter har följande överenskommelse träffats:
+
+## 1. Parter
+
+**Uthyrarens namn:** <%= landlord[:name] %>
+**Personnummer:** <%= landlord[:personnummer] %>
+
+**Hyresgästens namn:** <%= tenant[:name] %>
+**Personnummer:** <%= tenant[:personnummer] %>
+
+## 2. Bakgrund
+
+<%= tenant[:name].split(' ').first %> har bott i kollektivboende hos <%= landlord[:name].split(' ').first %> enligt muntlig överenskommelse.
+
+En deposition om **<%= deposit[:amount] %> kronor** har erlagts av <%= tenant[:name].split(' ').first %>.
+
+Uppsägning skedde muntligen i rätt tid, en månad före utflytt, med vittnen närvarande.
+
+## 3. Deposition
+
+<%= landlord[:name].split(' ').first %> bekräftar härmed att depositionen om **<%= deposit[:amount] %> kronor** tillhör <%= tenant[:name].split(' ').first %> och ska återbetalas i sin helhet.
+
+## 4. Återbetalning
+
+Återbetalning ska ske senast den **<%= deposit[:repayment_deadline] %>** genom banköverföring till konto som <%= tenant[:name].split(' ').first %> anvisar.
+
+## 5. Avtalets giltighet
+
+Denna handling utgör en bindande överenskommelse mellan parterna och gäller oavsett tidigare muntliga avtal.
+
+---
+
+## Ort och datum
+
+Huddinge den ____________________
+
+## Underskrifter
+
+**Hyresgästens underskrift:**
+
+_________________________________
+<%= tenant[:name] %>
+
+**Uthyrarens underskrift:**
+
+_________________________________
+<%= landlord[:name] %>
