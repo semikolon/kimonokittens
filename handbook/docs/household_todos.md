@@ -1,6 +1,6 @@
 # Household Todos
 
 - Rensa ut och flyttstäda
-- Soppåsarna
+- Sopsäckarna
 - Ansvarsavtal
 - Betala hyran, säga upp alla avtal
