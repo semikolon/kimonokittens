@@ -1,5 +1,5 @@
 # Household Todos
 
-- Samla de ev nya
+- Rensa ut och flyttstäda under januari
 - Sophämtning
 - Ansvarsavtal
