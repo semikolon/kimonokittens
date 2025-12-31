@@ -42,6 +42,8 @@
 - Webhook receiver: Port 49123
 - Production database: `kimonokittens_production`
 
+**Thermal Management:** Cabinet ventilation holes (Dec 2025) provide near-door-ajar cooling performance. Current: GPU 59°C, CPU 60-62°C. See `/dashboard/CLAUDE.md` for detailed thermal history and shader impact analysis.
+
 ---
 
 ## 👤 SESSION CONTEXT & PERMISSIONS

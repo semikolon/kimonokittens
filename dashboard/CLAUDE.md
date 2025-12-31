@@ -92,6 +92,16 @@ Host kimonokittens
 - **Recommendation**: Disable for 24/7 use (reduces wear, ~200 kWh/year saved, quieter)
 - To disable: Comment out `<AnoAI />` in `App.tsx`
 
+**Thermal History & Cabinet Ventilation:**
+- **Oct 6, 2025** (baseline with cabinet door ajar after shader thermal issues):
+  - GPU: 54°C (shader off), 75°C (shader on, +21°C)
+  - Power: 19W (shader off), 43W (shader on, +24W)
+  - **Context**: Door ajar for cooling, not closed-cabinet baseline
+- **Dec 31, 2025** (cabinet closed with ventilation holes cut in back panel):
+  - GPU: 59°C @ 37% utilization, CPU: 60-62°C
+  - **Result**: Only +5°C vs door-ajar despite closed cabinet - ventilation holes working excellently
+  - 45+ days uptime, no thermal throttling, 34°C margin to GPU critical temp (93°C)
+
 **Note**: Hardware specs and Chrome GPU flags are in `~/.claude/CLAUDE.md` (global, machine-specific)
 
 ---
