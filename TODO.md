@@ -877,6 +877,18 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Priority 3**: Target 22:00-06:00 + weekends for heating during winter
   - **Blocker**: Requires Node-RED configuration changes (not code changes in this repo)
   - **Location**: Heatpump control runs on Raspberry Pi via MQTT (separate infrastructure)
+- [ ] **⚡ Review heatpump self-learning analysis** 📅 **Sunday Jan 5, 2026**
+  - **What**: Check `/api/heatpump/analysis` endpoint on Dell for first week of override data
+  - **Why**: Distribution-aware scheduling deployed Jan 1 - verify it reduced overrides
+  - **Look for**:
+    - Override frequency (should be lower than ~3/day seen in Dec SMS log)
+    - Which hour blocks still have overrides (morning 06:00-12:00? evening 18:00-24:00?)
+    - Hot water vs indoor breakdown
+  - **Actions based on results**:
+    - If overrides still high → increase hours_on from 14 to 15-16
+    - If overrides clustered in specific block → adjust MIN_HOURS_PER_BLOCK
+    - If zero/minimal overrides → consider reducing hours_on to save cost
+  - **Added**: Jan 1, 2026 after deploying distribution algorithm + override tracking
 - [ ] **⚡ FUTURE: Self-learning hours_on adjustment** ⏳ **PLANNED**
   - **Goal**: Replace fixed hours_on value with adaptive algorithm
   - **Approach**: Monitor performance metrics to automatically optimize baseline

@@ -271,8 +271,8 @@ class HeatpumpScheduleHandler
           )
         end
 
-        # Always send SMS alert for temperature emergencies (throttled to 1/hour)
-        send_emergency_sms(temps, config)
+        # SMS alerts disabled (Jan 2026) - too noisy, override logging sufficient
+        # Re-enable via: send_emergency_sms(temps, config)
       end
 
     # Priority 2: Schedule (use calculated schedule)
