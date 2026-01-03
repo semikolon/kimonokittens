@@ -897,9 +897,23 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Impact**: Pricing model now accounts for time-of-use rates in projections
 - [x] ~~**⚡ Heatpump Optimization for Peak Avoidance**~~ ✅ **COMPLETE** (Nov 20, 2025)
   - **Goal**: ~400-500 kr/month savings by shifting consumption to off-peak
-  - **Achieved**: Migrated from Pi/Tibber to Dell Ruby backend with ps-strategy algorithm
-  - **Implementation**: `handlers/heatpump_schedule_handler.rb` selects cheapest hours with block distribution
-  - **Docs**: `docs/HEATPUMP_SCHEDULE_API_PLAN.md`
+  - **Priority 1**: Migrate Node-RED heatpump schedule from Tibber API to elprisetjustnu.se API
+  - **Priority 2**: Implement smart scheduling to avoid 06:00-22:00 weekdays in winter months
+  - **Priority 3**: Target 22:00-06:00 + weekends for heating during winter
+  - **Blocker**: Requires Node-RED configuration changes (not code changes in this repo)
+  - **Location**: Heatpump control runs on Raspberry Pi via MQTT (separate infrastructure)
+- [ ] **⚡ Review heatpump self-learning analysis** 📅 **Sunday Jan 5, 2026**
+  - **What**: Check `/api/heatpump/analysis` endpoint on Dell for first week of override data
+  - **Why**: Distribution-aware scheduling deployed Jan 1 - verify it reduced overrides
+  - **Look for**:
+    - Override frequency (should be lower than ~3/day seen in Dec SMS log)
+    - Which hour blocks still have overrides (morning 06:00-12:00? evening 18:00-24:00?)
+    - Hot water vs indoor breakdown
+  - **Actions based on results**:
+    - If overrides still high → increase hours_on from 14 to 15-16
+    - If overrides clustered in specific block → adjust MIN_HOURS_PER_BLOCK
+    - If zero/minimal overrides → consider reducing hours_on to save cost
+  - **Added**: Jan 1, 2026 after deploying distribution algorithm + override tracking
 - [x] ~~**⚡ Self-learning hours_on adjustment**~~ ✅ **COMPLETE** (Dec 20, 2025)
   - **Goal**: Replace fixed hours_on value with adaptive algorithm
   - **Deployed**: Full auto-learning system with weekly cron job (Sunday 3am)
