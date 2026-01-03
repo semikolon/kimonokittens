@@ -53,6 +53,84 @@ describe('weatherVibes', () => {
       it('prefers sleet over snow for snöblandat', () => {
         expect(detectVibeKey(params({ condition: 'Snöblandat regn' }))).toBe('sleet')
       })
+
+      describe('snow landscape (weather history)', () => {
+        const snowHistory = {
+          recent_snow_cm: 5.0,
+          snow_hours_last_24h: 8,
+          snow_on_ground: true,
+          recent_snow_event: true,
+          current_temp: -2,
+        }
+
+        it('returns snow_landscape when snow on ground + drizzle condition', () => {
+          // This is the key case: it snowed yesterday, now light rain but beautiful snow outside
+          expect(detectVibeKey(params({
+            condition: 'Lätt duggregn',
+            temp: 0,
+            weatherHistory: snowHistory,
+          }))).toBe('snow_landscape')
+        })
+
+        it('returns snow_landscape when snow on ground + overcast condition', () => {
+          expect(detectVibeKey(params({
+            condition: 'Mulet',
+            temp: -1,
+            weatherHistory: snowHistory,
+          }))).toBe('snow_landscape')
+        })
+
+        it('returns snow_landscape even with cold+damp conditions (overrides rått och ruskigt)', () => {
+          expect(detectVibeKey(params({
+            condition: 'Mulet',
+            temp: 0,
+            humidity: 85,
+            weatherHistory: snowHistory,
+          }))).toBe('snow_landscape')
+        })
+
+        it('active snowfall takes priority over snow_landscape', () => {
+          expect(detectVibeKey(params({
+            condition: 'Snöfall',
+            temp: -2,
+            weatherHistory: snowHistory,
+          }))).toBe('snow')
+        })
+
+        it('heavy rain overrides snow_landscape', () => {
+          expect(detectVibeKey(params({
+            condition: 'Kraftigt regn',
+            temp: 1,
+            weatherHistory: snowHistory,
+          }))).toBe('rain_heavy')
+        })
+
+        it('stormy weather overrides snow_landscape', () => {
+          expect(detectVibeKey(params({
+            condition: 'Mulet',
+            wind: 45,
+            weatherHistory: snowHistory,
+          }))).toBe('stormy')
+        })
+
+        it('does not return snow_landscape without recent snow event', () => {
+          const noRecentSnow = { ...snowHistory, recent_snow_event: false }
+          expect(detectVibeKey(params({
+            condition: 'Mulet',
+            temp: 0,
+            weatherHistory: noRecentSnow,
+          }))).not.toBe('snow_landscape')
+        })
+
+        it('does not return snow_landscape when snow melted (temp too warm)', () => {
+          const meltedSnow = { ...snowHistory, snow_on_ground: false }
+          expect(detectVibeKey(params({
+            condition: 'Mulet',
+            temp: 5,
+            weatherHistory: meltedSnow,
+          }))).not.toBe('snow_landscape')
+        })
+      })
     })
 
     describe('rain conditions', () => {
@@ -61,9 +139,9 @@ describe('weatherVibes', () => {
         expect(detectVibeKey(params({ condition: 'Kraftigt regn', wind: 30 }))).toBe('rain_windy')
       })
 
-      it('returns rain for moderate rain conditions', () => {
+      it('returns rain or rain_showers for moderate rain conditions', () => {
         expect(detectVibeKey(params({ condition: 'Måttligt regn' }))).toBe('rain')
-        expect(detectVibeKey(params({ condition: 'Regnskurar' }))).toBe('rain')
+        expect(detectVibeKey(params({ condition: 'Regnskurar' }))).toBe('rain_showers')
         expect(detectVibeKey(params({ condition: 'Områden med regn' }))).toBe('rain')
       })
 
@@ -81,9 +159,9 @@ describe('weatherVibes', () => {
           expect(detectVibeKey(params({ condition: 'Störtregn' }))).toBe('rain_heavy')
         })
 
-        it('returns rain (moderate) for other rain conditions', () => {
+        it('returns rain (moderate) or rain_showers for other rain conditions', () => {
           expect(detectVibeKey(params({ condition: 'Måttligt regn' }))).toBe('rain')
-          expect(detectVibeKey(params({ condition: 'Regnskurar' }))).toBe('rain')
+          expect(detectVibeKey(params({ condition: 'Regnskurar' }))).toBe('rain_showers')
           expect(detectVibeKey(params({ condition: 'Områden med regn' }))).toBe('rain')
         })
 
@@ -181,8 +259,9 @@ describe('weatherVibes', () => {
         expect(detectVibeKey(params({ temp: 2 }))).toBe('cold')
       })
 
-      it('returns damp for humid mild weather', () => {
-        expect(detectVibeKey(params({ temp: 5, humidity: 80 }))).toBe('damp')
+      it('returns default for humid mild weather (damp removed - not notable enough)', () => {
+        // Note: standalone 'damp' was removed - humidity without cold isn't notable
+        expect(detectVibeKey(params({ temp: 12, humidity: 80 }))).toBe('default')
       })
 
       it('returns windy for windy mild weather', () => {
@@ -221,12 +300,12 @@ describe('weatherVibes', () => {
   describe('getVibe helper', () => {
     it('returns short version for forecast', () => {
       const result = getVibe(params({ condition: 'Regn' }), 'short')
-      expect(result).toBe('Ta paraply')
+      expect(result).toBe('Regn')  // Updated: now matches VIBES.rain.short
     })
 
     it('returns long version for current weather', () => {
       const result = getVibe(params({ condition: 'Regn' }), 'long')
-      expect(result).toBe('Ta paraply')
+      expect(result).toBe('Regnigt')  // Updated: now matches VIBES.rain.long
     })
 
     it('returns different short/long for asymmetric vibes', () => {

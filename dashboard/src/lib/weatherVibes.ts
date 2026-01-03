@@ -22,7 +22,10 @@ export const VIBES = {
   rain_icy:         { short: 'Ishalka!',        long: 'Riktigt halt' },
   sleet:            { short: 'Ruskigt',         long: 'Ruskigt' },
 
-  // Snow conditions
+  // Snow landscape (recent snow on ground - takes priority over current drizzle/overcast)
+  snow_landscape:   { short: 'Vintermys',       long: 'Mysigt snölandskap' },
+
+  // Snow conditions (active snowfall)
   snow_windy:       { short: 'Snöyra',          long: 'Snöyra' },
   snow_flurries:    { short: 'Snöyr',           long: 'Lätt snöyr' },
   snow:             { short: 'Mysigt',          long: 'Mysigt ute' },
@@ -70,6 +73,14 @@ export const VIBES = {
 
 export type VibeKey = keyof typeof VIBES
 
+export interface WeatherHistory {
+  recent_snow_cm: number
+  snow_hours_last_24h: number
+  snow_on_ground: boolean
+  recent_snow_event: boolean
+  current_temp: number
+}
+
 export interface WeatherParams {
   temp: number
   wind: number
@@ -77,11 +88,12 @@ export interface WeatherParams {
   condition: string
   sunHours?: number
   airQualityIndex?: number  // US EPA index: 1=Good, 2=Moderate, 3+=Unhealthy
+  weatherHistory?: WeatherHistory  // Recent weather to detect snow landscapes etc
 }
 
 // Single detection function - returns the vibe key based on weather parameters
 export function detectVibeKey(params: WeatherParams): VibeKey {
-  const { temp, wind, humidity, condition, sunHours, airQualityIndex } = params
+  const { temp, wind, humidity, condition, sunHours, airQualityIndex, weatherHistory } = params
 
   const isFreezing = temp < -5
   const isCold = temp < 10
@@ -104,6 +116,10 @@ export function detectVibeKey(params: WeatherParams): VibeKey {
   const isSunny = /sol|klart|klar/.test(condLower)
   const isIcy = isFreezing || /underkyld|frys/.test(condLower)
 
+  // Snow landscape detection: recent snow on ground creates cozy winter vibe
+  // This should override dreary descriptions when there's beautiful snow outside
+  const hasSnowLandscape = weatherHistory?.snow_on_ground && weatherHistory?.recent_snow_event
+
   // Priority-ordered detection (order matters!)
   // Dangerous conditions first
   if (isStormy) return 'stormy'
@@ -111,10 +127,15 @@ export function detectVibeKey(params: WeatherParams): VibeKey {
   if (isRaining && isIcy) return 'rain_icy'  // Freezing rain = very dangerous!
   if (isSleet) return 'sleet'
 
-  // Snow conditions
+  // Active snow conditions (takes priority over snow landscape)
   if (isSnowing && isWindy) return 'snow_windy'
   if (isFlurries) return 'snow_flurries'
   if (isSnowing) return 'snow'
+
+  // Snow landscape: if there's snow on ground and weather isn't extreme,
+  // show cozy winter vibe instead of dreary rain/overcast vibes
+  // This handles the case: snowed yesterday, now light drizzle but beautiful white landscape
+  if (hasSnowLandscape && !isHeavyRain && !isStormy) return 'snow_landscape'
 
   // Rain conditions
   if (isRaining && isWindy && isDamp) return 'rain_windy_damp'
