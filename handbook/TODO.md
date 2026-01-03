@@ -1,17 +1,30 @@
 # TODO – Handbook / Wiki
 
-### Milestone 0 – Walking skeleton
-- [ ] `handbook/server/agoo/handbook_api.rb` with GET /raw, POST /propose, PATCH /approve
-- [ ] Vite React scaffold in `handbook/frontend/` (Tailwind + Radix)
-- [ ] TipTap editor + word-diff viewer
-- [ ] WebSocket broadcast on merge
+**Last updated**: Dec 21, 2025
 
-### Milestone 1 – Auth & DB
-- [ ] Next-Auth setup (Facebook provider) – `.env` vars + `/api/auth/*` routes
-- [x] Prisma schema + first migration (moved to /prisma)
+### Milestone 0 – Walking skeleton ✅ COMPLETE
+- [x] Backend handler with GET /pages, GET/POST /proposals, POST /approve (`handlers/handbook_handler.rb`, 388 lines)
+- [x] Mounted in main puma_server.rb at `/api/handbook/*`
+- [x] Vite React scaffold in `handbook/frontend/` (Tailwind + Radix)
+- [x] TipTap editor + word-diff viewer (in frontend scaffold)
+- [ ] WebSocket broadcast on merge (deferred - using polling for now)
+
+### Milestone 1 – Auth & DB ✅ MOSTLY COMPLETE
+- [x] Facebook OAuth implementation (`handbook/authentication_plan.md` - marked complete)
+- [x] Prisma schema + migrations (moved to /prisma - shared with dashboard)
 - [ ] `<RentPanel/>` component showing logged-in user's ledger
 
+### Milestone 1.5 – AI Query System ✅ COMPLETE (Added Dec 2025)
+- [x] OpenAI embeddings integration (`text-embedding-3-small`)
+- [x] Pinecone vector database client
+- [x] RAG query endpoint (`POST /api/handbook/query`)
+- [x] Indexing script (`handbook/scripts/index_documents.rb`)
+- [ ] Run indexing script to populate Pinecone index
+- [ ] Post-commit hook for automatic re-indexing
+
 ### Milestone 2 – Review flow polish
+- [x] Git-based proposal branches with approval tracking
+- [x] Auto-merge on 2 approvals with conflict detection
 - [ ] Banner "Waiting for approvals" with avatars of approvers
 - [ ] Diff per hunk accept/reject (client only)
 - [ ] E-mail or Matrix push when new proposal created
@@ -22,9 +35,16 @@
 - [ ] Dark mode toggle + prefers-color-scheme
 
 ### Milestone 4 – Deployment
+- [x] Backend integrated into main dashboard puma_server.rb (no separate service needed)
 - [ ] `infra/compose.yml` for Postgres + Watchtower upgrade
-- [ ] systemd unit `handbook.service` to start Agoo with `bundle exec`
 - [ ] CI: Vite build + rspec + prisma validate (from root)
+
+### NEW: Milestone 5 – Dashboard Integration (Dec 2025)
+- [ ] Add handbook as third dashboard view (Tab cycling: public → admin → handbook)
+- [ ] Create `HandbookDashboard.tsx` with AI query widget
+- [ ] Quick links to key handbook pages
+- [ ] Pending proposals display
+- [ ] See: `docs/HANDBOOK_DASHBOARD_VIEW_PLAN.md`
 
 ### Stretch ideas
 - [ ] Stripe webhook to auto-mark rent paid, update ledger

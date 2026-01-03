@@ -135,7 +135,8 @@ class ContractGeneratorHtml
         personnummer: tenant.personnummer || 'N/A',
         phone: tenant.phone || 'N/A',
         email: tenant.email,
-        move_in_date: tenant.start_date&.strftime('%Y-%m-%d') || Date.today.strftime('%Y-%m-%d')
+        move_in_date: tenant.start_date&.strftime('%Y-%m-%d') || Date.today.strftime('%Y-%m-%d'),
+        probation_end_date: ((tenant.start_date || Date.today) >> 3).strftime('%Y-%m-%d')  # 3 months after move-in
       },
       property: PROPERTY,
       rent: {

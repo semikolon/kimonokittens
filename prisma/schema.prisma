@@ -240,12 +240,14 @@ model SmsEvent {
 }
 
 model HeatpumpConfig {
-  id                  String   @id @default(cuid())
-  hoursOn             Int      @default(12)
-  emergencyTempOffset Float    @default(1.0)
-  minHotwater         Float    @default(40.0)
-  updatedAt           DateTime @updatedAt
-  createdAt           DateTime @default(now())
+  id                  String    @id @default(cuid())
+  hoursOn             Int       @default(12)
+  emergencyTempOffset Float     @default(1.0)
+  minHotwater         Float     @default(40.0)
+  blockDistribution   String    @default("[2,2,2,2]") // Per-block minimum hours: [overnight, morning, afternoon, evening]
+  lastAutoAdjustment  DateTime? // When auto-tuner last made a change
+  updatedAt           DateTime  @updatedAt
+  createdAt           DateTime  @default(now())
 }
 
 // Track heatpump override events for self-learning analysis
@@ -261,4 +263,19 @@ model HeatpumpOverride {
 
   @@index([type, createdAt(sort: Desc)])
   @@index([hourOfDay])
+}
+
+// Audit log for auto-learning adjustments
+// Every auto-adjustment is logged for transparency and rollback capability
+model HeatpumpAdjustment {
+  id             String   @id @default(cuid())
+  adjustmentType String   // 'hours_on' or 'block_distribution'
+  previousValue  String   // JSON: e.g. {"hours_on": 14} or {"blocks": [2,2,2,2]}
+  newValue       String   // JSON: e.g. {"hours_on": 15} or {"blocks": [2,3,2,2]}
+  reason         String   // Human-readable explanation
+  overrideStats  String   // JSON: stats that triggered this adjustment
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([adjustmentType])
 }

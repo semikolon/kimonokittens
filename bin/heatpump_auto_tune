@@ -1,0 +1,103 @@
+#!/usr/bin/env ruby
+
+# Heatpump Auto-Tuning Script
+#
+# Weekly cron job that analyzes override patterns and adjusts heatpump
+# schedule parameters to minimize temperature emergencies.
+#
+# Layers:
+# - Layer 2: Adjust hours_on based on override frequency
+#   - Too many overrides (>1.5/day) → increase hours_on by 1
+#   - Zero overrides for 2+ weeks → decrease hours_on by 1
+#
+# - Layer 3: Adjust block distribution based on override clustering
+#   - If a block has >35% of overrides → increase its min hours
+#   - Rebalance from lowest-override block to maintain total
+#
+# Guardrails:
+# - hours_on clamped to 10-20 range
+# - Minimum 7 days between adjustments
+# - SMS notification on every adjustment
+#
+# Usage:
+#   bundle exec ruby bin/heatpump_auto_tune           # Live mode
+#   bundle exec ruby bin/heatpump_auto_tune --dry-run # Test mode (no changes)
+#
+# Cron (Sunday 3am):
+#   0 3 * * 0 /home/kimonokittens/.rbenv/shims/bundle exec ruby /home/kimonokittens/Projects/kimonokittens/bin/heatpump_auto_tune >> /var/log/kimonokittens/auto_tune.log 2>&1
+
+require 'dotenv/load'
+require 'time'
+require_relative '../lib/persistence'
+require_relative '../lib/services/heatpump_auto_tuner'
+
+# Parse arguments
+dry_run = ARGV.include?('--dry-run')
+
+puts "=" * 60
+puts "Heatpump Auto-Tuner"
+puts "Time: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
+puts "Mode: #{dry_run ? 'DRY RUN (no changes will be applied)' : 'LIVE'}"
+puts "=" * 60
+puts
+
+begin
+  # Get current config for logging
+  config = Persistence.heatpump_config.get_current
+  puts "Current config:"
+  puts "  hours_on: #{config.hours_on}"
+  puts "  block_distribution: #{config.block_distribution.inspect}"
+  puts "  last_auto_adjustment: #{config.last_auto_adjustment&.strftime('%Y-%m-%d %H:%M') || 'never'}"
+  puts
+
+  # Run the auto-tuner
+  tuner = HeatpumpAutoTuner.new(dry_run: dry_run)
+  result = tuner.run
+
+  # Display result
+  puts "Result:"
+  puts "  #{result[:message]}"
+
+  if result[:adjusted]
+    puts
+    puts "Adjustment applied:"
+    puts "  Type: #{result[:adjustment_type]}"
+    puts "  Previous: #{result[:previous_value]}"
+    puts "  New: #{result[:new_value]}"
+    puts "  Reason: #{result[:reason]}"
+  elsif result[:would_adjust]
+    puts
+    puts "Would have adjusted:"
+    puts "  Type: #{result[:adjustment_type]}"
+    puts "  Previous: #{result[:previous_value]}"
+    puts "  New: #{result[:new_value]}"
+    puts "  Reason: #{result[:reason]}"
+    puts "  Blocked by: #{result[:blocked_by]}" if result[:blocked_by]
+  end
+
+  if tuner.stats
+    puts
+    puts "Statistics (7-day):"
+    puts "  Total overrides: #{tuner.stats[:total_overrides]}"
+    puts "  Overrides/day: #{tuner.stats[:overrides_per_day].round(2)}"
+    puts "  By type: #{tuner.stats[:by_type]}"
+    puts "  By block: #{tuner.stats[:by_block]}"
+    puts "  Avg override price: #{tuner.stats[:average_price].round(4)} kr/kWh"
+  end
+
+  puts
+  puts "=" * 60
+  puts "Completed successfully"
+  puts "=" * 60
+
+  # Exit with appropriate code
+  # 0 = adjusted or no adjustment needed
+  # 1 = skipped (rate limited) or error
+  exit(result[:skipped] ? 1 : 0)
+
+rescue => e
+  puts
+  puts "ERROR: #{e.message}"
+  puts e.backtrace.first(5).join("\n")
+  exit(2)
+end

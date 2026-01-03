@@ -471,3 +471,93 @@
     }
   }
 }
+
+/* ========================================
+   MOBILE RESPONSIVE STYLES
+   Only affects screens below 768px (md breakpoint)
+   Desktop remains completely unchanged
+   ======================================== */
+@media (max-width: 767px) {
+  /* Clock widget: Scale down for mobile */
+  .clock-time-container {
+    transform: scale(0.55);
+    transform-origin: top left;
+    height: 110px !important;
+    margin-top: -30px !important;
+  }
+
+  .clock-date {
+    margin-top: 150px !important;
+    font-size: 1.25rem !important;
+  }
+
+  /* Hide logo on mobile - takes too much space */
+  .clock-logo {
+    display: none;
+  }
+
+  /* Weather forecast: Stack rows vertically on mobile */
+  .forecast-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  }
+
+  .forecast-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  /* Weather forecast text size adjustment */
+  .weather-forecast .text-\[21px\] {
+    font-size: 18px !important;
+  }
+
+  /* Widget padding adjustments for mobile */
+  .elegant-widget-content,
+  [class*="p-8"] {
+    padding: 1rem !important;
+  }
+
+  /* Reduce base font size slightly on mobile for better fit */
+  body {
+    font-size: 1.25rem;
+  }
+
+  /* Widget titles: slightly smaller on mobile */
+  h3.text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  /* Electricity anomaly bar: improve mobile readability */
+  .anomaly-sparkline {
+    min-height: 80px;
+  }
+
+  /* Admin forms: Stack form elements vertically on mobile */
+  .p-6.space-y-6 form {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .p-6.space-y-6 form input {
+    width: 100%;
+  }
+
+  .p-6.space-y-6 form button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Admin tenant details: reduce internal padding */
+  .p-6.space-y-6 {
+    padding: 1rem !important;
+  }
+
+  /* Make admin buttons more touch-friendly */
+  .p-6.space-y-6 button {
+    min-height: 44px; /* iOS recommended touch target */
+  }
+}

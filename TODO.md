@@ -36,7 +36,7 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
    - (See `docs/TENANT_SIGNUP_IMPLEMENTATION_SUMMARY.md` for full checklist)
 4. **Log Rotation** - Needs verification if actually needed in production
 5. **Contract Replacement Workflow** - Delete+Re-sign not yet implemented
-6. **Heatpump Peak Avoidance** - Requires Pi Node-RED config (separate infrastructure)
+6. ~~**Heatpump Peak Avoidance**~~ - ✅ **COMPLETE** (Nov 20, 2025) - Schedule API migrated from Pi/Tibber to Dell Ruby backend. See `docs/HEATPUMP_SCHEDULE_API_PLAN.md`
 7. ~~**Horsemen Font**~~ - ✅ **COMPLETE** (Nov 20-21, 2025) - Font files added to `/fonts/`, @font-face declarations in signup.html, nginx config deployed
 8. **Whenever Gem vs Manual Cron** - Consider pros/cons of using Whenever gem (already installed) for cron job management instead of manual crontab entries (rent reminders, bank sync, electricity scrapers)
 9. **Electricity Price Awareness System** - Smart warnings for high-cost periods to optimize household appliance usage (washing machine, tumble dryer, dishwasher). System auto-detects abnormally high prices via statistical analysis (rolling baseline, no manual threshold). Features: (a) Predictive SMS/notifications day(s) before expensive periods, (b) Enhanced dashboard sparkline with visual price peak warnings overlaid on heatpump schedule bar. Context-aware: accounts for seasonal patterns while alerting on objectively high prices regardless of outdoor temperature. **Architecture:** See `docs/PRICE_AWARENESS_ARCHITECTURE_ANALYSIS.md` for design rationale (on-demand calculation, separate from heatpump config).
@@ -45,6 +45,31 @@ This document provides a detailed, step-by-step implementation plan for the Kimo
 12. **Date/Period Calculation Duplication** (Nov 24, 2025) - Reduce duplication of CONFIG→RENT month conversion logic across codebase. Currently duplicated in: `RentCalculator::Config#days_in_month`, `RentLedger.config_to_rent_month`, multiple handlers with manual `next_month` calls. Consider centralizing in `RentCalculator::Helpers` or dedicated `PeriodConverter` module. Context: Nov 24 congruency work fixed multiple bugs from inconsistent period semantics - consolidation would prevent future drift.
 
 **Impact:** Documentation was significantly outdated. 6 major features marked "planned" were actually shipped months ago.
+
+---
+
+## 🔥 HIGH PRIORITY: Handbook Dashboard View (Dec 2025)
+
+**Goal:** Add handbook as third tab-navigable view in dashboard (public → admin → handbook)
+
+**Status:** 🚧 IN PROGRESS - Implementation started, paused for other priorities
+
+**What we're building (MVP - no AI/RAG yet):**
+- [ ] Extend `useKeyboardNav.tsx` to cycle through 3 views
+- [ ] Create `HandbookDashboard.tsx` with readable markdown content
+- [ ] Navigation between handbook pages (agreements, house-rules, etc.)
+- [ ] Consistent styling with existing dashboard
+
+**What's deferred (Jan 2025+):**
+- AI query widget (Pinecone/RAG indexing)
+- Proposal creation/approval UI
+- Real-time WebSocket updates
+
+**Backend already exists:** `handlers/handbook_handler.rb` (388 lines) mounted at `/api/handbook/*`
+
+**Plan document:** `docs/HANDBOOK_DASHBOARD_VIEW_PLAN.md`
+
+**Why high priority:** Household members need access to handbook content on the kiosk display.
 
 ---
 
@@ -870,7 +895,7 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
   - **Swedish holiday handling**: Red days excluded from peak pricing ✅
   - **Testing**: Validated against actual 2025 invoices ✅
   - **Impact**: Pricing model now accounts for time-of-use rates in projections
-- [ ] **⚡ FUTURE: Heatpump Optimization for Peak Avoidance** ⏳ **PLANNED**
+- [x] ~~**⚡ Heatpump Optimization for Peak Avoidance**~~ ✅ **COMPLETE** (Nov 20, 2025)
   - **Goal**: ~400-500 kr/month savings by shifting consumption to off-peak
   - **Priority 1**: Migrate Node-RED heatpump schedule from Tibber API to elprisetjustnu.se API
   - **Priority 2**: Implement smart scheduling to avoid 06:00-22:00 weekdays in winter months
@@ -889,16 +914,14 @@ g the merge button in the UI. The UI should show a warning if conflicts are foun
     - If overrides clustered in specific block → adjust MIN_HOURS_PER_BLOCK
     - If zero/minimal overrides → consider reducing hours_on to save cost
   - **Added**: Jan 1, 2026 after deploying distribution algorithm + override tracking
-- [ ] **⚡ FUTURE: Self-learning hours_on adjustment** ⏳ **PLANNED**
+- [x] ~~**⚡ Self-learning hours_on adjustment**~~ ✅ **COMPLETE** (Dec 20, 2025)
   - **Goal**: Replace fixed hours_on value with adaptive algorithm
-  - **Approach**: Monitor performance metrics to automatically optimize baseline
-    - Temperature override frequency (too many overrides = increase hours_on)
-    - Energy cost vs target (overspending → reduce hours_on, underspending → can increase)
-    - Weather pattern correlation (colder winters need higher baseline)
-    - Indoor temperature stability (fluctuations indicate poor scheduling)
-  - **Benefit**: Intelligent baseline optimization vs removed emergency_price reactive approach
-  - **Context**: Replaces removed price opportunity logic (emergency_price threshold) with proactive learning
-  - **Added**: Nov 20, 2025 during emergencyPrice field removal
+  - **Deployed**: Full auto-learning system with weekly cron job (Sunday 3am)
+  - **Layer 2**: Adjusts hours_on based on override frequency (>1.5/day → increase, 0 for 2 weeks → decrease)
+  - **Layer 3**: Per-block distribution learning based on override clustering
+  - **First Adjustment**: 15 → 14 hours (detected 8 weeks zero overrides)
+  - **Implementation**: `lib/services/heatpump_auto_tuner.rb`, `bin/heatpump_auto_tune`
+  - **Docs**: `docs/HEATPUMP_AUTO_LEARNING_PLAN.md`
 - [ ] **⚡ FUTURE: Enhance Electricity Projection Accuracy** ⏳ **PLANNED**
   - Use Vattenfall/Fortum PDF scrapers to extract actual bill line-item breakdowns and model specific cost components (trading margins, certificates, administrative fees) instead of empirical 4.5% adjustment. See `bin/analyze_projection_accuracy.rb` for current accuracy baseline.
 - [ ] **💳 FUTURE: Billogram Rent Payment Automation** ⏳ **DEFERRED** (Resume end Dec 2025)

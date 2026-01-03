@@ -1,8 +1,11 @@
 # Heatpump Schedule API Implementation Plan
 
 **Created:** November 17, 2025
-**Status:** Planning → Implementation
+**Status:** ✅ DEPLOYED TO PRODUCTION (Nov 20, 2025)
 **Goal:** Replace Tibber API with Dell-based elprisetjustnu.se pricing + peak/off-peak logic
+
+**Deployed:** Complete migration from Pi/Tibber to Dell Ruby backend with ps-strategy algorithm.
+Node-RED now calls Dell `/api/heatpump/schedule` every 10 minutes, acting purely as transport layer.
 
 ---
 

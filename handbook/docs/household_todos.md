@@ -1,6 +1,6 @@
 # Household Todos
 
-- Städ-frenzy på tisdag
-- Samla de ev nya
-- Sophämtning
+- Rensa ut och flyttstäda
+- Sopsäckarna
 - Ansvarsavtal
+- Betala hyran, säga upp alla avtal

@@ -453,7 +453,46 @@ class DeploymentHandler
     end
     $logger.info("✅ Backend service reloaded (PID #{pid})")
 
+    # Run post-deployment hooks
+    run_post_deploy_hooks
+
     true
+  end
+
+  def run_post_deploy_hooks
+    hooks_dir = File.join(@project_dir, 'bin/hooks/post-deploy.d')
+
+    unless Dir.exist?(hooks_dir)
+      $logger.info("ℹ️  No post-deploy hooks directory (#{hooks_dir})")
+      return
+    end
+
+    # Find all executable scripts, run in alphabetical order
+    scripts = Dir.glob(File.join(hooks_dir, '*')).select { |f| File.executable?(f) }.sort
+
+    if scripts.empty?
+      $logger.info("ℹ️  No post-deploy hooks found")
+      return
+    end
+
+    $logger.info("🔄 Running #{scripts.length} post-deploy hook(s)...")
+    Dir.chdir(@project_dir)
+
+    scripts.each do |script|
+      script_name = File.basename(script)
+      $logger.info("  → Running #{script_name}...")
+
+      output = `bundle exec #{script} 2>&1`
+      if $?.success?
+        # Log first meaningful line of output as summary
+        summary = output.lines.find { |l| l.strip.length > 0 }&.strip || 'completed'
+        $logger.info("  ✅ #{script_name}: #{summary}")
+      else
+        $logger.error("  ⚠️  #{script_name} failed (non-critical):")
+        $logger.error(output.lines.last(5).join)
+        # Don't fail deployment - hooks are non-critical
+      end
+    end
   end
 
   def deploy_frontend

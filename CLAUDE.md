@@ -42,6 +42,8 @@
 - Webhook receiver: Port 49123
 - Production database: `kimonokittens_production`
 
+**Thermal Management:** Cabinet ventilation holes (Dec 2025) provide near-door-ajar cooling performance. Current: GPU 59°C, CPU 60-62°C. See `/dashboard/CLAUDE.md` for detailed thermal history and shader impact analysis.
+
 ---
 
 ## 👤 SESSION CONTEXT & PERMISSIONS
@@ -541,8 +543,14 @@ Handlers → Services → Domain Models + Repositories → Database
 - **Dashboard data generation**: All data consumed by widgets or useful for online handbook
 - **Heatpump schedule generation** (Nov 20, 2025): Moved from Pi Tibber/ps-strategy → Dell Ruby backend
   - ps-strategy algorithm now in `/api/heatpump/schedule` handler
-  - Configurable parameters via database (HeatpumpConfig table) - UI in progress
-  - Temperature override logic will also move to Dell (currently broken on Pi)
+  - Configurable via `HeatpumpConfigModal.tsx` in TemperatureWidget (hours_on, emergencyTempOffset, minHotwater)
+  - Temperature override logic working (Dec 19, 2025) - triggers SMS + logs to HeatpumpOverride table
+- **Heatpump auto-learning** (Dec 20, 2025): Self-optimizing schedule adjustments
+  - Weekly cron job (Sunday 3am) analyzes override patterns
+  - Layer 2: Adjusts hours_on (>1.5 overrides/day → +1h, zero for 2 weeks → -1h)
+  - Layer 3: Per-block distribution learning based on override clustering
+  - SMS notification on every adjustment
+  - See `docs/HEATPUMP_AUTO_LEARNING_PLAN.md` for full architecture
 
 **Services to Sunset** (after BRF-Auto income secured):
 - **Pi Agoo server** (`json_server.rb`):
@@ -563,11 +571,12 @@ Handlers → Services → Domain Models + Repositories → Database
    - Blocks compressor at permission level, preventing **ALL heat production** (both space heating and hot water)
    - MQTT: `{"EVU":1}` = blocked, `{"EVU":0}` = allowed
    - Cannot be overridden by software - operates upstream of all internal logic
-2. **Temperature Override** (⚠️ **BROKEN as of Nov 20, 2025** - pending migration to Dell backend)
-   - Previous implementation: Node-RED function checking `indoor ≤ target` OR `hotwater < 40°C`
-   - Broken: Depends on removed Tibber data flow
-   - **Migration plan**: Override logic moving to Dell backend in `/api/heatpump/schedule` handler
-   - See `docs/HEATPUMP_CONFIG_UI_PLAN.md` for implementation details
+2. **Temperature Override** (✅ **WORKING as of Dec 19, 2025**)
+   - Implementation: Dell `/api/heatpump/schedule` handler checks `indoor ≤ target - offset` OR `hotwater < min_hotwater`
+   - Thresholds configurable via HeatpumpConfig: `min_hotwater` (default 42°C), `emergency_temp_offset` (default 2°C)
+   - Forces EVU=0 (heatpump ON) regardless of schedule when temperatures too low
+   - Logs override events to HeatpumpOverride table for auto-learning analysis
+   - Sends SMS alert (max 1/hour) for temperature emergencies
 3. **Dell API Schedule** (price-optimized ps-strategy, Nov 20, 2025)
    - **Replaced** Tibber/Node-RED ps-strategy with Ruby backend implementation
    - Generates schedule from electricity prices (configurable via HeatpumpConfig in database)
@@ -642,9 +651,11 @@ machinectl shell kimonokittens@ /usr/bin/systemctl --user status kimonokittens-k
 4. **Deploy components**:
    ```bash
    # Frontend: npm ci → npx vite build → rsync to nginx → restart kiosk
-   # Backend: git pull → bundle install → systemctl restart dashboard
+   # Backend: git pull → bundle install → systemctl restart dashboard → run post-deploy hooks
    ```
 5. **Monitor**: `journalctl -u kimonokittens-webhook -f`
+
+**Post-deploy hooks**: Backend deployments run all executable scripts in `bin/hooks/post-deploy.d/` (alphabetical order, non-blocking failures). Add new hooks by dropping scripts there - no webhook restart needed.
 
 **Webhook endpoints**: `/webhook` (GitHub), `/health`, `/status` (deployment queue info)
 
