@@ -90,6 +90,13 @@ interface WeatherData {
     name: string
     country: string
   }
+  weather_history?: {
+    recent_snow_cm: number
+    snow_hours_last_24h: number
+    snow_on_ground: boolean
+    recent_snow_event: boolean
+    current_temp: number
+  }
   error?: string
   generated_at?: string
 }
