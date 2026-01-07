@@ -1,5 +1,5 @@
 {
-  "enabled": false,
+  "enabled": true,
   "sleepTime": "01:00",
   "sleepTimeWeekend": "03:00",
   "wakeTime": "05:30",
