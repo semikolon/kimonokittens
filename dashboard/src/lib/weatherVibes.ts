@@ -23,7 +23,7 @@ export const VIBES = {
   sleet:            { short: 'Ruskigt',         long: 'Ruskigt' },
 
   // Snow landscape (recent snow on ground - takes priority over current drizzle/overcast)
-  snow_landscape:   { short: 'Vintermys',       long: 'Mysigt snölandskap' },
+  snow_landscape:   { short: 'Vintermys',       long: 'Snölandskap' },
 
   // Snow conditions (active snowfall)
   snow_windy:       { short: 'Snöyra',          long: 'Snöyra' },
@@ -46,7 +46,7 @@ export const VIBES = {
   // Sunny conditions (from WeatherAPI)
   sunny_freezing:   { short: 'Kallt',           long: 'Soligt men kallt' },
   sunny_cold_windy: { short: 'Blåsigt',         long: 'Soligt men blåsigt' },
-  sunny_cold:       { short: 'Friskt',          long: 'Friskt vinterväder' },
+  sunny_cold:       { short: 'Friskt',          long: 'Frisk vinterdag' },
   sunny_mild:       { short: 'Skönt',           long: 'Riktigt skönt' },
   sunny:            { short: 'Fint',            long: 'Njut av solen' },
 

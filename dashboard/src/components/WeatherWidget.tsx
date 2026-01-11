@@ -92,7 +92,9 @@ export function WeatherWidget() {
 
   const shortenWeatherText = (text: string) => {
     // Shorten common long Swedish weather descriptions to prevent wrapping
-    return text.replace('Områden med regn i närheten', 'Regn i närheten')
+    return text
+      .replace('Områden med regn i närheten', 'Regn nära')
+      .replace('Växlande molnighet', 'Omväxlande')
   }
 
   // Current weather vibe (uses humidity + air quality + weather history, returns long phrases)
